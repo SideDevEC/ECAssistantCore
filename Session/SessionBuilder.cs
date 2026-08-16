@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ECAssistant.Config;
 using ECAssistant.Engine;
 using ECAssistant.Services;
@@ -24,13 +25,12 @@ namespace ECAssistant;
 ///
 /// Usage:
 ///   var builder = new SessionBuilder(config, workingDir, logger);
-///   var session = await builder.BuildSessionAsync(sessionKey, sharedWeights, sharedModelParams, inferenceParams);
-///   session.AddListener(myUiListener);
-///   session.RegisterTool(new MyCustomTool());
-///   session.Prompt("do something");
+///   builder.ExternalTools.Add(new MyCustomTool());
+///   await builder.BuildAsync(session);
 ///
 /// To skip built-in tools entirely (only your custom tools):
 ///   var builder = new SessionBuilder(config, workingDir, logger) { RegisterBuiltInTools = false };
+///   builder.ExternalTools.Add(new MyCustomTool());
 /// </summary>
 public class SessionBuilder
 {
@@ -39,6 +39,13 @@ public class SessionBuilder
     private readonly string _userConfigDir;
     private readonly ILogger _logger;
     private readonly BackgroundProcessManager _bgManager;
+
+    /// <summary>
+    /// External tools to register alongside built-in tools.
+    /// Set before calling BuildAsync(). These are registered first,
+    /// before the native tools.
+    /// </summary>
+    public List<EToolBase> ExternalTools { get; set; } = new();
 
     /// <summary>
     /// Whether to register the built-in ECAssistant tools (shell, file reader, git, etc.).
@@ -94,10 +101,20 @@ public class SessionBuilder
 
     /// <summary>
     /// Build a fully initialized session with standard tools + optional secondary model.
-    /// The caller is responsible for creating the AgentSession (e.g., via SessionManager)
-    /// and passing it in. This method handles tool registration, vector memory, etc.
+    /// Uses the ExternalTools property if set.
     /// </summary>
     public async Task BuildAsync(AgentSession session)
+    {
+        await BuildAsync(session, ExternalTools.Count > 0 ? ExternalTools : null);
+    }
+
+    /// <summary>
+    /// Build a fully initialized session with external tools + standard tools + secondary model.
+    /// External tools are registered first (if enabled), then built-in tools.
+    /// Both get their config section written if missing.
+    /// </summary>
+    /// <param name="externalTools">Tools from the host to register alongside native tools</param>
+    public async Task BuildAsync(AgentSession session, List<EToolBase>? externalTools)
     {
         // ── Vector Memory (semantic search) ──
         if (EnableVectorMemory ?? _config.VectorMemory.Enabled)
@@ -109,10 +126,10 @@ public class SessionBuilder
         // ── Project Context Manager ──
         await session.InitializeProjectContextAsync();
 
-        // ── Register built-in tools ──
-        if (RegisterBuiltInTools)
+        // ── Register tools (external first, then built-in) ──
+        if (RegisterBuiltInTools || (externalTools != null && externalTools.Count > 0))
         {
-            RegisterBuiltInToolsAsync(session);
+            RegisterBuiltInToolsAsync(session, externalTools);
         }
 
         // ── Secondary Model (optional) ──
@@ -133,27 +150,88 @@ public class SessionBuilder
     }
 
     /// <summary>
-    /// Register all built-in ECAssistant tools on the session.
-    /// Called automatically by BuildAsync unless RegisterBuiltInTools is false.
-    /// Can also be called directly if you want to register built-in tools
-    /// but control the order or interleave with custom tool registration.
+    /// Register external tools first, then built-in tools.
+    /// External tools are processed first so that native tools take precedence
+    /// in case of name conflicts. Both follow the same logic:
+    /// - Config section written if missing (via GetConfigSection())
+    /// - Tool registered only if IsEnabled is true
     /// </summary>
-    public void RegisterBuiltInToolsAsync(AgentSession session)
+    public void RegisterBuiltInToolsAsync(AgentSession session, List<EToolBase>? externalTools = null)
+    {
+        // ── External tools first ──
+        if (externalTools != null)
+        {
+            foreach (var tool in externalTools)
+            {
+                EnsureToolConfigSection(tool);
+                if (tool.IsEnabled)
+                    session.RegisterTool(tool);
+            }
+        }
+
+        // ── Built-in tools ──
+        RegisterNativeTools(session);
+    }
+
+    /// <summary>
+    /// Register all built-in ECAssistant tools on the session.
+    /// Creates each tool, ensures its config section exists, and registers
+    /// only if the tool is enabled.
+    /// </summary>
+    private void RegisterNativeTools(AgentSession session)
     {
         var fileSystem = new FileSystemAdapter();
         var processRunner = new ProcessRunner();
         var httpClient = new HttpClientAdapter();
 
-        // v10.24: Pass EAgentConfig to tools instead of IConfigProvider
-        session.RegisterTool(new EShellAgent(processRunner, _config, _workingDir));
-        session.RegisterTool(new EBackgroundExecTool(_bgManager, processRunner, fileSystem, _config));
-        session.RegisterTool(new EWebSearchTool(httpClient, _config));
-        session.RegisterTool(new EDotnetBuildTool(processRunner, _config));
-        session.RegisterTool(new EGitTool(processRunner, fileSystem, _config));
-        session.RegisterTool(new ECodeEditorTool(fileSystem, _config));
-        session.RegisterTool(new EFileReaderTool(fileSystem, _config));
-        session.RegisterTool(new EWebFetchTool(httpClient, _config));
-        session.RegisterTool(new EFileResearchTool(fileSystem, _config));
+        // Create all tool instances
+        var shellAgent = new EShellAgent(processRunner, _config, _workingDir);
+        var backgroundExec = new EBackgroundExecTool(_bgManager, processRunner, fileSystem, _config);
+        var webSearch = new EWebSearchTool(httpClient, _config);
+        var dotnetBuild = new EDotnetBuildTool(processRunner, _config);
+        var gitTool = new EGitTool(processRunner, fileSystem, _config);
+        var codeEditor = new ECodeEditorTool(fileSystem, _config);
+        var fileReader = new EFileReaderTool(fileSystem, _config);
+        var webFetch = new EWebFetchTool(httpClient, _config);
+        var fileResearch = new EFileResearchTool(fileSystem, _config);
+
+        // Ensure config sections exist for all tools (regardless of enabled state)
+        // and register only enabled tools
+        EnsureAndRegister(session, shellAgent);
+        EnsureAndRegister(session, backgroundExec);
+        EnsureAndRegister(session, webSearch);
+        EnsureAndRegister(session, dotnetBuild);
+        EnsureAndRegister(session, gitTool);
+        EnsureAndRegister(session, codeEditor);
+        EnsureAndRegister(session, fileReader);
+        EnsureAndRegister(session, webFetch);
+        EnsureAndRegister(session, fileResearch);
+    }
+
+    /// <summary>
+    /// Ensure the tool's config section exists in EAgentConfig.Tools.
+    /// If not, writes the default from GetConfigSection() and persists to appsettings.json.
+    /// Called for all tools — enabled or disabled — so config always has a section.
+    /// </summary>
+    private void EnsureToolConfigSection(EToolBase tool)
+    {
+        if (!_config.Tools.ContainsKey(tool.Name))
+        {
+            var section = tool.GetConfigSection();
+            var jsonElement = JsonSerializer.SerializeToElement(section);
+            _config.Tools[tool.Name] = jsonElement;
+            AgentConfigBuilder.Update(_config);
+        }
+    }
+
+    /// <summary>
+    /// Ensure config section exists, then register the tool if it's enabled.
+    /// </summary>
+    private void EnsureAndRegister(AgentSession session, EToolBase tool)
+    {
+        EnsureToolConfigSection(tool);
+        if (tool.IsEnabled)
+            session.RegisterTool(tool);
     }
 
     /// <summary>

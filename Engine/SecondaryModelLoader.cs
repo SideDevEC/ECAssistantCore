@@ -29,6 +29,7 @@ public class SecondaryModelLoader : IDisposable
     private string[] _antiPrompts = new[] { "User:", "Question:" };
     private bool _loaded = false;
     private readonly ILogger _logger;
+    private readonly SemaphoreSlim _inferenceLock = new(1, 1);
     
     public string ModelPath { get; private set; } = "";
     public uint ContextSize { get; private set; } = 4096;
@@ -94,28 +95,36 @@ public class SecondaryModelLoader : IDisposable
         if (!_loaded || _executor == null || _inferenceParams == null)
             return "(Secondary model not loaded)";
 
-        // Use provided maxTokens, or fall back to configured default
-        var effectiveMaxTokens = maxTokens ?? (int)_inferenceParams.MaxTokens;
-
-        var inferenceParams = InferenceParamsFactory.Create(
-            effectiveMaxTokens,
-            _antiPrompts);
-        // Reuse the same sampling pipeline from the loaded config
-        inferenceParams.SamplingPipeline = _inferenceParams.SamplingPipeline;
-
-        var sb = new System.Text.StringBuilder();
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        await _inferenceLock.WaitAsync();
         try
         {
-            await foreach (var token in _executor.InferAsync(prompt, inferenceParams, cts.Token))
-                sb.Append(token);
-        }
-        catch (OperationCanceledException)
-        {
-            // Timeout — return what we have
-        }
+            // Use provided maxTokens, or fall back to configured default
+            var effectiveMaxTokens = maxTokens ?? (int)_inferenceParams.MaxTokens;
 
-        return sb.ToString().Trim();
+            var inferenceParams = InferenceParamsFactory.Create(
+                effectiveMaxTokens,
+                _antiPrompts);
+            // Reuse the same sampling pipeline from the loaded config
+            inferenceParams.SamplingPipeline = _inferenceParams.SamplingPipeline;
+
+            var sb = new System.Text.StringBuilder();
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            try
+            {
+                await foreach (var token in _executor.InferAsync(prompt, inferenceParams, cts.Token))
+                    sb.Append(token);
+            }
+            catch (OperationCanceledException)
+            {
+                // Timeout — return what we have
+            }
+
+            return sb.ToString().Trim();
+        }
+        finally
+        {
+            _inferenceLock.Release();
+        }
     }
 
     /// <summary>Summarize text using the secondary model.</summary>

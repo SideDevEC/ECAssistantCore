@@ -33,7 +33,7 @@ namespace ECAssistant.Session;
 /// get an ISessionOutput reference and call Write/WriteLine/StartStream/RequestApproval.
 /// The session writes to a JSONL file (always) and notifies attached IOutputListener(s).
 /// </summary>
-public class AgentSession : ISessionOutput, IAsyncDisposable
+public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
 {
     // ── Identity ──────────────────────────────────────
     public string Key { get; }
@@ -155,6 +155,15 @@ public class AgentSession : ISessionOutput, IAsyncDisposable
 
     /// <summary>The engine powering this session.</summary>
     public EAgentEngine Engine => _engine;
+
+    /// <summary>ISessionContext: Secondary LLM for tool use.</summary>
+    public SecondaryModelLoader? SecondaryModel => _engine.SecondaryModel;
+
+    /// <summary>ISessionContext: Keyword memory.</summary>
+    public EMemoryManager Memory => _engine.Memory;
+
+    /// <summary>ISessionContext: Vector memory (semantic search).</summary>
+    public VectorMemoryStore? VectorMemory => _engine.VectorMemory;
 
     /// <summary>The orchestrator managing multi-step execution.</summary>
     public AgentOrchestrator Orchestrator => _orchestrator;
@@ -733,6 +742,9 @@ public class AgentSession : ISessionOutput, IAsyncDisposable
     /// </summary>
     public void RegisterTool(EToolBase tool)
     {
+        // Set session context before registration so tools can use it
+        tool.Session = this;
+
         // v10.24: Auto-register tool config section if not present
         if (_config != null)
         {

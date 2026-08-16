@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ECAssistant.Config;
+using ECAssistant.Session;
 
 namespace ECAssistant.Tools;
 
@@ -21,6 +22,13 @@ public abstract class EToolBase
 
                /// <summary>Example usage text shown to the LLM in the system prompt</summary>
     public abstract string UsageExample { get; }
+
+    /// <summary>
+    /// Session context — set right before registration via session.RegisterTool().
+    /// Provides access to session info, memory, and the secondary LLM.
+    /// Null until the tool is registered.
+    /// </summary>
+    public ISessionContext? Session { get; internal set; }
 
                 /// <summary>
                 /// Execute the tool with given arguments.
