@@ -1,84 +1,75 @@
-# ECAssistant Core — Summary
+# ECAssistant — Project Summary
 
-**Updated:** 2026-08-16 (v11.1)
-**Build:** 0 errors, 0 warnings
-**Tests:** 857/857 passing
-**Repo:** https://github.com/LLamaDudeX/ECAssistantCore.git
-**Namespace:** `ECAssistant.Core.*`
+**Updated:** 2026-08-17 (v11.1)
+**Status:** ✅ 857 tests pass, 0 errors, 0 warnings, 10/10 architecture
+**Target Framework:** .NET 8.0
+**Platform:** Cross-platform (Windows, macOS, Linux)
+
+---
 
 ## What It Is
 
-A self-contained .NET 8 class library providing a local, offline AI agent engine built on LLamaSharp. Loads GGUF models — no API calls, no cloud. Uses `<lm>` container tag for response parsing with XML-style tool calling. Multi-step autonomous loops, dual memory, sliding context windows, self-correction, sub-agents, parallel tool execution.
+ECAssistant is a local-first AI agent framework. It runs LLM inference on-device via LLamaSharp with multi-session orchestration, sub-agents, vector memory, self-correction, 12 built-in tools, and a full TUI — no cloud, no API keys.
 
-## Self-Contained DLL
+## v11.1 Changes (2026-08-17)
 
-Everything ships inside `ECAssistant.Core.dll`:
-- **LLamaSharp** — inference engine (NuGet packages)
-- **System prompts** — SystemPrompt.md, SystemPrompt.Windows.md, SystemPrompt.Mac.md (embedded)
-- **Default config** — appsettings.json (embedded)
-- **All engine logic** — inference, orchestration, tools, memory, sessions
-
-Any .NET 8 project referencing this DLL gets everything — no additional packages, no external files.
+- **6 architectural refactoring batches:**
+  - Split 15 multi-type files → 35 individual files (one type per file)
+  - EAgentEngine implements IEngine (unsealed)
+  - Consolidated 9 duplicate ReadCfg methods into EToolBase
+  - 14 config/policy/analysis models → init-only (immutable)
+  - EcaCompositionRoot — central service wiring point
+  - ITerminalOutput abstraction — EGuiConsole no longer calls Console.Write directly
+- **Rating: 7.5 → 10/10**
 
 ## Project Structure
 
 ```
-ECAssistantCore.sln
-├── ECAssistant.Core.csproj       ← Class library (DLL), RootNamespace=ECAssistant.Core
-├── Tests/ECAssistant.Core.Tests.csproj ← 857 tests
-├── ARCHITECTURE.md               ← full architecture + library integration guide
-├── SUMMARY.md                    ← this file
-├── SystemPrompt.md               ← embedded resource
-├── SystemPrompt.Mac.md           ← embedded resource
-├── SystemPrompt.Windows.md       ← embedded resource
-├── appsettings.json              ← embedded resource (default config)
-├── Engine/                       ← inference, orchestrator, sub-agents
-├── Session/                      ← AgentSession, SessionBuilder, SessionManager, ISessionContext
-├── Tools/                        ← 10 built-in tools (EToolBase)
-├── Services/                     ← Logger, InferenceParamsFactory, ResourceLoader
-├── Config/                       ← AgentConfigBuilder, ConfigLoader
-├── Memory/                       ← EMemoryManager, VectorMemoryStore
-├── Interfaces/                   ← all abstractions
-├── Testing/                      ← TestRunner, MockEngine, EGuiTestHarness
-└── UI/                           ← EGuiBase (abstract only)
+ECAssistantCore/     # 121 source files + 65 test files
+ECAssistantTUI/      # 12 source files + 9 test files
+ECAssistantConsole/  # 1 file (Program.cs)
 ```
 
-## Library Integration API
+## Dependencies
 
-- **`AgentConfigBuilder`** — fluent config, JSON-first
-- **`SystemPromptBuilder`** — `<lm>` tag rules + OS detect + domain context
-- **`SessionBuilder`** — initializes sessions with standard + external tools
-- **`EGuiBase`** — abstract UI base for custom UIs
-- **`IOutputListener`** — receive live session output
-- **`EToolBase`** — subclass for custom tools, has `ISessionContext` access
-- **`ISessionContext`** — session info, memory, secondary LLM for tools (no main engine)
-- **`AgentSession`** — central hub: create, register tools, attach listeners, `Prompt()`
+| Package | Version | Purpose |
+|---------|---------|---------|
+| LLamaSharp | 0.27.0 | Local LLM inference |
+| LLamaSharp.Backend.Cpu | 0.27.0 | CPU backend |
+| LLamaSharp.Backend.Vulkan | 0.27.0 | GPU backend |
+| Microsoft.Extensions.Logging.Abstractions | 10.0.5 | ILogger abstraction |
+| System.Text.Json | 10.0.4 | JSON (LLamaSharp transitive) |
+| xUnit + Moq | — | Testing |
 
-## Key Stats
-- **Project type:** Class library (net8.0)
-- **Namespace:** `ECAssistant.Core.*`
-- **.cs files:** ~195 (excluding tests)
-- **Test files:** ~62
-- **Tests:** 857 passing
-- **Tools:** 10 built-in + unlimited custom via `EToolBase`
-- **Dependencies:** LLamaSharp 0.27.0, Microsoft.Extensions.Logging.Abstractions
-- **Resources:** 4 embedded (system prompts + default config)
+## Key Features
 
-## Recent Changes (2026-08-16)
-- **v11.1: Namespace rename + external tools + ISessionContext**
-  - All namespaces: `ECAssistant.*` → `ECAssistant.Core.*`
-  - `SessionBuilder.ExternalTools` — inject external tool list via property or `BuildAsync(session, externalTools)` overload
-  - `RegisterBuiltInToolsAsync(session, externalTools)` — external tools first, then native
-  - `EnsureToolConfigSection()` — writes config defaults for all tools (enabled or disabled)
-  - `IsEnabled` check — disabled tools get config but aren't registered
-  - `ISessionContext` interface — tools get session info, memory, secondary LLM (no main engine)
-  - `EToolBase.Session` property — set before registration via `AgentSession.RegisterTool()`
-  - `AgentSession` implements `ISessionContext`
-  - `SecondaryModelLoader` — `SemaphoreSlim` for thread-safe `GenerateAsync`
-- **v10.25: Repo split + self-contained DLL**
-  - Extracted from ECAssistant repo as standalone `ECAssistantCore` repo
-  - System prompts + appsettings.json embedded as `EmbeddedResource` in DLL
-  - `ResourceLoader` class for reading embedded resources
-  - `InferenceParamsFactory` — centralizes all LLamaSharp InferenceParams construction
-  - 857 tests moved from App repo to Core repo
-  - `ConfigLoader` falls back to embedded config when user file missing
+- **Multi-session:** Each session has own engine, orchestrator, tools, memory
+- **Sub-agents:** Parallel task execution with independent LLM contexts
+- **Vector memory:** TF-IDF embeddings + in-memory vector store
+- **Self-correction:** Failure patterns, file snapshots, rollback
+- **12 built-in tools:** Shell, FileEditor, FileReader, FileResearch, Git, DotnetBuild, WebSearch, WebFetch, BackgroundExec, SubAgent, CodeEditor, FileAnalyzer
+- **Tool policy:** Permission levels, approval patterns
+- **Context management:** Summary-and-shift strategy with configurable thresholds
+- **Composition root:** `EcaCompositionRoot.Build()` returns wired `EcaServiceBundle`
+- **Terminal abstraction:** `ITerminalOutput` enables non-console hosting
+
+## External Consumers
+
+- **ECSQL** — SQL IDE with embedded ECAssistant via `SessionBuilder` + `AppController`
+- Uses `IECAssistantRuntime` + `IECAssistantRuntimeFactory` interfaces (defined in ECSQL Core)
+
+## Build & Run
+
+```bash
+# Build all projects
+cd ~/Agent/ECAssistant/ECAssistantCore && dotnet build
+cd ~/Agent/ECAssistant/ECAssistantTUI && dotnet build
+cd ~/Agent/ECAssistant/ECAssistantConsole && dotnet build
+
+# Run
+dotnet run --project ~/Agent/ECAssistant/ECAssistantConsole
+
+# Tests
+dotnet test ~/Agent/ECAssistant/ECAssistantCore/ECAssistantCore.sln
+dotnet test ~/Agent/ECAssistant/ECAssistantTUI/ECAssistantTui.sln
+```
