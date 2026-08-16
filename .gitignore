@@ -1,0 +1,20 @@
+# Build artifacts
+bin/
+obj/
+*.dll
+*.pdb
+*.exe
+
+# IDE files
+.vs/
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.user
+
+# Model files (large, don't commit)
+*.gguf
+*.bin
