@@ -9,7 +9,7 @@
     <AssemblyName>ECAssistant.Core</AssemblyName>
     <IsPackable>true</IsPackable>
     <PackageId>ECAssistant.Core</PackageId>
-    <Description>ECAssistant Core — local AI agent engine, tools, session management, and memory system. Library for embedding ECAssistant into any .NET application.</Description>
+    <Description>ECAssistant Core — local AI agent engine, tools, session management, and memory system.</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -34,24 +34,5 @@
     <EmbeddedResource Include="SystemPrompt.Mac.md" />
     <EmbeddedResource Include="appsettings.json" />
   </ItemGroup>
-
-  <!-- Embed LLamaSharp native runtime files into the DLL -->
-  <Target Name="EmbedNativeRuntimes" BeforeTargets="PrepareResourceItems" AfterTargets="ResolvePackageAssets">
-    <ItemGroup>
-      <NativeFiles Include="$(NuGetPackageRoot)llamasharp.backend.cpu/0.27.0/LLamaSharpRuntimes/**/native/**/*.*" />
-      <NativeFiles Include="$(NuGetPackageRoot)llamasharp.backend.vulkan/0.27.0/LLamaSharpRuntimes/**/native/**/*.*" />
-      <NativeFiles Include="$(NuGetPackageRoot)llamasharp.backend.vulkan.linux/0.27.0/LLamaSharpRuntimes/**/native/**/*.*" />
-      <NativeFiles Include="$(NuGetPackageRoot)llamasharp.backend.vulkan.windows/0.27.0/LLamaSharpRuntimes/**/native/**/*.*" />
-      <NativeFiles Include="$(NuGetPackageRoot)llamasharp.backend.cuda12/0.27.0/LLamaSharpRuntimes/**/native/**/*.*" Condition="'$(OS)' == 'WINDOWS'" />
-      <NativeFiles Include="$(NuGetPackageRoot)llamasharp.backend.cuda12.linux/0.27.0/LLamaSharpRuntimes/**/native/**/*.*" />
-      <NativeFiles Include="$(NuGetPackageRoot)llamasharp.backend.cuda12.windows/0.27.0/LLamaSharpRuntimes/**/native/**/*.*" Condition="'$(OS)' == 'WINDOWS'" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <EmbeddedResource Include="@(NativeFiles)"
-                          Condition="Exists('%(Identity)') And $([System.String]::new('%(Identity)').Contains('LLamaSharpRuntimes'))"
-                          LogicalName="$([System.String]::new('%(Identity)').Substring($([System.String]::new('%(Identity)').IndexOf('LLamaSharpRuntimes')).Replace('LLamaSharpRuntimes','runtimes').Replace('/','.').Replace('\','.'))" />
-    </ItemGroup>
-  </Target>
 
 </Project>
