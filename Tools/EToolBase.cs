@@ -122,6 +122,22 @@ public abstract class EToolBase
     /// </summary>
     protected static bool IsToolEnabled(Dictionary<string, JsonElement> tools, string toolName)
         => ReadConfig(tools, toolName, "enabled", true);
+
+    /// <summary>
+    /// Read a config value from a JsonElement section. Shared by all tools.
+    /// Replaces the duplicated ReadCfg&lt;T&gt; across tool files.
+    /// </summary>
+    protected static T ReadCfg<T>(JsonElement? section, string key, T defaultValue)
+    {
+        if (section.HasValue && section.Value.ValueKind == JsonValueKind.Object)
+        {
+            if (section.Value.TryGetProperty(key, out var prop))
+            {
+                try { return prop.Deserialize<T>() ?? defaultValue; } catch { return defaultValue; }
+            }
+        }
+        return defaultValue;
+    }
 }
 
 /// <summary>

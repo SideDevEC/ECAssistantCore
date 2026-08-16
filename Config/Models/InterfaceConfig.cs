@@ -5,13 +5,13 @@ namespace ECAssistant.Core.Config;
 public class InterfaceConfig
 {
     [JsonPropertyName("history_max_messages")]
-    public int HistoryMaxMessages { get; set; } = 50;
+    public int HistoryMaxMessages { get; init; } = 50;
     [JsonPropertyName("show_elapsed_time")]
-    public bool ShowElapsedTime { get; set; } = true;
+    public bool ShowElapsedTime { get; init; } = true;
     [JsonPropertyName("prompt_prefix")]
-    public string PromptPrefix { get; set; } = "[You]: ";
+    public string PromptPrefix { get; init; } = "[You]: ";
     [JsonPropertyName("response_prefix")]
-    public string ResponsePrefix { get; set; } = "[Agent]: ";
+    public string ResponsePrefix { get; init; } = "[Agent]: ";
     [JsonPropertyName("auto_clear_history_after")]
-    public object? AutoClearHistoryAfter { get; set; } = null;
+    public object? AutoClearHistoryAfter { get; init; } = null;
 }

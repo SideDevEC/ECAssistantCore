@@ -71,18 +71,6 @@ public class EWebFetchTool : EToolBase
         }
     }
 
-    private static T ReadCfg<T>(JsonElement? section, string key, T defaultValue)
-    {
-        if (section.HasValue && section.Value.ValueKind == JsonValueKind.Object)
-        {
-            if (section.Value.TryGetProperty(key, out var prop))
-            {
-                try { return prop.Deserialize<T>() ?? defaultValue; } catch { return defaultValue; }
-            }
-        }
-        return defaultValue;
-    }
-
     private string HtmlToText(string html)
     {
         if (string.IsNullOrEmpty(html))

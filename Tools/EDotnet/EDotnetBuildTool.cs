@@ -57,18 +57,6 @@ public class EDotnetBuildTool : EToolBase
             return EToolResult.Success(Name, $"[Build Success with warnings] {warnings.Count} warning(s).\n{result.StdOut}");
     }
 
-    private static T ReadCfg<T>(JsonElement? section, string key, T defaultValue)
-    {
-        if (section.HasValue && section.Value.ValueKind == JsonValueKind.Object)
-        {
-            if (section.Value.TryGetProperty(key, out var prop))
-            {
-                try { return prop.Deserialize<T>() ?? defaultValue; } catch { return defaultValue; }
-            }
-        }
-        return defaultValue;
-    }
-
     // Stateless utility — no mutable state
     private static List<BuildError> ParseBuildErrors(string output)
     {

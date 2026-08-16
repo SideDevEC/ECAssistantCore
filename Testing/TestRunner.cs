@@ -307,8 +307,15 @@ public sealed class TestRunner : IAsyncDisposable
             : new EAgentConfig();
 
         // Override model path with our test model
-        config.Llm.ModelPath = _modelPath;
-        config.Llm.GpuLayers = 15; // Match production config
+        config.Llm = new LlmConfig
+        {
+            ModelPath = _modelPath,
+            GpuLayers = 15, // Match production config
+            ContextSize = config.Llm.ContextSize,
+            Threads = config.Llm.Threads,
+            BatchSize = config.Llm.BatchSize,
+            UBatchSize = config.Llm.UBatchSize
+        };
 
         // Build inference params
         var inferenceParams = InferenceParamsFactory.Create(config);

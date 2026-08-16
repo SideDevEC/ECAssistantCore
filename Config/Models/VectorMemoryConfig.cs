@@ -5,11 +5,11 @@ namespace ECAssistant.Core.Config;
 public class VectorMemoryConfig
 {
     [JsonPropertyName("enabled")]
-    public bool Enabled { get; set; } = true;
+    public bool Enabled { get; init; } = true;
     [JsonPropertyName("directory")]
-    public string Directory { get; set; } = "vecmem";
+    public string Directory { get; init; } = "vecmem";
     [JsonPropertyName("max_results")]
-    public int MaxResults { get; set; } = 5;
+    public int MaxResults { get; init; } = 5;
     [JsonPropertyName("auto_index")]
-    public bool AutoIndex { get; set; } = true;
+    public bool AutoIndex { get; init; } = true;
 }

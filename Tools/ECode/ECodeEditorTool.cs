@@ -63,18 +63,6 @@ public class ECodeEditorTool : EToolBase
         return EToolResult.Success(Name, result);
     }
 
-    private static T ReadCfg<T>(JsonElement? section, string key, T defaultValue)
-    {
-        if (section.HasValue && section.Value.ValueKind == JsonValueKind.Object)
-        {
-            if (section.Value.TryGetProperty(key, out var prop))
-            {
-                try { return prop.Deserialize<T>() ?? defaultValue; } catch { return defaultValue; }
-            }
-        }
-        return defaultValue;
-    }
-
     // ─── Create: create a new file with content ───────────────
     private async Task<string> DoCreate(Dictionary<string, string?> args, CancellationToken ct)
     {

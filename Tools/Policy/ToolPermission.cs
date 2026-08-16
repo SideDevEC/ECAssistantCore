@@ -7,8 +7,8 @@ namespace ECAssistant.Core.Tools;
 /// </summary>
 public class ToolPermission
 {
-    public string ToolName { get; set; } = "";
-    public ToolPermissionLevel Level { get; set; } = ToolPermissionLevel.Allowed;
-    public List<string>? ApprovalPatterns { get; set; }
-    public string? Reason { get; set; }
+    public string ToolName { get; init; } = "";
+    public ToolPermissionLevel Level { get; init; } = ToolPermissionLevel.Allowed;
+    public List<string>? ApprovalPatterns { get; init; }
+    public string? Reason { get; init; }
 }

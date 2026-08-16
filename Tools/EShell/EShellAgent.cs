@@ -88,18 +88,6 @@ public class EShellAgent : EToolBase
         }
     }
 
-    private static T ReadCfg<T>(JsonElement? section, string key, T defaultValue)
-    {
-        if (section.HasValue && section.Value.ValueKind == JsonValueKind.Object)
-        {
-            if (section.Value.TryGetProperty(key, out var prop))
-            {
-                try { return prop.Deserialize<T>() ?? defaultValue; } catch { return defaultValue; }
-            }
-        }
-        return defaultValue;
-    }
-
     // ProcessRunner now owns OS-aware shell selection (pwsh on Windows, zsh on macOS, bash on Linux).
     // EShellAgent passes the raw command — no double-wrapping.
     private async Task<ShellProcessResult> RunShellAsync(string command, string workingDir, CancellationToken cancellationToken = default)

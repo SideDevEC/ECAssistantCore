@@ -8,11 +8,11 @@ namespace ECAssistant.Core.Tools;
 public class ToolPermissionConfigEntry
 {
     [JsonPropertyName("tool")]
-    public string ToolName { get; set; } = "";
+    public string ToolName { get; init; } = "";
 
     [JsonPropertyName("level")]
-    public string Level { get; set; } = "Allowed";
+    public string Level { get; init; } = "Allowed";
 
     [JsonPropertyName("reason")]
-    public string? Reason { get; set; }
+    public string? Reason { get; init; }
 }
