@@ -13,12 +13,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- InternalsVisibleTo for test assemblies. Add consumer assemblies as needed. -->
     <InternalsVisibleTo Include="ECAssistant.Core.Tests" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Exclude Tests from Core library build -->
     <Compile Remove="Tests/**" />
   </ItemGroup>
 
@@ -31,13 +29,29 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Embed system prompts and default config into the DLL as resources -->
     <EmbeddedResource Include="SystemPrompt.md" />
     <EmbeddedResource Include="SystemPrompt.Windows.md" />
     <EmbeddedResource Include="SystemPrompt.Mac.md" />
     <EmbeddedResource Include="appsettings.json" />
   </ItemGroup>
 
-  <!-- Native runtime files are included via build script (pack-core.sh) -->
+  <!-- Embed LLamaSharp native runtime files into the DLL -->
+  <Target Name="EmbedNativeRuntimes" BeforeTargets="PrepareResourceItems" AfterTargets="ResolvePackageAssets">
+    <ItemGroup>
+      <NativeFiles Include="$(NuGetPackageRoot)llamasharp.backend.cpu/0.27.0/LLamaSharpRuntimes/**/native/**/*.*" />
+      <NativeFiles Include="$(NuGetPackageRoot)llamasharp.backend.vulkan/0.27.0/LLamaSharpRuntimes/**/native/**/*.*" />
+      <NativeFiles Include="$(NuGetPackageRoot)llamasharp.backend.vulkan.linux/0.27.0/LLamaSharpRuntimes/**/native/**/*.*" />
+      <NativeFiles Include="$(NuGetPackageRoot)llamasharp.backend.vulkan.windows/0.27.0/LLamaSharpRuntimes/**/native/**/*.*" />
+      <NativeFiles Include="$(NuGetPackageRoot)llamasharp.backend.cuda12/0.27.0/LLamaSharpRuntimes/**/native/**/*.*" Condition="'$(OS)' == 'WINDOWS'" />
+      <NativeFiles Include="$(NuGetPackageRoot)llamasharp.backend.cuda12.linux/0.27.0/LLamaSharpRuntimes/**/native/**/*.*" />
+      <NativeFiles Include="$(NuGetPackageRoot)llamasharp.backend.cuda12.windows/0.27.0/LLamaSharpRuntimes/**/native/**/*.*" Condition="'$(OS)' == 'WINDOWS'" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="@(NativeFiles)"
+                          Condition="Exists('%(Identity)') And $([System.String]::new('%(Identity)').Contains('LLamaSharpRuntimes'))"
+                          LogicalName="$([System.String]::new('%(Identity)').Substring($([System.String]::new('%(Identity)').IndexOf('LLamaSharpRuntimes')).Replace('LLamaSharpRuntimes','runtimes').Replace('/','.').Replace('\','.'))" />
+    </ItemGroup>
+  </Target>
 
 </Project>
