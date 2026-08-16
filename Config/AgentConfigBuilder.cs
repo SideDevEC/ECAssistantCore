@@ -8,7 +8,7 @@ namespace ECAssistant;
 /// Fluent config builder for library consumers.
 ///
 /// On Build():
-/// 1. Resolve working directory: given path + "eca-data" appended (default: "./eca-data/")
+/// 1. Resolve working directory: use the given path directly (default: "./")
 /// 2. If appsettings.json exists there → load it, return it (JSON is source of truth)
 /// 3. If not → generate appsettings.json with code values + defaults, return it
 ///
@@ -17,19 +17,19 @@ namespace ECAssistant;
 /// the JSON to change settings — they never see the code.
 ///
 /// Usage:
-///   // First run: generates .eca-data/appsettings.json with these values
+///   // First run: generates appsettings.json with these values
 ///   var config = AgentConfigBuilder.Create()
 ///       .WithModel("/path/to/model.gguf")
 ///       .ContextSize(16384)
 ///       .GpuLayers(15)
 ///       .Build();
 ///
-///   // Subsequent runs: loads .eca-data/appsettings.json, ignores code values
+///   // Subsequent runs: loads appsettings.json, ignores code values
 ///   var config = AgentConfigBuilder.Create()
 ///       .WithModel("/path/to/model.gguf")  // ignored — JSON exists
 ///       .Build();
 ///
-/// End users edit .eca-data/appsettings.json to tweak settings.
+/// End users edit appsettings.json to tweak settings.
 /// </summary>
 public class AgentConfigBuilder
 {
@@ -81,9 +81,9 @@ public class AgentConfigBuilder
     public AgentConfigBuilder RepeatPenalty(float penalty) { _repeatPenalty = penalty; return this; }
 
     /// <summary>
-    /// Base directory for agent data. "eca-data" is always appended.
-    /// Default: "." → resolves to "./eca-data/".
-    /// Example: .WorkingDirectory("/var/lib/myapp") → "/var/lib/myapp/eca-data/"
+    /// Base directory for agent data. Used directly — no subdirectory appended.
+    /// Default: "." → resolves to "./".
+    /// Example: .WorkingDirectory("/var/lib/myapp") → "/var/lib/myapp/appsettings.json"
     /// </summary>
     public AgentConfigBuilder WorkingDirectory(string dir) { _workingDir = dir; return this; }
 
@@ -102,14 +102,14 @@ public class AgentConfigBuilder
     /// <summary>
     /// Build the EAgentConfig.
     ///
-    /// 1. Resolve working dir: given path + "/eca-data/"
+    /// 1. Use working dir directly (no subdirectory appended)
     /// 2. If appsettings.json exists there → load and return it (JSON wins)
     /// 3. If not → generate it with code values + defaults, then return
     /// </summary>
     public EAgentConfig Build()
     {
-        // 1. Resolve working directory — always append "eca-data"
-        var workingDir = Path.Combine(_workingDir, "eca-data");
+        // 1. Use working directory directly
+        var workingDir = _workingDir;
         Directory.CreateDirectory(workingDir);
 
         var jsonPath = Path.Combine(workingDir, "appsettings.json");
