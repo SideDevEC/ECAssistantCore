@@ -1,14 +1,14 @@
 using System.Text.Json;
-using ECAssistant.Config;
-using ECAssistant.Engine;
-using ECAssistant.Services;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Engine;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Interfaces;
 using LLama;
 using LLama.Common;
 using LLama.Native;
 using LLama.Sampling;
 
-namespace ECAssistant.Session;
+namespace ECAssistant.Core.Session;
 
 /// <summary>
 /// Session Manager — creates, tracks, and manages all sessions.

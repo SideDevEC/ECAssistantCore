@@ -1,4 +1,4 @@
-namespace ECAssistant.Analysis;
+namespace ECAssistant.Core.Analysis;
 
 public class FileInfoData
 {

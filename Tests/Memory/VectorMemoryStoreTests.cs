@@ -1,7 +1,7 @@
-using ECAssistant.Memory;
-using ECAssistant.Services;
+using ECAssistant.Core.Memory;
+using ECAssistant.Core.Services;
 
-namespace ECAssistant.Tests.Memory;
+namespace ECAssistant.Core.Tests.Memory;
 
 public class VectorMemoryStoreTests : IDisposable
 {

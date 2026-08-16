@@ -1,8 +1,8 @@
-using ECAssistant.Config;
-using ECAssistant.Interfaces;
-using ECAssistant.Tools.Shell;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Tools.Shell;
 
-namespace ECAssistant.Tests.Tools;
+namespace ECAssistant.Core.Tests.Tools;
 
 public class EShellAgentTests
 {

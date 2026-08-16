@@ -1,6 +1,6 @@
-using ECAssistant;
+using ECAssistant.Core;
 
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 /// <summary>
 /// A single parsed tool call request from the LLM response.

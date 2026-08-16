@@ -1,10 +1,10 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using ECAssistant.Tools;
-using ECAssistant.Services;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Tools;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 /// <summary>
 /// A single planned tool call — concrete mapping from a sub-task to a tool + args.

@@ -2,10 +2,10 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
-using ECAssistant.Config;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Tools.Shell;
+namespace ECAssistant.Core.Tools.Shell;
 
 /// <summary>
 /// Shell Agent Tool — the primary tool for all file and system operations.

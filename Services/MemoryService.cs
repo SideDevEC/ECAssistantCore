@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Services;
+namespace ECAssistant.Core.Services;
 
 /// <summary>
 /// Persistent memory service with vector search.

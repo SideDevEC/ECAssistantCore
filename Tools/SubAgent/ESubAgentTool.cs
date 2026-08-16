@@ -1,7 +1,7 @@
-using ECAssistant.Engine;
-using ECAssistant.Orchestration;
+using ECAssistant.Core.Engine;
+using ECAssistant.Core.Orchestration;
 
-namespace ECAssistant.Tools.SubAgent;
+namespace ECAssistant.Core.Tools.SubAgent;
 
 /// <summary>
 /// Sub-Agent Spawn Tool — allows the main agent to spawn isolated sub-agents

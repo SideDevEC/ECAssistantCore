@@ -1,7 +1,7 @@
-using ECAssistant.Services;
-using ECAssistant.Engine;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Engine;
 
-namespace ECAssistant.Tests.Services;
+namespace ECAssistant.Core.Tests.Services;
 
 public class SummaryServiceTests
 {

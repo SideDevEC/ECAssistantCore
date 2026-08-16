@@ -1,4 +1,4 @@
-namespace ECAssistant.Interfaces;
+namespace ECAssistant.Core.Interfaces;
 
 public record GenerationParams(
     int MaxTokens,

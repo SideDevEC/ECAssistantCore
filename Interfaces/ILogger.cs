@@ -1,6 +1,6 @@
-using ECAssistant.Services;
+using ECAssistant.Core.Services;
 
-namespace ECAssistant.Interfaces;
+namespace ECAssistant.Core.Interfaces;
 
 /// <summary>
 /// Structured logging interface — file only, headless.

@@ -1,4 +1,4 @@
-namespace ECAssistant.Session;
+namespace ECAssistant.Core.Session;
 
 /// <summary>
 /// Interface for session output — implemented by AgentSession.

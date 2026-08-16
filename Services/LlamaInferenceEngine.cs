@@ -3,13 +3,13 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LLama;
-using ECAssistant.Services;
+using ECAssistant.Core.Services;
 using LLama.Common;
 using LLama.Sampling;
 using Microsoft.Extensions.Logging;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Services;
+namespace ECAssistant.Core.Services;
 
 /// <summary>
 /// Concrete LLamaSharp inference engine.

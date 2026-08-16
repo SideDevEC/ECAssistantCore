@@ -1,7 +1,7 @@
-using ECAssistant.Engine;
-using ECAssistant.Services;
+using ECAssistant.Core.Engine;
+using ECAssistant.Core.Services;
 
-namespace ECAssistant.Tests.Integration;
+namespace ECAssistant.Core.Tests.Integration;
 
 /// <summary>
 /// Integration tests for ContextWindow with a real TokenCounter —

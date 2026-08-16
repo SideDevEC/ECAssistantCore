@@ -1,14 +1,14 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using ECAssistant.Engine;
-using ECAssistant.Tools;
-using ECAssistant.Memory;
-using ECAssistant.Services;
-using ECAssistant.Session;
+using ECAssistant.Core.Engine;
+using ECAssistant.Core.Tools;
+using ECAssistant.Core.Memory;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Session;
 using LLama.Common;
 using LLama.Sampling;
 
-namespace ECAssistant.Testing;
+namespace ECAssistant.Core.Testing;
 
 /// <summary>
 /// Mock engine for model-independent testing.

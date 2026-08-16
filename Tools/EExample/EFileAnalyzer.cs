@@ -1,10 +1,10 @@
-using ECAssistant.Tools;
+using ECAssistant.Core.Tools;
 using System.IO;
 using System.Text.Json;
 using System.Text;
-using ECAssistant;
+using ECAssistant.Core;
 
-namespace ECAssistant.Tools.Example;
+namespace ECAssistant.Core.Tools.Example;
 
 /// <summary>
 /// EXAMPLE TOOL — Extends EToolBase to show how to add a new tool.

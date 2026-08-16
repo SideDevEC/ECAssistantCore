@@ -1,4 +1,4 @@
-namespace ECAssistant.Services;
+namespace ECAssistant.Core.Services;
 
 /// <summary>Log severity levels (ordered low to high).</summary>
 public enum LogLevel

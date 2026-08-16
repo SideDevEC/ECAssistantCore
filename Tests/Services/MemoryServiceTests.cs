@@ -1,8 +1,8 @@
-using ECAssistant.Services;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Interfaces;
 using Moq;
 
-namespace ECAssistant.Tests.Services;
+namespace ECAssistant.Core.Tests.Services;
 
 public class MemoryServiceTests
 {

@@ -1,8 +1,8 @@
-using ECAssistant.Engine;
-using ECAssistant.Memory;
-using ECAssistant.Tools;
+using ECAssistant.Core.Engine;
+using ECAssistant.Core.Memory;
+using ECAssistant.Core.Tools;
 
-namespace ECAssistant.Session;
+namespace ECAssistant.Core.Session;
 
 /// <summary>
 /// Read-only session context exposed to tools.

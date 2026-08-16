@@ -1,8 +1,8 @@
-using ECAssistant.Config;
-using ECAssistant.Interfaces;
-using ECAssistant.Tools.Build;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Tools.Build;
 
-namespace ECAssistant.Tests.Tools;
+namespace ECAssistant.Core.Tests.Tools;
 
 public class EDotnetBuildToolTests
 {

@@ -1,8 +1,8 @@
-using ECAssistant.Config;
-using ECAssistant.Services;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Tests.Integration;
+namespace ECAssistant.Core.Tests.Integration;
 
 /// <summary>
 /// Integration tests for the config loading pipeline — uses real FileSystemAdapter

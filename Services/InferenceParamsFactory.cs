@@ -1,8 +1,8 @@
 using LLama.Common;
 using LLama.Sampling;
-using ECAssistant.Config;
+using ECAssistant.Core.Config;
 
-namespace ECAssistant.Services;
+namespace ECAssistant.Core.Services;
 
 /// <summary>
 /// Factory for creating InferenceParams from EAgentConfig.

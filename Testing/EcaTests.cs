@@ -1,6 +1,6 @@
-using ECAssistant.Orchestration;
+using ECAssistant.Core.Orchestration;
 
-namespace ECAssistant.Testing;
+namespace ECAssistant.Core.Testing;
 
 /// <summary>
 /// Predefined test scenarios for ECAssistant.

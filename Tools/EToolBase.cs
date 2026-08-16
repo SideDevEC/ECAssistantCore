@@ -1,8 +1,8 @@
 using System.Text.Json;
-using ECAssistant.Config;
-using ECAssistant.Session;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Session;
 
-namespace ECAssistant.Tools;
+namespace ECAssistant.Core.Tools;
 
 /// <summary>
 /// Base class for all Tools. 

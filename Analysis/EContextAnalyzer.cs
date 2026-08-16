@@ -1,8 +1,8 @@
 using System.Text;
 using System.Linq;
-using ECAssistant;
+using ECAssistant.Core;
 
-namespace ECAssistant.Analysis;
+namespace ECAssistant.Core.Analysis;
 
 /// <summary>
 /// Cross-File Context Analyzer — scans the project directory, builds file relationships,

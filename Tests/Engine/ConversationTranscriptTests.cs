@@ -1,7 +1,7 @@
 using System.Text.Json;
-using ECAssistant.Engine;
+using ECAssistant.Core.Engine;
 
-namespace ECAssistant.Tests.Engine;
+namespace ECAssistant.Core.Tests.Engine;
 
 public class ConversationTranscriptTests
 {

@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace ECAssistant.Session;
+namespace ECAssistant.Core.Session;
 
 /// <summary>
 /// Discovers existing sessions on disk and determines which one to load as active.

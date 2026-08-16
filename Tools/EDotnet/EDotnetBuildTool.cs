@@ -1,11 +1,11 @@
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using ECAssistant.Config;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Interfaces;
 using System.Text.Json;
 
-namespace ECAssistant.Tools.Build;
+namespace ECAssistant.Core.Tools.Build;
 
 /// <summary>
 /// .NET build/test tool.

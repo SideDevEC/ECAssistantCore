@@ -1,10 +1,10 @@
 using System;
 using System.IO;
 using System.Text.Json;
-using ECAssistant.Interfaces;
-using ECAssistant.Config;
+using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Config;
 
-namespace ECAssistant.Services;
+namespace ECAssistant.Core.Services;
 
 /// <summary>
 /// JSON configuration loader.

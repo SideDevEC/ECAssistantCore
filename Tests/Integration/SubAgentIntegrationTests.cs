@@ -1,15 +1,15 @@
-using ECAssistant.Config;
-using ECAssistant;
-using ECAssistant.Engine;
-using ECAssistant.Interfaces;
-using ECAssistant.Orchestration;
-using ECAssistant.Services;
-using ECAssistant.Testing;
-using ECAssistant.Tools;
-using ECAssistant.UI;
-using ToolPolicy = ECAssistant.Tools.ToolPolicy;
+using ECAssistant.Core.Config;
+using ECAssistant.Core;
+using ECAssistant.Core.Engine;
+using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Orchestration;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Testing;
+using ECAssistant.Core.Tools;
+using ECAssistant.Core.UI;
+using ToolPolicy = ECAssistant.Core.Tools.ToolPolicy;
 
-namespace ECAssistant.Tests.Integration;
+namespace ECAssistant.Core.Tests.Integration;
 
 /// <summary>
 /// Integration tests for sub-agent spawning through the orchestrator.
@@ -47,7 +47,7 @@ public class SubAgentIntegrationTests : IDisposable
         var logger = new Mock<ILogger>();
         var engine = new MockEngine(_tempDir);
         _engines.Add(engine);
-        var policy = new ECAssistant.Tools.ToolPolicy();
+        var policy = new ECAssistant.Core.Tools.ToolPolicy();
         var orchestrator = new AgentOrchestrator(engine, sessionOutput: new TestSessionOutput(_gui), maxTurns: maxTurns, maxFailures: 3, toolPolicy: policy, logger: logger.Object);
         _orchestrators.Add(orchestrator);
         return (engine, orchestrator);
@@ -105,7 +105,7 @@ public class SubAgentIntegrationTests : IDisposable
 
         // Register a mock ESubAgent tool instead of InitializeSubAgents
         engine.RegisterTool(new MockSubAgentTool());
-        orchestrator.Policy.SetPermission("ESubAgent", ECAssistant.Tools.ToolPermissionLevel.Allowed, "Test");
+        orchestrator.Policy.SetPermission("ESubAgent", ECAssistant.Core.Tools.ToolPermissionLevel.Allowed, "Test");
 
         engine.AddResponse(
             "<lm><thinking>Spawn a sub-agent</thinking>" +
@@ -129,7 +129,7 @@ public class SubAgentIntegrationTests : IDisposable
         var (engine, orchestrator) = CreateEngineWithMockedTools(maxTurns: 5);
         // Register mock ESubAgent instead of InitializeSubAgents to avoid loading real model
         engine.RegisterTool(new MockSubAgentTool());
-        orchestrator.Policy.SetPermission("ESubAgent", ECAssistant.Tools.ToolPermissionLevel.Allowed, "Test");
+        orchestrator.Policy.SetPermission("ESubAgent", ECAssistant.Core.Tools.ToolPermissionLevel.Allowed, "Test");
 
         // Call ESubAgent without task argument
         engine.AddResponse("<lm><thinking>Spawn sub-agent without task</thinking><toolcall>ESubAgent</toolcall></lm>");
@@ -194,7 +194,7 @@ public class SubAgentIntegrationTests : IDisposable
         var (engine, orchestrator) = CreateEngineWithOrchestrator(maxTurns: 5);
         // Register mock ESubAgent instead of InitializeSubAgents to avoid loading real model
         engine.RegisterTool(new MockSubAgentTool());
-        orchestrator.Policy.SetPermission("ESubAgent", ECAssistant.Tools.ToolPermissionLevel.Allowed, "Test");
+        orchestrator.Policy.SetPermission("ESubAgent", ECAssistant.Core.Tools.ToolPermissionLevel.Allowed, "Test");
 
         engine.AddResponse(
             "<lm><thinking>Spawn two sub-agents</thinking>" +
@@ -218,7 +218,7 @@ public class SubAgentIntegrationTests : IDisposable
 
         var engine = new MockEngine(_tempDir);
         _engines.Add(engine);
-        var policy = new ECAssistant.Tools.ToolPolicy();
+        var policy = new ECAssistant.Core.Tools.ToolPolicy();
         var orchestrator = new AgentOrchestrator(engine, sessionOutput: new TestSessionOutput(_gui), maxTurns: maxTurns, maxFailures: 3, toolPolicy: policy, logger: mockLogger.Object);
         _orchestrators.Add(orchestrator);
         return (engine, orchestrator);
@@ -229,7 +229,7 @@ public class SubAgentIntegrationTests : IDisposable
 /// Mock ESubAgent tool for testing — returns a canned result without
 /// spawning a real EAgentEngine that would load a 5GB GGUF model.
 /// </summary>
-public class MockSubAgentTool : ECAssistant.Tools.EToolBase
+public class MockSubAgentTool : ECAssistant.Core.Tools.EToolBase
 {
     public override string Name => "ESubAgent";
     public override string Description => "Mock sub-agent tool for testing";
@@ -237,14 +237,14 @@ public class MockSubAgentTool : ECAssistant.Tools.EToolBase
     public override string GetToolRules() => "<task>=description (required)";
     public override string GetToolExample() => "<toolcall>ESubAgent<task>test</task></toolcall>";
 
-    public override async Task<ECAssistant.Tools.EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
+    public override async Task<ECAssistant.Core.Tools.EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
         var taskDesc = arguments.GetValueOrDefault("task")?.Trim();
         if (string.IsNullOrEmpty(taskDesc))
-            return new ECAssistant.Tools.EToolResult { ToolName = Name, Succeeded = false, Error = "Missing task argument." };
+            return new ECAssistant.Core.Tools.EToolResult { ToolName = Name, Succeeded = false, Error = "Missing task argument." };
 
-        return new ECAssistant.Tools.EToolResult
+        return new ECAssistant.Core.Tools.EToolResult
         {
             ToolName = Name,
             Succeeded = true,

@@ -1,17 +1,17 @@
 using System.Text;
 using System.Text.Json;
-using ECAssistant.Config;
-using ECAssistant.Engine;
-using ECAssistant.Memory;
-using ECAssistant.Orchestration;
-using ECAssistant.Services;
-using ECAssistant.Interfaces;
-using ECAssistant.Tools;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Engine;
+using ECAssistant.Core.Memory;
+using ECAssistant.Core.Orchestration;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Tools;
 using LLama;
 using LLama.Common;
 using LLama.Sampling;
 
-namespace ECAssistant.Session;
+namespace ECAssistant.Core.Session;
 
 /// <summary>
 /// A fully isolated agent session.
@@ -84,7 +84,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     public DateTime RunStartedAt { get; private set; }
 
     // ── Tool policy ───────────────────────────────────
-    private readonly ECAssistant.Tools.ToolPolicy _toolPolicy;
+    private readonly ECAssistant.Core.Tools.ToolPolicy _toolPolicy;
     private readonly EAgentConfig? _config;  // v10.24: for tool config registration
     private readonly ILogger _logger;
 
@@ -110,7 +110,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         _workingDir = workingDir;
         _inferenceLock = inferenceLock;
         _subAgentConfig = subAgentConfig ?? new SubAgentConfig();
-        _toolPolicy = new ECAssistant.Tools.ToolPolicy();
+        _toolPolicy = new ECAssistant.Core.Tools.ToolPolicy();
         _config = config;
 
         // Create session directory
@@ -169,7 +169,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     public AgentOrchestrator Orchestrator => _orchestrator;
 
     /// <summary>The tool policy for this session.</summary>
-    public ECAssistant.Tools.ToolPolicy Policy => _toolPolicy;
+    public ECAssistant.Core.Tools.ToolPolicy Policy => _toolPolicy;
 
     /// <summary>Number of messages in the conversation.</summary>
     public int MessageCount => _engine.Transcript.MessageCount;

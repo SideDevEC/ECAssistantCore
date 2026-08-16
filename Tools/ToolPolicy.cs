@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace ECAssistant.Tools;
+namespace ECAssistant.Core.Tools;
 
 /// <summary>
 /// Tool policy manager — checks permissions before tool execution.

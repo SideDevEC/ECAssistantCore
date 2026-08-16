@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Services;
+namespace ECAssistant.Core.Services;
 
 /// <summary>
 /// Concrete file system implementation.

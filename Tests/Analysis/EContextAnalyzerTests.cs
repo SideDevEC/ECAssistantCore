@@ -1,6 +1,6 @@
-using ECAssistant.Analysis;
+using ECAssistant.Core.Analysis;
 
-namespace ECAssistant.Tests.Analysis;
+namespace ECAssistant.Core.Tests.Analysis;
 
 public class EContextAnalyzerTests : IDisposable
 {

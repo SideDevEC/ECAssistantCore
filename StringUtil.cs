@@ -1,4 +1,4 @@
-namespace ECAssistant;
+namespace ECAssistant.Core;
 
 /// <summary>
 /// String utility — truncation and text helpers.

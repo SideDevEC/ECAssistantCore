@@ -1,8 +1,8 @@
 using System.Text;
-using ECAssistant.Config;
-using ECAssistant.Services;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Services;
 
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 /// <summary>
 /// Manages the LLM conversation context window.

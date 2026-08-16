@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 /// <summary>
 /// A single message in the conversation transcript.

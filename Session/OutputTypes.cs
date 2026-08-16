@@ -1,4 +1,4 @@
-namespace ECAssistant.Session;
+namespace ECAssistant.Core.Session;
 
 /// <summary>
 /// Output states — semantic meaning of output, not colors.

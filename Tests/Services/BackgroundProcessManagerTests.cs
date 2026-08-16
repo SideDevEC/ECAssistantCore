@@ -1,6 +1,6 @@
-using ECAssistant.Services;
+using ECAssistant.Core.Services;
 
-namespace ECAssistant.Tests.Services;
+namespace ECAssistant.Core.Tests.Services;
 
 public class BackgroundProcessManagerTests : IDisposable
 {

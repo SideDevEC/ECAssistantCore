@@ -1,7 +1,7 @@
-using ECAssistant.Services;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Tests.Services;
+namespace ECAssistant.Core.Tests.Services;
 
 public class InMemoryVectorStoreTests
 {

@@ -1,7 +1,7 @@
-using ECAssistant.Memory;
-using ECAssistant.Services;
+using ECAssistant.Core.Memory;
+using ECAssistant.Core.Services;
 
-namespace ECAssistant.Tests.Integration;
+namespace ECAssistant.Core.Tests.Integration;
 
 /// <summary>
 /// Integration tests for the memory pipeline — EMemoryManager and VectorMemoryStore
@@ -103,7 +103,7 @@ public class MemoryIntegrationTests : IDisposable
         // Manually create memory files
         for (int i = 1; i <= 3; i++)
         {
-            var entry = new ECAssistant.Memory.MemoryEntry
+            var entry = new ECAssistant.Core.Memory.MemoryEntry
             {
                 Id = i,
                 Key = $"key{i}",

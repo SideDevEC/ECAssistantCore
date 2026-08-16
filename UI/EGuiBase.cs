@@ -1,4 +1,4 @@
-namespace ECAssistant.UI;
+namespace ECAssistant.Core.UI;
 
 /// <summary>
 /// Abstract base for ALL console / I/O interaction points.

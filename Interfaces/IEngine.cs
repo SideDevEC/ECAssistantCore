@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ECAssistant.Interfaces;
+namespace ECAssistant.Core.Interfaces;
 
 /// <summary>
 /// Engine interface for testing/abstraction.

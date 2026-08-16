@@ -1,6 +1,6 @@
-namespace ECAssistant.Services;
+namespace ECAssistant.Core.Services;
 
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Interfaces;
 
 /// <summary>
 /// Lightweight structured logger — writes to file only.

@@ -1,8 +1,8 @@
-using ECAssistant.Engine;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Engine;
+using ECAssistant.Core.Interfaces;
 using Moq;
 
-namespace ECAssistant.Tests.Engine;
+namespace ECAssistant.Core.Tests.Engine;
 
 public class SelfCorrectionManagerTests
 {

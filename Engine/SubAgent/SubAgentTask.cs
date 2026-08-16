@@ -1,4 +1,4 @@
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 public class SubAgentTask
 {

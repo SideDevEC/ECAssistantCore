@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace ECAssistant.Interfaces;
+namespace ECAssistant.Core.Interfaces;
 
 /// <summary>
 /// File system abstraction.

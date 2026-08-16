@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace ECAssistant.Services;
+namespace ECAssistant.Core.Services;
 
 /// <summary>
 /// Loads embedded resources from the Core DLL.
@@ -10,7 +10,7 @@ namespace ECAssistant.Services;
 public static class ResourceLoader
 {
     private static readonly Assembly _assembly = typeof(ResourceLoader).Assembly;
-    private const string _baseNamespace = "ECAssistant.";
+    private const string _baseNamespace = "ECAssistant.Core.";
 
     /// <summary>
     /// Load a text resource embedded in the Core DLL.

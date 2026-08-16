@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <OutputType>Library</OutputType>
-    <RootNamespace>ECAssistant</RootNamespace>
+    <RootNamespace>ECAssistant.Core</RootNamespace>
     <AssemblyName>ECAssistant.Core</AssemblyName>
     <IsPackable>true</IsPackable>
     <PackageId>ECAssistant.Core</PackageId>

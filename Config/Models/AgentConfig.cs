@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace ECAssistant.Config;
+namespace ECAssistant.Core.Config;
 
 public class AgentConfig
 {

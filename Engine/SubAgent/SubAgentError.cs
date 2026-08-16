@@ -1,7 +1,7 @@
 using System.Text;
-using ECAssistant.Orchestration;
+using ECAssistant.Core.Orchestration;
 
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 public class SubAgentError
 {

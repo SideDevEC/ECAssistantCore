@@ -1,4 +1,4 @@
-namespace ECAssistant;
+namespace ECAssistant.Core;
 
 /// <summary>
 /// ANSI color codes. Used ONLY by ConsoleUiRenderer (the UI bridge).

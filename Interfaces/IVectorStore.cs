@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace ECAssistant.Interfaces;
+namespace ECAssistant.Core.Interfaces;
 
 /// <summary>
 /// Vector similarity search abstraction.

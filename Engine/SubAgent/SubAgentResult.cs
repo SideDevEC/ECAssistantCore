@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 public class SubAgentResult
 {

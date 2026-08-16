@@ -1,6 +1,6 @@
-using ECAssistant.Session;
+using ECAssistant.Core.Session;
 
-namespace ECAssistant.Tests.Session;
+namespace ECAssistant.Core.Tests.Session;
 
 /// <summary>
 /// Tests for session prompt queue logic and run state transitions.

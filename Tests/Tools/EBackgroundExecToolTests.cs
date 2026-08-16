@@ -1,9 +1,9 @@
-using ECAssistant.Config;
-using ECAssistant.Interfaces;
-using ECAssistant.Services;
-using ECAssistant.Tools.Background;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Tools.Background;
 
-namespace ECAssistant.Tests.Tools;
+namespace ECAssistant.Core.Tests.Tools;
 
 public class EBackgroundExecToolTests : IDisposable
 {

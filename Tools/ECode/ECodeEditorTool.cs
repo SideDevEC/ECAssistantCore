@@ -1,10 +1,10 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using ECAssistant.Config;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Tools.Code;
+namespace ECAssistant.Core.Tools.Code;
 
 /// <summary>
 /// Code Editor Tool — surgical code edits with diff preview, multi-line replacement,

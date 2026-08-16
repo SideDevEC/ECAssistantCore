@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
-using ECAssistant.Tools;
+using ECAssistant.Core.Tools;
 
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 /// <summary>
 /// Analyzes a batch of toolcalls and determines which can run in parallel

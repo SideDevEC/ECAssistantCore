@@ -1,8 +1,8 @@
-using ECAssistant.Config;
-using ECAssistant.Interfaces;
-using ECAssistant.Tools.Research;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Tools.Research;
 
-namespace ECAssistant.Tests.Tools;
+namespace ECAssistant.Core.Tests.Tools;
 
 public class EFileResearchToolTests : IDisposable
 {

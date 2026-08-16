@@ -1,17 +1,17 @@
-using ECAssistant;
-using ECAssistant.Config;
-using ECAssistant.Engine;
-using ECAssistant.Interfaces;
-using ECAssistant.Orchestration;
-using ECAssistant.Services;
-using ECAssistant.Testing;
-using ECAssistant.Tools;
-using ECAssistant.Tools.Shell;
-using ECAssistant.Tools.Code;
-using ECAssistant.Tools.Reader;
-using ECAssistant.UI;
+using ECAssistant.Core;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Engine;
+using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Orchestration;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Testing;
+using ECAssistant.Core.Tools;
+using ECAssistant.Core.Tools.Shell;
+using ECAssistant.Core.Tools.Code;
+using ECAssistant.Core.Tools.Reader;
+using ECAssistant.Core.UI;
 
-namespace ECAssistant.Tests.Integration;
+namespace ECAssistant.Core.Tests.Integration;
 
 /// <summary>
 /// Integration tests for tools working through the full pipeline:
@@ -58,7 +58,7 @@ public class ToolPipelineIntegrationTests : IDisposable
         _engines.Add(engine);
 
         var sessionOutput = new TestSessionOutput(_gui);
-        var policy = new ECAssistant.Tools.ToolPolicy();
+        var policy = new ECAssistant.Core.Tools.ToolPolicy();
         var orchestrator = new AgentOrchestrator(engine, sessionOutput: sessionOutput, maxTurns: maxTurns, maxFailures: 3, toolPolicy: policy, logger: logger.Object);
         _orchestrators.Add(orchestrator);
 

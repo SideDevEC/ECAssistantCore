@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.Json;
-using ECAssistant.Config;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Tools.Git;
+namespace ECAssistant.Core.Tools.Git;
 
 /// <summary>
 /// Git Integration Tool — wraps common git operations with structured output.

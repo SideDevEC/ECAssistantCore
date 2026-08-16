@@ -1,10 +1,10 @@
 using System;
 using System.IO;
 using System.Text.Json;
-using ECAssistant.Interfaces;
-using ECAssistant.Services;
+using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Services;
 
-namespace ECAssistant.Config;
+namespace ECAssistant.Core.Config;
 
 /// <summary>
 /// Loads EAgentConfig from JSON files.

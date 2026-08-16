@@ -5,7 +5,7 @@ using System.Globalization;
 using System.Linq;
 
 
-namespace ECAssistant.Memory;
+namespace ECAssistant.Core.Memory;
 
 /// <summary>
 /// Persistent Memory Manager - gives the agent long-term memory across sessions.

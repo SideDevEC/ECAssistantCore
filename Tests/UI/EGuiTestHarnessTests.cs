@@ -1,7 +1,7 @@
-using ECAssistant.Testing;
-using ECAssistant.UI;
+using ECAssistant.Core.Testing;
+using ECAssistant.Core.UI;
 
-namespace ECAssistant.Tests.UI;
+namespace ECAssistant.Core.Tests.UI;
 
 /// <summary>
 /// Tests for EGuiTestHarness — verifies it captures output correctly.

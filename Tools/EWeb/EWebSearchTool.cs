@@ -4,10 +4,10 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using ECAssistant.Config;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Tools.Web;
+namespace ECAssistant.Core.Tools.Web;
 
 /// <summary>
 /// Web Search Tool — lets the LLM search the web using DuckDuckGo Instant Answer API.

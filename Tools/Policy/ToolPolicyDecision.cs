@@ -1,4 +1,4 @@
-namespace ECAssistant.Tools;
+namespace ECAssistant.Core.Tools;
 
 /// <summary>
 /// Result of a tool policy check.

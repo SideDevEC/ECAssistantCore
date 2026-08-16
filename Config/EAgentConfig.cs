@@ -2,9 +2,9 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Config;
+namespace ECAssistant.Core.Config;
 
 /// <summary>App settings — matches the nested structure in appsettings.json</summary>
 public class EAgentConfig

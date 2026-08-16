@@ -1,9 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using ECAssistant.Services;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Memory;
+namespace ECAssistant.Core.Memory;
 
 /// <summary>
 /// Vector Memory Store — semantic search over memory entries using embeddings.

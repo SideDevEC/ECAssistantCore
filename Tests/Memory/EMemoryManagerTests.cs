@@ -1,6 +1,6 @@
-using ECAssistant.Memory;
+using ECAssistant.Core.Memory;
 
-namespace ECAssistant.Tests.Memory;
+namespace ECAssistant.Core.Tests.Memory;
 
 public class EMemoryManagerTests : IDisposable
 {
@@ -51,7 +51,7 @@ public class EMemoryManagerTests : IDisposable
     {
         // Create a memory file manually
         Directory.CreateDirectory(_tempDir);
-        var entry = new ECAssistant.Memory.MemoryEntry
+        var entry = new ECAssistant.Core.Memory.MemoryEntry
         {
             Id = 1,
             Key = "TestKey",
@@ -74,7 +74,7 @@ public class EMemoryManagerTests : IDisposable
         Directory.CreateDirectory(_tempDir);
         File.WriteAllText(Path.Combine(_tempDir, "bad.json"), "{ invalid json }");
         File.WriteAllText(Path.Combine(_tempDir, "empty_key.json"),
-            System.Text.Json.JsonSerializer.Serialize(new ECAssistant.Memory.MemoryEntry { Key = "" }));
+            System.Text.Json.JsonSerializer.Serialize(new ECAssistant.Core.Memory.MemoryEntry { Key = "" }));
 
         var mgr = new EMemoryManager(_tempDir);
         mgr.Load();

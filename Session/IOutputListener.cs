@@ -1,4 +1,4 @@
-namespace ECAssistant.Session;
+namespace ECAssistant.Core.Session;
 
 /// <summary>
 /// Listener interface for session output.

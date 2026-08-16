@@ -1,4 +1,4 @@
-namespace ECAssistant;
+namespace ECAssistant.Core;
 
 /// <summary>
 /// Builds a system prompt for ECAssistant.Core that includes the required

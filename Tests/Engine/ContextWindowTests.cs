@@ -1,7 +1,7 @@
-using ECAssistant.Engine;
-using ECAssistant.Services;
+using ECAssistant.Core.Engine;
+using ECAssistant.Core.Services;
 
-namespace ECAssistant.Tests.Engine;
+namespace ECAssistant.Core.Tests.Engine;
 
 public class ContextWindowTests
 {

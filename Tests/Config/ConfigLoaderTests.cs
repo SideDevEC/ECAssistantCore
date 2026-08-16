@@ -1,8 +1,8 @@
-using ECAssistant.Config;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Interfaces;
 using Moq;
 
-namespace ECAssistant.Tests.Config;
+namespace ECAssistant.Core.Tests.Config;
 
 public class ConfigLoaderTests
 {

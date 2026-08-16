@@ -1,25 +1,25 @@
 using System.Diagnostics;
 using System.Text;
-using ECAssistant.Config;
-using ECAssistant.Engine;
-using ECAssistant.Orchestration;
-using ECAssistant.Tools;
-using ECAssistant.Tools.Shell;
-using ECAssistant.Tools.Research;
-using ECAssistant.Tools.Background;
-using ECAssistant.Tools.Web;
-using ECAssistant.Tools.Build;
-using ECAssistant.Tools.Git;
-using ECAssistant.Tools.Code;
-using ECAssistant.Tools.Reader;
-using ECAssistant.Analysis;
-using ECAssistant.Services;
-using ECAssistant.Interfaces;
-using ECAssistant.UI;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Engine;
+using ECAssistant.Core.Orchestration;
+using ECAssistant.Core.Tools;
+using ECAssistant.Core.Tools.Shell;
+using ECAssistant.Core.Tools.Research;
+using ECAssistant.Core.Tools.Background;
+using ECAssistant.Core.Tools.Web;
+using ECAssistant.Core.Tools.Build;
+using ECAssistant.Core.Tools.Git;
+using ECAssistant.Core.Tools.Code;
+using ECAssistant.Core.Tools.Reader;
+using ECAssistant.Core.Analysis;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.UI;
 using LLama.Common;
 using LLama.Sampling;
 
-namespace ECAssistant.Testing;
+namespace ECAssistant.Core.Testing;
 
 /// <summary>
 /// Test result for a single test scenario.
@@ -482,7 +482,7 @@ public sealed class TestRunner : IAsyncDisposable
             await engine.PrefillStaticPrefix();
 
         // Create orchestrator with tool policy (all allowed for tests)
-        var policy = new ECAssistant.Tools.ToolPolicy();
+        var policy = new ECAssistant.Core.Tools.ToolPolicy();
         var orchestrator = new AgentOrchestrator(engine, sessionOutput: null, maxTurns: 10, maxFailures: 3, toolPolicy: policy, logger: _logger);
 
         // v10.18: Initialize sub-agent support (async — rebuilds KV cache)

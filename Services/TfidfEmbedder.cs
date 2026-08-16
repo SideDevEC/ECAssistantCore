@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
 using System.Text;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Services;
+namespace ECAssistant.Core.Services;
 
 /// <summary>
 /// TF-IDF text embedding implementation.

@@ -1,9 +1,9 @@
 using System;
 using LLama;
 using LLama.Common;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Services;
+namespace ECAssistant.Core.Services;
 
 /// <summary>
 /// Concrete GGUF model loader.

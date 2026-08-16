@@ -1,10 +1,10 @@
 using System.Text;
 using System.Text.Json;
-using ECAssistant.Config;
-using ECAssistant.Interfaces;
-using ECAssistant.Services;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Services;
 
-namespace ECAssistant.Tools.Background;
+namespace ECAssistant.Core.Tools.Background;
 
 /// <summary>
 /// Background Exec Tool — lets the LLM start long-running processes

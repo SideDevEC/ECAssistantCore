@@ -1,4 +1,4 @@
-namespace ECAssistant.Session;
+namespace ECAssistant.Core.Session;
 
 /// <summary>
 /// Session run state — whether the session is idle or executing.

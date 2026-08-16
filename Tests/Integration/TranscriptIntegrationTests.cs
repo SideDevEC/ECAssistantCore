@@ -1,6 +1,6 @@
-using ECAssistant.Engine;
+using ECAssistant.Core.Engine;
 
-namespace ECAssistant.Tests.Integration;
+namespace ECAssistant.Core.Tests.Integration;
 
 /// <summary>
 /// Integration tests for ConversationTranscript persistence —

@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.Json;
-using ECAssistant.Config;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Tools.Reader;
+namespace ECAssistant.Core.Tools.Reader;
 
 /// <summary>
 /// EFileReader — read file contents with offset/limit/token-budget control.

@@ -1,4 +1,4 @@
-namespace ECAssistant.Config;
+namespace ECAssistant.Core.Config;
 
 /// <summary>Bridge class for backward compatibility. In 0.27+, use LLama.ContextParams directly.</summary>
 public class ContextParams 

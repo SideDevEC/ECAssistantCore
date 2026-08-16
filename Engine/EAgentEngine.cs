@@ -4,14 +4,14 @@ using LLama.Common;
 using LLama.Native;
 using System.Runtime.InteropServices;
 using LLama.Sampling;
-using ECAssistant.Config;
-using ECAssistant.Tools;
-using ECAssistant.Memory;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Tools;
+using ECAssistant.Core.Memory;
 using Microsoft.Extensions.Logging;
-using ECAssistant.Services;
-using ECAssistant.Session;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Session;
 
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 internal sealed class NullLogger : Microsoft.Extensions.Logging.ILogger
 {
@@ -49,7 +49,7 @@ public class EAgentEngine : IAsyncDisposable
     private VectorMemoryStore? _vectorMemory = null;
     private SelfCorrectionManager? _selfCorrection = null;
     private ProjectContextManager? _projectContext = null;
-    private readonly ECAssistant.Interfaces.ILogger? _logger;
+    private readonly ECAssistant.Core.Interfaces.ILogger? _logger;
     private TaskPlanner? _taskPlanner = null;
     private SecondaryModelLoader? _secondaryModel = null;  // v10.7: for LLM-based decomposition + summarization
 
@@ -397,7 +397,7 @@ public class EAgentEngine : IAsyncDisposable
      private string _workingDir = "";
 
 /// <summary>Original constructor — loads GGUF from disk. Use this for standalone engines.</summary>
-public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threadCount, InferenceParams inferenceParams, string workingDir = "", ECAssistant.Interfaces.ILogger? logger = null)
+public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threadCount, InferenceParams inferenceParams, string workingDir = "", ECAssistant.Core.Interfaces.ILogger? logger = null)
           : this(modelPath, contextSize, gpuLayers, threadCount, inferenceParams, workingDir, sharedWeights: null, sharedModelParams: null, logger)
     {
     }
@@ -416,7 +416,7 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
     /// <param name="inferenceParams">Inference params for THIS engine</param>
     /// <param name="workingDir">Working directory</param>
     public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threadCount, InferenceParams inferenceParams, string workingDir,
-        LLamaWeights? sharedWeights = null, ModelParams? sharedModelParams = null, ECAssistant.Interfaces.ILogger? logger = null)
+        LLamaWeights? sharedWeights = null, ModelParams? sharedModelParams = null, ECAssistant.Core.Interfaces.ILogger? logger = null)
           {
                _logger = logger ?? new Logger();
                _modelPath = modelPath;

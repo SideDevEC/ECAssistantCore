@@ -1,7 +1,7 @@
 using System.Text;
-using ECAssistant.UI;
+using ECAssistant.Core.UI;
 
-namespace ECAssistant.Testing;
+namespace ECAssistant.Core.Testing;
 
 /// <summary>
 /// Non-interactive test harness for EGuiBase.

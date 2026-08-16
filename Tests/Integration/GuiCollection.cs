@@ -1,4 +1,4 @@
-namespace ECAssistant.Tests.Integration;
+namespace ECAssistant.Core.Tests.Integration;
 
 /// <summary>
 /// xUnit test collection that serializes tests sharing the static EGuiTestHarness field.

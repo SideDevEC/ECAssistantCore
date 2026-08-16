@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Text;
-using ECAssistant.Tools;
-using ECAssistant.Session;
+using ECAssistant.Core.Tools;
+using ECAssistant.Core.Session;
 
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 /// <summary>
 /// Executes dependency-ordered tool call groups in parallel.

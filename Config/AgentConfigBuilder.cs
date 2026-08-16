@@ -1,8 +1,8 @@
 using System.IO;
 using System.Text.Json;
-using ECAssistant.Config;
+using ECAssistant.Core.Config;
 
-namespace ECAssistant;
+namespace ECAssistant.Core;
 
 /// <summary>
 /// Fluent config builder for library consumers.

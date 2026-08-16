@@ -1,6 +1,6 @@
-using ECAssistant.Session;
+using ECAssistant.Core.Session;
 
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 /// <summary>
 /// Interactive Decision Loop — lets the agent ask clarifying questions,

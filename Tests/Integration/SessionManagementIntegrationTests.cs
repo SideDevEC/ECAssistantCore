@@ -1,6 +1,6 @@
-using ECAssistant.Session;
+using ECAssistant.Core.Session;
 
-namespace ECAssistant.Tests.Integration;
+namespace ECAssistant.Core.Tests.Integration;
 
 /// <summary>
 /// Integration tests for SessionDiscovery — exercises real file system I/O

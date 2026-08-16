@@ -1,4 +1,4 @@
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 /// <summary>
 /// A group of toolcalls that can execute in parallel.

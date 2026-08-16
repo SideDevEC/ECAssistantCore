@@ -1,7 +1,7 @@
 using System.Text;
-using ECAssistant.Engine;
+using ECAssistant.Core.Engine;
 
-namespace ECAssistant.Services;
+namespace ECAssistant.Core.Services;
 
 /// <summary>
 /// Handles LLM-based summarization of old conversation context.

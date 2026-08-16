@@ -1,12 +1,12 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using ECAssistant.Engine;
-using ECAssistant.Tools;
-using ECAssistant.Services;
-using ECAssistant.Session;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Engine;
+using ECAssistant.Core.Tools;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Session;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Orchestration;
+namespace ECAssistant.Core.Orchestration;
 
 /// <summary>
 /// Orchestrator — the decision-making brain for multi-step agent workflows.
@@ -35,7 +35,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
     private ExecutionPlan? _executionPlan = null;
 
       // v10.23: Config for sub-agent manager injection
-    private readonly ECAssistant.Config.EAgentConfig? _config;
+    private readonly ECAssistant.Core.Config.EAgentConfig? _config;
 
       // ─── Hard Limits ──────────────────────
     private int _maxTurns;   // v10.6: changed from readonly to allow dynamic adjustment
@@ -45,8 +45,8 @@ public sealed class AgentOrchestrator : IAsyncDisposable
     private readonly HashSet<string> _toolWhitelist = new(StringComparer.OrdinalIgnoreCase);
 
       // ─── Tool Policy (permissions + approval) ─────
-    private readonly ECAssistant.Tools.ToolPolicy _toolPolicy;
-    private readonly ECAssistant.Interfaces.ILogger? _logger;
+    private readonly ECAssistant.Core.Tools.ToolPolicy _toolPolicy;
+    private readonly ECAssistant.Core.Interfaces.ILogger? _logger;
 
      // v10.18: Sub-agent manager (lazy-init, created when first sub-agent tool is registered)
     private SubAgentManager? _subAgentManager;
@@ -58,15 +58,15 @@ public sealed class AgentOrchestrator : IAsyncDisposable
         ISessionOutput? sessionOutput = null,
         int maxTurns = 5,
         int maxFailures = 3,
-        ECAssistant.Tools.ToolPolicy? toolPolicy = null,
-        ECAssistant.Interfaces.ILogger? logger = null,
-        ECAssistant.Config.EAgentConfig? config = null)
+        ECAssistant.Core.Tools.ToolPolicy? toolPolicy = null,
+        ECAssistant.Core.Interfaces.ILogger? logger = null,
+        ECAssistant.Core.Config.EAgentConfig? config = null)
               {
                   _engine = engine;
                   _out = sessionOutput;
                   _maxTurns = Math.Max(1, maxTurns);
                   _maxFailuresBeforeStop = maxFailures;
-                  _toolPolicy = toolPolicy ?? new ECAssistant.Tools.ToolPolicy();
+                  _toolPolicy = toolPolicy ?? new ECAssistant.Core.Tools.ToolPolicy();
                   _logger = logger ?? new Logger();
                   _config = config;
 
@@ -96,7 +96,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
       }
 
       /// <summary>Get the tool policy instance (for runtime modification).</summary>
-    public ECAssistant.Tools.ToolPolicy Policy => _toolPolicy;
+    public ECAssistant.Core.Tools.ToolPolicy Policy => _toolPolicy;
 
       /// <summary>Execute multi-step workflow autonomously.</summary>
     public async Task<OrchestratorResult> ExecuteMultiStep(string goal)

@@ -1,10 +1,10 @@
 using LLama;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Interfaces;
 using LLama.Common;
 using LLama.Sampling;
-using ECAssistant.Services;
+using ECAssistant.Core.Services;
 
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 /// <summary>
 /// Secondary Model Loader — loads a smaller GGUF model for lightweight tasks

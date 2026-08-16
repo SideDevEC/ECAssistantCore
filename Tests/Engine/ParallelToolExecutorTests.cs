@@ -1,8 +1,8 @@
-using ECAssistant.Engine;
-using ECAssistant.Tools;
+using ECAssistant.Core.Engine;
+using ECAssistant.Core.Tools;
 using Moq;
 
-namespace ECAssistant.Tests.Engine;
+namespace ECAssistant.Core.Tests.Engine;
 
 public class ParallelToolExecutorTests
 {

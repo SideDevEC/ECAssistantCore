@@ -4,11 +4,11 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using ECAssistant.Config;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Interfaces;
 using System.Text.Json;
 
-namespace ECAssistant.Tools.Web;
+namespace ECAssistant.Core.Tools.Web;
 
 /// <summary>
 /// EWebFetch — fetch a URL's content and convert HTML to plain text.

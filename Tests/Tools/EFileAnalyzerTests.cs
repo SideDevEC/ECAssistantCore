@@ -1,7 +1,7 @@
-using ECAssistant;
-using ECAssistant.Tools.Example;
+using ECAssistant.Core;
+using ECAssistant.Core.Tools.Example;
 
-namespace ECAssistant.Tests.Tools;
+namespace ECAssistant.Core.Tests.Tools;
 
 public class EFileAnalyzerTests : IDisposable
 {

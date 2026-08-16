@@ -1,4 +1,4 @@
-namespace ECAssistant.Interfaces;
+namespace ECAssistant.Core.Interfaces;
 
 /// <summary>
 /// Tool permission policy record.

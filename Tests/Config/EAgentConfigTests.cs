@@ -1,6 +1,6 @@
-using ECAssistant.Config;
+using ECAssistant.Core.Config;
 
-namespace ECAssistant.Tests.Config;
+namespace ECAssistant.Core.Tests.Config;
 
 public class EAgentConfigTests : IDisposable
 {

@@ -1,20 +1,20 @@
 using System.Text.Json;
-using ECAssistant.Config;
-using ECAssistant.Engine;
-using ECAssistant.Services;
-using ECAssistant.Session;
-using ECAssistant.Tools;
-using ECAssistant.Tools.Background;
-using ECAssistant.Tools.Build;
-using ECAssistant.Tools.Code;
-using ECAssistant.Tools.Git;
-using ECAssistant.Tools.Reader;
-using ECAssistant.Tools.Research;
-using ECAssistant.Tools.Shell;
-using ECAssistant.Tools.Web;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Engine;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Session;
+using ECAssistant.Core.Tools;
+using ECAssistant.Core.Tools.Background;
+using ECAssistant.Core.Tools.Build;
+using ECAssistant.Core.Tools.Code;
+using ECAssistant.Core.Tools.Git;
+using ECAssistant.Core.Tools.Reader;
+using ECAssistant.Core.Tools.Research;
+using ECAssistant.Core.Tools.Shell;
+using ECAssistant.Core.Tools.Web;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant;
+namespace ECAssistant.Core;
 
 /// <summary>
 /// Builder for creating and initializing AgentSessions with standard tools.

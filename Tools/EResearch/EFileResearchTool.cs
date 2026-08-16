@@ -2,10 +2,10 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using ECAssistant.Config;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Tools.Research;
+namespace ECAssistant.Core.Tools.Research;
 
 /// <summary>
 /// EFileResearchTool — scan project files, read content for LLM analysis.

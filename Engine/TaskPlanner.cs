@@ -1,7 +1,7 @@
-using ECAssistant.Services;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 /// <summary>
 /// Task Planner — breaks complex requests into sub-tasks, tracks progress, and adapts.

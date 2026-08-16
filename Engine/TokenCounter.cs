@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using LLama;
 
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 /// <summary>
 /// Token counting using the real LLamaSharp tokenizer for accurate estimates.

@@ -1,7 +1,7 @@
 using LLama;
 using LLama.Common;
 
-namespace ECAssistant.Interfaces;
+namespace ECAssistant.Core.Interfaces;
 
 /// <summary>
 /// Abstracts GGUF model loading.

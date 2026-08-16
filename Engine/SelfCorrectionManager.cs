@@ -1,8 +1,8 @@
 using System.Text.Json;
-using ECAssistant.Services;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 /// <summary>
 /// Self-Correction Manager — detects failure loops, manages file rollback snapshots,

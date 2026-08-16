@@ -1,7 +1,7 @@
 using System.IO;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Services;
+namespace ECAssistant.Core.Services;
 
 /// <summary>
 /// File Watcher — monitors the workspace directory for changes and raises events.

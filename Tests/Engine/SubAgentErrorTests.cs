@@ -1,7 +1,7 @@
-using ECAssistant.Engine;
-using ECAssistant.Orchestration;
+using ECAssistant.Core.Engine;
+using ECAssistant.Core.Orchestration;
 
-namespace ECAssistant.Tests.Engine;
+namespace ECAssistant.Core.Tests.Engine;
 
 public class SubAgentErrorTests
 {

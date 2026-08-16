@@ -1,6 +1,6 @@
-using ECAssistant.Tools;
+using ECAssistant.Core.Tools;
 
-namespace ECAssistant.Tests.Tools;
+namespace ECAssistant.Core.Tests.Tools;
 
 public class ToolPolicyTests
 {

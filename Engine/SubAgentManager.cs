@@ -1,16 +1,16 @@
 using System.Text;
-using ECAssistant.Session;
+using ECAssistant.Core.Session;
 using System.Collections.Concurrent;
 using LLama;
 using LLama.Common;
 using LLama.Sampling;
-using ECAssistant.Config;
-using ECAssistant.Tools;
-using ECAssistant.Orchestration;
-using ECAssistant.Services;
-using ECAssistant.Interfaces;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Tools;
+using ECAssistant.Core.Orchestration;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Interfaces;
 
-namespace ECAssistant.Engine;
+namespace ECAssistant.Core.Engine;
 
 /// <summary>
 /// Sub-agent task definition — what the main agent wants a sub-agent to do.
