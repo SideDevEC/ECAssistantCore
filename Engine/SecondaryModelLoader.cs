@@ -90,6 +90,7 @@ public class SecondaryModelLoader : IDisposable
 
     /// <summary>Generate text with the secondary model (non-streaming, simple).</summary>
     // v10.12.13: Default maxTokens scales with configured MaxTokens
+    // v10.24: Post-process to strip Qwen native <think> blocks and extract <lm> content.
     public async Task<string> GenerateAsync(string prompt, int? maxTokens = null)
     {
         if (!_loaded || _executor == null || _inferenceParams == null)
@@ -119,7 +120,13 @@ public class SecondaryModelLoader : IDisposable
                 // Timeout — return what we have
             }
 
-            return sb.ToString().Trim();
+            var raw = sb.ToString().Trim();
+            var cleaned = StripThinkingAndExtractLm(raw);
+            
+            if (cleaned != raw)
+                _logger.Info("SecondaryModel", $"Stripped thinking tags: {raw.Length} -> {cleaned.Length} chars");
+            
+            return cleaned;
         }
         finally
         {
@@ -127,12 +134,90 @@ public class SecondaryModelLoader : IDisposable
         }
     }
 
+    /// <summary>
+    /// Extract content from &lt;lm&gt;...&lt;/lm&gt; container and strip Qwen native think blocks.
+    /// Qwen models with always-on thinking emit &lt;think&gt; blocks before the actual answer.
+    /// 
+    /// Priority:
+    /// 1. If &lt;lm&gt;...&lt;/lm&gt; exists -> extract content, strip think blocks inside
+    /// 2. Else strip think blocks from raw -> return remaining text
+    /// 3. Else return raw (backwards compat)
+    /// </summary>
+    private string StripThinkingAndExtractLm(string raw)
+    {
+        if (string.IsNullOrEmpty(raw)) return raw;
+
+        string content;
+
+        // Priority 1: Extract <lm>...</lm> container
+        var lmStart = raw.IndexOf("<lm>", StringComparison.OrdinalIgnoreCase);
+        if (lmStart >= 0)
+        {
+            var lmEnd = raw.IndexOf("</lm>", lmStart + 4, StringComparison.OrdinalIgnoreCase);
+            if (lmEnd >= 0)
+            {
+                content = raw.Substring(lmStart + 4, lmEnd - lmStart - 4).Trim();
+                _logger?.Debug("SecondaryModel", $"Extracted <lm> container: {content.Length} chars");
+            }
+            else
+            {
+                // <lm> opened but not closed — take rest
+                content = raw.Substring(lmStart + 4).Trim();
+                _logger?.Debug("SecondaryModel", $"<lm> opened but not closed — taking rest: {content.Length} chars");
+            }
+        }
+        else
+        {
+            // No <lm> container — use raw
+            content = raw;
+        }
+
+        // Strip <think>...</think> blocks from the extracted content (Qwen native thinking)
+        var result = new System.Text.StringBuilder();
+        var searchFrom = 0;
+        var stripped = false;
+        while (searchFrom < content.Length)
+        {
+            var thinkStart = content.IndexOf("<think>", searchFrom, StringComparison.OrdinalIgnoreCase);
+            if (thinkStart < 0)
+            {
+                result.Append(content.Substring(searchFrom));
+                break;
+            }
+
+            if (thinkStart > searchFrom)
+                result.Append(content.Substring(searchFrom, thinkStart - searchFrom));
+
+            var thinkEnd = content.IndexOf("</think>", thinkStart + 7, StringComparison.OrdinalIgnoreCase);
+            if (thinkEnd < 0)
+            {
+                stripped = true;
+                _logger?.Debug("SecondaryModel", "Unclosed <think> block — skipped rest");
+                break;
+            }
+
+            stripped = true;
+            searchFrom = thinkEnd + 8; // </think> is 8 chars
+        }
+
+        var cleaned = result.ToString().Trim();
+        if (stripped && !string.IsNullOrEmpty(cleaned))
+        {
+            _logger?.Debug("SecondaryModel", $"Stripped <think> blocks: {content.Length} -> {cleaned.Length} chars");
+            return cleaned;
+        }
+
+        // No think tags found — return content as-is
+        return content;
+    }
+
     /// <summary>Summarize text using the secondary model.</summary>
     // v10.12.13: Default maxTokens = 25% of configured MaxTokens (min 100)
+    // v10.24: Uses <lm> container directive for clean extraction
     public async Task<string> SummarizeAsync(string text, int? maxTokens = null)
     {
         var effectiveMax = maxTokens ?? Math.Max(100, (int)(_inferenceParams?.MaxTokens ?? 512) / 4);
-        var prompt = $"Summarize the conversation below. STRICT RULES:\n- Output ONLY a concise summary of what was discussed\n- Keep facts, decisions, and tool results only\n- Do NOT add opinions, suggestions, or extra context\n- Do NOT add greetings, conclusions, or meta-commentary\n- Maximum 3 sentences\n- Plain text only, no formatting\n\nConversation:\n{text}\n\nSummary:";
+        var prompt = $"You are a summarization assistant. Wrap your summary in <lm></lm> tags.\nSTRICT RULES:\n- Output ONLY a concise summary inside <lm></lm> tags\n- Keep facts, decisions, and tool results only\n- Do NOT add opinions, suggestions, or extra context\n- Do NOT add greetings, conclusions, or meta-commentary\n- Maximum 3 sentences\n- Plain text only, no formatting inside the tags\n\nConversation:\n{text}\n\n<lm>";
         return await GenerateAsync(prompt, effectiveMax);
     }
 
@@ -146,7 +231,7 @@ public class SecondaryModelLoader : IDisposable
         if (!_loaded)
             return null;
 
-        var prompt = @"You decompose tasks. Output ONLY numbered steps. Nothing else.
+        var prompt = @"You decompose tasks. Wrap your answer in <lm></lm> tags. Inside the tags, output ONLY numbered steps. Nothing else.
 
 Count the distinct actions the user asked for. Output exactly that many steps. Stop. Do not add any more.
 
@@ -156,19 +241,25 @@ FORBIDDEN:
 - Steps the user did not explicitly ask for
 
 User: read Program.cs then fix line 42 then rebuild
+<lm>
 1. Read Program.cs
 2. Fix the bug at line 42
 3. Rebuild the project
+</lm>
 
 User: what day is today
+<lm>
 1. Get the current date
+</lm>
 
 User: calculate 4+2, write it to a file, then copy the file to a new location
+<lm>
 1. Calculate 4+2
 2. Write the result to a file
 3. Copy the file to a new location
+</lm>
 
-User: " + userRequest + "\n";
+User: " + userRequest + "\n<lm>\n";
 
         var effectiveMax = Math.Max(128, (int)(_inferenceParams?.MaxTokens ?? 512) / 2);
         var result = await GenerateAsync(prompt, maxTokens: effectiveMax);

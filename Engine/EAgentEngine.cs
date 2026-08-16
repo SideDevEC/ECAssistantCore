@@ -1298,7 +1298,7 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
                 if (_secondaryModel != null && _secondaryModel.IsLoaded)
                 {
                     summaryText = await _secondaryModel.GenerateAsync(
-                        $"Summarize this conversation concisely. Keep facts, decisions, and tool results only. Max 3 sentences. Plain text.\n\n{convText}\n\nSummary:",
+                        $"You are a summarization assistant. Wrap your summary in <lm></lm> tags.\nSummarize this conversation concisely. Keep facts, decisions, and tool results only. Max 3 sentences. Plain text inside the tags.\n\n{convText}\n\n<lm>",
                         maxTokens: Math.Max(100, (int)_secondaryModel.ContextSize / 8));
                     summaryText = System.Text.RegularExpressions.Regex.Replace(summaryText, @"<[^>]+>", "");
                 }

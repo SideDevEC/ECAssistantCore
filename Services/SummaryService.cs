@@ -38,7 +38,7 @@ public class SummaryService
 
         // Build the summarization prompt from the messages
         var oldContent = BuildBlockString(messages);
-        var prompt = $"Summarize the conversation below. STRICT RULES:\n- Output ONLY a concise summary of what was discussed\n- Keep facts, decisions, and tool results only\n- Do NOT add opinions, suggestions, or extra context\n- Do NOT add greetings, conclusions, or meta-commentary\n- Maximum 3 sentences\n- Plain text only, no formatting\n\nConversation:\n{oldContent}\n\nSummary:";
+        var prompt = $"You are a summarization assistant. Wrap your summary in <lm></lm> tags.\nSTRICT RULES:\n- Output ONLY a concise summary inside <lm></lm> tags\n- Keep facts, decisions, and tool results only\n- Do NOT add opinions, suggestions, or extra context\n- Do NOT add greetings, conclusions, or meta-commentary\n- Maximum 3 sentences\n- Plain text only, no formatting inside the tags\n\nConversation:\n{oldContent}\n\n<lm>";
 
         try
         {
