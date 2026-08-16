@@ -14,10 +14,7 @@ public class EShellAgent : EToolBase
 {
     private readonly IProcessRunner _processRunner;
     private readonly string _workingDirectory;
-    private readonly bool _isWindows = OperatingSystem.IsWindows();
     private readonly JsonElement? _toolConfig;
-    private readonly bool _usePwshCore;
-    private readonly bool _fallbackToPwshExe;
     private readonly int _maxOutputChars;
 
     public override string Name => "EShellAgent";
@@ -40,16 +37,12 @@ public class EShellAgent : EToolBase
         config.Tools.TryGetValue(Name, out var tc);
         _toolConfig = tc.ValueKind == JsonValueKind.Undefined ? null : tc;
         IsEnabled = ReadCfg(_toolConfig, "enabled", true);
-        _usePwshCore = ReadCfg(_toolConfig, "use_pwsh_core", true);
-        _fallbackToPwshExe = ReadCfg(_toolConfig, "fallback_to_powershell_exe", true);
         _maxOutputChars = ReadCfg(_toolConfig, "max_output_chars", 50000);
     }
 
     public override object GetConfigSection() => new
     {
         enabled = true,
-        use_pwsh_core = true,
-        fallback_to_powershell_exe = true,
         max_output_chars = 50000
     };
 
@@ -107,19 +100,11 @@ public class EShellAgent : EToolBase
         return defaultValue;
     }
 
+    // ProcessRunner now owns OS-aware shell selection (pwsh on Windows, zsh on macOS, bash on Linux).
+    // EShellAgent passes the raw command — no double-wrapping.
     private async Task<ShellProcessResult> RunShellAsync(string command, string workingDir, CancellationToken cancellationToken = default)
     {
-        string shellCommand;
-
-        if (_isWindows)
-        {
-            var shell = _usePwshCore ? "pwsh" : "powershell.exe";
-            shellCommand = $"{shell} -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"{command}\"";
-        }
-        else
-            shellCommand = $"/bin/zsh -c \"{command}\"";
-
-        var result = await _processRunner.ExecuteAsync(shellCommand, workingDir, cancellationToken);
+        var result = await _processRunner.ExecuteAsync(command, workingDir, cancellationToken);
         return new ShellProcessResult(result.StdOut, result.StdErr, result.ExitCode);
     }
 

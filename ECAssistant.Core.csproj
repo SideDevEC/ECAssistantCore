@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="SystemPrompt.md" />
+    <EmbeddedResource Include="SystemPrompt.Linux.md" />
     <EmbeddedResource Include="SystemPrompt.Windows.md" />
     <EmbeddedResource Include="SystemPrompt.Mac.md" />
     <EmbeddedResource Include="appsettings.json" />

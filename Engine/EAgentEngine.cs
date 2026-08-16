@@ -62,12 +62,12 @@ public class EAgentEngine : IAsyncDisposable
     private string? _systemPromptText;
 
     // ── Injectable system prompt path (for library consumers) ──
-    // When set, overrides the default OS-specific SystemPrompt.md lookup.
+    // When set, overrides the default OS-specific system prompt lookup.
     // Set to null to use the default file-based loading behavior.
     private string? _systemPromptPathOverride;
     /// <summary>
     /// Override the system prompt file path. Set before calling LoadContext().
-    /// When null (default), the engine loads OS-specific SystemPrompt.md from
+    /// When null (default), the engine loads OS-specific system prompt from
     /// working dir or build dir. When set, loads from this exact path.
     /// Library consumers can also set SystemPromptText directly to inject
     /// a prompt string without any file I/O.
@@ -563,7 +563,7 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
 
              // v10.16: Load OS-specific system prompt at startup
             // Windows: SystemPrompt.Windows.md, Mac: SystemPrompt.Mac.md
-            // Fallback: SystemPrompt.md (generic/legacy)
+            // Fallback: SystemPrompt.Linux.md (generic/legacy)
             // v10.23: If SystemPromptText is already set (by library consumer), skip file loading
             try
              {
@@ -591,10 +591,10 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
                 {
                     var promptResourceName = OperatingSystem.IsMacOS() ? "SystemPrompt.Mac.md"
                                       : OperatingSystem.IsWindows() ? "SystemPrompt.Windows.md"
-                                      : "SystemPrompt.md";
+                                      : "SystemPrompt.Linux.md";
 
                     // Try embedded resource first (self-contained DLL)
-                    var embedded = ResourceLoader.LoadTextWithFallback(promptResourceName, "SystemPrompt.md");
+                    var embedded = ResourceLoader.LoadTextWithFallback(promptResourceName, "SystemPrompt.Linux.md");
                     if (embedded != null)
                     {
                         _systemPromptText = embedded;
@@ -607,9 +607,9 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
                         if (!File.Exists(sysPromptPath)) sysPromptPath = Path.Combine(AppContext.BaseDirectory, promptResourceName);
                         if (!File.Exists(sysPromptPath))
                         {
-                            var legacyPath = Path.Combine(_workingDir, "SystemPrompt.md");
-                            if (!File.Exists(legacyPath)) legacyPath = Path.Combine(AppContext.BaseDirectory, "SystemPrompt.md");
-                            if (File.Exists(legacyPath)) { sysPromptPath = legacyPath; promptResourceName = "SystemPrompt.md"; }
+                            var legacyPath = Path.Combine(_workingDir, "SystemPrompt.Linux.md");
+                            if (!File.Exists(legacyPath)) legacyPath = Path.Combine(AppContext.BaseDirectory, "SystemPrompt.Linux.md");
+                            if (File.Exists(legacyPath)) { sysPromptPath = legacyPath; promptResourceName = "SystemPrompt.Linux.md"; }
                         }
                         if (File.Exists(sysPromptPath))
                         {
@@ -632,11 +632,11 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
 
          }
 
-       /// <summary>Build system+tools prompt — SystemPrompt.md + runtime tool self-registration.</summary>
+       /// <summary>Build system+tools prompt — system prompt + runtime tool self-registration.</summary>
     /// <remarks>
-    /// SystemPrompt.md is tool-agnostic (v3.2). Each registered tool provides its own
+    /// The system prompt is tool-agnostic (v3.2). Each registered tool provides its own
     /// Name, Description, Rules, and Examples via ToSystemPromptBlock(). These are
-    /// appended at runtime so adding/removing tools requires no SystemPrompt.md edits.
+    /// appended at runtime so adding/removing tools requires no system prompt edits.
     /// </remarks>
     private string BuildSystemToolsPrompt()
           {

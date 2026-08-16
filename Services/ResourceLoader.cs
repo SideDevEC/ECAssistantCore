@@ -4,7 +4,7 @@ namespace ECAssistant.Services;
 
 /// <summary>
 /// Loads embedded resources from the Core DLL.
-/// Resources (SystemPrompt.md, appsettings.json, etc.) are embedded at build time,
+/// Resources (SystemPrompt.*.md, appsettings.json, etc.) are embedded at build time,
 /// making Core.dll fully self-contained — no external files needed.
 /// </summary>
 public static class ResourceLoader

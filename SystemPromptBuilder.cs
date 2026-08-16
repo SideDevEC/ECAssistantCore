@@ -68,7 +68,7 @@ public class SystemPromptBuilder
     {
         return platform switch
         {
-            "macOS" => "Use bash/zsh commands. Shell is case-sensitive.",
+            "macOS" => "Use zsh commands. Shell is case-sensitive.",
             "Windows" => "Use PowerShell commands. Shell is case-insensitive.",
             "Linux" => "Use bash commands. Shell is case-sensitive.",
             _ => "Use shell commands appropriate for your platform."

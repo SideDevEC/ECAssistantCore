@@ -28,13 +28,14 @@ public class BackgroundProcessManager : IDisposable
         var tempDir = Path.Combine(workingDirectory, ".tmp");
         Directory.CreateDirectory(tempDir);
         var isWindows = OperatingSystem.IsWindows();
+        var isMacOS = OperatingSystem.IsMacOS();
         var ext = isWindows ? ".ps1" : ".sh";
         var tempScript = Path.Combine(tempDir, $"ecagent_bg_{id}{ext}");
         await File.WriteAllTextAsync(tempScript, command);
 
         var psi = new ProcessStartInfo
         {
-            FileName = isWindows ? "powershell.exe" : "/bin/zsh",
+            FileName = isWindows ? "powershell.exe" : isMacOS ? "/bin/zsh" : "/bin/bash",
             Arguments = isWindows
                 ? $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{tempScript}\""
                 : $"-c \"{command}\"",
