@@ -376,13 +376,10 @@ public class EAgentEngine : IAsyncDisposable
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
         try
         {
-            var planInference = new InferenceParams
-            {
-                MaxTokens = Math.Min(1024, (int)_contextSize / 4),
-                AntiPrompts = new[] { "</plan>", "User:", "Question:" },
-                OverflowStrategy = LLama.Common.ContextOverflowStrategy.TruncateAndReprefill,
-                SamplingPipeline = _inferenceParams.SamplingPipeline,
-            };
+            var planInference = InferenceParamsFactory.Create(
+                Math.Min(1024, (int)_contextSize / 4),
+                new[] { "</plan>", "User:", "Question:" });
+            planInference.SamplingPipeline = _inferenceParams.SamplingPipeline;
             await foreach (var token in executor.InferAsync(prompt, planInference, cts.Token))
                 sb.Append(token);
         }

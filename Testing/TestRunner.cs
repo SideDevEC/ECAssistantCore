@@ -381,21 +381,7 @@ public sealed class TestRunner : IAsyncDisposable
         config.Llm.GpuLayers = 15; // Match production config
 
         // Build inference params
-        var inferenceParams = new InferenceParams
-        {
-            MaxTokens = config.Inference.MaxTokens,
-            AntiPrompts = config.Inference.AntiPrompts.Length > 0
-                ? config.Inference.AntiPrompts
-                : new[] { "</s>" },
-            OverflowStrategy = LLama.Common.ContextOverflowStrategy.TruncateAndReprefill,
-            SamplingPipeline = new DefaultSamplingPipeline
-            {
-                Temperature = config.Sampling.Temperature,
-                TopP = config.Sampling.TopP,
-                TopK = config.Sampling.TopK,
-                RepeatPenalty = config.Sampling.RepeatPenalty
-            }
-        };
+        var inferenceParams = InferenceParamsFactory.Create(config);
 
         // Create the engine
         EAgentEngine engine;

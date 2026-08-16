@@ -3,6 +3,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LLama;
+using ECAssistant.Services;
 using LLama.Common;
 using LLama.Sampling;
 using Microsoft.Extensions.Logging;
@@ -33,18 +34,13 @@ public class LlamaInferenceEngine : IInferenceEngine
 
     public async Task<string> GenerateAsync(string prompt, GenerationParams parameters, CancellationToken ct = default)
     {
-        var inferenceParams = new InferenceParams
-        {
-            MaxTokens = parameters.MaxTokens,
-            AntiPrompts = new[] { "User:", "### User" },
-            SamplingPipeline = new DefaultSamplingPipeline
-            {
-                Temperature = parameters.Temperature,
-                TopP = parameters.TopP,
-                TopK = parameters.TopK,
-                RepeatPenalty = parameters.RepeatPenalty,
-            },
-        };
+        var inferenceParams = InferenceParamsFactory.Create(
+            parameters.MaxTokens,
+            new[] { "User:", "### User" },
+            parameters.Temperature,
+            parameters.TopP,
+            parameters.TopK,
+            parameters.RepeatPenalty);
 
         var executor = new StatelessExecutor(_weights, _modelParams, Microsoft.Extensions.Logging.Abstractions.NullLogger<StatelessExecutor>.Instance);
         var sb = new StringBuilder();

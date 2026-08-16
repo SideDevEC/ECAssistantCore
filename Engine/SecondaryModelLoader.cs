@@ -66,19 +66,13 @@ public class SecondaryModelLoader : IDisposable
             // v10.7.1: StatelessExecutor — fresh context per call, no KV cache
             loader._executor = new StatelessExecutor(loader._weights, parameters, new Microsoft.Extensions.Logging.Abstractions.NullLogger<StatelessExecutor>());
             loader._antiPrompts = antiPrompts ?? new[] { "User:", "Question:" };
-            loader._inferenceParams = new InferenceParams
-            {
-                MaxTokens = maxTokens,
-                AntiPrompts = loader._antiPrompts,
-                OverflowStrategy = LLama.Common.ContextOverflowStrategy.TruncateAndReprefill,
-                SamplingPipeline = new DefaultSamplingPipeline
-                {
-                    Temperature = temperature,
-                    TopP = topP,
-                    TopK = topK,
-                    RepeatPenalty = repeatPenalty,
-                }
-            };
+            loader._inferenceParams = InferenceParamsFactory.Create(
+                maxTokens,
+                loader._antiPrompts,
+                temperature,
+                topP,
+                topK,
+                repeatPenalty);
             loader._loaded = true;
             loader.ModelPath = modelPath;
             loader.ContextSize = contextSize;
@@ -103,13 +97,11 @@ public class SecondaryModelLoader : IDisposable
         // Use provided maxTokens, or fall back to configured default
         var effectiveMaxTokens = maxTokens ?? (int)_inferenceParams.MaxTokens;
 
-        var inferenceParams = new InferenceParams
-        {
-            MaxTokens = effectiveMaxTokens,
-            AntiPrompts = _antiPrompts,
-            OverflowStrategy = LLama.Common.ContextOverflowStrategy.TruncateAndReprefill,
-            SamplingPipeline = _inferenceParams.SamplingPipeline,
-        };
+        var inferenceParams = InferenceParamsFactory.Create(
+            effectiveMaxTokens,
+            _antiPrompts);
+        // Reuse the same sampling pipeline from the loaded config
+        inferenceParams.SamplingPipeline = _inferenceParams.SamplingPipeline;
 
         var sb = new System.Text.StringBuilder();
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));

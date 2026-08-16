@@ -71,21 +71,7 @@ public class SessionManager : IAsyncDisposable
             Threads = config.Llm.Threads == -1 ? null : config.Llm.Threads,
         };
 
-        _inferenceParams = new InferenceParams
-        {
-            MaxTokens = config.Inference.MaxTokens,
-            AntiPrompts = config.Inference.AntiPrompts.Length > 0
-                ? config.Inference.AntiPrompts
-                : new[] { "</s>" },
-            OverflowStrategy = LLama.Common.ContextOverflowStrategy.TruncateAndReprefill,
-            SamplingPipeline = new DefaultSamplingPipeline
-            {
-                Temperature = config.Sampling.Temperature,
-                TopP = config.Sampling.TopP,
-                TopK = config.Sampling.TopK,
-                RepeatPenalty = config.Sampling.RepeatPenalty
-            }
-        };
+        _inferenceParams = InferenceParamsFactory.Create(config);
 
         // v10.21: Redirect native llama.cpp C++ logging through callback — keeps console clean.
         // All load_tensors:, repack:, ggml_metal_, llama_context: etc go to file, not stderr/stdout.

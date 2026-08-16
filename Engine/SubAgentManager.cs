@@ -73,19 +73,7 @@ public sealed class SubAgentManager : IDisposable
         DefaultMaxToolCalls = _config.SubAgent.MaxToolCalls;
         DefaultMaxRetries = _config.SubAgent.MaxRetries;
 
-        _inferenceParams = new InferenceParams
-        {
-            MaxTokens = _config.Inference.MaxTokens,
-            AntiPrompts = _config.Inference.AntiPrompts,
-            OverflowStrategy = LLama.Common.ContextOverflowStrategy.TruncateAndReprefill,
-            SamplingPipeline = new DefaultSamplingPipeline
-            {
-                Temperature = _config.Sampling.Temperature,
-                TopP = _config.Sampling.TopP,
-                TopK = _config.Sampling.TopK,
-                RepeatPenalty = _config.Sampling.RepeatPenalty
-            }
-        };
+        _inferenceParams = InferenceParamsFactory.Create(_config);
     }
 
     // ═══════════════════════════════════════════════════════════════
