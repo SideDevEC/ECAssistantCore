@@ -101,9 +101,3 @@ public class EDecisionLoop : IDisposable
     public void Dispose() => _running = false;
 }
 
-public class DecisionResult
-{
-    public bool Success { get; set; }
-    public string? OptionChosen { get; set; }
-    public string Outcome { get; set; } = "";
-}

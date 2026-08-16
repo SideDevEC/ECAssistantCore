@@ -177,21 +177,3 @@ public class TaskPlanner
         return result;
     }
 }
-
-// ─── Data Structures ──────────────────────────────────────────────
-
-public class SubTask
-{
-    public string Description { get; set; } = "";
-    public SubTaskStatus Status { get; set; }
-    public DateTime? CompletedAt { get; set; }
-    public string? FailureReason { get; set; }
-}
-
-public enum SubTaskStatus
-{
-    Pending,
-    InProgress,
-    Completed,
-    Failed
-}

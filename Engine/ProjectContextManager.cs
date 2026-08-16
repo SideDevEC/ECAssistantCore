@@ -261,33 +261,3 @@ public class ProjectContextManager : IDisposable
 
     public void Dispose() { }
 }
-
-// ─── Data Structures ──────────────────────────────────────────────
-
-public class ProjectContext
-{
-    public List<FileContext> Files { get; set; } = new();
-    public List<FileRelationship> Relationships { get; set; } = new();
-    public string ProjectType { get; set; } = "Unknown";
-    public string? EntryPoint { get; set; }
-    public DateTime? LastScan { get; set; }
-}
-
-public class FileContext
-{
-    public string Path { get; set; } = "";
-    public string Extension { get; set; } = "";
-    public int Size { get; set; }
-    public int Lines { get; set; }
-    public int Classes { get; set; }
-    public int Methods { get; set; }
-    public List<string> Imports { get; set; } = new();
-    public DateTime LastModified { get; set; }
-}
-
-public class FileRelationship
-{
-    public string Source { get; set; } = "";
-    public string Target { get; set; } = "";
-    public string Type { get; set; } = "";
-}

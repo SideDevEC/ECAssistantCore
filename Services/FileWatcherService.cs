@@ -138,20 +138,3 @@ public class FileWatcherService : IDisposable
         _watcher?.Dispose();
     }
 }
-
-/// <summary>Type of file change.</summary>
-public enum FileChangeType
-{
-    Created,
-    Modified,
-    Deleted,
-    Renamed
-}
-
-/// <summary>A single file change event.</summary>
-public class FileChange
-{
-    public string Path { get; set; } = "";
-    public FileChangeType Type { get; set; }
-    public DateTime Timestamp { get; set; }
-}

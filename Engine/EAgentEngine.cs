@@ -3,6 +3,7 @@ using LLama;
 using LLama.Common;
 using LLama.Native;
 using System.Runtime.InteropServices;
+using ECAssistant.Core.Interfaces;
 using LLama.Sampling;
 using ECAssistant.Core.Config;
 using ECAssistant.Core.Tools;
@@ -13,22 +14,7 @@ using ECAssistant.Core.Session;
 
 namespace ECAssistant.Core.Engine;
 
-internal sealed class NullLogger : Microsoft.Extensions.Logging.ILogger
-{
-    public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null!;
-    public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => false;
-    public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, EventId eventId, TState state, Exception? ex, Func<TState, Exception?, string> formatter) { }
-}
-
-public sealed class ToolCallResult
-{
-    public string ToolName { get; set; } = "";
-    public Dictionary<string, string?> Args { get; set; } = new();
-    public bool IsToolCall { get; set; }
-}
-
-
-public class EAgentEngine : IAsyncDisposable
+public class EAgentEngine : IEngine, IAsyncDisposable
 {
     private LLamaWeights? _weights;
     private LLamaContext? _context;
@@ -1624,6 +1610,30 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
                 _transcript.SaveToDisk(p);
           _out?.WriteInfo($"[Context] Transcript saved ({_transcript.MessageCount} messages, {_contextWindow.GetTotalTokens()} tokens).");
                }
+
+    // ── IEngine implementation (lifecycle adapter) ──────────
+
+    /// <summary>IEngine: Start execution with a user message.</summary>
+    public Task StartAsync(string userMessage)
+    {
+        StartExecution();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>IEngine: Run the inference loop until completion or cancellation.</summary>
+    public async Task RunAsync(CancellationToken ct = default)
+    {
+        await PrefillStaticPrefix();
+        // The main generate loop is driven by AgentOrchestrator, not here.
+        // This method is for standalone engine execution without an orchestrator.
+        ct.ThrowIfCancellationRequested();
+    }
+
+    /// <summary>IEngine: Synchronous dispose wrapper.</summary>
+    public void Dispose()
+    {
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
+    }
 
    public async ValueTask DisposeAsync()
         {

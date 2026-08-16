@@ -374,24 +374,3 @@ public class ParallelToolExecutor
         return $"[{ok}/{batch.Results.Count} OK] {string.Join(" | ", parts)} ({batch.Groups.Count} groups)";
     }
 }
-
-/// <summary>Result of a single tool execution within a batch.</summary>
-public class SingleToolResult
-{
-    public ToolCallRequest ToolCall { get; set; } = null!;  // Must be set by caller
-    public bool Succeeded { get; set; }
-    public string Output { get; set; } = "";
-    public string Error { get; set; } = "";
-    public long ElapsedMs { get; set; }
-}
-
-/// <summary>Combined result of an entire batch execution.</summary>
-public class BatchToolResult
-{
-    public List<SingleToolResult> Results { get; set; } = new();
-    public List<DependencyGroup> Groups { get; set; } = new();
-
-    public bool AllSucceeded => Results.All(r => r.Succeeded);
-    public bool AnySucceeded => Results.Any(r => r.Succeeded);
-    public int SuccessCount => Results.Count(r => r.Succeeded);
-}

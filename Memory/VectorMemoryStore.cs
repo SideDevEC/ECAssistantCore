@@ -235,26 +235,3 @@ public class VectorMemoryStore : IDisposable
     public void Dispose() { }
 }
 
-// ─── Data Structures ──────────────────────────────
-
-public class VectorEntry
-{
-    public int Id { get; set; }
-    public string Key { get; set; } = "";
-    public string Content { get; set; } = "";
-    public string Category { get; set; } = "general";
-    public Dictionary<string, string> Tags { get; set; } = new();
-    public float[]? Vector { get; set; }
-    public string Timestamp { get; set; } = "";
-}
-
-public class VectorSearchResult
-{
-    public string Key { get; set; } = "";
-    public string Content { get; set; } = "";
-    public string Category { get; set; } = "";
-    public float Score { get; set; }
-    public string Timestamp { get; set; } = "";
-
-    public override string ToString() => $"[{Category}] {Key} (score: {Score:F3})";
-}
