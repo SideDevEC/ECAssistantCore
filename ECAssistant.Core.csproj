@@ -31,10 +31,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="SystemPrompt.md" Pack="true" PackagePath="content/" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SystemPrompt.Windows.md" Pack="true" PackagePath="content/" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SystemPrompt.Mac.md" Pack="true" PackagePath="content/" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="appsettings.json" Pack="true" PackagePath="content/" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Embed system prompts and default config into the DLL as resources -->
+    <!-- This makes Core.dll fully self-contained — no external files needed -->
+    <EmbeddedResource Include="SystemPrompt.md" />
+    <EmbeddedResource Include="SystemPrompt.Windows.md" />
+    <EmbeddedResource Include="SystemPrompt.Mac.md" />
+    <EmbeddedResource Include="appsettings.json" />
   </ItemGroup>
 
 </Project>

@@ -2,12 +2,13 @@ using System;
 using System.IO;
 using System.Text.Json;
 using ECAssistant.Interfaces;
+using ECAssistant.Services;
 
 namespace ECAssistant.Config;
 
 /// <summary>
 /// Loads EAgentConfig from JSON files.
-/// Replaces the static EAgentConfig.Load() factory method.
+/// Falls back to embedded default appsettings.json from Core.dll if file not found.
 /// </summary>
 public class ConfigLoader
 {
@@ -20,6 +21,7 @@ public class ConfigLoader
 
     public EAgentConfig Load(string filePath = "appsettings.json")
     {
+        // Try user-provided file first
         try
         {
             if (_fileSystem.FileExists(filePath))
@@ -31,8 +33,24 @@ public class ConfigLoader
         }
         catch (Exception)
         {
-            // Silently fall back to defaults — callers handle null/missing config
+            // File read/parse failed — continue to embedded fallback
         }
+
+        // Fallback: embedded default config from Core.dll
+        try
+        {
+            var embeddedJson = ResourceLoader.LoadText("appsettings.json");
+            if (embeddedJson != null)
+            {
+                var config = JsonSerializer.Deserialize<EAgentConfig>(embeddedJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (config != null) return config;
+            }
+        }
+        catch (Exception)
+        {
+            // Embedded parse failed — continue to defaults
+        }
+
         return new EAgentConfig();
     }
 }

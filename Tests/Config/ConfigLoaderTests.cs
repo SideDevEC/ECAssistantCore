@@ -56,19 +56,21 @@ public class ConfigLoaderTests
     }
 
     [Fact]
-    public void Load_MissingFile_ReturnsDefaultConfig()
+    public void Load_MissingFile_FallsBackToEmbeddedDefault()
     {
         _mockFileSystem.Setup(fs => fs.FileExists(It.IsAny<string>())).Returns(false);
 
         var loader = new ConfigLoader(_mockFileSystem.Object);
         var config = loader.Load("nonexistent.json");
 
+        // Should fall back to embedded appsettings.json from Core.dll
         Assert.NotNull(config);
-        Assert.Equal(".", config.RootPath);
+        // Embedded config has RootPath = "ECAssistant"
+        Assert.Equal("ECAssistant", config.RootPath);
     }
 
     [Fact]
-    public void Load_InvalidJson_ReturnsDefaultConfig()
+    public void Load_InvalidJson_FallsBackToEmbeddedDefault()
     {
         _mockFileSystem.Setup(fs => fs.FileExists(It.IsAny<string>())).Returns(true);
         _mockFileSystem.Setup(fs => fs.ReadFile(It.IsAny<string>())).Returns("not valid json {{{");
@@ -77,11 +79,12 @@ public class ConfigLoaderTests
         var config = loader.Load("appsettings.json");
 
         Assert.NotNull(config);
-        Assert.Equal(".", config.RootPath);
+        // File deserialization failed, falls back to embedded config
+        Assert.Equal("ECAssistant", config.RootPath);
     }
 
     [Fact]
-    public void Load_EmptyJson_ReturnsDefaultConfig()
+    public void Load_EmptyJson_FallsBackToEmbeddedDefault()
     {
         _mockFileSystem.Setup(fs => fs.FileExists(It.IsAny<string>())).Returns(true);
         _mockFileSystem.Setup(fs => fs.ReadFile(It.IsAny<string>())).Returns("");
@@ -90,7 +93,8 @@ public class ConfigLoaderTests
         var config = loader.Load("appsettings.json");
 
         Assert.NotNull(config);
-        Assert.Equal(".", config.RootPath);
+        // Empty string deserializes to null, falls back to embedded config
+        Assert.Equal("ECAssistant", config.RootPath);
     }
 
     [Fact]
@@ -106,7 +110,7 @@ public class ConfigLoaderTests
     }
 
     [Fact]
-    public void Load_FileExistsButDeserializesToNull_ReturnsDefaultConfig()
+    public void Load_FileExistsButDeserializesToNull_FallsBackToEmbeddedDefault()
     {
         _mockFileSystem.Setup(fs => fs.FileExists(It.IsAny<string>())).Returns(true);
         _mockFileSystem.Setup(fs => fs.ReadFile(It.IsAny<string>())).Returns("null");
@@ -115,7 +119,8 @@ public class ConfigLoaderTests
         var config = loader.Load("appsettings.json");
 
         Assert.NotNull(config);
-        Assert.Equal(".", config.RootPath);
+        // File deserialized to null, falls back to embedded config
+        Assert.Equal("ECAssistant", config.RootPath);
     }
 
     [Fact]
@@ -141,7 +146,7 @@ public class ConfigLoaderTests
     }
 
     [Fact]
-    public void Load_ReadFileThrows_ReturnsDefaultConfig()
+    public void Load_ReadFileThrows_FallsBackToEmbeddedDefault()
     {
         _mockFileSystem.Setup(fs => fs.FileExists(It.IsAny<string>())).Returns(true);
         _mockFileSystem.Setup(fs => fs.ReadFile(It.IsAny<string>())).Throws(new IOException("disk error"));
@@ -150,6 +155,7 @@ public class ConfigLoaderTests
         var config = loader.Load("appsettings.json");
 
         Assert.NotNull(config);
-        Assert.Equal(".", config.RootPath);
+        // Read threw, falls back to embedded config
+        Assert.Equal("ECAssistant", config.RootPath);
     }
 }

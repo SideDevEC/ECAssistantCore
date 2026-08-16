@@ -586,32 +586,43 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
                         _systemPromptText = "";
                     }
                 }
-                // Default: OS-specific file-based loading
+                // Default: load OS-specific prompt from embedded resources
                 else
                 {
-                var promptFileName = OperatingSystem.IsMacOS() ? "SystemPrompt.Mac.md"
-                                   : OperatingSystem.IsWindows() ? "SystemPrompt.Windows.md"
-                                   : "SystemPrompt.md";
-                var sysPromptPath = Path.Combine(_workingDir, promptFileName);
-                if (!File.Exists(sysPromptPath)) sysPromptPath = Path.Combine(AppContext.BaseDirectory, promptFileName); // fallback to build dir
-                // v10.16: Final fallback to legacy SystemPrompt.md if OS-specific not found
-                if (!File.Exists(sysPromptPath))
-                {
-                    var legacyPath = Path.Combine(_workingDir, "SystemPrompt.md");
-                    if (!File.Exists(legacyPath)) legacyPath = Path.Combine(AppContext.BaseDirectory, "SystemPrompt.md");
-                    if (File.Exists(legacyPath)) { sysPromptPath = legacyPath; promptFileName = "SystemPrompt.md"; }
-                }
-                 if (File.Exists(sysPromptPath))
-                      {
-                         _systemPromptText = File.ReadAllText(sysPromptPath);
-                          _out?.WriteInfo($"[Config] System prompt loaded from: {promptFileName} ({_systemPromptText.Length} chars)");
-                      }
+                    var promptResourceName = OperatingSystem.IsMacOS() ? "SystemPrompt.Mac.md"
+                                      : OperatingSystem.IsWindows() ? "SystemPrompt.Windows.md"
+                                      : "SystemPrompt.md";
+
+                    // Try embedded resource first (self-contained DLL)
+                    var embedded = ResourceLoader.LoadTextWithFallback(promptResourceName, "SystemPrompt.md");
+                    if (embedded != null)
+                    {
+                        _systemPromptText = embedded;
+                        _out?.WriteInfo($"[Config] System prompt loaded from embedded resource: {promptResourceName} ({_systemPromptText.Length} chars)");
+                    }
+                    // Fallback: file-based loading (for users who customize the prompt)
                     else
-                         {
-                           _logger?.Warn("Engine", "No system prompt file found — using empty system prompt.");
-                              _systemPromptText = "";
-                            }
-                          }
+                    {
+                        var sysPromptPath = Path.Combine(_workingDir, promptResourceName);
+                        if (!File.Exists(sysPromptPath)) sysPromptPath = Path.Combine(AppContext.BaseDirectory, promptResourceName);
+                        if (!File.Exists(sysPromptPath))
+                        {
+                            var legacyPath = Path.Combine(_workingDir, "SystemPrompt.md");
+                            if (!File.Exists(legacyPath)) legacyPath = Path.Combine(AppContext.BaseDirectory, "SystemPrompt.md");
+                            if (File.Exists(legacyPath)) { sysPromptPath = legacyPath; promptResourceName = "SystemPrompt.md"; }
+                        }
+                        if (File.Exists(sysPromptPath))
+                        {
+                            _systemPromptText = File.ReadAllText(sysPromptPath);
+                            _out?.WriteInfo($"[Config] System prompt loaded from: {promptResourceName} ({_systemPromptText.Length} chars)");
+                        }
+                        else
+                        {
+                            _logger?.Warn("Engine", "No system prompt found (embedded or file) — using empty system prompt.");
+                            _systemPromptText = "";
+                        }
+                    }
+                }
                 }
              catch (Exception ex)
                   {

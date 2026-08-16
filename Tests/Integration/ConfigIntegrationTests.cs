@@ -149,14 +149,15 @@ public class ConfigIntegrationTests : IDisposable
     }
 
     [Fact]
-    public void ConfigLoader_MissingFile_ReturnsDefaultConfig()
+    public void ConfigLoader_MissingFile_FallsBackToEmbeddedDefault()
     {
         var fs = new FileSystemAdapter();
         var loader = new ConfigLoader(fs);
         var config = loader.Load(GetFullPath("nonexistent.json"));
 
         Assert.NotNull(config);
-        Assert.Equal(".", config.RootPath);
+        // Falls back to embedded appsettings.json from Core.dll
+        Assert.Equal("ECAssistant", config.RootPath);
         // Verify default sections are initialized
         Assert.NotNull(config.Memory);
         Assert.NotNull(config.Llm);
@@ -175,7 +176,8 @@ public class ConfigIntegrationTests : IDisposable
         var config = loader.Load(GetFullPath("appsettings.json"));
 
         Assert.NotNull(config);
-        Assert.Equal(".", config.RootPath);
+        // Invalid JSON falls back to embedded config
+        Assert.Equal("ECAssistant", config.RootPath);
     }
 
     [Fact]
@@ -329,7 +331,7 @@ public class ConfigIntegrationTests : IDisposable
     }
 
     [Fact]
-    public void ConfigLoader_EmptyJson_ReturnsDefaults()
+    public void ConfigLoader_EmptyJson_FallsBackToEmbeddedDefault()
     {
         WriteAppSettings("");
 
@@ -338,7 +340,8 @@ public class ConfigIntegrationTests : IDisposable
         var config = loader.Load(GetFullPath("appsettings.json"));
 
         Assert.NotNull(config);
-        Assert.Equal(".", config.RootPath);
+        // Empty JSON deserializes to null, falls back to embedded config
+        Assert.Equal("ECAssistant", config.RootPath);
     }
 
     [Fact]
