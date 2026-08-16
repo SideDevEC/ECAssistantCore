@@ -288,12 +288,10 @@ public class AgentSession : ISessionOutput, IAsyncDisposable
     {
         lock (_bufferLock)
         {
-            // If streaming, stop and flush buffer first
+            // Always flush any remaining stream content, even if StopStream was already called
             if (_streaming)
-            {
                 StopStream();
-                FlushStreamBuffer();
-            }
+            FlushStreamBuffer();
 
             _currentState = state;
 
@@ -831,10 +829,8 @@ public class AgentSession : ISessionOutput, IAsyncDisposable
         lock (_bufferLock)
         {
             if (_streaming)
-            {
                 StopStream();
-                FlushStreamBuffer();
-            }
+            FlushStreamBuffer();
         }
 
         lock (_fileLock) { try { _outputFile.Dispose(); } catch { } }
