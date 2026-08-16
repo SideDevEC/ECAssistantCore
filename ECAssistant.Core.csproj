@@ -13,8 +13,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="e-assistant" />
-    <InternalsVisibleTo Include="ECAssistant.Tests" />
+    <!-- InternalsVisibleTo for test assemblies. Add consumer assemblies as needed. -->
+    <InternalsVisibleTo Include="ECAssistant.Core.Tests" />
   </ItemGroup>
 
   <ItemGroup>

@@ -99,7 +99,7 @@ public class TestContext
 public sealed class TestRunner : IAsyncDisposable
 {
     private readonly string _modelPath;
-    internal readonly string _testRootDir;
+    public readonly string TestRootDir;
     private EAgentEngine? _engine;
     private AgentOrchestrator? _orchestrator;
     private EGuiTestHarness? _testGui;
@@ -129,10 +129,10 @@ public sealed class TestRunner : IAsyncDisposable
         _modelPath = modelPath;
         _logger = logger ?? new Logger();
         // v10.19.2: All test artifacts stay inside the working directory (~/ECAssistant/tests/)
-        _testRootDir = testRootDir ?? Path.Combine(
+        TestRootDir = testRootDir ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             "ECAssistant", "tests");
-        Directory.CreateDirectory(_testRootDir);
+        Directory.CreateDirectory(TestRootDir);
     }
 
     /// <summary>Run a single test scenario and return the result.</summary>
@@ -145,7 +145,7 @@ public sealed class TestRunner : IAsyncDisposable
         };
 
         // Create a sandboxed working directory for this test
-        var sandboxDir = Path.Combine(_testRootDir, scenario.Name.Replace(" ", "_"));
+        var sandboxDir = Path.Combine(TestRootDir, scenario.Name.Replace(" ", "_"));
         if (Directory.Exists(sandboxDir))
             Directory.Delete(sandboxDir, true);
         Directory.CreateDirectory(sandboxDir);
@@ -320,7 +320,7 @@ public sealed class TestRunner : IAsyncDisposable
         // v10.17.2: Verbose mode — dump full captured log for debugging
         if (Verbose && _testGui != null)
         {
-            var dumpPath = Path.Combine(_testRootDir, $"{scenario.Name.Replace(" ", "_")}_full_log.txt");
+            var dumpPath = Path.Combine(TestRootDir, $"{scenario.Name.Replace(" ", "_")}_full_log.txt");
             _testGui.DumpToFile(dumpPath);
             Console.WriteLine($"     📝 Full log: {dumpPath}");
         }
@@ -336,7 +336,7 @@ public sealed class TestRunner : IAsyncDisposable
         Console.WriteLine("═══════════════════════════════════════════");
         Console.WriteLine("  ECAssistant Automated Test Suite");
         Console.WriteLine($"  Model: {Path.GetFileName(_modelPath)}");
-        Console.WriteLine($"  Test Root: {_testRootDir}");
+        Console.WriteLine($"  Test Root: {TestRootDir}");
         Console.WriteLine("═══════════════════════════════════════════");
         Console.WriteLine();
 
