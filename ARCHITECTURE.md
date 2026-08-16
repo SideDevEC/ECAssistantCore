@@ -1,8 +1,9 @@
 # ECAssistant Core — Architecture
 
-**Updated:** 2026-08-16 (v10.25)
+**Updated:** 2026-08-16 (v11.1)
 **Build:** 0 errors, 0 warnings
 **Tests:** 857/857 passing (Core only)
+**Namespace:** `ECAssistant.Core.*`
 
 ## Project Structure
 
@@ -10,6 +11,7 @@
 ECAssistantCore.sln
 ├── ECAssistant.Core.csproj       ← Class library (DLL)
 │     OutputType=Library, AssemblyName=ECAssistant.Core
+│     RootNamespace=ECAssistant.Core
 │     NuGet: LLamaSharp 0.27.0, LLamaSharp.Backend.Cpu/Vulkan/Cuda12
 │     Embedded resources: SystemPrompt.md, SystemPrompt.Windows.md,
 │       SystemPrompt.Mac.md, appsettings.json
@@ -23,7 +25,7 @@ ECAssistantCore.sln
 ## What Core Contains
 
 - **Engine/** — LLM inference, context window, KV cache, orchestrator, sub-agents
-- **Session/** — AgentSession, SessionBuilder, SessionManager (headless, no UI)
+- **Session/** — AgentSession, SessionBuilder, SessionManager, ISessionContext (headless, no UI)
 - **Tools/** — 10 built-in tools, all extend EToolBase
 - **Services/** — Logger, LlamaInferenceEngine, InferenceParamsFactory, ResourceLoader
 - **Config/** — AgentConfigBuilder, ConfigLoader, EAgentConfig
@@ -35,10 +37,10 @@ ECAssistantCore.sln
 
 ## What Core Does NOT Contain
 
-- No `Program.cs` (entry point lives in App)
-- No `EGuiConsole` (concrete TUI lives in App)
-- No `ConsoleUiRenderer`, `HelpLayer`, `SessionLayer`, `LoadingIndicator` (App UI)
-- No `IGuiLayer` (App — references EGuiConsole in signatures)
+- No `Program.cs` (entry point lives in ECAssistantConsole)
+- No `EGuiConsole` (concrete TUI lives in ECAssistantTUI)
+- No `ConsoleUiRenderer`, `HelpLayer`, `SessionLayer`, `LoadingIndicator` (TUI project)
+- No `IGuiConsole` (TUI project — interface for hosting TUI externally)
 
 ## Dependency Flow
 
@@ -48,10 +50,11 @@ Any .NET 8 project
   └── references ECAssistant.Core.dll
         ├── AgentConfigBuilder → Build() → EAgentConfig
         ├── SessionManager(config, modelPath, workingDir, logger)
-        ├── SessionBuilder → BuildAsync(session)
+        ├── SessionBuilder → ExternalTools → BuildAsync(session, externalTools)
         ├── AgentSession → Prompt(input)
         ├── IOutputListener → receive live output
-        ├── EToolBase → subclass for custom tools
+        ├── EToolBase → subclass for custom tools (has ISessionContext access)
+        ├── ISessionContext → session info, memory, secondary LLM for tools
         └── EGuiBase → implement for custom UI
 ```
 
@@ -60,47 +63,73 @@ Any .NET 8 project
 ### Integration Points
 - **`AgentConfigBuilder`** — fluent config, JSON-first, generates `appsettings.json`
 - **`SystemPromptBuilder`** — required `<lm>` tag rules + OS detection + domain context
-- **`SessionBuilder`** — initializes sessions with standard tools
+- **`SessionBuilder`** — initializes sessions with standard + external tools
 - **`EGuiBase`** (abstract) — implement for custom UI (Avalonia, web, etc.)
 - **`IOutputListener`** — implement to receive live output events
 - **`EToolBase`** (abstract) — subclass for custom domain-specific tools
+- **`ISessionContext`** — session info, memory, secondary LLM (no main engine access)
 - **`AgentSession`** — central hub: create, register tools, attach listeners, `Prompt()`
 - **`EAgentEngine.SystemPromptPath` / `SystemPromptText`** — inject custom system prompt
 
-### Self-Contained Resources (v10.25)
-- System prompts and default config embedded as `EmbeddedResource` in DLL
-- `ResourceLoader` class reads embedded resources at runtime
-- `EAgentEngine` loads from embedded first, falls back to file for custom overrides
-- `ConfigLoader` falls back to embedded `appsettings.json` when user file missing
-- No external files required — just reference the DLL
+### External Tool Registration (v11.1)
 
-### InferenceParamsFactory (v10.25)
-- Centralizes all LLamaSharp `InferenceParams` construction
-- `Create(EAgentConfig)` — from config
-- `Create(maxTokens, antiPrompts, temperature, ...)` — explicit values
-- Consumers never touch LLamaSharp types directly
+```
+Host creates tool instances with dependencies
+  ↓
+SessionBuilder.ExternalTools = new() { tool1, tool2, ... }
+  — OR —
+await builder.BuildAsync(session, externalTools);
+  ↓
+RegisterBuiltInToolsAsync(session, externalTools)
+  ├── External tools first:
+  │     ├── EnsureToolConfigSection(tool) — write GetConfigSection() if missing
+  │     └── If tool.IsEnabled → session.RegisterTool(tool)
+  │           ├── tool.Session = session (ISessionContext)
+  │           ├── Config section check (already exists)
+  │           └── engine.RegisterTool(tool)
+  └── Native tools (same flow)
+```
+
+### ISessionContext (v11.1)
+
+Tools receive read-only session access via `EToolBase.Session`:
+```csharp
+public interface ISessionContext
+{
+    string Key { get; }
+    string? Label { get; }
+    ToolPolicy Policy { get; }
+    int ContextTokens { get; }
+    uint MaxTokens { get; }
+    SecondaryModelLoader? SecondaryModel { get; }  // tools can ask LLM questions
+    EMemoryManager Memory { get; }
+    VectorMemoryStore? VectorMemory { get; }
+}
+```
+- Set in `AgentSession.RegisterTool()` before engine registration
+- No access to main engine's `GenerateAsync` or `Prompt` — prevents orchestration interference
+- `SecondaryModelLoader.GenerateAsync` is thread-safe via `SemaphoreSlim`
 
 ### Config Flow (JSON is source of truth)
 
 ```
 AgentConfigBuilder.Build()
-  ├── 1. Resolve working dir: given path + "eca-data"
+  ├── 1. Resolve working dir
   ├── 2. appsettings.json exists?
   │     ├── YES → load it (code values IGNORED)
   │     └── NO  → generate from code values + defaults
   └── Result: EAgentConfig
 ```
 
-### Tool Registration Flow
+### Tool Registration & Config Persistence
 
 ```
-session.RegisterTool(new SqlQueryTool(db, config))
-  ├── tool.Name = "SqlQuery"
-  ├── config.Tools.ContainsKey("SqlQuery")?
-  │     ├── YES → tool reads existing config from JSON
-  │     └── NO  → tool.GetConfigSection() → add to config → persist
-  ├── tool.IsEnabled checked → skip if false
-  └── tool registered on engine
+session.RegisterTool(tool)
+  ├── tool.Session = this (ISessionContext set)
+  ├── config.Tools.ContainsKey(tool.Name)?
+  │     ├── YES → tool already has config
+  │     └── NO  → tool.GetConfigSection() → add to config → AgentConfigBuilder.Update() → persist to appsettings.json
+  └── engine.RegisterTool(tool)
 ```
 
 ### Usage Example (from any .NET 8 app)
@@ -114,15 +143,10 @@ var config = AgentConfigBuilder.Create()
 var sessionManager = new SessionManager(config, config.Llm.ModelPath, workingDir, logger);
 var session = sessionManager.Main;
 
-session.Engine.SystemPromptText = SystemPromptBuilder.Create()
-    .WithAgentName("My Assistant")
-    .WithDescription("You help with X.")
-    .Build();
-
 var builder = new SessionBuilder(config, workingDir, workingDir, logger);
+builder.ExternalTools.Add(new MyCustomTool(myDependency));
 await builder.BuildAsync(session);
 
-session.RegisterTool(new MyCustomTool());
 session.AddListener(new MyUiListener());
 session.Prompt("Do something");
 ```
@@ -138,17 +162,9 @@ public abstract class EToolBase
     public abstract string UsageExample { get; }
     public virtual bool IsEnabled { get; protected set; } = true;
     public virtual object GetConfigSection() => new { enabled = true };
+    public ISessionContext? Session { get; internal set; }  // v11.1
     public abstract Task<EToolResult> ExecuteAsync(
         Dictionary<string, string?> arguments, CancellationToken ct = default);
-}
-```
-
-### EToolResult
-```csharp
-public record EToolResult(bool Succeeded, string ToolName, string Output, string Error)
-{
-    public static EToolResult Success(string name, string output);
-    public static EToolResult Failure(string name, string error);
 }
 ```
 
@@ -166,34 +182,6 @@ public record EToolResult(bool Succeeded, string ToolName, string Output, string
 | EWebFetchTool | EWebFetch | enabled |
 | ESubAgentTool | ESubAgent | enabled |
 
-## Layers
-
-### Session Layer (`Session/`)
-- `AgentSession` — central hub, implements `ISessionOutput`
-- `SessionBuilder` — public API for session initialization
-- `SessionManager` — multi-session lifecycle, shared weights
-
-### Engine Layer (`Engine/`)
-- `EAgentEngine` — LLM inference, context window, KV cache
-- `AgentOrchestrator` — multi-step execution, tool dispatch, `<toolcall>` parsing
-- `SubAgentManager` — child agents, config injected
-- `ParallelToolsExecutor` — dependency-ordered parallel tool execution
-- `SecondaryModelLoader` — secondary LLM
-
-### Config Layer (`Config/`)
-- `EAgentConfig` — `Tools` is `Dictionary<string, JsonElement>` (dynamic)
-- `AgentConfigBuilder` — fluent, JSON-first, `Update()` for persistence
-- `ConfigLoader` — JSON deserialization, embedded fallback
-
-### Services Layer (`Services/`)
-- `Logger`, `LlamaInferenceEngine`, `InMemoryVectorStore`
-- `InferenceParamsFactory` — centralizes LLamaSharp InferenceParams construction
-- `ResourceLoader` — reads embedded resources from DLL
-
-### Tools Layer (`Tools/`)
-- 10 built-in tools, all extend `EToolBase`
-- Subclass `EToolBase` to add custom tools
-
 ## Key Constraints
 - Engine, tools, memory, services: ZERO references to UI/color/Console
 - No hardcoded `~/ECAssistant/` paths in Core
@@ -202,3 +190,4 @@ public record EToolResult(bool Succeeded, string ToolName, string Output, string
 - `AgentConfigBuilder`: JSON is source of truth
 - System prompts and appsettings.json embedded in DLL (v10.25)
 - LLamaSharp types never leak through public API to consumers
+- `ISessionContext` exposes no main engine inference — tools can't call `Prompt()` or `GenerateAsync`
