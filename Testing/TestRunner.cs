@@ -363,28 +363,8 @@ public sealed class TestRunner : IAsyncDisposable
         // Task planner
         engine.InitializeTaskPlanner();
 
-        // Secondary model (optional)
-        if (config.SecondaryModel.Enabled && !string.IsNullOrEmpty(config.SecondaryModel.ModelPath))
-        {
-            var secPath = config.SecondaryModel.ModelPath;
-            if (!Path.IsPathRooted(secPath))
-            {
-                var secInWork = Path.Combine(userConfigDir, secPath);
-                var secInBuild = Path.Combine(AppContext.BaseDirectory, secPath);
-                secPath = File.Exists(secInWork) ? secInWork : (File.Exists(secInBuild) ? secInBuild : secInWork);
-            }
-            var secondary = SecondaryModelLoader.Load(secPath,
-                contextSize: config.SecondaryModel.ContextSize,
-                gpuLayers: config.SecondaryModel.GpuLayers,
-                temperature: config.SecondaryModel.Temperature,
-                topP: config.SecondaryModel.TopP,
-                topK: config.SecondaryModel.TopK,
-                repeatPenalty: config.SecondaryModel.RepeatPenalty,
-                maxTokens: config.SecondaryModel.MaxTokens,
-                antiPrompts: config.SecondaryModel.AntiPrompts, logger: _logger);
-            if (secondary != null)
-                engine.SetSecondaryModel(secondary);
-        }
+        // v10.25: Background tasks config (replaces secondary model)
+        engine.SetBackgroundTasks(config.BackgroundTasks);
 
         // Background process manager
         _bgMgr = new BackgroundProcessManager();

@@ -163,7 +163,7 @@ public class ConfigIntegrationTests : IDisposable
         Assert.NotNull(config.Llm);
         Assert.NotNull(config.Workspace);
         Assert.True(config.Memory.Enabled); // default
-        Assert.Equal(16384u, config.Llm.ContextSize); // default
+        Assert.Equal(8192u, config.Llm.ContextSize); // default (v10.25: reduced from 16384)
     }
 
     [Fact]

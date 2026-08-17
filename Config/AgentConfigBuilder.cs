@@ -45,8 +45,8 @@ public class AgentConfigBuilder
     private string _workingDir = ".";
     private bool _enableVectorMemory = false;
     private bool _enableSubAgents = false;
-    private bool _enableSecondaryModel = false;
-    private string? _secondaryModelPath = null;
+    private bool _decomposeUseLlm = true;
+    private bool _summarizeUseLlm = true;
 
     private AgentConfigBuilder() { }
 
@@ -93,11 +93,11 @@ public class AgentConfigBuilder
     /// <summary>Enable sub-agents (parallel child agents). Default: false. Seeds initial JSON only.</summary>
     public AgentConfigBuilder EnableSubAgents(bool enabled = true) { _enableSubAgents = enabled; return this; }
 
-    /// <summary>Enable secondary model. Default: false. Seeds initial JSON only.</summary>
-    public AgentConfigBuilder EnableSecondaryModel(bool enabled = true) { _enableSecondaryModel = enabled; return this; }
+    /// <summary>Use LLM for task decomposition. When false, uses keyword-based fallback. Seeds initial JSON only.</summary>
+    public AgentConfigBuilder DecomposeUseLlm(bool useLlm = true) { _decomposeUseLlm = useLlm; return this; }
 
-    /// <summary>Path to secondary model GGUF. Seeds initial JSON only.</summary>
-    public AgentConfigBuilder WithSecondaryModel(string path) { _secondaryModelPath = path; return this; }
+    /// <summary>Use LLM for summarization. When false, uses extractive truncation fallback. Seeds initial JSON only.</summary>
+    public AgentConfigBuilder SummarizeUseLlm(bool useLlm = true) { _summarizeUseLlm = useLlm; return this; }
 
     /// <summary>
     /// Build the EAgentConfig.
@@ -172,18 +172,30 @@ public class AgentConfigBuilder
             {
                 Enabled = _enableSubAgents,
             },
-            SecondaryModel = new SecondaryModelConfig
+            BackgroundTasks = new BackgroundTasksConfig
             {
-                Enabled = _enableSecondaryModel && !string.IsNullOrEmpty(_secondaryModelPath),
-                ModelPath = _secondaryModelPath ?? "",
-                ContextSize = 4096,
-                GpuLayers = 0,
-                Temperature = 0.1f,
-                TopP = 0.8f,
-                TopK = 40,
-                RepeatPenalty = 1.1f,
-                MaxTokens = 512,
-                AntiPrompts = new[] { "User:", "\n```\n", "Question:", "Assistant:", "###", "<user>", "<tooloutput>", "### User" },
+                Decompose = new DecomposeConfig
+                {
+                    UseLlm = _decomposeUseLlm,
+                    ContextSize = 4096,
+                    MaxTokens = 256,
+                    Temperature = 0.1f,
+                    TopP = 0.8f,
+                    TopK = 40,
+                    RepeatPenalty = 1.1f,
+                    AntiPrompts = new[] { "User:", "Question:", "</lm>" },
+                },
+                Summarize = new SummarizeConfig
+                {
+                    UseLlm = _summarizeUseLlm,
+                    ContextSize = 4096,
+                    MaxTokens = 200,
+                    Temperature = 0.1f,
+                    TopP = 0.8f,
+                    TopK = 40,
+                    RepeatPenalty = 1.1f,
+                    AntiPrompts = new[] { "User:", "Question:", "</lm>" },
+                },
             },
         };
 

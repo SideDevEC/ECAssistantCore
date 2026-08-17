@@ -110,27 +110,23 @@ public sealed class AgentOrchestrator : IAsyncDisposable
         await _engine.PrefillStaticPrefix();
 
          // v10.6: Decompose the request into sub-tasks using TaskPlanner
-         // v10.7: Try secondary model (LLM) first, fall back to keyword-based
+         // v10.25: Use engine.DecomposeTaskAsync (StatelessExecutor with shared weights), fall back to keyword-based
         var planner = _engine.TaskPlanner;
         if (planner != null)
          {
             List<SubTask>? decomposed = null;
 
-             // v10.7: Try secondary model for LLM-based decomposition
-            var secondary = _engine.SecondaryModel;
-            if (secondary != null && secondary.IsLoaded)
+             // v10.25: Try LLM-based decomposition via engine (StatelessExecutor with shared main weights)
+            _out?.WriteInfo("Attempting LLM task decomposition...");
+            var steps = await _engine.DecomposeTaskAsync(goal);
+            if (steps != null && steps.Count > 0)
              {
-                _out?.WriteInfo("Using secondary model for task decomposition...");
-                var steps = await secondary.DecomposeTaskAsync(goal);
-                if (steps != null && steps.Count > 0)
-                 {
-                    decomposed = steps.Select(s => new SubTask { Description = s, Status = SubTaskStatus.Pending }).ToList();
-                    _out?.WriteSuccess($"Secondary model produced {decomposed.Count} steps.");
-                 }
-                else
-                 {
-                    _out?.WriteWarning("Secondary model failed — falling back to keywords.");
-                 }
+                decomposed = steps.Select(s => new SubTask { Description = s, Status = SubTaskStatus.Pending }).ToList();
+                _out?.WriteSuccess($"LLM decomposition produced {decomposed.Count} steps.");
+             }
+            else
+             {
+                _out?.WriteWarning("LLM decomposition failed or disabled — falling back to keywords.");
              }
 
              // Fallback: keyword-based decomposition

@@ -1,7 +1,7 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-08-17 (v11.1)
-**Status:** ✅ 857 tests pass, 0 errors, 0 warnings, 10/10 architecture
+**Updated:** 2026-08-17 (v11.2)
+**Status:** ✅ 857 tests pass, 0 errors, 13 warnings (pre-existing xUnit analyzers)
 
 ## Overview
 
@@ -21,10 +21,10 @@ ECAssistant is a local-first AI agent framework running LLM inference on-device 
 ## Project Structure
 
 ```
-ECAssistantCore/           # Core engine, tools, sessions, memory (121 files + 65 test files)
+ECAssistantCore/           # Core engine, tools, sessions, memory (210 files + 65 test files)
 ├── Analysis/              # Project context analysis (EContextAnalyzer)
 ├── Composition/           # EcaCompositionRoot + EcaServiceBundle
-├── Config/                # AgentConfigBuilder, ConfigLoader, 12 config models (init-only)
+├── Config/                # AgentConfigBuilder, ConfigLoader, 13 config models (init-only)
 ├── Engine/                # EAgentEngine (IEngine), Orchestrator, SubAgentManager, TaskPlanner
 │   ├── SelfCorrection/    # FailureAnalysis, FailurePattern, FileSnapshot
 │   └── SubAgent/          # SubAgentTask, SubAgentResult, SubAgentError
@@ -32,6 +32,7 @@ ECAssistantCore/           # Core engine, tools, sessions, memory (121 files + 6
 ├── Memory/                # EMemoryManager, VectorMemoryStore
 ├── Services/              # 12 service implementations (Logger, ContextManager, ModelLoader, etc.)
 ├── Session/               # AgentSession, SessionManager, SessionBuilder, SessionDiscovery
+│   └── ISessionContext     # Exposes SharedWeights + BackgroundTasks (not SecondaryModel)
 ├── Testing/               # TestRunner, MockEngine, TestScenario, EcaTests
 └── Tools/                 # EToolBase + 12 built-in tools
     ├── EBackground/       # Background process execution
@@ -94,6 +95,28 @@ Each `AgentSession` has:
 - Own orchestrator, tools, memory, output buffer, prompt queue, runner thread
 - Sessions share model weights (one GGUF in RAM), nothing else
 - `SessionBuilder` — public API for external consumers (e.g., ECSQL)
+- `ISessionContext` exposes `SharedWeights` + `SharedModelParams` + `BackgroundTasks` (not SecondaryModel)
+
+## Background Tasks (v11.2)
+
+Replaces the secondary model with StatelessExecutor using shared main weights:
+
+```
+LLamaWeights (22 GB, shared, read-only)
+├── Main engine → LLamaContext (own KV cache, InteractiveExecutor)
+├── Sub-agent engines → own LLamaContext (own KV cache, shared weights)
+└── Background tasks → StatelessExecutor (no KV cache, fresh per call)
+    ├── DecomposeTaskAsync() — use_llm toggle (keyword fallback)
+    └── WireSummaryService() — use_llm toggle (extractive fallback)
+```
+
+Config:
+```json
+"background_tasks": {
+    "decompose": { "use_llm": true, "context_size": 4096, "max_tokens": 256, ... },
+    "summarize": { "use_llm": true, "context_size": 4096, "max_tokens": 200, ... }
+}
+```
 
 ## Composition Root
 
@@ -127,3 +150,4 @@ Each `AgentSession` has:
 - EAgentEngine implements IEngine (unsealed)
 - EGuiConsole uses ITerminalOutput (no direct Console.Write)
 - EcaCompositionRoot is the single wiring point
+- One model load — background tasks use StatelessExecutor with shared weights

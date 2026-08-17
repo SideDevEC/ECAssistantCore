@@ -25,8 +25,8 @@ public class EAgentConfig
     [JsonPropertyName("llm")]
     public LlmConfig Llm { get; set; } = new();
 
-    [JsonPropertyName("secondary_model")]
-    public SecondaryModelConfig SecondaryModel { get; set; } = new();
+    [JsonPropertyName("background_tasks")]
+    public BackgroundTasksConfig BackgroundTasks { get; set; } = new();
 
     [JsonPropertyName("subagent")]
     public SubAgentConfig SubAgent { get; set; } = new();

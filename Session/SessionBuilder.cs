@@ -66,10 +66,16 @@ public class SessionBuilder
     public bool? EnableSubAgents { get; set; }
 
     /// <summary>
-    /// Whether to initialize the secondary model (for summarization/decomposition).
-    /// Default: follows config (config.SecondaryModel.Enabled).
+    /// Whether to use LLM for background tasks (decomposition, summarization).
+    /// Default: follows config (config.BackgroundTasks.Decompose.UseLlm / Summarize.UseLlm).
     /// </summary>
-    public bool? EnableSecondaryModel { get; set; }
+    public bool? EnableSecondaryModel { get; set; } // kept for compat — now ignored
+
+    /// <summary>
+    /// Wire background task config into the session. Default: true.
+    /// Passes config.BackgroundTasks to the engine for StatelessExecutor use.
+    /// </summary>
+    public bool EnableBackgroundTasks { get; set; } = true;
 
     /// <summary>
     /// The background process manager shared across sessions.
@@ -132,14 +138,10 @@ public class SessionBuilder
             RegisterBuiltInToolsAsync(session, externalTools);
         }
 
-        // ── Secondary Model (optional) ──
-        if (EnableSecondaryModel ?? (_config.SecondaryModel.Enabled && !string.IsNullOrEmpty(_config.SecondaryModel.ModelPath)))
+        // ── Background Tasks (decompose + summarize config) ──
+        if (EnableBackgroundTasks)
         {
-            var secondary = LoadSecondaryModel();
-            if (secondary != null)
-            {
-                session.SetSecondaryModel(secondary);
-            }
+            session.SetBackgroundTasks(_config.BackgroundTasks);
         }
 
         // ── Sub-agents (only if enabled) ──
@@ -236,29 +238,10 @@ public class SessionBuilder
 
     /// <summary>
     /// Load the secondary model from config.
-    /// Returns null if model file not found or loading fails.
+    /// DEPRECATED — no longer used. Secondary model removed in favor of shared weights.
     /// </summary>
     private SecondaryModelLoader? LoadSecondaryModel()
     {
-        var secPath = _config.SecondaryModel.ModelPath;
-        if (string.IsNullOrEmpty(secPath)) return null;
-
-        if (!Path.IsPathRooted(secPath))
-        {
-            var secInWork = Path.Combine(_userConfigDir, secPath);
-            var secInBuild = Path.Combine(AppContext.BaseDirectory, secPath);
-            secPath = File.Exists(secInWork) ? secInWork : (File.Exists(secInBuild) ? secInBuild : secInWork);
-        }
-
-        return SecondaryModelLoader.Load(secPath,
-            contextSize: _config.SecondaryModel.ContextSize,
-            gpuLayers: _config.SecondaryModel.GpuLayers,
-            temperature: _config.SecondaryModel.Temperature,
-            topP: _config.SecondaryModel.TopP,
-            topK: _config.SecondaryModel.TopK,
-            repeatPenalty: _config.SecondaryModel.RepeatPenalty,
-            maxTokens: _config.SecondaryModel.MaxTokens,
-            antiPrompts: _config.SecondaryModel.AntiPrompts,
-            logger: _logger);
+        return null;
     }
 }

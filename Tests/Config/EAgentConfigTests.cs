@@ -33,7 +33,7 @@ public class EAgentConfigTests : IDisposable
         Assert.NotNull(config.Workspace);
         Assert.NotNull(config.Tools);
         Assert.NotNull(config.Llm);
-        Assert.NotNull(config.SecondaryModel);
+        Assert.NotNull(config.BackgroundTasks);
         Assert.NotNull(config.SubAgent);
         Assert.NotNull(config.VectorMemory);
         Assert.NotNull(config.Inference);

@@ -156,8 +156,14 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     /// <summary>The engine powering this session.</summary>
     public EAgentEngine Engine => _engine;
 
-    /// <summary>ISessionContext: Secondary LLM for tool use.</summary>
-    public SecondaryModelLoader? SecondaryModel => _engine.SecondaryModel;
+    /// <summary>ISessionContext: Shared model weights for tool LLM access.</summary>
+    public LLamaWeights? SharedWeights => _engine.SharedWeights;
+
+    /// <summary>ISessionContext: Shared model params for creating StatelessExecutor.</summary>
+    public ModelParams? SharedModelParams => _engine.SharedModelParams;
+
+    /// <summary>ISessionContext: Background task config (decompose + summarize).</summary>
+    public BackgroundTasksConfig? BackgroundTasks => _engine.BackgroundTasks;
 
     /// <summary>ISessionContext: Keyword memory.</summary>
     public EMemoryManager Memory => _engine.Memory;
@@ -780,10 +786,10 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         }
     }
 
-    /// <summary>Set secondary model for this session.</summary>
-    public void SetSecondaryModel(SecondaryModelLoader secondary)
+    /// <summary>Set background task config for this session.</summary>
+    public void SetBackgroundTasks(BackgroundTasksConfig config)
     {
-        _engine.SetSecondaryModel(secondary);
+        _engine.SetBackgroundTasks(config);
     }
 
     /// <summary>Clear conversation history for this session.</summary>

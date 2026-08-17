@@ -38,6 +38,7 @@ public class EAgentEngine : IEngine, IAsyncDisposable
     private readonly ECAssistant.Core.Interfaces.ILogger? _logger;
     private TaskPlanner? _taskPlanner = null;
     private SecondaryModelLoader? _secondaryModel = null;  // v10.7: for LLM-based decomposition + summarization
+    private BackgroundTasksConfig? _backgroundTasks = null;  // v10.25: replaces secondary model
 
        // ── Context Window (replaces raw string list) ───────────
     private readonly ContextWindow _contextWindow;
@@ -97,7 +98,13 @@ public class EAgentEngine : IEngine, IAsyncDisposable
     public SelfCorrectionManager? SelfCorrection => _selfCorrection;
     public ProjectContextManager? ProjectContext => _projectContext;
     public TaskPlanner? TaskPlanner => _taskPlanner;
-    public SecondaryModelLoader? SecondaryModel => _secondaryModel;  // v10.7
+    public SecondaryModelLoader? SecondaryModel => _secondaryModel;  // v10.7 (deprecated)
+    /// <summary>Shared model weights — exposed for tools that need LLM access.</summary>
+    public LLamaWeights? SharedWeights => _weights;
+    /// <summary>Shared model params — needed to create StatelessExecutor.</summary>
+    public ModelParams? SharedModelParams => _modelParams;
+    /// <summary>Background task config (decompose + summarize). Replaces secondary model.</summary>
+    public BackgroundTasksConfig? BackgroundTasks => _backgroundTasks;
     public IReadOnlyList<EToolBase> Tools => _tools;
     public int TurnCount => _turnCount;
     public ConversationTranscript Transcript => _transcript;
@@ -229,7 +236,13 @@ public class EAgentEngine : IEngine, IAsyncDisposable
         _taskPlanner = new TaskPlanner(_logger);
     }
 
-    /// <summary>Set the secondary model for decomposition + summarization (v10.7).</summary>
+    /// <summary>Set background task config for decomposition + summarization.</summary>
+    public void SetBackgroundTasks(BackgroundTasksConfig config)
+    {
+        _backgroundTasks = config;
+    }
+
+    /// <summary>Set the secondary model for decomposition + summarization (v10.7). DEPRECATED — use SetBackgroundTasks.</summary>
     public void SetSecondaryModel(SecondaryModelLoader secondary)
     {
         _secondaryModel = secondary;
@@ -311,28 +324,31 @@ public class EAgentEngine : IEngine, IAsyncDisposable
     /// <summary>Wire the SummaryService to use the engine's own LLM for context compaction.</summary>
     public void WireSummaryService()
     {
+        var summarizeConfig = _backgroundTasks?.Summarize;
+        var useLlm = summarizeConfig?.UseLlm ?? true;
+
+        if (!useLlm)
+        {
+            // Extractive fallback — no LLM inference
+            _contextWindow.SetSummaryService(new SummaryService(null));
+            _out?.WriteInfo("[Context] SummaryService wired to extractive fallback (use_llm=false).");
+            return;
+        }
+
         _contextWindow.SetSummaryService(new SummaryService(async prompt =>
         {
-            // v10.7: Use secondary model for summarization if available (no KV cache interference)
-            // v10.7.4: Use GenerateAsync directly — SummaryService.SummarizeAsync already builds
-            // its own prompt. Calling _secondaryModel.SummarizeAsync would double-wrap the prompt.
-            if (_secondaryModel != null && _secondaryModel.IsLoaded)
-            {
-                var summary = await _secondaryModel.GenerateAsync(prompt, maxTokens: Math.Max(100, (int)_secondaryModel.ContextSize / 8));
-                summary = System.Text.RegularExpressions.Regex.Replace(summary, @"<[^>]+>", "");
-                // v10.7.4: Escape angle brackets to prevent fake XML tags in context
-                summary = summary.Replace("<", "&lt;").Replace(">", "&gt;");
-                return string.IsNullOrWhiteSpace(summary) ? "(Summary generation failed)" : summary;
-            }
-            
-            // Fallback: use a separate StatelessExecutor (doesn't interfere with main KV cache)
             if (_weights == null || _modelParams == null) return "(Summary generation failed)";
+
             var summaryExecutor = new StatelessExecutor(_weights, _modelParams, new NullLogger());
             var sb = new StringBuilder();
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
             try
             {
-                await foreach (var token in summaryExecutor.InferAsync(prompt, _inferenceParams, cts.Token))
+                var summaryInference = InferenceParamsFactory.Create(
+                    summarizeConfig?.MaxTokens ?? 200,
+                    summarizeConfig?.AntiPrompts ?? new[] { "User:", "Question:", "</lm>" });
+                summaryInference.SamplingPipeline = _inferenceParams.SamplingPipeline;
+                await foreach (var token in summaryExecutor.InferAsync(prompt, summaryInference, cts.Token))
                     sb.Append(token);
             }
             catch (OperationCanceledException)
@@ -341,10 +357,11 @@ public class EAgentEngine : IEngine, IAsyncDisposable
             }
             var result = sb.ToString().Trim();
             result = System.Text.RegularExpressions.Regex.Replace(result, @"<[^>]+>", "");
+            // Escape angle brackets to prevent fake XML tags in context
+            result = result.Replace("<", "&lt;").Replace(">", "&gt;");
             return string.IsNullOrWhiteSpace(result) ? "(Summary generation failed)" : result;
         }));
-        var mode = (_secondaryModel != null && _secondaryModel.IsLoaded) ? "secondary model" : "stateless side-executor";
-        _out?.WriteInfo($"[Context] SummaryService wired to {mode}.");
+        _out?.WriteInfo("[Context] SummaryService wired to stateless executor (shared main weights).");
     }
 
     /// <summary>
@@ -377,6 +394,101 @@ public class EAgentEngine : IEngine, IAsyncDisposable
         var result = sb.ToString().Trim();
         _out?.WriteInfo($"[StepMapper] Plan generated ({result.Length} chars)");
         return result;
+    }
+
+    /// <summary>
+    /// v10.25: Decompose a user request into sub-tasks using the main LLM (stateless).
+    /// Uses StatelessExecutor with shared weights — does not pollute main KV cache.
+    /// When use_llm is false, returns null (caller falls back to keyword-based TaskPlanner).
+    /// </summary>
+    public async Task<List<string>?> DecomposeTaskAsync(string userRequest)
+    {
+        var decomposeConfig = _backgroundTasks?.Decompose;
+        if (decomposeConfig == null || !decomposeConfig.UseLlm)
+            return null; // Caller falls back to keyword-based decomposition
+
+        if (_weights == null || _modelParams == null)
+            return null;
+
+        var executor = new StatelessExecutor(_weights, _modelParams, new NullLogger());
+        var prompt = @"You decompose tasks. Wrap your answer in <lm></lm> tags. Inside the tags, output ONLY numbered steps. Nothing else.
+
+Count the distinct actions the user asked for. Output exactly that many steps. Stop. Do not add any more.
+
+FORBIDDEN:
+- Extra steps not requested (verify, check, clean up, create project, setup)
+- Explanations, reasoning, or text outside numbered steps
+- Steps the user did not explicitly ask for
+
+User: read Program.cs then fix line 42 then rebuild
+<lm>
+1. Read Program.cs
+2. Fix the bug at line 42
+3. Rebuild the project
+</lm>
+
+User: what day is today
+<lm>
+1. Get the current date
+</lm>
+
+User: calculate 4+2, write it to a file, then copy the file to a new location
+<lm>
+1. Calculate 4+2
+2. Write the result to a file
+3. Copy the file to a new location
+</lm>
+
+User: " + userRequest + "\n<lm>\n";
+
+        var sb = new StringBuilder();
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        try
+        {
+            var decomposeInference = InferenceParamsFactory.Create(
+                decomposeConfig.MaxTokens,
+                decomposeConfig.AntiPrompts);
+            decomposeInference.SamplingPipeline = _inferenceParams.SamplingPipeline;
+            await foreach (var token in executor.InferAsync(prompt, decomposeInference, cts.Token))
+                sb.Append(token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Timeout — return what we have
+        }
+
+        var raw = sb.ToString().Trim();
+        _logger?.Info("Decompose", $"Raw output:\n{raw}");
+
+        if (string.IsNullOrWhiteSpace(raw))
+            return null;
+
+        // Parse numbered lines: "1. ...", "2. ...", etc.
+        var steps = new List<string>();
+        var lines = raw.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        int expectedNumber = 1;
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+            var match = System.Text.RegularExpressions.Regex.Match(trimmed, $@"^{expectedNumber}\.\s*(.+)$");
+            if (match.Success)
+            {
+                var step = match.Groups[1].Value.Trim();
+                if (!string.IsNullOrWhiteSpace(step))
+                    steps.Add(step);
+                expectedNumber++;
+            }
+            else break;
+        }
+
+        if (steps.Count == 0)
+        {
+            _logger?.Warn("Decompose", "Decomposition produced no numbered steps — falling back to keywords.");
+            return null;
+        }
+
+        _logger?.Info("Decompose", $"Decomposed into {steps.Count} steps: {string.Join(" | ", steps.Select(s => s.Substring(0, Math.Min(s.Length, 50))))}");
+        return steps;
     }
 
        /// <summary>Create engine with context window support and auto-injected memory.</summary>
@@ -1274,19 +1386,31 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
                 // v10.12.13: Cap convText relative to secondary model context size (75% of it)
                 var allMessages = _contextWindow.GetWindowMessages();
                 var convSb = new StringBuilder();
-                var convCharLimit = (int)(_secondaryModel?.ContextSize ?? 4096) * 3 / 4;  // 75% of context as chars
+                var convCharLimit = (int)(_backgroundTasks?.Summarize.ContextSize ?? 4096) * 3 / 4;  // 75% of context as chars
                 for (int i = allMessages.Count - 1; i >= 0 && convSb.Length < convCharLimit; i--)
                     convSb.Insert(0, $"[{allMessages[i].Role}] {allMessages[i].Content}\n");
                 var convText = convSb.ToString();
                 
-                // Summarize the conversation using secondary model if available
+                // Summarize using StatelessExecutor with shared weights
                 var summaryText = "";
-                if (_secondaryModel != null && _secondaryModel.IsLoaded)
+                if (_weights != null && _modelParams != null && (_backgroundTasks?.Summarize.UseLlm ?? true))
                 {
-                    summaryText = await _secondaryModel.GenerateAsync(
-                        $"You are a summarization assistant. Wrap your summary in <lm></lm> tags.\nSummarize this conversation concisely. Keep facts, decisions, and tool results only. Max 3 sentences. Plain text inside the tags.\n\n{convText}\n\n<lm>",
-                        maxTokens: Math.Max(100, (int)_secondaryModel.ContextSize / 8));
-                    summaryText = System.Text.RegularExpressions.Regex.Replace(summaryText, @"<[^>]+>", "");
+                    var summaryExecutor = new StatelessExecutor(_weights, _modelParams, new NullLogger());
+                    var summarySb = new StringBuilder();
+                    using var summaryCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+                    try
+                    {
+                        var summaryInference = InferenceParamsFactory.Create(
+                            Math.Max(100, (_backgroundTasks?.Summarize.MaxTokens ?? 200)),
+                            _backgroundTasks?.Summarize.AntiPrompts ?? new[] { "User:", "Question:", "</lm>" });
+                        summaryInference.SamplingPipeline = _inferenceParams.SamplingPipeline;
+                        await foreach (var token in summaryExecutor.InferAsync(
+                            $"You are a summarization assistant. Wrap your summary in <lm></lm> tags.\nSummarize this conversation concisely. Keep facts, decisions, and tool results only. Max 3 sentences. Plain text inside the tags.\n\n{convText}\n\n<lm>",
+                            summaryInference, summaryCts.Token))
+                            summarySb.Append(token);
+                    }
+                    catch (OperationCanceledException) { }
+                    summaryText = System.Text.RegularExpressions.Regex.Replace(summarySb.ToString().Trim(), @"<[^>]+>", "");
                 }
                 
                 // Clear context window and rebuild KV cache (await!)
