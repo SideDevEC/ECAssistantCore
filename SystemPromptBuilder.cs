@@ -109,14 +109,13 @@ public class SystemPromptBuilder
         sb.AppendLine("### CRITICAL RULES — NO EXCEPTIONS");
         sb.AppendLine("1. Your FIRST token is always `<lm>`. Your LAST token is always `</lm>`. Nothing comes before or after.");
         sb.AppendLine("2. Inside `<lm>`: ONE `<thinking>`, then ONE `<toolcall>` OR ONE `<output>`. Then `</lm>`. Then STOP.");
-        sb.AppendLine("3. Never write a second `<thinking>` or `<toolcall>`.");
-        sb.AppendLine("4. Never write text outside `<lm>...</lm>`.");
-        sb.AppendLine("5. Never write `<user>`, `<tooloutput>`, `<result>` tags — host only.");
-        sb.AppendLine("6. After a tool result in history, respond with `<output>` (if done) or another `<toolcall>` (if you need more data).");
-        sb.AppendLine("7. Keep `<thinking>` SHORT — 1-2 sentences max.");
-        sb.AppendLine("8. For simple questions, still use the full format: `<lm><thinking>brief</thinking><output>answer</output></lm>`.");
-        sb.AppendLine("9. After the `<assistant>` tag, start with `<lm>` immediately. Do NOT echo `<assistant>` back.");
-        sb.AppendLine("10. You can include MULTIPLE `<toolcall>` tags in one `<lm>` response for independent operations.");
+        sb.AppendLine("3. Never write text outside `<lm>...</lm>`.");
+        sb.AppendLine("4. Never write `<user>`, `<tooloutput>`, `<result>` tags — host only.");
+        sb.AppendLine("5. After a tool result in history, respond with `<output>` (if done) or another `<toolcall>` (if you need more data). Do NOT repeat the same tool call.");
+        sb.AppendLine("6. Keep `<thinking>` SHORT — 1-2 sentences max.");
+        sb.AppendLine("7. For simple questions, still use the full format.");
+        sb.AppendLine("8. After the `<assistant>` tag, start with `<lm>` immediately. Do NOT echo `<assistant>` back.");
+        sb.AppendLine("9. You can include MULTIPLE `<toolcall>` tags in one `<lm>` response for independent operations.");
         sb.AppendLine();
         sb.AppendLine("### EXAMPLE: Simple question after tool result");
         sb.AppendLine("Tool returned: \"Wednesday\"");
@@ -139,11 +138,8 @@ public class SystemPromptBuilder
         // ── Error handling (generic, always included) ──
         sb.AppendLine("## ERROR HANDLING");
         sb.AppendLine();
-        sb.AppendLine("When a tool returns errors:");
-        sb.AppendLine("1. Read the error message carefully");
-        sb.AppendLine("2. Identify the root cause");
-        sb.AppendLine("3. Fix the issue with a new tool call — don't just retry the same command");
-        sb.AppendLine("4. After 3 failed attempts, ask the user for help");
+        sb.AppendLine("1. Read the error, identify root cause, fix with a new tool call — don't retry the same command.");
+        sb.AppendLine("2. After 3 failed attempts, ask the user for help.");
         sb.AppendLine();
 
         // ── Conversation history format ──
@@ -152,9 +148,7 @@ public class SystemPromptBuilder
         sb.AppendLine("When you see history from previous turns:");
         sb.AppendLine("- `<user>...text...</user>` = what the user asked");
         sb.AppendLine("- `<tooloutput>ToolName<result>text</result></tooloutput>` = tool result from a previous turn");
-        sb.AppendLine("- Your past `<thinking>` and `<toolcall>`/`<output>` blocks");
-        sb.AppendLine();
-        sb.AppendLine("If you see a `<tooloutput>` in history, the tool ALREADY RAN. Read the result and give your `<output>` answer. Do NOT repeat the same tool call.");
+        sb.AppendLine("- Your past `<thinking>`/`<toolcall>`/`<output>` blocks are visible in history.");
         sb.AppendLine();
 
         // ── Operating rules ──
@@ -162,7 +156,6 @@ public class SystemPromptBuilder
         sb.AppendLine();
         sb.AppendLine("1. Keep responses concise — don't over-explain");
         sb.AppendLine("2. Use the right tool for the job");
-        sb.AppendLine("3. If a tool fails, read the error carefully and fix the command");
         sb.AppendLine();
 
         // ── Memory ──
