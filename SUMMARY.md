@@ -1,6 +1,6 @@
 # ECAssistant — Project Summary
 
-**Updated:** 2026-08-17 (v11.3 — OOP compliance refactor, complete)
+**Updated:** 2026-08-18 (v11.4 — conversational gate + system prompt improvements)
 **Status:** ✅ 857 tests pass, 0 errors, 13 warnings (pre-existing xUnit analyzers)
 **Target Framework:** .NET 8.0
 **Platform:** Cross-platform (Windows, macOS, Linux)
@@ -10,6 +10,18 @@
 ## What It Is
 
 ECAssistant is a local-first AI agent framework. It runs LLM inference on-device via LLamaSharp with multi-session orchestration, sub-agents, vector memory, self-correction, 12 built-in tools, and a full TUI — no cloud, no API keys.
+
+## v11.4 Changes (2026-08-18)
+
+- **Conversational gate before decomposition:** Skip task decomposition for simple chat questions
+  - Fast path: action-verb + step-indicator heuristic (instant, zero cost) — catches ~70-80% of conversational questions
+  - LLM fallback: 1-token TASK/CHAT classification (~0.15s) for ambiguous cases
+  - `IsConversationalAsync()` on EAgentEngine — StatelessExecutor with shared weights, 2-token output
+  - `LooksConversational()` on Orchestrator — static heuristic, no LLM needed
+- **System prompt improvement:** Teach LLM to learn from failed thinking in conversation history
+  - Added guidance: review past `<thinking>` from failed tool calls, adjust approach, don't repeat failed reasoning
+- **CUDA backend fix:** `` condition corrected from `'WINDOWS'` to `'Windows_NT'` (was silently skipping CUDA on Windows)
+- **Vulkan backend:** Re-added as fallback for non-NVIDIA Windows GPUs
 
 ## v11.3 Changes (2026-08-17 — OOP compliance refactor, complete)
 
@@ -65,7 +77,8 @@ TestModelLoad/       # Standalone model load test (outside project)
 |---------|---------|---------|
 | LLamaSharp | 0.27.0 | Local LLM inference |
 | LLamaSharp.Backend.Cpu | 0.27.0 | CPU backend |
-| LLamaSharp.Backend.Vulkan | 0.27.0 | GPU backend |
+| LLamaSharp.Backend.Vulkan | 0.27.0 | GPU backend (Vulkan) |
+| LLamaSharp.Backend.Cuda12 | 0.27.0 | GPU backend (CUDA, Windows-only) |
 | Microsoft.Extensions.Logging.Abstractions | 10.0.5 | ILogger abstraction |
 | System.Text.Json | 10.0.4 | JSON (LLamaSharp transitive) |
 | xUnit + Moq | — | Testing |

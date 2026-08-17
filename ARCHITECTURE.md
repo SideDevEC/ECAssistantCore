@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-08-17 (v11.3 — OOP compliance refactor, complete)
+**Updated:** 2026-08-18 (v11.4 — conversational gate + system prompt improvements)
 **Status:** ✅ 857 tests pass, 0 errors, 13 warnings (pre-existing xUnit analyzers)
 
 ## Overview
@@ -109,6 +109,7 @@ LLamaWeights (22 GB, shared, read-only)
 ├── Sub-agent engines → own LLamaContext (own KV cache, shared weights)
 └── Background tasks → StatelessExecutor (no KV cache, fresh per call)
     ├── DecomposeTaskAsync() — use_llm toggle (keyword fallback)
+    ├── IsConversationalAsync() — 1-token TASK/CHAT classification (v11.4 gate)
     └── WireSummaryService() — use_llm toggle (extractive fallback)
 ```
 
@@ -159,3 +160,5 @@ Config:
 - EcaCompositionRoot is the single wiring point
 - One model load — background tasks use StatelessExecutor with shared weights
 - MockEngine uses protected mock-mode constructor (no static flags)
+- v11.4: Orchestrator gates decomposition — verb heuristic first (instant), then LLM 1-token classification (~0.15s)
+- v11.4: System prompt teaches LLM to learn from failed <thinking> blocks in conversation history
