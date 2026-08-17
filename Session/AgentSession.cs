@@ -744,7 +744,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
 
     /// <summary>Register a tool for this session's engine.
     /// v10.24: If tool's config section is not in EAgentConfig.Tools, adds it via GetConfigSection()
-    /// and calls AgentConfigBuilder.Update() to persist to appsettings.json.
+    /// and calls AgentConfigBuilder.Default.Update() to persist to appsettings.json.
     /// </summary>
     public void RegisterTool(EToolBase tool)
     {
@@ -759,7 +759,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
                 var section = tool.GetConfigSection();
                 var jsonElement = System.Text.Json.JsonSerializer.SerializeToElement(section);
                 _config.Tools[tool.Name] = jsonElement;
-                AgentConfigBuilder.Update(_config);
+                AgentConfigBuilder.Default.Update(_config);
             }
         }
         _engine.RegisterTool(tool);

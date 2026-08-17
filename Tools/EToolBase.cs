@@ -104,7 +104,7 @@ public abstract class EToolBase
     /// Read a value from the tool's config section in EAgentConfig.Tools.
     /// Returns defaultValue if the key is not found or the section doesn't exist.
     /// </summary>
-    protected static T ReadConfig<T>(Dictionary<string, JsonElement> tools, string toolName, string key, T defaultValue)
+    protected T ReadConfig<T>(Dictionary<string, JsonElement> tools, string toolName, string key, T defaultValue)
     {
         if (tools.TryGetValue(toolName, out var section) && section.ValueKind == JsonValueKind.Object)
         {
@@ -120,14 +120,14 @@ public abstract class EToolBase
     /// <summary>
     /// Check if a tool is enabled in the config.
     /// </summary>
-    protected static bool IsToolEnabled(Dictionary<string, JsonElement> tools, string toolName)
+    protected bool IsToolEnabled(Dictionary<string, JsonElement> tools, string toolName)
         => ReadConfig(tools, toolName, "enabled", true);
 
     /// <summary>
     /// Read a config value from a JsonElement section. Shared by all tools.
     /// Replaces the duplicated ReadCfg&lt;T&gt; across tool files.
     /// </summary>
-    protected static T ReadCfg<T>(JsonElement? section, string key, T defaultValue)
+    protected T ReadCfg<T>(JsonElement? section, string key, T defaultValue)
     {
         if (section.HasValue && section.Value.ValueKind == JsonValueKind.Object)
         {

@@ -216,7 +216,7 @@ public class SessionBuilder
             var section = tool.GetConfigSection();
             var jsonElement = JsonSerializer.SerializeToElement(section);
             _config.Tools[tool.Name] = jsonElement;
-            AgentConfigBuilder.Update(_config);
+            AgentConfigBuilder.Default.Update(_config);
         }
     }
 
