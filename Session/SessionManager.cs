@@ -64,6 +64,15 @@ public class SessionManager : IAsyncDisposable
         _workingDir = workingDir;
         _subAgentConfig = config.SubAgent;
 
+        // ── Pre-flight validation: catch misconfigurations before native code ──
+        var validator = new ModelParamValidator(_logger);
+        var validationError = validator.Validate(config, resolvedModelPath);
+        if (validationError != null)
+        {
+            _logger.Error("SessionManager", validationError.Message);
+            throw validationError;
+        }
+
         _modelParams = new ModelParams(_modelPath)
         {
             GpuLayerCount = Math.Clamp(config.Llm.GpuLayers, 0, 100),
@@ -90,8 +99,26 @@ public class SessionManager : IAsyncDisposable
         }
         catch { /* native lib may not be loaded yet — ignore */ }
 
-        // Load model weights ONCE — shared across all sessions
-        _sharedWeights = LLamaWeights.LoadFromFile(_modelParams);
+        // ── Load model weights ONCE — shared across all sessions ──
+        // Wrapped in try/catch: LLamaSharp throws native exceptions for GPU layer
+        // mismatches, corrupted files, OOM, etc. We translate to ModelLoadException
+        // with actionable diagnostics so the caller can display a helpful message.
+        try
+        {
+            _sharedWeights = LLamaWeights.LoadFromFile(_modelParams);
+        }
+        catch (Exception ex) when (ex is not ModelLoadException)
+        {
+            var mle = new ModelLoadException(
+                ModelLoadPhase.LoadWeights,
+                _modelPath,
+                config.Llm.GpuLayers,
+                config.Llm.ContextSize,
+                $"Failed to load model weights: {ex.GetType().Name}: {ex.Message}",
+                inner: ex);
+            _logger.Error("SessionManager", mle.ToDiagnosticString());
+            throw mle;
+        }
     }
 
     /// <summary>Get a session by key.</summary>

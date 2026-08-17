@@ -418,6 +418,25 @@ public sealed class SubAgentManager : IDisposable
                 },
             };
         }
+        catch (ModelLoadException mle)
+        {
+            childEngine?.EndExecution();
+            _out?.WriteTag("SubAgent", $"Model load failed: {mle.Phase}", OutputState.Error);
+            _out?.WriteError(mle.ToDiagnosticString());
+            return new SubAgentResult
+            {
+                Succeeded = false,
+                Duration = sw.Elapsed,
+                Error = new SubAgentError
+                {
+                    Kind = SubAgentErrorKind.Exception,
+                    Message = $"{mle.Phase}: {mle.Message}",
+                    AttemptedAction = task.Description,
+                    PartialOutput = mle.ToDiagnosticString(),
+                    RetryAttempt = retryAttempt,
+                },
+            };
+        }
         catch (Exception ex)
         {
             childEngine?.EndExecution();

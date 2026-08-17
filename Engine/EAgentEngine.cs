@@ -590,6 +590,16 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
 
                _workingDir = string.IsNullOrEmpty(workingDir) ? AppContext.BaseDirectory : workingDir;
 
+               // ── Pre-flight validation: catch misconfigurations before native code ──
+               var validator = new ModelParamValidator(_logger);
+               var validationError = validator.Validate(modelPath, gpuLayers, contextSize, threadCount);
+               if (validationError != null)
+               {
+                   _logger?.Error("Engine", validationError.Message);
+                   _out?.WriteError(validationError.ToDiagnosticString());
+                   throw validationError;
+               }
+
                if (sharedWeights != null && sharedModelParams != null)
                {
                    // ── Shared weights path (v10.20 sessions) ──
@@ -605,7 +615,20 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
                        Threads = sharedModelParams.Threads,
                    };
                    _modelParams = ctxParams;
-                   _context = _weights.CreateContext(ctxParams);
+                   try
+                   {
+                       _context = _weights.CreateContext(ctxParams);
+                   }
+                   catch (Exception ex) when (ex is not ModelLoadException)
+                   {
+                       var mle = new ModelLoadException(
+                           ModelLoadPhase.CreateContext, modelPath, gpuLayers, contextSize,
+                           $"Failed to create context (KV cache): {ex.GetType().Name}: {ex.Message}",
+                           inner: ex);
+                       _logger?.Error("Engine", mle.ToDiagnosticString());
+                       _out?.WriteError(mle.ToDiagnosticString());
+                       throw mle;
+                   }
                }
                else
                {
@@ -616,8 +639,34 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
                           ContextSize = contextSize,
                            };
                    _modelParams = parameters;
-                   _weights = LLamaWeights.LoadFromFile(parameters);
-                _context = _weights.CreateContext(parameters);
+                   try
+                   {
+                       _weights = LLamaWeights.LoadFromFile(parameters);
+                   }
+                   catch (Exception ex) when (ex is not ModelLoadException)
+                   {
+                       var mle = new ModelLoadException(
+                           ModelLoadPhase.LoadWeights, modelPath, gpuLayers, contextSize,
+                           $"Failed to load model weights: {ex.GetType().Name}: {ex.Message}",
+                           inner: ex);
+                       _logger?.Error("Engine", mle.ToDiagnosticString());
+                       _out?.WriteError(mle.ToDiagnosticString());
+                       throw mle;
+                   }
+                   try
+                   {
+                       _context = _weights.CreateContext(parameters);
+                   }
+                   catch (Exception ex) when (ex is not ModelLoadException)
+                   {
+                       var mle = new ModelLoadException(
+                           ModelLoadPhase.CreateContext, modelPath, gpuLayers, contextSize,
+                           $"Failed to create context (KV cache): {ex.GetType().Name}: {ex.Message}",
+                           inner: ex);
+                       _logger?.Error("Engine", mle.ToDiagnosticString());
+                       _out?.WriteError(mle.ToDiagnosticString());
+                       throw mle;
+                   }
                }
 
           var nullLog = new NullLogger();
@@ -807,7 +856,22 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
         }
         catch (OperationCanceledException)
         {
-             _out?.WriteWarning("[KVCache] Prefill timed out (120s) — continuing anyway.");
+             var mle = new ModelLoadException(
+                 ModelLoadPhase.Prefill, _modelPath ?? "", _gpuLayers, _contextSize,
+                 "Prefill timed out after 120s — model may be too large or context too big for available memory.");
+             _logger?.Error("Engine", mle.ToDiagnosticString());
+             _out?.WriteError(mle.ToDiagnosticString());
+             // Don't throw — prefill is best-effort, continue without KV cache optimization
+        }
+        catch (Exception ex) when (ex is not ModelLoadException)
+        {
+             var mle = new ModelLoadException(
+                 ModelLoadPhase.Prefill, _modelPath ?? "", _gpuLayers, _contextSize,
+                 $"Prefill failed: {ex.GetType().Name}: {ex.Message}",
+                 inner: ex);
+             _logger?.Error("Engine", mle.ToDiagnosticString());
+             _out?.WriteError(mle.ToDiagnosticString());
+             // Don't throw — prefill is best-effort, continue without KV cache optimization
         }
 
         var elapsedMs = (long)((DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - startMs);

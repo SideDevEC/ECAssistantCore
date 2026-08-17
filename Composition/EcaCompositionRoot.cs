@@ -50,6 +50,19 @@ public class EcaCompositionRoot
         // ── Resolve model path ──
         var modelPath = ResolveModelPath(config, _userConfigDir);
 
+        // ── Pre-flight model validation ──
+        // Catch misconfigurations early (wrong path, invalid GPU layers, bad context size)
+        // before SessionManager tries to call LLamaSharp native code.
+        var validator = new Engine.ModelParamValidator(logger);
+        var validationError = validator.Validate(config, modelPath);
+        if (validationError != null)
+        {
+            logger.Error("Composition", validationError.Message);
+            // Print to console so user sees it before any TUI takes over
+            Console.Error.WriteLine(validationError.ToDiagnosticString());
+            throw validationError;
+        }
+
         // ── Create directories ──
         Directory.CreateDirectory(_userConfigDir);
         if (config.Memory?.DataPath != null)
