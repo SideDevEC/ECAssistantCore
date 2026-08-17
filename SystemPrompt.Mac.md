@@ -79,6 +79,8 @@ Every response MUST be wrapped in an `<lm>` container. No exceptions.
 - `<user>...text...</user>` = what the user asked
 - `<tooloutput>ToolName<result>text</result></tooloutput>` = tool result from a previous turn
 - Your past `<thinking>`/`<toolcall>`/`<output>` blocks are visible in history.
+- If a previous tool call failed, your past `<thinking>` shows why — adjust your approach, don't repeat failed reasoning.
+- Use past failures as context: if the same type of step failed before, try a different tool or approach.
 
 ---
 
