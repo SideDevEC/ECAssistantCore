@@ -21,10 +21,8 @@ public class EAgentEngine : IEngine, IAsyncDisposable
     private ModelParams? _modelParams;
     private bool _sharesWeights = false; // v10.20: if true, don't dispose _weights in DisposeAsync
     // v10.22: Mock mode flag — when true, skip all LLama native initialization
+    // Set via the mock-mode protected constructor overload, not via static field.
     internal bool MockMode = false;
-
-    /// <summary>Internal flag set by MockEngine to skip model loading in the base constructor.</summary>
-    internal static bool _sForceMockMode = false;
     // v10.5: Switched to InteractiveExecutor for KV cache reuse.
     // Static prefix (system prompt + tools) is prefilled once at session start.
     // Only new tokens (user msg, tool output, directives) are fed per turn.
@@ -37,8 +35,12 @@ public class EAgentEngine : IEngine, IAsyncDisposable
     private ProjectContextManager? _projectContext = null;
     private readonly ECAssistant.Core.Interfaces.ILogger? _logger;
     private TaskPlanner? _taskPlanner = null;
-    private SecondaryModelLoader? _secondaryModel = null;  // v10.7: for LLM-based decomposition + summarization
     private BackgroundTasksConfig? _backgroundTasks = null;  // v10.25: replaces secondary model
+
+    // v10.25: Injected service dependencies — used by Initialize* methods if provided
+    private readonly SelfCorrectionManager? _injectedSelfCorrection;
+    private readonly ProjectContextManager? _injectedProjectContext;
+    private readonly TaskPlanner? _injectedTaskPlanner;
 
        // ── Context Window (replaces raw string list) ───────────
     private readonly ContextWindow _contextWindow;
@@ -93,12 +95,11 @@ public class EAgentEngine : IEngine, IAsyncDisposable
     /// <summary>Path to the GGUF model file.</summary>
     public string ModelPath => _modelPath;
 
-    public EMemoryManager Memory => _memoryManager ??= new EMemoryManager();
+    public EMemoryManager Memory => _memoryManager!;  // Always set in constructors — no lazy init
     public VectorMemoryStore? VectorMemory => _vectorMemory;
     public SelfCorrectionManager? SelfCorrection => _selfCorrection;
     public ProjectContextManager? ProjectContext => _projectContext;
     public TaskPlanner? TaskPlanner => _taskPlanner;
-    public SecondaryModelLoader? SecondaryModel => _secondaryModel;  // v10.7 (deprecated)
     /// <summary>Shared model weights — exposed for tools that need LLM access.</summary>
     public LLamaWeights? SharedWeights => _weights;
     /// <summary>Shared model params — needed to create StatelessExecutor.</summary>
@@ -218,14 +219,14 @@ public class EAgentEngine : IEngine, IAsyncDisposable
     /// <summary>Initialize self-correction manager.</summary>
     public void InitializeSelfCorrection(string workingDir)
     {
-        _selfCorrection = new SelfCorrectionManager(workingDir, _logger);
+        _selfCorrection = _injectedSelfCorrection ?? new SelfCorrectionManager(workingDir, _logger);
         _out?.WriteSuccess("[SelfCorrect] Self-correction manager ready.");
     }
 
     /// <summary>Initialize project context manager and scan project.</summary>
     public async Task InitializeProjectContextAsync(string workingDir)
     {
-        _projectContext = new ProjectContextManager(workingDir, _logger);
+        _projectContext = _injectedProjectContext ?? new ProjectContextManager(workingDir, _logger);
         await _projectContext.InitializeAsync();
         _out?.WriteSuccess($"[ProjectCtx] Project context loaded: {_projectContext.FileCount} files.");
     }
@@ -233,20 +234,13 @@ public class EAgentEngine : IEngine, IAsyncDisposable
     /// <summary>Initialize task planner for this session.</summary>
     public void InitializeTaskPlanner()
     {
-        _taskPlanner = new TaskPlanner(_logger);
+        _taskPlanner = _injectedTaskPlanner ?? new TaskPlanner(_logger);
     }
 
     /// <summary>Set background task config for decomposition + summarization.</summary>
     public void SetBackgroundTasks(BackgroundTasksConfig config)
     {
         _backgroundTasks = config;
-    }
-
-    /// <summary>Set the secondary model for decomposition + summarization (v10.7). DEPRECATED — use SetBackgroundTasks.</summary>
-    public void SetSecondaryModel(SecondaryModelLoader secondary)
-    {
-        _secondaryModel = secondary;
-        _out?.WriteSuccess("[Secondary] Secondary model attached to engine.");
     }
 
     /// <summary>Inject project context into prompt — only for code-related tasks.</summary>
@@ -344,7 +338,7 @@ public class EAgentEngine : IEngine, IAsyncDisposable
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
             try
             {
-                var summaryInference = InferenceParamsFactory.Create(
+                var summaryInference = InferenceParamsFactory.Default.Create(
                     summarizeConfig?.MaxTokens ?? 200,
                     summarizeConfig?.AntiPrompts ?? new[] { "User:", "Question:", "</lm>" });
                 summaryInference.SamplingPipeline = _inferenceParams.SamplingPipeline;
@@ -379,7 +373,7 @@ public class EAgentEngine : IEngine, IAsyncDisposable
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
         try
         {
-            var planInference = InferenceParamsFactory.Create(
+            var planInference = InferenceParamsFactory.Default.Create(
                 Math.Min(1024, (int)_contextSize / 4),
                 new[] { "</plan>", "User:", "Question:" });
             planInference.SamplingPipeline = _inferenceParams.SamplingPipeline;
@@ -445,7 +439,7 @@ User: " + userRequest + "\n<lm>\n";
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         try
         {
-            var decomposeInference = InferenceParamsFactory.Create(
+            var decomposeInference = InferenceParamsFactory.Default.Create(
                 decomposeConfig.MaxTokens,
                 decomposeConfig.AntiPrompts);
             decomposeInference.SamplingPipeline = _inferenceParams.SamplingPipeline;
@@ -501,6 +495,28 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
     }
 
     /// <summary>
+    /// Protected mock-mode constructor — skips all LLama native initialization.
+    /// Used by MockEngine for model-independent testing. No GGUF loaded, no context created.
+    /// </summary>
+    protected EAgentEngine(bool mockMode, string modelPath, uint contextSize, int gpuLayers, int threadCount, InferenceParams inferenceParams, string workingDir)
+    {
+        if (!mockMode) throw new ArgumentException("Use the normal constructor for real engines. This constructor is for mock mode only.", nameof(mockMode));
+        MockMode = true;
+        _logger = new Logger();
+        _modelPath = modelPath;
+        _contextSize = contextSize;
+        _gpuLayers = gpuLayers;
+        _threads = threadCount;
+        _inferenceParams = inferenceParams;
+        _workingDir = string.IsNullOrEmpty(workingDir) ? AppContext.BaseDirectory : workingDir;
+        _memoryManager = new EMemoryManager();
+        var mockSummarySvc = new SummaryService(null);
+        _contextWindow = new ContextWindow(contextSize, mockSummarySvc);
+        _transcript = new ConversationTranscript();
+        _memoryManager.Load();
+    }
+
+    /// <summary>
     /// Shared-weights constructor — uses an already-loaded LLamaWeights instance.
     /// Creates its own LLamaContext (own KV cache) from the shared weights.
     /// This is the v10.20 session path: one GGUF in RAM, separate KV caches per session.
@@ -514,10 +530,15 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
     /// <param name="inferenceParams">Inference params for THIS engine</param>
     /// <param name="workingDir">Working directory</param>
     public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threadCount, InferenceParams inferenceParams, string workingDir,
-        LLamaWeights? sharedWeights = null, ModelParams? sharedModelParams = null, ECAssistant.Core.Interfaces.ILogger? logger = null)
+        LLamaWeights? sharedWeights = null, ModelParams? sharedModelParams = null, ECAssistant.Core.Interfaces.ILogger? logger = null,
+        EMemoryManager? memoryManager = null, SelfCorrectionManager? selfCorrection = null,
+        ProjectContextManager? projectContext = null, TaskPlanner? taskPlanner = null)
           {
                _logger = logger ?? new Logger();
                _modelPath = modelPath;
+               _injectedSelfCorrection = selfCorrection;
+               _injectedProjectContext = projectContext;
+               _injectedTaskPlanner = taskPlanner;
 
                // Enable native library logging — only once (LLamaSharp throws on second config)
                if (!_nativeLibConfigured)
@@ -533,10 +554,8 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
                }
 
            // v10.22: Mock mode — skip all LLama native initialization, just set basic fields
-           if (MockMode || _sForceMockMode)
+           if (MockMode)
            {
-               if (_sForceMockMode) MockMode = true; // promote static flag to instance
-               _sForceMockMode = false; // reset static flag
                _contextSize = contextSize;
                _gpuLayers = gpuLayers;
                _threads = threadCount;
@@ -610,7 +629,7 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
            if (_context != null) _tokenCounter.Initialize(_context);
 
           // ── Load memory manager (not lazy — eager on startup) ───
-              _memoryManager = new EMemoryManager();
+         _memoryManager = memoryManager ?? new EMemoryManager();
 
            // ── Initialize context window + transcript ────────────
            var summarySvc = new SummaryService(null); // Will be wired after construction
@@ -634,7 +653,7 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
                             var userMsgs = loaded.Messages.Where(m => m.Role == "user").TakeLast(3);
                             if (userMsgs.Any())
                             {
-                                 _out?.WriteInfo($"[Last session] {string.Join(" | ", userMsgs.Select(m => StringUtil.Truncate(m.Content, 60)))}");
+                                 _out?.WriteInfo($"[Last session] {string.Join(" | ", userMsgs.Select(m => StringUtil.Default.Truncate(m.Content, 60)))}");
                             }
                           }
                     }
@@ -692,7 +711,7 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
                                       : "SystemPrompt.Linux.md";
 
                     // Try embedded resource first (self-contained DLL)
-                    var embedded = ResourceLoader.LoadTextWithFallback(promptResourceName, "SystemPrompt.Linux.md");
+                    var embedded = ResourceLoader.Default.LoadTextWithFallback(promptResourceName, "SystemPrompt.Linux.md");
                     if (embedded != null)
                     {
                         _systemPromptText = embedded;
@@ -1400,7 +1419,7 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
                     using var summaryCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
                     try
                     {
-                        var summaryInference = InferenceParamsFactory.Create(
+                        var summaryInference = InferenceParamsFactory.Default.Create(
                             Math.Max(100, (_backgroundTasks?.Summarize.MaxTokens ?? 200)),
                             _backgroundTasks?.Summarize.AntiPrompts ?? new[] { "User:", "Question:", "</lm>" });
                         summaryInference.SamplingPipeline = _inferenceParams.SamplingPipeline;
@@ -1528,11 +1547,11 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
                   rawResult = rawResult.Substring("<assistant>".Length).Trim();
               if (rawResult.EndsWith("</assistant>", StringComparison.OrdinalIgnoreCase))
                   rawResult = rawResult.Substring(0, rawResult.Length - "</assistant>".Length).Trim();
-              _out?.WriteDim($"[Engine] Raw ({rawResult.Length} chars): {StringUtil.Truncate(rawResult, 500)}");
+              _out?.WriteDim($"[Engine] Raw ({rawResult.Length} chars): {StringUtil.Default.Truncate(rawResult, 500)}");
 
                    cleanResponse = ExtractCleanResponse(rawResult);
 
-              _out?.WriteDim($"[Engine] Clean ({cleanResponse.Length} chars): {StringUtil.Truncate(cleanResponse, 500)}");
+              _out?.WriteDim($"[Engine] Clean ({cleanResponse.Length} chars): {StringUtil.Default.Truncate(cleanResponse, 500)}");
 
               if (string.IsNullOrEmpty(cleanResponse))
                   cleanResponse = timedOut ? "(Response truncated — model timed out)" : "(Empty response from model)";
@@ -1705,7 +1724,7 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
          }
 
          var result = sb.ToString().Trim();
-         _logger?.Debug("Extract", $"Output: {result.Length} chars, starts with: {StringUtil.Truncate(result, 80)}");
+         _logger?.Debug("Extract", $"Output: {result.Length} chars, starts with: {StringUtil.Default.Truncate(result, 80)}");
          return result;
            }
 
@@ -1714,7 +1733,7 @@ public EAgentEngine(string modelPath, uint contextSize, int gpuLayers, int threa
         => (_memoryManager == null) ? "(Not initialized)" : _memoryManager.Query(s, maxResults: maxResults);
 
    public void SaveMemory(string k, string c, string cat = "general")
-      { if (_memoryManager == null) _memoryManager = new EMemoryManager(); _memoryManager.AddEntry(k, c, cat); }
+      { _memoryManager?.AddEntry(k, c, cat); }
 
      /// <summary>Load memory manager from disk (called during constructor now).</summary>
    public void LoadContext()

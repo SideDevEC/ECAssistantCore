@@ -96,7 +96,7 @@ public class ParallelToolExecutor
                         if (policy.NeedsApproval)
                         {
                             _log($"[Policy] {tc}: {policy.Message}");
-                            var isApproved = _out?.RequestApproval($"[Policy] Approve {tc.ToolName}#{tc.Index} ({string.Join(", ", tc.Args.Select(kvp => kvp.Key + "=" + StringUtil.Truncate(kvp.Value ?? "", 60)))})?") ?? false;
+                            var isApproved = _out?.RequestApproval($"[Policy] Approve {tc.ToolName}#{tc.Index} ({string.Join(", ", tc.Args.Select(kvp => kvp.Key + "=" + StringUtil.Default.Truncate(kvp.Value ?? "", 60)))})?") ?? false;
                             if (isApproved)
                             {
                                 _log($"[Policy] Approved: {tc}");
@@ -250,7 +250,7 @@ public class ParallelToolExecutor
             if (policyDecision.NeedsApproval)
             {
                 _log($"[Policy] {tc}: {policyDecision.Message}");
-                var isApproved = _out?.RequestApproval($"[Policy] Approve {tc.ToolName}#{tc.Index} ({string.Join(", ", tc.Args.Select(kvp => kvp.Key + "=" + StringUtil.Truncate(kvp.Value ?? "", 60)))})?") ?? false;
+                var isApproved = _out?.RequestApproval($"[Policy] Approve {tc.ToolName}#{tc.Index} ({string.Join(", ", tc.Args.Select(kvp => kvp.Key + "=" + StringUtil.Default.Truncate(kvp.Value ?? "", 60)))})?") ?? false;
 
                 if (!isApproved)
                 {
@@ -327,8 +327,7 @@ public class ParallelToolExecutor
     /// [Tool 2: ToolName] Output: ...
     /// </result></tooloutput>
     /// </summary>
-   // Stateless utility — no mutable state
-    public static string CombineResults(BatchToolResult batch)
+    public string CombineResults(BatchToolResult batch)
     {
         if (batch.Results.Count == 1)
         {
@@ -360,8 +359,7 @@ public class ParallelToolExecutor
     /// <summary>
     /// Format a short summary for console display (not for LLM).
     /// </summary>
-   // Stateless utility — no mutable state
-    public static string FormatConsoleSummary(BatchToolResult batch)
+    public string FormatConsoleSummary(BatchToolResult batch)
     {
         if (batch.Results.Count == 1)
         {

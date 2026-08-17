@@ -2,16 +2,18 @@ using System.Text.Json.Serialization;
 
 namespace ECAssistant.Core.Config;
 
-public class SecondaryModelConfig
+/// <summary>
+/// Task decomposition settings. When use_llm is true, uses StatelessExecutor
+/// with shared main weights. When false, falls back to keyword-based TaskPlanner.
+/// </summary>
+public class DecomposeConfig
 {
-    [JsonPropertyName("enabled")]
-    public bool Enabled { get; init; } = false;
-    [JsonPropertyName("model_path")]
-    public string ModelPath { get; init; } = "";
+    [JsonPropertyName("use_llm")]
+    public bool UseLlm { get; init; } = true;
     [JsonPropertyName("context_size")]
     public uint ContextSize { get; init; } = 4096;
-    [JsonPropertyName("gpu_layers")]
-    public int GpuLayers { get; init; } = 0;
+    [JsonPropertyName("max_tokens")]
+    public int MaxTokens { get; init; } = 256;
     [JsonPropertyName("temperature")]
     public float Temperature { get; init; } = 0.1f;
     [JsonPropertyName("top_p")]
@@ -20,8 +22,6 @@ public class SecondaryModelConfig
     public int TopK { get; init; } = 40;
     [JsonPropertyName("repeat_penalty")]
     public float RepeatPenalty { get; init; } = 1.1f;
-    [JsonPropertyName("max_tokens")]
-    public int MaxTokens { get; init; } = 512;
     [JsonPropertyName("anti_prompts")]
-    public string[] AntiPrompts { get; init; } = new[] { "User:", "Question:", "\n```,\n" };
+    public string[] AntiPrompts { get; init; } = new[] { "User:", "Question:", "</lm>" };
 }

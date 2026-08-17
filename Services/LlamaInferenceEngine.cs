@@ -34,7 +34,7 @@ public class LlamaInferenceEngine : IInferenceEngine
 
     public async Task<string> GenerateAsync(string prompt, GenerationParams parameters, CancellationToken ct = default)
     {
-        var inferenceParams = InferenceParamsFactory.Create(
+        var inferenceParams = InferenceParamsFactory.Default.Create(
             parameters.MaxTokens,
             new[] { "User:", "### User" },
             parameters.Temperature,

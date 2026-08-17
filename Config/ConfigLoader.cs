@@ -39,7 +39,7 @@ public class ConfigLoader
         // Fallback: embedded default config from Core.dll
         try
         {
-            var embeddedJson = ResourceLoader.LoadText("appsettings.json");
+            var embeddedJson = ResourceLoader.Default.LoadText("appsettings.json");
             if (embeddedJson != null)
             {
                 var config = JsonSerializer.Deserialize<EAgentConfig>(embeddedJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });

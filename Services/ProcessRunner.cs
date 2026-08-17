@@ -78,7 +78,7 @@ public class ProcessRunner : IProcessRunner
     }
 
     /// <summary>Check if a command exists on the system (for pwsh detection on Windows).</summary>
-    private static bool CommandExists(string command)
+    private bool CommandExists(string command)
     {
         try
         {

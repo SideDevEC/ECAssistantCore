@@ -318,7 +318,7 @@ public sealed class TestRunner : IAsyncDisposable
         };
 
         // Build inference params
-        var inferenceParams = InferenceParamsFactory.Create(config);
+        var inferenceParams = InferenceParamsFactory.Default.Create(config);
 
         // Create the engine
         EAgentEngine engine;

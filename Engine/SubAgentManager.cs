@@ -32,6 +32,12 @@ public sealed class SubAgentManager : IDisposable
     private readonly ISessionOutput? _out;
     private readonly ILogger _logger;
 
+    // v10.25: Injected service dependencies — no more new-ing inside methods
+    private readonly Services.BackgroundProcessManager _bgManager;
+    private readonly ECAssistant.Core.Interfaces.IProcessRunner _processRunner;
+    private readonly ECAssistant.Core.Interfaces.IFileSystem _fileSystem;
+    private readonly ECAssistant.Core.Interfaces.IHttpClient _httpClient;
+
     /// <summary>Maximum concurrent sub-agents.</summary>
     public int MaxConcurrent { get; set; } = 3;
 
@@ -54,12 +60,22 @@ public sealed class SubAgentManager : IDisposable
     public IReadOnlyDictionary<string, ActiveSubAgent> ActiveAgents => _activeSubAgents;
 
     public SubAgentManager(EAgentEngine mainEngine, string mainWorkingDir = "", ILogger? logger = null, ISessionOutput? sessionOutput = null,
-        EAgentConfig? config = null, string? modelPath = null)
+        EAgentConfig? config = null, string? modelPath = null,
+        ECAssistant.Core.Interfaces.IProcessRunner? processRunner = null,
+        ECAssistant.Core.Interfaces.IFileSystem? fileSystem = null,
+        ECAssistant.Core.Interfaces.IHttpClient? httpClient = null,
+        Services.BackgroundProcessManager? bgManager = null)
     {
         _mainEngine = mainEngine;
         _mainWorkingDir = mainWorkingDir;
         _logger = logger ?? new Logger();
         _out = sessionOutput;
+
+        // v10.25: Injected dependencies — fall back to new instances if not provided
+        _bgManager = bgManager ?? new Services.BackgroundProcessManager();
+        _processRunner = processRunner ?? new Services.ProcessRunner();
+        _fileSystem = fileSystem ?? new Services.FileSystemAdapter();
+        _httpClient = httpClient ?? new Services.HttpClientAdapter();
 
         // v10.23: Config injected, not read from ~/ECAssistant/appsettings.json
         _config = config ?? new EAgentConfig();
@@ -73,7 +89,7 @@ public sealed class SubAgentManager : IDisposable
         DefaultMaxToolCalls = _config.SubAgent.MaxToolCalls;
         DefaultMaxRetries = _config.SubAgent.MaxRetries;
 
-        _inferenceParams = InferenceParamsFactory.Create(_config);
+        _inferenceParams = InferenceParamsFactory.Default.Create(_config);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -268,23 +284,17 @@ public sealed class SubAgentManager : IDisposable
             childEngine.LoadContext();
             childEngine.WireSummaryService();
 
-            // Register tools
-            var bgMgr = new Services.BackgroundProcessManager();
-            var processRunner = new Services.ProcessRunner();
-            var fileSystem = new Services.FileSystemAdapter();
-            var httpClient = new Services.HttpClientAdapter();
-
-            // v10.24: Pass EAgentConfig to tools instead of ConfigProvider
-            childEngine.RegisterTool(new Tools.Shell.EShellAgent(processRunner, _config, workingDir));
-            childEngine.RegisterTool(new Tools.Background.EBackgroundExecTool(bgMgr, processRunner, fileSystem, _config));
-            childEngine.RegisterTool(new Tools.Web.EWebSearchTool(httpClient, _config));
-            childEngine.RegisterTool(new Tools.Build.EDotnetBuildTool(processRunner, _config));
-            childEngine.RegisterTool(new Tools.Git.EGitTool(processRunner, fileSystem, _config));
-            childEngine.RegisterTool(new Tools.Code.ECodeEditorTool(fileSystem, _config));
+            // Register tools — use injected service dependencies
+            childEngine.RegisterTool(new Tools.Shell.EShellAgent(_processRunner, _config, workingDir));
+            childEngine.RegisterTool(new Tools.Background.EBackgroundExecTool(_bgManager, _processRunner, _fileSystem, _config));
+            childEngine.RegisterTool(new Tools.Web.EWebSearchTool(_httpClient, _config));
+            childEngine.RegisterTool(new Tools.Build.EDotnetBuildTool(_processRunner, _config));
+            childEngine.RegisterTool(new Tools.Git.EGitTool(_processRunner, _fileSystem, _config));
+            childEngine.RegisterTool(new Tools.Code.ECodeEditorTool(_fileSystem, _config));
 
             var researchExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                 { ".cs", ".md", ".json", ".txt", ".xml", ".sql", ".html", ".css", ".js", ".sh" };
-            childEngine.RegisterTool(new Tools.Research.EFileResearchTool(fileSystem, _config));
+            childEngine.RegisterTool(new Tools.Research.EFileResearchTool(_fileSystem, _config));
 
             await childEngine.PrefillStaticPrefix();
 

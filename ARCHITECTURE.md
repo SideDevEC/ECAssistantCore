@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-08-17 (v11.2)
+**Updated:** 2026-08-17 (v11.3 — OOP compliance refactor)
 **Status:** ✅ 857 tests pass, 0 errors, 13 warnings (pre-existing xUnit analyzers)
 
 ## Overview
@@ -10,7 +10,7 @@ ECAssistant is a local-first AI agent framework running LLM inference on-device 
 ## OOP Principles
 
 - **Encapsulation:** Config models are init-only (immutable); 2 documented exceptions for builder-mutated properties
-- **No globals or statics:** Dependencies injected via constructors
+- **No globals or statics:** Dependencies injected via constructors. No static classes, no static mutable state. Utility classes (StringUtil, InferenceParamsFactory, ResourceLoader) are instance classes with `Default` shared instance. Factory methods on immutable data classes (EToolResult.Success, TranscriptMessage.User, etc.) are the only allowed static methods
 - **No cross-dependencies:** Layers depend only on the layer below
 - **Single responsibility:** One type per file, one interface = one concern
 - **Modular & interchangeable:** Every service behind an interface, mockable via Moq
@@ -36,6 +36,7 @@ ECAssistantCore/           # Core engine, tools, sessions, memory (210 files + 6
 ├── Testing/               # TestRunner, MockEngine, TestScenario, EcaTests
 └── Tools/                 # EToolBase + 12 built-in tools
     ├── EBackground/       # Background process execution
+    ├── Build/             # BuildErrorParser (extracted from EDotnetBuildTool)
     ├── ECode/             # Code editor (create, patch, diff, search, insert, delete)
     ├── EDotnet/           # dotnet build/restore/test
     ├── EGit/              # Git operations
@@ -44,7 +45,8 @@ ECAssistantCore/           # Core engine, tools, sessions, memory (210 files + 6
     ├── EWeb/              # Web search + fetch
     ├── Policy/            # ToolPermission, ToolPolicyDecision
     ├── Reader/            # File reader
-    └── SubAgent/          # Sub-agent tool
+    ├── SubAgent/          # Sub-agent tool
+    └── EToolResult.cs     # Tool call result (split from EToolBase.cs)
 
 ECAssistantTUI/            # Terminal UI layer (12 files + 9 test files)
 ├── Controller/            # AppController
@@ -142,12 +144,17 @@ Config:
 
 ## Key Constraints
 
-- No statics, no globals, no service locators
+- No static classes, no static mutable state
+- Utility classes use instance methods with `Default` shared instance (StringUtil, InferenceParamsFactory, ResourceLoader)
+- Factory methods on immutable data classes are the only allowed static methods (EToolResult.Success, TranscriptMessage.User, ToolPolicy.Allowed, etc.)
 - Constructor injection throughout
 - One type per file
 - All config models init-only (2 documented exceptions)
 - All ReadCfg logic consolidated in EToolBase
 - EAgentEngine implements IEngine (unsealed)
+- EAgentEngine: optional constructor injection for EMemoryManager, SelfCorrectionManager, ProjectContextManager, TaskPlanner
+- SubAgentManager: injects IProcessRunner, IFileSystem, IHttpClient, BackgroundProcessManager via constructor
 - EGuiConsole uses ITerminalOutput (no direct Console.Write)
 - EcaCompositionRoot is the single wiring point
 - One model load — background tasks use StatelessExecutor with shared weights
+- MockEngine uses protected mock-mode constructor (no static flags)

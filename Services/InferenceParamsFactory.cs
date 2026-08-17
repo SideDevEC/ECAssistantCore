@@ -7,14 +7,18 @@ namespace ECAssistant.Core.Services;
 /// <summary>
 /// Factory for creating InferenceParams from EAgentConfig.
 /// Centralizes all LLamaSharp-specific construction so callers don't need LLamaSharp references.
+/// Instance class (not static) for OOP compliance. Use Default or inject your own.
 /// </summary>
-public static class InferenceParamsFactory
+public class InferenceParamsFactory
 {
+    /// <summary>Default shared instance for convenience.</summary>
+    public static readonly InferenceParamsFactory Default = new();
+
     /// <summary>
     /// Create InferenceParams from an EAgentConfig's Inference and Sampling settings.
     /// Uses TruncateAndReprefill overflow strategy (handles context window gracefully).
     /// </summary>
-    public static InferenceParams Create(EAgentConfig config)
+    public InferenceParams Create(EAgentConfig config)
     {
         return new InferenceParams
         {
@@ -37,7 +41,7 @@ public static class InferenceParamsFactory
     /// Create InferenceParams with explicit values.
     /// Used by sub-agents and secondary models that may override config defaults.
     /// </summary>
-    public static InferenceParams Create(
+    public InferenceParams Create(
         int maxTokens,
         string[]? antiPrompts = null,
         float temperature = 0.8f,

@@ -1,4 +1,5 @@
 using ECAssistant.Core.Engine;
+using ECAssistant.Core.Testing;
 using ECAssistant.Core.Tools;
 using Moq;
 
@@ -6,6 +7,20 @@ namespace ECAssistant.Core.Tests.Engine;
 
 public class ParallelToolExecutorTests
 {
+    // CombineResults/FormatConsoleSummary are instance methods but don't use instance state.
+    // Create a minimal executor for testing them.
+    private static readonly ParallelToolExecutor _executor = CreateTestExecutor();
+
+    private static ParallelToolExecutor CreateTestExecutor()
+    {
+        // Create a mock EAgentEngine via the mock-mode constructor path
+        var engine = new Testing.MockEngine("/tmp", cycleResponses: true);
+        return new ParallelToolExecutor(
+            engine,
+            new ECAssistant.Core.Tools.ToolPolicy(),
+            (name, args) => Task.FromResult(EToolResult.Success(name, "mock")));
+    }
+
     private static ToolCallRequest MakeTool(string name, int index, Dictionary<string, string?>? args = null)
         => new() { ToolName = name, Index = index, Args = args ?? new() };
 
@@ -31,7 +46,7 @@ public class ParallelToolExecutorTests
     public void CombineResults_SingleSuccessfulResult_ReturnsOutputDirectly()
     {
         var batch = MakeBatch(("EShellAgent", 0, true, "Build succeeded", ""));
-        var result = ParallelToolExecutor.CombineResults(batch);
+        var result = _executor.CombineResults(batch);
         Assert.Equal("Build succeeded", result);
     }
 
@@ -39,7 +54,7 @@ public class ParallelToolExecutorTests
     public void CombineResults_SingleFailedResult_ReturnsFailedMessage()
     {
         var batch = MakeBatch(("EShellAgent", 0, false, "", "Build failed"));
-        var result = ParallelToolExecutor.CombineResults(batch);
+        var result = _executor.CombineResults(batch);
         Assert.Contains("[FAILED]", result);
         Assert.Contains("EShellAgent", result);
         Assert.Contains("Build failed", result);
@@ -52,7 +67,7 @@ public class ParallelToolExecutorTests
             ("EShellAgent", 0, true, "Output 1", ""),
             ("EFileResearchTool", 1, true, "Output 2", "")
         );
-        var result = ParallelToolExecutor.CombineResults(batch);
+        var result = _executor.CombineResults(batch);
         Assert.Contains("BATCH", result);
         Assert.Contains("Tool 0", result);
         Assert.Contains("Tool 1", result);
@@ -68,7 +83,7 @@ public class ParallelToolExecutorTests
             ("EShellAgent", 0, true, "Good output", ""),
             ("ECodeEditor", 1, false, "", "Edit failed")
         );
-        var result = ParallelToolExecutor.CombineResults(batch);
+        var result = _executor.CombineResults(batch);
         Assert.Contains("OK", result);
         Assert.Contains("FAIL", result);
         Assert.Contains("Good output", result);
@@ -82,7 +97,7 @@ public class ParallelToolExecutorTests
             ("EShellAgent", 0, true, "A", ""),
             ("EShellAgent", 1, true, "B", "")
         );
-        var result = ParallelToolExecutor.CombineResults(batch);
+        var result = _executor.CombineResults(batch);
         Assert.Contains("2/2 succeeded", result);
     }
 
@@ -94,7 +109,7 @@ public class ParallelToolExecutorTests
             ("EShellAgent", 1, false, "", "err"),
             ("EShellAgent", 2, true, "C", "")
         );
-        var result = ParallelToolExecutor.CombineResults(batch);
+        var result = _executor.CombineResults(batch);
         Assert.Contains("2/3 succeeded", result);
     }
 
@@ -114,7 +129,7 @@ public class ParallelToolExecutorTests
                 new() { ToolCalls = new() { MakeTool("B", 1) }, GroupIndex = 1 }
             }
         };
-        var result = ParallelToolExecutor.CombineResults(batch);
+        var result = _executor.CombineResults(batch);
         Assert.Contains("2 group(s)", result);
     }
 
@@ -122,7 +137,7 @@ public class ParallelToolExecutorTests
     public void FormatConsoleSummary_SingleResult_ReturnsSimpleSummary()
     {
         var batch = MakeBatch(("EShellAgent", 0, true, "output", ""));
-        var result = ParallelToolExecutor.FormatConsoleSummary(batch);
+        var result = _executor.FormatConsoleSummary(batch);
         Assert.Contains("EShellAgent", result);
         Assert.Contains("OK", result);
     }
@@ -131,7 +146,7 @@ public class ParallelToolExecutorTests
     public void FormatConsoleSummary_SingleFailedResult_ShowsFail()
     {
         var batch = MakeBatch(("ECodeEditor", 0, false, "", "error"));
-        var result = ParallelToolExecutor.FormatConsoleSummary(batch);
+        var result = _executor.FormatConsoleSummary(batch);
         Assert.Contains("ECodeEditor", result);
         Assert.Contains("FAIL", result);
     }
@@ -143,7 +158,7 @@ public class ParallelToolExecutorTests
             ("EShellAgent", 0, true, "A", ""),
             ("EFileResearchTool", 1, false, "", "err")
         );
-        var result = ParallelToolExecutor.FormatConsoleSummary(batch);
+        var result = _executor.FormatConsoleSummary(batch);
         Assert.Contains("1/2 OK", result);
         Assert.Contains("EShellAgent#0:OK", result);
         Assert.Contains("EFileResearchTool#1:FAIL", result);
@@ -166,7 +181,7 @@ public class ParallelToolExecutorTests
                 new() { ToolCalls = new() { MakeTool("C", 2) }, GroupIndex = 2 }
             }
         };
-        var result = ParallelToolExecutor.FormatConsoleSummary(batch);
+        var result = _executor.FormatConsoleSummary(batch);
         Assert.Contains("3 groups", result);
     }
 

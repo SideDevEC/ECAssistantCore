@@ -14,6 +14,7 @@ public class EDotnetBuildTool : EToolBase
 {
     private readonly IProcessRunner _processRunner;
     private readonly JsonElement? _toolConfig;
+    private readonly BuildErrorParser _errorParser = new();
 
     public override string Name => "DotnetBuild";
     public override string Description => "Run dotnet build, test, or restore commands.";
@@ -46,8 +47,8 @@ public class EDotnetBuildTool : EToolBase
             return EToolResult.Failure(Name, "Build exceeded time limit.");
 
         var allOutput = result.StdOut + "\n" + result.StdErr;
-        var errors = ParseBuildErrors(allOutput);
-        var warnings = ParseBuildWarnings(allOutput);
+        var errors = _errorParser.ParseErrors(allOutput);
+        var warnings = _errorParser.ParseWarnings(allOutput);
 
         if (result.ExitCode == 0 && errors.Count == 0)
             return EToolResult.Success(Name, $"[Build Success] {warnings.Count} warning(s).\n{result.StdOut}");
@@ -57,24 +58,4 @@ public class EDotnetBuildTool : EToolBase
             return EToolResult.Success(Name, $"[Build Success with warnings] {warnings.Count} warning(s).\n{result.StdOut}");
     }
 
-    // Stateless utility — no mutable state
-    private static List<BuildError> ParseBuildErrors(string output)
-    {
-        var errors = new List<BuildError>();
-        var pattern = @"(.+?)\((\d+),(\d+)\):\s+(error|fatal error)\s+(\w+):\s+(.+)$";
-        foreach (Match m in Regex.Matches(output, pattern, RegexOptions.Multiline))
-            errors.Add(new BuildError(m.Groups[1].Value, int.Parse(m.Groups[2].Value), m.Groups[5].Value, m.Groups[6].Value));
-        return errors;
-    }
-
-    private static List<BuildError> ParseBuildWarnings(string output)
-    {
-        var warnings = new List<BuildError>();
-        var pattern = @"(.+?)\((\d+),(\d+)\):\s+warning\s+(\w+):\s+(.+)$";
-        foreach (Match m in Regex.Matches(output, pattern, RegexOptions.Multiline))
-            warnings.Add(new BuildError(m.Groups[1].Value, int.Parse(m.Groups[2].Value), m.Groups[4].Value, m.Groups[5].Value));
-        return warnings;
-    }
 }
-
-internal record BuildError(string File, int Line, string Code, string Message);

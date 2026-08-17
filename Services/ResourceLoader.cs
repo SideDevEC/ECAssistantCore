@@ -6,17 +6,26 @@ namespace ECAssistant.Core.Services;
 /// Loads embedded resources from the Core DLL.
 /// Resources (SystemPrompt.*.md, appsettings.json, etc.) are embedded at build time,
 /// making Core.dll fully self-contained — no external files needed.
+/// Instance class (not static) for OOP compliance. Use Default or inject your own.
 /// </summary>
-public static class ResourceLoader
+public class ResourceLoader
 {
-    private static readonly Assembly _assembly = typeof(ResourceLoader).Assembly;
+    /// <summary>Default shared instance for convenience.</summary>
+    public static readonly ResourceLoader Default = new();
+
+    private readonly Assembly _assembly;
     private const string _baseNamespace = "ECAssistant.Core.";
+
+    public ResourceLoader()
+    {
+        _assembly = typeof(ResourceLoader).Assembly;
+    }
 
     /// <summary>
     /// Load a text resource embedded in the Core DLL.
     /// Returns null if the resource is not found.
     /// </summary>
-    public static string? LoadText(string resourceName)
+    public string? LoadText(string resourceName)
     {
         var fullId = _baseNamespace + resourceName;
         using var stream = _assembly.GetManifestResourceStream(fullId);
@@ -29,7 +38,7 @@ public static class ResourceLoader
     /// Load a text resource, with fallback to an alternative name.
     /// Returns null if neither resource is found.
     /// </summary>
-    public static string? LoadTextWithFallback(string primary, string fallback)
+    public string? LoadTextWithFallback(string primary, string fallback)
     {
         return LoadText(primary) ?? LoadText(fallback);
     }
@@ -37,7 +46,7 @@ public static class ResourceLoader
     /// <summary>
     /// Check if an embedded resource exists.
     /// </summary>
-    public static bool Exists(string resourceName)
+    public bool Exists(string resourceName)
     {
         return _assembly.GetManifestResourceInfo(_baseNamespace + resourceName) != null;
     }

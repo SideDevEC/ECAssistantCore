@@ -1,6 +1,6 @@
 # ECAssistant — Project Summary
 
-**Updated:** 2026-08-17 (v11.2)
+**Updated:** 2026-08-17 (v11.3 — OOP compliance refactor)
 **Status:** ✅ 857 tests pass, 0 errors, 13 warnings (pre-existing xUnit analyzers)
 **Target Framework:** .NET 8.0
 **Platform:** Cross-platform (Windows, macOS, Linux)
@@ -10,6 +10,20 @@
 ## What It Is
 
 ECAssistant is a local-first AI agent framework. It runs LLM inference on-device via LLamaSharp with multi-session orchestration, sub-agents, vector memory, self-correction, 12 built-in tools, and a full TUI — no cloud, no API keys.
+
+## v11.3 Changes (2026-08-17 — OOP compliance refactor)
+
+Full OOP compliance audit and refactor:
+- **Split multi-type files:** `EToolBase.cs` → `EToolBase.cs` + `EToolResult.cs`; `BackgroundTasksConfig.cs` → 3 files
+- **Removed static mutable state:** `_sForceMockMode` → protected mock-mode constructor on EAgentEngine
+- **Deleted deprecated dead code:** `SecondaryModelLoader.cs` + `SecondaryModelConfig.cs` removed
+- **Converted static classes to instance:** `StringUtil`, `InferenceParamsFactory`, `ResourceLoader` — now instance classes with `Default` shared instance
+- **SystemPromptBuilder:** private static methods → instance methods
+- **SubAgentManager:** service dependencies (IProcessRunner, IFileSystem, IHttpClient, BackgroundProcessManager) now injected via constructor
+- **EAgentEngine:** optional constructor injection for EMemoryManager, SelfCorrectionManager, ProjectContextManager, TaskPlanner
+- **BuildErrorParser:** extracted from EDotnetBuildTool into dedicated instance class
+- **ParallelToolExecutor:** CombineResults/FormatConsoleSummary moved from static to instance methods
+- **ProcessRunner.CommandExists:** static → instance method
 
 ## v11.2 Changes (2026-08-17)
 

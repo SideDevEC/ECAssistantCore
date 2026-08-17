@@ -53,27 +53,10 @@ public class MockEngine : EAgentEngine
     /// <param name="workingDir">Working directory (for file operations)</param>
     /// <param name="cycleResponses">If true, cycle through responses repeatedly. If false, use default after queue empties.</param>
     public MockEngine(string workingDir, bool cycleResponses = false)
-        : base(modelPath: ActivateMockMode("/mock/model.gguf"),
-               contextSize: 4096,
-               gpuLayers: 0,
-               threadCount: 1,
-               inferenceParams: new InferenceParams { MaxTokens = 128 },
-               workingDir: workingDir,
-               sharedWeights: null,
-               sharedModelParams: null)
+        : base(mockMode: true, modelPath: "/mock/model.gguf", contextSize: 4096, gpuLayers: 0, threadCount: 1,
+               inferenceParams: new InferenceParams { MaxTokens = 128 }, workingDir: workingDir)
     {
         _cycleResponses = cycleResponses;
-    }
-
-    /// <summary>
-    /// Side-effect helper: sets the static mock-mode flag before base() constructor runs.
-    /// Returns the modelPath unchanged. The EAgentEngine constructor checks _sForceMockMode
-    /// and skips LLama weight loading when true.
-    /// </summary>
-    private static string ActivateMockMode(string modelPath)
-    {
-        EAgentEngine._sForceMockMode = true;
-        return modelPath;
     }
 
     /// <summary>Add a predefined response to the queue.</summary>

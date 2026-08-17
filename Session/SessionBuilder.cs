@@ -66,12 +66,6 @@ public class SessionBuilder
     public bool? EnableSubAgents { get; set; }
 
     /// <summary>
-    /// Whether to use LLM for background tasks (decomposition, summarization).
-    /// Default: follows config (config.BackgroundTasks.Decompose.UseLlm / Summarize.UseLlm).
-    /// </summary>
-    public bool? EnableSecondaryModel { get; set; } // kept for compat — now ignored
-
-    /// <summary>
     /// Wire background task config into the session. Default: true.
     /// Passes config.BackgroundTasks to the engine for StatelessExecutor use.
     /// </summary>
@@ -236,12 +230,4 @@ public class SessionBuilder
             session.RegisterTool(tool);
     }
 
-    /// <summary>
-    /// Load the secondary model from config.
-    /// DEPRECATED — no longer used. Secondary model removed in favor of shared weights.
-    /// </summary>
-    private SecondaryModelLoader? LoadSecondaryModel()
-    {
-        return null;
-    }
 }

@@ -71,7 +71,7 @@ public class SessionManager : IAsyncDisposable
             Threads = config.Llm.Threads == -1 ? null : config.Llm.Threads,
         };
 
-        _inferenceParams = InferenceParamsFactory.Create(config);
+        _inferenceParams = InferenceParamsFactory.Default.Create(config);
 
         // v10.21: Redirect native llama.cpp C++ logging through callback — keeps console clean.
         // All load_tensors:, repack:, ggml_metal_, llama_context: etc go to file, not stderr/stdout.

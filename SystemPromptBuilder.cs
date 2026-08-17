@@ -54,7 +54,7 @@ public class SystemPromptBuilder
     /// <summary>
     /// Auto-detect the OS. Returns "macOS", "Windows", or "Linux".
     /// </summary>
-    private static string DetectPlatform()
+    private string DetectPlatform()
     {
         if (OperatingSystem.IsMacOS()) return "macOS";
         if (OperatingSystem.IsWindows()) return "Windows";
@@ -64,7 +64,7 @@ public class SystemPromptBuilder
     /// <summary>
     /// Get OS-specific shell guidance for the platform.
     /// </summary>
-    private static string GetShellGuidance(string platform)
+    private string GetShellGuidance(string platform)
     {
         return platform switch
         {
