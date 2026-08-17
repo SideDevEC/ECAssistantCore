@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-08-17 (v11.3 — OOP compliance refactor)
+**Updated:** 2026-08-17 (v11.3 — OOP compliance refactor, complete)
 **Status:** ✅ 857 tests pass, 0 errors, 13 warnings (pre-existing xUnit analyzers)
 
 ## Overview
@@ -10,7 +10,7 @@ ECAssistant is a local-first AI agent framework running LLM inference on-device 
 ## OOP Principles
 
 - **Encapsulation:** Config models are init-only (immutable); 2 documented exceptions for builder-mutated properties
-- **No globals or statics:** Dependencies injected via constructors. No static classes, no static mutable state. Utility classes (StringUtil, InferenceParamsFactory, ResourceLoader) are instance classes with `Default` shared instance. Factory methods on immutable data classes (EToolResult.Success, TranscriptMessage.User, etc.) are the only allowed static methods
+- **No globals or statics:** Dependencies injected via constructors. No static classes, no static mutable state. Utility classes (StringUtil, InferenceParamsFactory, ResourceLoader, AgentConfigBuilder) are instance classes with `Default` shared instance. The only allowed static methods are factory methods on immutable data classes (EToolResult.Success, TranscriptMessage.User, ToolPolicy.Allowed, AgentConfigBuilder.Create, etc.) and pure protected instance helpers on EToolBase (ReadConfig, ReadCfg, IsToolEnabled)
 - **No cross-dependencies:** Layers depend only on the layer below
 - **Single responsibility:** One type per file, one interface = one concern
 - **Modular & interchangeable:** Every service behind an interface, mockable via Moq
@@ -145,8 +145,9 @@ Config:
 ## Key Constraints
 
 - No static classes, no static mutable state
-- Utility classes use instance methods with `Default` shared instance (StringUtil, InferenceParamsFactory, ResourceLoader)
-- Factory methods on immutable data classes are the only allowed static methods (EToolResult.Success, TranscriptMessage.User, ToolPolicy.Allowed, etc.)
+- Utility classes use instance methods with `Default` shared instance (StringUtil, InferenceParamsFactory, ResourceLoader, AgentConfigBuilder)
+- Factory methods on immutable data classes are the only allowed static methods (EToolResult.Success, TranscriptMessage.User, ToolPolicy.Allowed, AgentConfigBuilder.Create, etc.)
+- EToolBase config helpers (ReadConfig, ReadCfg, IsToolEnabled) are protected instance methods
 - Constructor injection throughout
 - One type per file
 - All config models init-only (2 documented exceptions)
