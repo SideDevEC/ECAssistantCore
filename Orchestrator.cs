@@ -110,12 +110,29 @@ public sealed class AgentOrchestrator : IAsyncDisposable
         await _engine.PrefillStaticPrefix();
 
          // v10.6: Decompose the request into sub-tasks using TaskPlanner
-         // v10.25: Use engine.DecomposeTaskAsync (StatelessExecutor with shared weights), fall back to keyword-based
-        var planner = _engine.TaskPlanner;
-        if (planner != null)
+         // v11.4: Gate — skip decomposition for conversational questions
+         var planner = _engine.TaskPlanner;
+         if (planner != null)
          {
             List<SubTask>? decomposed = null;
 
+            // v11.4: Fast gate — action verb check (instant, zero cost)
+            if (LooksConversational(goal))
+            {
+                _out?.WriteDim("Conversational question — skipping decomposition.");
+                decomposed = new List<SubTask> { new SubTask { Description = goal, Status = SubTaskStatus.Pending } };
+            }
+            else
+            {
+                // v11.4: LLM gate — ambiguous cases, 1-token classification
+                var isChat = await _engine.IsConversationalAsync(goal);
+                if (isChat)
+                {
+                    _out?.WriteDim("LLM classified as conversational — skipping decomposition.");
+                    decomposed = new List<SubTask> { new SubTask { Description = goal, Status = SubTaskStatus.Pending } };
+                }
+                else
+                {
              // v10.25: Try LLM-based decomposition via engine (StatelessExecutor with shared main weights)
             _out?.WriteInfo("Attempting LLM task decomposition...");
             var steps = await _engine.DecomposeTaskAsync(goal);
@@ -139,6 +156,8 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                  // Populate planner with LLM-generated steps so GetProgressContext works
                 planner.Decompose(string.Join(" then ", decomposed.Select(s => s.Description)));
              }
+                }
+            }
 
              _subTasks = decomposed;
              _currentSubTask = 0;
@@ -538,6 +557,27 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
      /// <summary>
      /// Parse the LLM's clean response — detect one or more <toolcall> blocks or an <output> block.
+    // v11.4: Fast conversational gate — action verb + step indicator heuristic
+    private static readonly string[] ActionVerbs = new[]
+    {
+        "build", "create", "add", "remove", "update", "fix", "replace", "refactor",
+        "test", "delete", "move", "copy", "run", "search", "find", "read", "write",
+        "install", "deploy", "configure", "check", "analyze", "scan", "show",
+        "list", "open", "edit", "generate", "execute", "start", "stop", "restart"
+    };
+
+    private static readonly string[] StepIndicators = new[]
+    {
+        " and then ", " then ", " after that ", " also ", " finally ", " next ", " and "
+    };
+
+    private static bool LooksConversational(string request)
+    {
+        var hasActions = ActionVerbs.Any(v => request.Contains(v, StringComparison.OrdinalIgnoreCase));
+        var hasSteps = StepIndicators.Any(s => request.Contains(s, StringComparison.OrdinalIgnoreCase));
+        return !hasActions && !hasSteps;
+    }
+
      ///
      /// The engine already strips noise via ExtractCleanResponse() and extracts ALL <toolcall> blocks.
      /// We parse them into a list of ToolCallRequest objects for the ParallelToolExecutor.

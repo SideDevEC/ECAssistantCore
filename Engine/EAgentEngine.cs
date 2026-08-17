@@ -485,6 +485,45 @@ User: " + userRequest + "\n<lm>\n";
         return steps;
     }
 
+    /// <summary>
+    /// v11.4: Classify user intent as TASK or CHAT using a fast LLM call.
+    /// Uses StatelessExecutor with shared weights — tiny prompt, 1-token output.
+    /// Returns true if the request is conversational (skip decomposition), false if it's a task.
+    /// </summary>
+    public async Task<bool> IsConversationalAsync(string userRequest)
+    {
+        if (_weights == null || _modelParams == null)
+            return false;
+
+        var executor = new StatelessExecutor(_weights, _modelParams, new NullLogger());
+        var prompt = $"Is this a task needing tools, or a conversational question? Reply only TASK or CHAT.\n\nUser: hello\nCHAT\n\nUser: create a file\nTASK\n\nUser: what can you do?\nCHAT\n\nUser: fix the bug\nTASK\n\nUser: how are you?\nCHAT\n\nUser: read Program.cs and fix line 42\nTASK\n\nUser: {userRequest}\n";
+
+        var sb = new StringBuilder();
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        try
+        {
+            var inference = InferenceParamsFactory.Default.Create(
+                maxTokens: 2,
+                antiPrompts: new[] { "\n", "User:" },
+                temperature: 0.1f,
+                topP: 0.8f,
+                topK: 40,
+                repeatPenalty: 1.0f);
+            inference.SamplingPipeline = _inferenceParams.SamplingPipeline;
+            await foreach (var token in executor.InferAsync(prompt, inference, cts.Token))
+                sb.Append(token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Timeout — assume task to be safe
+            return false;
+        }
+
+        var raw = sb.ToString().Trim().ToUpperInvariant();
+        _logger?.Info("Intent", $"Classification for '{userRequest.Substring(0, Math.Min(userRequest.Length, 40))}': {raw}");
+        return raw.StartsWith("CHAT");
+    }
+
        /// <summary>Create engine with context window support and auto-injected memory.</summary>
      private string _workingDir = "";
 
