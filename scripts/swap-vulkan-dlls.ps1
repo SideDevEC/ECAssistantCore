@@ -2,6 +2,7 @@
 .SYNOPSIS
 Swaps LLamaSharp 0.27.0 Vulkan native DLLs with latest llama.cpp build.
 Run this AFTER building Core and TUI on Windows.
+Updates: NuGet cache, Core, TUI, Console, and all Tests.
 #>
 param(
     [string]$LlamaVersion = "b10472",
@@ -89,6 +90,26 @@ foreach ($target in $targets) {
     Write-Host ""
 }
 
+# ── Copy Core/TUI output to Console lib/ ──
+Write-Host "Copying Core/TUI to Console lib/..." -ForegroundColor Yellow
+
+$coreDll = Get-ChildItem -Path "$RepoRoot" -Recurse -Filter "ECAssistant.Core.dll" | Where-Object {
+    $_.FullName -like "*\bin\Release\*" -or $_.FullName -like "*\bin\Debug\*"
+} | Select-Object -First 1 -ExpandProperty FullName
+
+$tuiDll = Get-ChildItem -Path "$RepoRoot" -Recurse -Filter "ECAssistant.TUI.dll" | Where-Object {
+    $_.FullName -like "*\bin\Release\*" -or $_.FullName -like "*\bin\Debug\*"
+} | Select-Object -First 1 -ExpandProperty FullName
+
+$consoleLib = "$RepoRoot\ECAssistantConsole\lib"
+if (Test-Path $consoleLib) {
+    if ($coreDll) { Copy-Item $coreDll "$consoleLib\ECAssistant.Core.dll" -Force; Write-Host "  OK Core -> Console\lib\" -ForegroundColor Green }
+    if ($tuiDll) { Copy-Item $tuiDll "$consoleLib\ECAssistant.TUI.dll" -Force; Write-Host "  OK TUI -> Console\lib\" -ForegroundColor Green }
+} else {
+    Write-Host "  Console\lib\ not found — skipping" -ForegroundColor DarkGray
+}
+Write-Host ""
+
 # ── Cleanup ──
 Remove-Item $tempZip -Force
 Remove-Item $tempExtract -Recurse -Force
@@ -99,5 +120,5 @@ Write-Host "Next steps:"
 Write-Host "  1. Rebuild: dotnet build -c Release"
 Write-Host "  2. Set gpu_layers > 0 in appsettings.json"
 Write-Host "  3. Test with short prompt, then longer one"
-Write-Host "  4. If crash -> delete swapped DLLs, restore from backup folders"
+Write-Host "  4. If crash -> restore from backup folders"
 Write-Host "     Or: dotnet restore (resets NuGet cache to originals)"
