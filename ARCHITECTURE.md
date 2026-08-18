@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-08-18 (v11.4 — conversational gate + system prompt improvements)
+**Updated:** 2026-08-18 (v11.5 — PrefixCachedExtractor for KV cache reuse)
 **Status:** ✅ 857 tests pass, 0 errors, 13 warnings (pre-existing xUnit analyzers)
 
 ## Overview
@@ -27,7 +27,8 @@ ECAssistantCore/           # Core engine, tools, sessions, memory (210 files + 6
 ├── Config/                # AgentConfigBuilder, ConfigLoader, 13 config models (init-only)
 ├── Engine/                # EAgentEngine (IEngine), Orchestrator, SubAgentManager, TaskPlanner
 │   ├── SelfCorrection/    # FailureAnalysis, FailurePattern, FileSnapshot
-│   └── SubAgent/          # SubAgentTask, SubAgentResult, SubAgentError
+│   ├── SubAgent/          # SubAgentTask, SubAgentResult, SubAgentError
+│   └── PrefixCachedExtractor.cs  # KV cache reuse for long-lived extraction tasks
 ├── Interfaces/            # 15 interfaces (IEngine, IInferenceEngine, ILogger, IMemoryService, etc.)
 ├── Memory/                # EMemoryManager, VectorMemoryStore
 ├── Services/              # 12 service implementations (Logger, ContextManager, ModelLoader, etc.)
@@ -121,6 +122,23 @@ Config:
 }
 ```
 
+## PrefixCachedExtractor (v11.5)
+
+Replaces `StatelessExecutor` for long-lived extraction tasks. Keeps a persistent `LLamaContext` with the static system-prompt prefix cached in KV memory. After each extraction, `SaveState`/`LoadState` rewinds the cache to the clean prefix — only variable tokens are prefilled per call.
+
+```
+LLamaWeights (shared, read-only)
+├── Main engine → InteractiveExecutor (persistent KV cache)
+├── Sub-agent engines → own LLamaContext (own KV cache)
+├── Background tasks → StatelessExecutor (no cache, fresh per call)
+└── PrefixCachedExtractor → persistent LLamaContext + SaveState/LoadState rewind
+    ├── PatternExtractor (ECSQL) — SQL pattern extraction
+    └── Future: summarizer, intent classifier, topic detector
+```
+
+**When to use:** Long-lived consumers (registered tools, session-scoped services)
+**When NOT to use:** Sub-agents, one-shot tasks — use `StatelessExecutor` instead
+
 ## Composition Root
 
 `EcaCompositionRoot.Build()` wires:
@@ -159,6 +177,7 @@ Config:
 - EGuiConsole uses ITerminalOutput (no direct Console.Write)
 - EcaCompositionRoot is the single wiring point
 - One model load — background tasks use StatelessExecutor with shared weights
+- PrefixCachedExtractor for long-lived extraction (KV cache reuse via SaveState/LoadState)
 - MockEngine uses protected mock-mode constructor (no static flags)
 - v11.4: Orchestrator gates decomposition — verb heuristic first (instant), then LLM 1-token classification (~0.15s)
 - v11.4: System prompt teaches LLM to learn from failed <thinking> blocks in conversation history

@@ -1,6 +1,6 @@
 # ECAssistant — Project Summary
 
-**Updated:** 2026-08-18 (v11.4 — conversational gate + system prompt improvements)
+**Updated:** 2026-08-18 (v11.5 — PrefixCachedExtractor for KV cache reuse)
 **Status:** ✅ 857 tests pass, 0 errors, 13 warnings (pre-existing xUnit analyzers)
 **Target Framework:** .NET 8.0
 **Platform:** Cross-platform (Windows, macOS, Linux)
@@ -10,6 +10,17 @@
 ## What It Is
 
 ECAssistant is a local-first AI agent framework. It runs LLM inference on-device via LLamaSharp with multi-session orchestration, sub-agents, vector memory, self-correction, 12 built-in tools, and a full TUI — no cloud, no API keys.
+
+## v11.5 Changes (2026-08-18)
+
+- **PrefixCachedExtractor:** KV cache reuse for long-lived extraction tasks
+  - Persistent `LLamaContext` + `InteractiveExecutor` with `SaveState`/`LoadState` rewind
+  - Static system-prompt prefix prefilled once, variable tokens only on each call
+  - Eliminates ~150 tokens of redundant prefill per extraction (~0.75-3s saved per call)
+  - Thread-safe via `SemaphoreSlim`, implements `IAsyncDisposable`
+  - Designed for long-lived consumers (registered tools, session-scoped services)
+  - NOT for sub-agents or short-lived scopes — use `StatelessExecutor` for those
+  - Currently used by ECSQL `PatternExtractor`; future: summarizer, intent classifier, topic detector
 
 ## v11.4 Changes (2026-08-18)
 
@@ -89,6 +100,7 @@ TestModelLoad/       # Standalone model load test (outside project)
 - **Sub-agents:** Parallel task execution with independent LLM contexts
 - **Shared weights:** One model load, multiple contexts (main + sub-agents + background tasks)
 - **Background tasks:** Decompose + summarize via StatelessExecutor with `use_llm` toggle
+- **PrefixCachedExtractor:** KV cache reuse for long-lived extraction tasks (v11.5)
 - **Vector memory:** TF-IDF embeddings + in-memory vector store
 - **Self-correction:** Failure patterns, file snapshots, rollback
 - **12 built-in tools:** Shell, FileEditor, FileReader, FileResearch, Git, DotnetBuild, WebSearch, WebFetch, BackgroundExec, SubAgent, CodeEditor, FileAnalyzer
