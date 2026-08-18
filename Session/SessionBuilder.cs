@@ -120,7 +120,15 @@ public class SessionBuilder
         if (EnableVectorMemory ?? _config.VectorMemory.Enabled)
         {
             var vecDir = Path.Combine(_workingDir, _config.VectorMemory.Directory);
-            await session.InitializeVectorMemoryAsync(vecDir);
+            
+            // Create embedder from config — uses real LLM if configured, falls back to TF-IDF
+            IVectorEmbedder? embedder = null;
+            if (_config.Embedding != null && _config.Embedding.Enabled)
+            {
+                embedder = new LlamaEmbedder(_config.Embedding, _logger);
+            }
+            
+            await session.InitializeVectorMemoryAsync(vecDir, embedder);
         }
 
         // ── Project Context Manager ──

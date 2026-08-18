@@ -34,6 +34,9 @@ public class EAgentConfig
     [JsonPropertyName("vector_memory")]
     public VectorMemoryConfig VectorMemory { get; set; } = new();
 
+    [JsonPropertyName("embedding")]
+    public EmbeddingConfig Embedding { get; set; } = new();
+
     [JsonPropertyName("inference")]
     public InferenceConfig Inference { get; set; } = new();
 

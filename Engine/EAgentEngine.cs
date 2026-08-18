@@ -272,16 +272,34 @@ public class EAgentEngine : IEngine, IAsyncDisposable
         return _selfCorrection?.GetFailureSummary();
     }
 
-    /// <summary>Initialize vector memory store with TF-IDF embeddings (no external deps).</summary>
-    public async Task InitializeVectorMemoryAsync(string storeDir)
+    /// <summary>
+    /// Initialize vector memory store.
+    /// Uses the provided embedder if available, otherwise falls back to TF-IDF.
+    /// </summary>
+    public async Task InitializeVectorMemoryAsync(string storeDir, IVectorEmbedder? embedder = null)
     {
         _vectorMemory = new VectorMemoryStore(storeDir, _logger);
         
-        Func<string, Task<float[]>> embeddingGenerator = async (text) =>
+        Func<string, Task<float[]>> embeddingGenerator;
+        
+        if (embedder != null)
         {
-            await Task.CompletedTask;
-            return TfidfEmbed(text);
-        };
+            _logger.Info("VecMem", $"Using provided embedder: {embedder.GetType().Name}");
+            embeddingGenerator = async (text) =>
+            {
+                await Task.CompletedTask;
+                return embedder.Embed(text);
+            };
+        }
+        else
+        {
+            _logger.Info("VecMem", "No embedder provided — using TF-IDF fallback");
+            embeddingGenerator = async (text) =>
+            {
+                await Task.CompletedTask;
+                return TfidfEmbed(text);
+            };
+        }
         
         await _vectorMemory.InitializeAsync(embeddingGenerator);
         _out?.WriteSuccess($"[VecMem] Vector memory ready: {_vectorMemory.Count} entries in {storeDir}");

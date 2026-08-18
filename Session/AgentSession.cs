@@ -766,9 +766,9 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     }
 
     /// <summary>Initialize vector memory for this session.</summary>
-    public async Task InitializeVectorMemoryAsync(string storeDir)
+    public async Task InitializeVectorMemoryAsync(string storeDir, IVectorEmbedder? embedder = null)
     {
-        await _engine.InitializeVectorMemoryAsync(storeDir);
+        await _engine.InitializeVectorMemoryAsync(storeDir, embedder);
     }
 
     /// <summary>Initialize project context for this session.</summary>
