@@ -52,7 +52,7 @@ public class EcaCompositionRoot
 
         // ── Pre-flight model validation ──
         // Catch misconfigurations early (wrong path, invalid GPU layers, bad context size)
-        // before SessionManager tries to call LLamaSharp native code.
+        // before SessionManager tries to connect to ECAssistantLLM server.
         var validator = new Engine.ModelParamValidator(logger);
         var validationError = validator.Validate(config, modelPath);
         if (validationError != null)
@@ -113,16 +113,21 @@ public class EcaCompositionRoot
                 case "ctx":
                 case "contextsize":
                     if (i + 1 < args.Length && uint.TryParse(args[++i], out uint ctx)) builder.ContextSize(ctx); break;
-                case "gpu":
-                case "gpulayers":
-                case "gpu_layers":
-                    if (i + 1 < args.Length && int.TryParse(args[++i], out int layers)) builder.GpuLayers(Math.Clamp(layers, 0, 100)); break;
-                case "threads":
-                case "threadcount":
-                    if (i + 1 < args.Length && int.TryParse(args[++i], out int thr)) builder.Threads(thr); break;
+                case "verbose":
+                    builder.Verbose(true); break;
+                case "silent":
+                    builder.Silent(true); break;
+                case "maxturns":
+                    if (i + 1 < args.Length && int.TryParse(args[++i], out int turns)) builder.MaxTurns(turns); break;
                 case "temp":
                 case "temperature":
                     if (i + 1 < args.Length && float.TryParse(args[++i], out float t)) builder.Temperature(Math.Clamp(t, 0.0f, 2.0f)); break;
+                case "local":
+                case "use-local":
+                    builder.UseLocalLLM(); break;
+                case "remote":
+                case "use-remote":
+                    if (i + 2 < args.Length) { builder.UseRemoteLLM(args[i + 1], args[i + 2], args[i + 3]); i += 3; } break;
             }
         }
     }

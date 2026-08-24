@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 namespace ECAssistant.Core.Config;
 
 /// <summary>
-/// Task decomposition settings. When use_llm is true, uses StatelessExecutor
-/// with shared main weights. When false, falls back to keyword-based TaskPlanner.
+/// Task decomposition settings. When use_llm is true, uses HTTP streaming
+/// inference (stateless mode). When false, falls back to keyword-based TaskPlanner.
 /// </summary>
 public class DecomposeConfig
 {

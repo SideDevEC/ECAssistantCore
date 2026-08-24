@@ -16,7 +16,7 @@ namespace ECAssistant.Core.Session;
 /// A fully isolated agent session.
 ///
 /// Each session has:
-/// - Its own EAgentEngine (own KV cache via own LLamaContext, shares model weights)
+/// - Its own EAgentEngine (own server-side KV cache via HTTP, own session)
 /// - Its own orchestrator
 /// - Its own tools (registered independently)
 /// - Its own memory
@@ -25,7 +25,7 @@ namespace ECAssistant.Core.Session;
 /// - Its own runner thread (background Task)
 /// - Its own stop/cancellation
 ///
-/// Sessions share the same loaded model weights (one GGUF in RAM) but are
+/// Sessions share the same ECAssistantLLM server (one model loaded in VRAM) but are
 /// otherwise completely independent. No shared state, no inter-session communication.
 ///
 /// The session is the central hub — all components (orchestrator, engine, tools)
@@ -88,13 +88,15 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     private readonly ILogger _logger;
 
     /// <summary>
-    /// Create a new fully isolated session with shared model weights.
+    /// Create a new fully isolated session.
+    /// Local mode: own server-side KV cache via ECAssistantLLM.
+    /// Remote mode: stateless HTTP inference (no KV cache).
     /// </summary>
     public AgentSession(
         string key,
         string sessionId,
         string endpoint,
-        string clientId,
+        string? clientId,
         InferenceRequestParams inferenceParams,
         string workingDir,
         SemaphoreSlim inferenceLock,
@@ -103,7 +105,9 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         ILogger? logger = null,
         EAgentConfig? config = null,
         OpenAIClient? httpClient = null,
-        RemoteTokenizer? remoteTokenizer = null)
+        RemoteTokenizer? remoteTokenizer = null,
+        string? apiKey = null,
+        bool isLocalMode = true)
     {
         _logger = logger ?? new Logger();
         Key = key;
@@ -122,10 +126,15 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         _outputFilePath = Path.Combine(_sessionDir, "ui_output.jsonl");
         _outputFile = new StreamWriter(_outputFilePath, append: true, Encoding.UTF8) { AutoFlush = true };
 
-        // Create HTTP-based inference + KV cache control
-        var client = httpClient ?? new OpenAIClient(endpoint, clientId);
-        var inferenceEngine = new HttpStreamingEngine(client, config?.LlmServer.ModelId ?? "main", sessionId);
-        var kvCacheController = new RemoteKvCacheController(client);
+        // Create HTTP client + inference engine + KV cache controller
+        var client = httpClient ?? new OpenAIClient(endpoint, clientId, apiKey);
+        var modelId = config?.LlmProvider.ModelId ?? "main";
+        var inferenceEngine = new HttpStreamingEngine(client, modelId, isLocalMode ? sessionId : null);
+
+        // KV cache only in local mode; remote mode uses no-op controller
+        IKvCacheController kvCacheController = isLocalMode
+            ? new RemoteKvCacheController(client)
+            : new NopKvCacheController();
 
         _engine = new EAgentEngine(
             sessionId: sessionId,

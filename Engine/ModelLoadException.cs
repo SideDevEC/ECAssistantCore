@@ -5,7 +5,8 @@ namespace ECAssistant.Core.Engine;
 /// <summary>
 /// Exception thrown when model loading or context creation fails.
 /// Contains structured diagnostic info so callers can display a helpful error
-/// instead of a raw LLamaSharp native exception.
+/// instead of a raw server error. Errors are returned by ECAssistantLLM server
+/// during model load or session creation.
 /// </summary>
 public class ModelLoadException : Exception
 {
@@ -15,7 +16,7 @@ public class ModelLoadException : Exception
     /// <summary>The model path that was attempted.</summary>
     public string ModelPath { get; }
 
-    /// <summary>GPU layers requested (may be the cause if &gt; available).</summary>
+    /// <summary>GPU layers requested (server-side param, 0 = not applicable in Core).</summary>
     public int GpuLayers { get; }
 
     /// <summary>Context size requested.</summary>
@@ -80,15 +81,13 @@ public class ModelLoadException : Exception
                 sb.AppendLine($"║  • GPU layers = {GpuLayers} — if this machine has no GPU or");
                 sb.AppendLine($"║    insufficient VRAM, set llm.gpu_layers to 0 in appsettings.json");
                 sb.AppendLine($"║  • Check the .gguf file is not corrupted (re-download if needed)");
-                sb.AppendLine($"║  • Check the model format is supported by your LLamaSharp version");
+                sb.AppendLine($"║  • Check the model format is supported by the ECAssistantLLM server");
                 break;
 
             case ModelLoadPhase.CreateContext:
-                sb.AppendLine($"║  • Context size = {ContextSize} — if too large for available RAM,");
+                sb.AppendLine($"║  • Context size = {ContextSize} — if too large for available VRAM,");
                 sb.AppendLine($"║    reduce llm.context_size in appsettings.json (try 4096 or 2048)");
-                sb.AppendLine($"║  • GPU layers = {GpuLayers} — if context creation fails with GPU,");
-                sb.AppendLine($"║    try setting llm.gpu_layers to 0 (CPU-only mode)");
-                sb.AppendLine($"║  • Check batch_size and ubatch_size in appsettings.json");
+                sb.AppendLine($"║  • Check server VRAM and max_vram_mb in llm-server.json");
                 break;
 
             case ModelLoadPhase.Prefill:
@@ -111,7 +110,7 @@ public enum ModelLoadPhase
     /// <summary>Loading GGUF weights from disk into RAM.</summary>
     LoadWeights,
 
-    /// <summary>Creating LLamaContext (allocates KV cache, GPU buffers).</summary>
+/// <summary>Creating server-side session (allocates KV cache on ECAssistantLLM).</summary>
     CreateContext,
 
     /// <summary>Prefilling the static prefix into KV cache.</summary>

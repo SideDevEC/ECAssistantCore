@@ -4,7 +4,7 @@ namespace ECAssistant.Core.Config;
 
 /// <summary>
 /// Configuration for background tasks (decomposition, summarization) that use
-/// the main model's shared weights via StatelessExecutor. No separate model load.
+/// HTTP streaming inference (stateless mode, no session KV cache). No separate model load.
 /// </summary>
 public class BackgroundTasksConfig
 {

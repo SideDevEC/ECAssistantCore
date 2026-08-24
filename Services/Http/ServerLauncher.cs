@@ -9,14 +9,15 @@ namespace ECAssistant.Core.Services.Http;
 /// <summary>
 /// Detects if ECAssistantLLM server is running. If not, launches it as a child process.
 /// Waits for health check to pass before returning.
+/// Local mode only — not used in remote mode.
 /// </summary>
 public sealed class ServerLauncher
 {
-    private readonly LlmServerEndpointConfig _config;
+    private readonly LlmProviderConfig _config;
     private readonly OpenAIClient _probeClient;
     private Process? _serverProcess;
 
-    public ServerLauncher(LlmServerEndpointConfig config)
+    public ServerLauncher(LlmProviderConfig config)
     {
         _config = config ?? throw new ArgumentNullException(nameof(config));
         _probeClient = new OpenAIClient(_config.Endpoint);
@@ -82,21 +83,55 @@ public sealed class ServerLauncher
     }
 
     /// <summary>
-    /// Stop the server if we started it.
+    /// Stop the server gracefully. Sends /eca/shutdown request first,
+    /// then waits for the process to exit. Falls back to Kill if needed.
+    /// If there are other clients connected, the server will stay running for them.
     /// </summary>
-    public void StopServer()
+    public async Task StopServerAsync(CancellationToken ct = default)
     {
+        // Try graceful shutdown via HTTP endpoint
         if (_serverProcess != null && !_serverProcess.HasExited)
         {
             try
             {
-                _serverProcess.Kill();
-                _serverProcess.WaitForExit(5000);
+                // Send shutdown request — server will wind down if this is the last client
+                using var shutdownClient = new OpenAIClient(_config.Endpoint);
+                await shutdownClient.PostJsonAsync("/eca/shutdown", "{}", ct);
             }
-            catch { }
+            catch { /* server may already be down */ }
+
+            // Wait for process to exit gracefully
+            var deadline = DateTime.UtcNow.AddSeconds(10);
+            while (DateTime.UtcNow < deadline && _serverProcess != null && !_serverProcess.HasExited)
+            {
+                await Task.Delay(200, ct);
+            }
+
+            // Force kill if still running (e.g. other clients kept it alive — but we launched it)
+            if (_serverProcess != null && !_serverProcess.HasExited)
+            {
+                try
+                {
+                    _serverProcess.Kill();
+                    _serverProcess.WaitForExit(5000);
+                }
+                catch { }
+            }
         }
         _serverProcess?.Dispose();
         _serverProcess = null;
+    }
+
+    /// <summary>
+    /// Stop the server (synchronous wrapper).
+    /// </summary>
+    public void StopServer()
+    {
+        try
+        {
+            StopServerAsync().Wait(TimeSpan.FromSeconds(15));
+        }
+        catch { }
     }
 
     private string? ResolveExecutablePath()

@@ -60,6 +60,10 @@ public class EAgentEngine : IEngine
     private int _consecutiveRewindFailures = 0;
     private const int MaxRewindFailures = 2;
 
+    // ── Output mode (verbose/silent) ──
+    private bool _verbose = true;
+    private bool _silent = false;
+
      // ── Injectable component overrides (for library consumers) ──
     private string? _systemPromptPathOverride;
     public string? SystemPromptPath
@@ -197,6 +201,11 @@ public class EAgentEngine : IEngine
         _config = config ?? new EAgentConfig();
         _backgroundTasks = _config.BackgroundTasks;
         _workingDir = string.IsNullOrEmpty(workingDir) ? AppContext.BaseDirectory : workingDir;
+
+        // ── Read output mode from config ──
+        _verbose = _config.Interface.Verbose;
+        _silent = _config.Interface.Silent;
+        MaxIterations = _config.Interface.MaxTurns > 0 ? _config.Interface.MaxTurns : 10;
 
         _processRunner = new ProcessRunner();
         _fileSystem = new FileSystemAdapter();
@@ -1079,7 +1088,9 @@ User: " + userRequest + "\n<lm>\n";
             try
              {
                 var stopTags = new[] { "</lm>" };
-                _out?.WriteLine($"── Token Stream (Turn {_turnCount}) ── [ESC to stop] ──", OutputState.Bold);
+                var showTokenStream = _verbose && !_silent;
+                if (showTokenStream)
+                    _out?.WriteLine($"── Token Stream (Turn {_turnCount}) ── [ESC to stop] ──", OutputState.Bold);
                 _out?.StartStream(OutputState.Raw);
                 var tokenCount = 0;
 
@@ -1097,7 +1108,8 @@ User: " + userRequest + "\n<lm>\n";
                          _out?.WriteError("[Stop] Generation stopped by user (ESC).");
                         goto inferenceDone;
                      }
-                     _out?.Write(token);
+                    if (showTokenStream)
+                        _out?.Write(token);
                     sb.Append(token);
                     tokenCount++;
                     var soFar = sb.ToString();
@@ -1105,16 +1117,22 @@ User: " + userRequest + "\n<lm>\n";
                      {
                         if (soFar.Contains(stopTag, StringComparison.OrdinalIgnoreCase))
                          {
-                             _out?.BlankLine();
-                             _out?.WriteInfo($"[Stop] Manual anti-prompt hit: {stopTag} (after {tokenCount} tokens)");
+                            if (showTokenStream)
+                            {
+                                _out?.BlankLine();
+                                _out?.WriteInfo($"[Stop] Manual anti-prompt hit: {stopTag} (after {tokenCount} tokens)");
+                            }
                             goto inferenceDone;
                          }
                      }
                  }
                 inferenceDone:
                  _out?.StopStream();
-                 _out?.WriteLine($"── End Token Stream ({tokenCount} tokens) ──", OutputState.Bold);
-                 _out?.BlankLine();
+                if (showTokenStream)
+                {
+                    _out?.WriteLine($"── End Token Stream ({tokenCount} tokens) ──", OutputState.Bold);
+                    _out?.BlankLine();
+                }
              }
             catch (OperationCanceledException)
              {
@@ -1131,7 +1149,8 @@ User: " + userRequest + "\n<lm>\n";
                 rawResult = rawResult.Substring("<assistant>".Length).Trim();
             if (rawResult.EndsWith("</assistant>", StringComparison.OrdinalIgnoreCase))
                 rawResult = rawResult.Substring(0, rawResult.Length - "</assistant>".Length).Trim();
-             _out?.WriteDim($"[Engine] Raw ({rawResult.Length} chars): {StringUtil.Default.Truncate(rawResult, 500)}");
+             if (_verbose && !_silent)
+                _out?.WriteDim($"[Engine] Raw ({rawResult.Length} chars): {StringUtil.Default.Truncate(rawResult, 500)}");
 
             cleanResponse = ExtractCleanResponse(rawResult);
              _out?.WriteDim($"[Engine] Clean ({cleanResponse.Length} chars): {StringUtil.Default.Truncate(cleanResponse, 500)}");
@@ -1359,7 +1378,7 @@ User: " + userRequest + "\n<lm>\n";
      // ── Factory helpers for injectable components ──────────────
 
     protected virtual SubAgentManager CreateSubAgentManager()
-         => new(this, _workingDir, _logger, _out, _config, null, _processRunner, _fileSystem, _httpClient);
+         => new(this, _workingDir, _logger, _out, _config, _processRunner, _fileSystem, _httpClient);
 
     protected virtual TaskPlanner CreateTaskPlanner()
          => new(_logger);
@@ -1529,7 +1548,7 @@ public class MockEngine : EAgentEngine
     }
 
     protected override SubAgentManager CreateSubAgentManager()
-        => new(this, _workingDir, _logger, _mockOut, _config, null, _processRunner, _fileSystem, _httpClient);
+        => new(this, _workingDir, _logger, _mockOut, _config, _processRunner, _fileSystem, _httpClient);
 
     /// <summary>No-op inference engine for mock mode.</summary>
     internal sealed class InferenceEngineNoop : IInferenceEngine

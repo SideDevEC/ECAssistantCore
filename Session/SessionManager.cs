@@ -10,7 +10,9 @@ namespace ECAssistant.Core.Session;
 
 /// <summary>
 /// Session Manager — creates, tracks, and manages all sessions.
-/// Uses ECAssistantLLM server via HTTP. No LLamaSharp dependency.
+/// Supports two provider modes:
+/// - local: spawns/connects to ECAssistantLLM server (full KV cache, tokenizer, session management)
+/// - remote: connects to any OpenAI-compatible API (no KV cache, stateless inference)
 /// </summary>
 public class SessionManager : IAsyncDisposable
 {
@@ -31,11 +33,17 @@ public class SessionManager : IAsyncDisposable
     private readonly ILogger _logger;
 
     // HTTP infrastructure (shared across all sessions)
-    private readonly ServerLauncher _serverLauncher;
-    private readonly LlmServerClient _serverClient;
+    private readonly ServerLauncher? _serverLauncher;       // local mode only
+    private readonly LlmServerClient? _serverClient;        // local mode only
     private readonly OpenAIClient _httpClient;
     private readonly InferenceParamsFactory _inferenceParamsFactory;
-    private RemoteTokenizer _remoteTokenizer;
+    private RemoteTokenizer? _remoteTokenizer;               // local mode only
+
+    /// <summary>True if running in local mode (ECAssistantLLM with KV cache).</summary>
+    public bool IsLocalMode => _config.LlmProvider.IsLocal;
+
+    /// <summary>True if running in remote mode (cloud API, no KV cache).</summary>
+    public bool IsRemoteMode => _config.LlmProvider.IsRemote;
 
     /// <summary>Called when a session is being loaded.</summary>
     public Action<string>? OnSessionLoading { get; set; }
@@ -44,7 +52,8 @@ public class SessionManager : IAsyncDisposable
     public Action<string>? OnSessionLoaded { get; set; }
 
     /// <summary>
-    /// Create session manager. Ensures LLM server is running, registers as client.
+    /// Create session manager. In local mode, ensures LLM server is running and registers as client.
+    /// In remote mode, just sets up the HTTP client with API key.
     /// </summary>
     public SessionManager(EAgentConfig config, string resolvedModelPath, string workingDir, ILogger? logger = null)
     {
@@ -53,46 +62,66 @@ public class SessionManager : IAsyncDisposable
         _workingDir = workingDir;
         _subAgentConfig = config.SubAgent;
 
-        // Setup HTTP infrastructure
-        var endpoint = config.LlmServer.Endpoint;
-        _serverLauncher = new ServerLauncher(config.LlmServer);
-        _serverClient = new LlmServerClient(endpoint);
-        _httpClient = new OpenAIClient(endpoint);
+        var provider = config.LlmProvider;
         _inferenceParamsFactory = InferenceParamsFactory.Default;
 
-        // Validate config
-        var validator = new ModelParamValidator(_logger);
-        var validationError = validator.Validate(config, resolvedModelPath);
-        if (validationError != null)
+        if (provider.IsLocal)
         {
-            _logger.Error("SessionManager", validationError.Message);
-            throw validationError;
+            // ── Local mode: ECAssistantLLM server ──
+            _serverLauncher = new ServerLauncher(provider);
+            _serverClient = new LlmServerClient(provider.Endpoint);
+            _httpClient = new OpenAIClient(provider.Endpoint);
+        }
+        else
+        {
+            // ── Remote mode: OpenAI-compatible API ──
+            _httpClient = new OpenAIClient(provider.Endpoint, apiKey: provider.ApiKey);
+        }
+
+        // Validate config (local mode needs model path; remote mode skips file validation)
+        if (provider.IsLocal)
+        {
+            var validator = new ModelParamValidator(_logger);
+            var validationError = validator.Validate(config, resolvedModelPath);
+            if (validationError != null)
+            {
+                _logger.Error("SessionManager", validationError.Message);
+                throw validationError;
+            }
         }
     }
 
     /// <summary>
-    /// Ensure LLM server is running and client is registered.
-    /// Call this before creating sessions.
+    /// Initialize provider connection.
+    /// Local mode: ensure server running, register client, start heartbeat, setup tokenizer.
+    /// Remote mode: no-op (connection is per-request via HTTP).
     /// </summary>
     public async Task InitializeAsync(CancellationToken ct = default)
     {
-        _logger.Info("SessionManager", "Ensuring LLM server is running...");
-        var ok = await _serverLauncher.EnsureServerRunningAsync(ct);
-        if (!ok)
-            throw new InvalidOperationException("Failed to start LLM server");
+        if (IsLocalMode)
+        {
+            _logger.Info("SessionManager", "Ensuring LLM server is running...");
+            var ok = await _serverLauncher!.EnsureServerRunningAsync(ct);
+            if (!ok)
+                throw new InvalidOperationException("Failed to start LLM server");
 
-        _logger.Info("SessionManager", "Registering client with LLM server...");
-        var connected = await _serverClient.ConnectAsync("ECAssistant", "1.0.0", ct);
-        if (!connected)
-            throw new InvalidOperationException("Failed to register with LLM server");
+            _logger.Info("SessionManager", "Registering client with LLM server...");
+            var connected = await _serverClient!.ConnectAsync("ECAssistant", "1.0.0", ct);
+            if (!connected)
+                throw new InvalidOperationException("Failed to register with LLM server");
 
-        // Setup tokenizer
-        _remoteTokenizer = new RemoteTokenizer(_httpClient, _config.LlmServer.ModelId);
+            // Setup tokenizer (local mode only — remote APIs don't expose /eca/tokenize)
+            _remoteTokenizer = new RemoteTokenizer(_httpClient, _config.LlmProvider.ModelId);
 
-        // Start heartbeat
-        _serverClient.StartHeartbeat(_config.LlmServer.HeartbeatIntervalSec, () => _sessions.Count);
+            // Start heartbeat
+            _serverClient.StartHeartbeat(_config.LlmProvider.HeartbeatIntervalSec, () => _sessions.Count);
 
-        _logger.Info("SessionManager", $"Connected to LLM server at {_config.LlmServer.Endpoint}");
+            _logger.Info("SessionManager", $"Connected to LLM server at {_config.LlmProvider.Endpoint}");
+        }
+        else
+        {
+            _logger.Info("SessionManager", $"Remote mode: {_config.LlmProvider.Endpoint} (model: {_config.LlmProvider.ModelId})");
+        }
     }
 
     /// <summary>Get a session by key.</summary>
@@ -118,10 +147,13 @@ public class SessionManager : IAsyncDisposable
     /// <summary>Agent config.</summary>
     public EAgentConfig Config => _config;
 
-    /// <summary>Server client.</summary>
-    public LlmServerClient ServerClient => _serverClient;
+    /// <summary>Server client (local mode only, null in remote mode).</summary>
+    public LlmServerClient? ServerClient => _serverClient;
 
-    // ── Session lifecycle ──────────────────────────────
+    /// <summary>Client ID for server session namespacing (local mode only).</summary>
+    public string? ClientId => _serverClient?.ClientId;
+
+    // ── Session lifecycle ──────────────────────────────────
 
     /// <summary>
     /// Discover existing sessions on disk and load them.
@@ -175,7 +207,8 @@ public class SessionManager : IAsyncDisposable
 
     /// <summary>
     /// Create a new session with the given key.
-    /// Session gets its own KV cache on the LLM server.
+    /// Local mode: session gets its own KV cache on the LLM server.
+    /// Remote mode: session uses stateless HTTP inference (no KV cache).
     /// </summary>
     public AgentSession CreateSession(string key, string? label = null)
     {
@@ -188,8 +221,9 @@ public class SessionManager : IAsyncDisposable
         var session = new AgentSession(
             key: key,
             sessionId: key,
-            endpoint: _config.LlmServer.Endpoint,
-            clientId: _serverClient.ClientId,
+            endpoint: _config.LlmProvider.Endpoint,
+            clientId: IsLocalMode ? _serverClient!.ClientId : null,
+            apiKey: IsRemoteMode ? _config.LlmProvider.ApiKey : null,
             inferenceParams: inferenceParams,
             workingDir: _workingDir,
             inferenceLock: _inferenceLock,
@@ -198,7 +232,8 @@ public class SessionManager : IAsyncDisposable
             logger: _logger,
             config: _config,
             httpClient: _httpClient,
-            remoteTokenizer: _remoteTokenizer);
+            remoteTokenizer: _remoteTokenizer,
+            isLocalMode: IsLocalMode);
 
         _sessions[key] = session;
         _sessionCounter++;
@@ -238,82 +273,41 @@ public class SessionManager : IAsyncDisposable
             session.Stop();
     }
 
-    /// <summary>Stop all sessions gracefully.</summary>
-    public async Task StopAllAsync()
+    /// <summary>Stop all sessions.</summary>
+    public void StopAll()
     {
         foreach (var session in _sessions.Values)
             session.Stop();
-        foreach (var session in _sessions.Values)
-            await session.DisposeAsync();
-        _sessions.Clear();
     }
 
-    /// <summary>Close and delete a session.</summary>
-    public async Task CloseSessionAsync(string key)
+    /// <summary>Delete a session.</summary>
+    public void DeleteSession(string key)
     {
         if (!_sessions.TryGetValue(key, out var session)) return;
-        if (session == Main) throw new InvalidOperationException("Cannot close the main session.");
-
-        await session.DisposeAsync();
+        session.Stop();
         _sessions.Remove(key);
-
-        if (ActiveSession == session)
-            ActiveSession = Main;
-
-        try
+        // Clean up session directory
+        var sessionDir = Path.Combine(_workingDir, ".sessions", key);
+        if (Directory.Exists(sessionDir))
         {
-            var sessionDir = Path.Combine(_workingDir, ".sessions", key);
-            if (Directory.Exists(sessionDir))
-                Directory.Delete(sessionDir, recursive: true);
+            try { Directory.Delete(sessionDir, recursive: true); }
+            catch { /* best effort */ }
         }
-        catch { }
-    }
-
-    /// <summary>Get a status report for all sessions.</summary>
-    public string GetStatusReport()
-    {
-        var sb = new System.Text.StringBuilder();
-        sb.AppendLine("=== Sessions ===");
-        int i = 1;
-        foreach (var session in _sessions.Values)
-        {
-            var active = session == ActiveSession ? " →" : "  ";
-            sb.AppendLine($"{active}{i}. {session.GetStatusSummary()}");
-            i++;
-        }
-        return sb.ToString();
-    }
-
-    /// <summary>Get session by index (1-based).</summary>
-    public AgentSession? GetByIndex(int index)
-    {
-        var list = _sessions.Values.ToList();
-        if (index < 1 || index > list.Count) return null;
-        return list[index - 1];
-    }
-
-    /// <summary>Rename a session's label by key.</summary>
-    public bool RenameSession(string key, string newLabel)
-    {
-        if (!_sessions.TryGetValue(key, out var session)) return false;
-        session.Rename(newLabel);
-        return true;
-    }
-
-    /// <summary>Rename a session's label by index (1-based).</summary>
-    public bool RenameSession(int index, string newLabel)
-    {
-        var session = GetByIndex(index);
-        if (session == null) return false;
-        session.Rename(newLabel);
-        return true;
     }
 
     public async ValueTask DisposeAsync()
     {
-        await StopAllAsync();
-        await _serverClient.DisposeAsync();
-        _serverLauncher.Dispose();
+        // Stop all sessions
+        StopAll();
+
+        // Local mode: disconnect from server + trigger graceful shutdown
+        if (IsLocalMode)
+        {
+            try { await _serverClient!.DisconnectAsync(); }
+            catch { /* best effort */ }
+            await _serverLauncher!.StopServerAsync();
+        }
+
         _httpClient.Dispose();
     }
 }

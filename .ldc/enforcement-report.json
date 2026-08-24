@@ -1,0 +1,358 @@
+{
+  "project": "ECAssistantCore",
+  "timestamp": "2026-08-24T20:50:24.706223+00:00",
+  "total_violations": 58,
+  "errors": 0,
+  "warnings": 58,
+  "violations": [
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Analysis/Models/ProjectArchitecture.cs",
+      "message": "Public class ProjectArchitecture in Analysis/Models/ProjectArchitecture.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Analysis/Models/ProjectRelationship.cs",
+      "message": "Public class ProjectRelationship in Analysis/Models/ProjectRelationship.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/ContextWindow.cs",
+      "message": "Public class ContextWindow in Engine/ContextWindow.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/ConversationTranscript.cs",
+      "message": "Public class ConversationTranscript in Engine/ConversationTranscript.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/DependencyGroup.cs",
+      "message": "Public class DependencyGroup in Engine/DependencyGroup.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/EAgentEngine.cs",
+      "message": "Public class ExecutionState in Engine/EAgentEngine.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/EAgentEngine.cs",
+      "message": "Public class MockEngine in Engine/EAgentEngine.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/ExecutionPlan.cs",
+      "message": "Public class ExecutionPlan in Engine/ExecutionPlan.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/FileContext.cs",
+      "message": "Public class FileContext in Engine/FileContext.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/FileRelationship.cs",
+      "message": "Public class FileRelationship in Engine/FileRelationship.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/LLMDecision.cs",
+      "message": "Public class LLMDecision in Engine/LLMDecision.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/ParallelToolExecutor.cs",
+      "message": "Public class ParallelToolExecutor in Engine/ParallelToolExecutor.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/PlannedToolCall.cs",
+      "message": "Public class PlannedToolCall in Engine/PlannedToolCall.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/ProjectContext.cs",
+      "message": "Public class ProjectContext in Engine/ProjectContext.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/SelfCorrection/FailureAnalysis.cs",
+      "message": "Public class FailureAnalysis in Engine/SelfCorrection/FailureAnalysis.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/SelfCorrection/FileSnapshot.cs",
+      "message": "Public class FileSnapshot in Engine/SelfCorrection/FileSnapshot.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/SubAgent/ActiveSubAgent.cs",
+      "message": "Public class ActiveSubAgent in Engine/SubAgent/ActiveSubAgent.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/SubAgent/SubAgentError.cs",
+      "message": "Public class SubAgentError in Engine/SubAgent/SubAgentError.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/SubAgent/SubAgentTask.cs",
+      "message": "Public class SubAgentTask in Engine/SubAgent/SubAgentTask.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/SubTask.cs",
+      "message": "Public class SubTask in Engine/SubTask.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/TaskPlanner.cs",
+      "message": "Public class TaskPlanner in Engine/TaskPlanner.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/TokenCounter.cs",
+      "message": "Public class TokenCounter in Engine/TokenCounter.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/ToolCallRequest.cs",
+      "message": "Public class ToolCallRequest in Engine/ToolCallRequest.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/ToolDependencyAnalyzer.cs",
+      "message": "Public class ToolDependencyAnalyzer in Engine/ToolDependencyAnalyzer.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Engine/TranscriptMessage.cs",
+      "message": "Public class TranscriptMessage in Engine/TranscriptMessage.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Interfaces/IInferenceEngine.cs",
+      "message": "Public class InferenceRequestParams in Interfaces/IInferenceEngine.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Interfaces/IKvCacheController.cs",
+      "message": "Public class KvCacheStatus in Interfaces/IKvCacheController.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Services/FileChange.cs",
+      "message": "Public class FileChange in Services/FileChange.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Services/Http/RemoteTokenizer.cs",
+      "message": "Public class RemoteTokenizer in Services/Http/RemoteTokenizer.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Services/Http/ServerLauncher.cs",
+      "message": "Public class ServerLauncher in Services/Http/ServerLauncher.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Services/InferenceParamsFactory.cs",
+      "message": "Public class InferenceParamsFactory in Services/InferenceParamsFactory.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Services/ResourceLoader.cs",
+      "message": "Public class ResourceLoader in Services/ResourceLoader.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Services/SummaryService.cs",
+      "message": "Public class SummaryService in Services/SummaryService.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Session/SessionBuilder.cs",
+      "message": "Public class SessionBuilder in Session/SessionBuilder.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Session/SessionDiscovery.cs",
+      "message": "Public class SessionDiscovery in Session/SessionDiscovery.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/SystemPromptBuilder.cs",
+      "message": "Public class SystemPromptBuilder in SystemPromptBuilder.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Testing/EGuiTestHarness.cs",
+      "message": "Public class EGuiTestHarness in Testing/EGuiTestHarness.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "message": "Public class EcaTests in Testing/EcaTests.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Testing/TestContext.cs",
+      "message": "Public class TestContext in Testing/TestContext.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Testing/TestScenario.cs",
+      "message": "Public class TestScenario in Testing/TestScenario.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Tools/Build/BuildErrorParser.cs",
+      "message": "Public class BuildErrorParser in Tools/Build/BuildErrorParser.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Tools/EBackground/EBackgroundExecTool.cs",
+      "message": "Public class EBackgroundExecTool in Tools/EBackground/EBackgroundExecTool.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Tools/ECode/ECodeEditorTool.cs",
+      "message": "Public class ECodeEditorTool in Tools/ECode/ECodeEditorTool.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Tools/EDotnet/EDotnetBuildTool.cs",
+      "message": "Public class EDotnetBuildTool in Tools/EDotnet/EDotnetBuildTool.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Tools/EExample/EFileAnalyzer.cs",
+      "message": "Public class EFileAnalyzer in Tools/EExample/EFileAnalyzer.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Tools/EGit/EGitTool.cs",
+      "message": "Public class EGitTool in Tools/EGit/EGitTool.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Tools/EResearch/EFileResearchTool.cs",
+      "message": "Public class EFileResearchTool in Tools/EResearch/EFileResearchTool.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Tools/EShell/EShellAgent.cs",
+      "message": "Public class EShellAgent in Tools/EShell/EShellAgent.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Tools/EToolBase.cs",
+      "message": "Public class EToolBase in Tools/EToolBase.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Tools/EWeb/EWebSearchTool.cs",
+      "message": "Public class EWebSearchTool in Tools/EWeb/EWebSearchTool.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Tools/Policy/ToolPermission.cs",
+      "message": "Public class ToolPermission in Tools/Policy/ToolPermission.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Tools/Policy/ToolPolicyDecision.cs",
+      "message": "Public class ToolPolicyDecision in Tools/Policy/ToolPolicyDecision.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Tools/Reader/EFileReaderTool.cs",
+      "message": "Public class EFileReaderTool in Tools/Reader/EFileReaderTool.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Tools/SubAgent/ESubAgentTool.cs",
+      "message": "Public class ESubAgentTool in Tools/SubAgent/ESubAgentTool.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Tools/ToolPolicy.cs",
+      "message": "Public class ToolPolicy in Tools/ToolPolicy.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Tools/Web/EWebFetchTool.cs",
+      "message": "Public class EWebFetchTool in Tools/Web/EWebFetchTool.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/Transport/SseParser.cs",
+      "message": "Public class SseParser in Transport/SseParser.cs implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantCore/UI/EGuiBase.cs",
+      "message": "Public class EGuiBase in UI/EGuiBase.cs implements no interface \u2014 may be a boundary leak"
+    }
+  ],
+  "passed": true
+}

@@ -16,9 +16,6 @@ namespace ECAssistant.Core.Engine;
 public sealed class SubAgentManager : IDisposable
 {
     private readonly EAgentEngine _mainEngine;
-    private readonly string _modelPath;
-    private readonly int _gpuLayers;
-    private readonly int _threadCount;
     private readonly InferenceRequestParams _inferenceParams;
     private readonly EAgentConfig _config;
     private readonly ConcurrentDictionary<string, ActiveSubAgent> _activeSubAgents = new();
@@ -57,7 +54,7 @@ public sealed class SubAgentManager : IDisposable
     public IReadOnlyDictionary<string, ActiveSubAgent> ActiveAgents => _activeSubAgents;
 
     public SubAgentManager(EAgentEngine mainEngine, string mainWorkingDir = "", ILogger? logger = null, ISessionOutput? sessionOutput = null,
-        EAgentConfig? config = null, string? modelPath = null,
+        EAgentConfig? config = null,
         ECAssistant.Core.Interfaces.IProcessRunner? processRunner = null,
         ECAssistant.Core.Interfaces.IFileSystem? fileSystem = null,
         ECAssistant.Core.Interfaces.IHttpClient? httpClient = null,
@@ -76,10 +73,7 @@ public sealed class SubAgentManager : IDisposable
 
         // v10.23: Config injected, not read from ~/ECAssistant/appsettings.json
         _config = config ?? new EAgentConfig();
-        _modelPath = modelPath ?? _config.Llm.ModelPath;
-        _gpuLayers = _config.SubAgent.GpuLayers;
         DefaultContextSize = _config.SubAgent.ContextSize;
-        _threadCount = _config.SubAgent.Threads;
         MaxConcurrent = _config.SubAgent.MaxConcurrent;
         DefaultMaxTurns = _config.SubAgent.MaxTurns;
         DefaultTimeoutSeconds = _config.SubAgent.TimeoutSeconds;
@@ -268,7 +262,7 @@ public sealed class SubAgentManager : IDisposable
             // Create HTTP-based inference for sub-agent
             var subSessionId = $"subagent-{Guid.NewGuid():N}";
             var subClient = new Transport.OpenAIClient(_mainEngine.InferenceEngine.Endpoint);
-            var subInference = new Services.Http.HttpStreamingEngine(subClient, _config.LlmServer.ModelId, subSessionId);
+            var subInference = new Services.Http.HttpStreamingEngine(subClient, _config.LlmProvider.ModelId, subSessionId);
             var subKvCache = new Services.Http.RemoteKvCacheController(subClient);
             childEngine = new EAgentEngine(
                 sessionId: subSessionId,

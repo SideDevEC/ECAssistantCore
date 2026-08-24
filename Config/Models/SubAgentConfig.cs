@@ -2,16 +2,16 @@ using System.Text.Json.Serialization;
 
 namespace ECAssistant.Core.Config;
 
+/// <summary>
+/// Sub-agent configuration. GPU/thread params are server-side concerns
+/// (live in ECAssistantLLM's llm-server.json). Core only controls session behavior.
+/// </summary>
 public class SubAgentConfig
 {
     [JsonPropertyName("enabled")]
     public bool Enabled { get; init; } = true;
     [JsonPropertyName("context_size")]
     public uint ContextSize { get; init; } = 16384;
-    [JsonPropertyName("gpu_layers")]
-    public int GpuLayers { get; init; } = 15;
-    [JsonPropertyName("threads")]
-    public int Threads { get; init; } = -1;
     [JsonPropertyName("max_concurrent")]
     public int MaxConcurrent { get; init; } = 3;
     [JsonPropertyName("max_turns")]

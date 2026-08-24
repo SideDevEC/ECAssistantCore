@@ -1,26 +1,34 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 
 namespace ECAssistant.Core.Transport;
 
 /// <summary>
 /// HttpClient wrapper for OpenAI-compatible API calls.
-/// Handles JSON serialization, headers, and SSE streaming.
+/// Handles JSON serialization, headers (X-Client-Id for local, Bearer for remote), and SSE streaming.
 /// </summary>
 public sealed class OpenAIClient : IDisposable
 {
     private readonly HttpClient _http;
     private readonly string _baseUrl;
     private readonly string? _clientId;
+    private readonly string? _apiKey;
     private bool _disposed;
 
-    /// <summary>Base URL of the server (e.g. http://localhost:8420).</summary>
+    /// <summary>Base URL of the server (e.g. http://localhost:8420 or https://api.openai.com).</summary>
     public string BaseUrl => _baseUrl;
 
-    public OpenAIClient(string baseUrl, string? clientId = null, TimeSpan? timeout = null)
+    /// <summary>
+    /// Create with endpoint, optional client ID (local ECAssistantLLM), and optional API key (remote).
+    /// When apiKey is set, requests include "Authorization: Bearer {apiKey}".
+    /// When clientId is set, requests include "X-Client-Id: {clientId}".
+    /// </summary>
+    public OpenAIClient(string baseUrl, string? clientId = null, string? apiKey = null, TimeSpan? timeout = null)
     {
         _baseUrl = baseUrl.TrimEnd('/');
         _clientId = clientId;
+        _apiKey = apiKey;
         _http = new HttpClient { Timeout = timeout ?? TimeSpan.FromMinutes(10) };
     }
 
@@ -70,7 +78,8 @@ public sealed class OpenAIClient : IDisposable
     }
 
     /// <summary>
-    /// Ping the server health endpoint.
+    /// Ping the server health endpoint. Only works with ECAssistantLLM (local mode).
+    /// Returns false for remote APIs that don't have /eca/health.
     /// </summary>
     public async Task<bool> PingAsync(CancellationToken ct = default)
     {
@@ -92,12 +101,17 @@ public sealed class OpenAIClient : IDisposable
         var url = $"{_baseUrl}{path}";
         var req = new HttpRequestMessage(method, url);
 
+        // Remote mode: Bearer token auth
+        if (_apiKey != null)
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+
+        // Local mode: client identification
         if (_clientId != null)
             req.Headers.Add("X-Client-Id", _clientId);
 
         if (jsonBody != null)
         {
-            req.Content = new StringContent(jsonBody, System.Text.Encoding.UTF8, "application/json");
+            req.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
         }
 
         return req;

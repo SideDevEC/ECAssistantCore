@@ -21,7 +21,8 @@ namespace ECAssistant.Core;
 ///   var config = AgentConfigBuilder.Create()
 ///       .WithModel("/path/to/model.gguf")
 ///       .ContextSize(16384)
-///       .GpuLayers(15)
+///       .MaxTurns(10)
+///       .Verbose(true)
 ///       .Build();
 ///
 ///   // Subsequent runs: loads appsettings.json, ignores code values
@@ -35,8 +36,6 @@ public class AgentConfigBuilder
 {
     private string _modelPath = "";
     private uint _contextSize = 16384;
-    private int _gpuLayers = 0;
-    private int _threads = -1;
     private int _maxTokens = 2048;
     private float _temperature = 0.3f;
     private float _topP = 0.9f;
@@ -47,6 +46,13 @@ public class AgentConfigBuilder
     private bool _enableSubAgents = false;
     private bool _decomposeUseLlm = true;
     private bool _summarizeUseLlm = true;
+    private bool _verbose = true;
+    private bool _silent = false;
+    private int _maxTurns = 10;
+    private string _providerMode = "local";
+    private string _providerEndpoint = "http://localhost:8420";
+    private string? _providerApiKey = null;
+    private string _providerModelId = "main";
 
     private AgentConfigBuilder() { }
 
@@ -59,11 +65,14 @@ public class AgentConfigBuilder
     /// <summary>LLM context window size in tokens. Default: 16384. Seeds initial JSON only.</summary>
     public AgentConfigBuilder ContextSize(uint size) { _contextSize = size; return this; }
 
-    /// <summary>GPU layers to offload. 0 = CPU only. Default: 0. Seeds initial JSON only.</summary>
-    public AgentConfigBuilder GpuLayers(int layers) { _gpuLayers = layers; return this; }
+    /// <summary>Max agent turns (iterations) per user request. 0 = unlimited. Default: 10. Seeds initial JSON only.</summary>
+    public AgentConfigBuilder MaxTurns(int turns) { _maxTurns = turns; return this; }
 
-    /// <summary>CPU threads. -1 = auto. Default: -1. Seeds initial JSON only.</summary>
-    public AgentConfigBuilder Threads(int threads) { _threads = threads; return this; }
+    /// <summary>Verbose output: show token stream, debug info, KV cache status. Default: true. Seeds initial JSON only.</summary>
+    public AgentConfigBuilder Verbose(bool enabled = true) { _verbose = enabled; return this; }
+
+    /// <summary>Silent mode: suppress token stream noise. Only show final results and errors. Default: false. Seeds initial JSON only.</summary>
+    public AgentConfigBuilder Silent(bool enabled = true) { _silent = enabled; return this; }
 
     /// <summary>Max tokens per response. Default: 2048. Seeds initial JSON only.</summary>
     public AgentConfigBuilder MaxTokens(int tokens) { _maxTokens = tokens; return this; }
@@ -98,6 +107,27 @@ public class AgentConfigBuilder
 
     /// <summary>Use LLM for summarization. When false, uses extractive truncation fallback. Seeds initial JSON only.</summary>
     public AgentConfigBuilder SummarizeUseLlm(bool useLlm = true) { _summarizeUseLlm = useLlm; return this; }
+
+    // ── LLM provider config ──
+
+    /// <summary>Use local ECAssistantLLM server (spawns if needed, full KV cache support). Seeds initial JSON only.</summary>
+    public AgentConfigBuilder UseLocalLLM(string endpoint = "http://localhost:8420")
+    {
+        _providerMode = "local";
+        _providerEndpoint = endpoint;
+        _providerApiKey = null;
+        return this;
+    }
+
+    /// <summary>Use remote OpenAI-compatible API (no KV cache, stateless inference). Seeds initial JSON only.</summary>
+    public AgentConfigBuilder UseRemoteLLM(string endpoint, string apiKey, string modelId)
+    {
+        _providerMode = "remote";
+        _providerEndpoint = endpoint;
+        _providerApiKey = apiKey;
+        _providerModelId = modelId;
+        return this;
+    }
 
     /// <summary>
     /// Build the EAgentConfig.
@@ -146,8 +176,6 @@ public class AgentConfigBuilder
             {
                 ModelPath = _modelPath,
                 ContextSize = _contextSize,
-                GpuLayers = _gpuLayers,
-                Threads = _threads,
             },
             Inference = new InferenceConfig
             {
@@ -171,6 +199,19 @@ public class AgentConfigBuilder
             SubAgent = new SubAgentConfig
             {
                 Enabled = _enableSubAgents,
+            },
+            Interface = new InterfaceConfig
+            {
+                Verbose = _verbose,
+                Silent = _silent,
+                MaxTurns = _maxTurns,
+            },
+            LlmProvider = new LlmProviderConfig
+            {
+                Mode = _providerMode,
+                Endpoint = _providerEndpoint,
+                ApiKey = _providerApiKey,
+                ModelId = _providerModelId,
             },
             BackgroundTasks = new BackgroundTasksConfig
             {

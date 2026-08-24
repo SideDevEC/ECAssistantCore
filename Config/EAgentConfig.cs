@@ -52,8 +52,8 @@ public class EAgentConfig
     [JsonPropertyName("interface")]
     public InterfaceConfig Interface { get; set; } = new();
 
-    [JsonPropertyName("llm_server")]
-    public LlmServerEndpointConfig LlmServer { get; set; } = new();
+    [JsonPropertyName("llm_provider")]
+    public LlmProviderConfig LlmProvider { get; set; } = new();
 
     public string GetRootPath() => Path.GetFullPath(RootPath);
     public string GetMemoryDirectory() => Path.GetFullPath(Path.Combine(RootPath, "Memory"));

@@ -4,7 +4,7 @@ namespace ECAssistant.Core.Config;
 
 /// <summary>
 /// Configuration for the embedding model used by vector memory.
-/// When enabled, uses a real GGUF embedding model via LLamaSharp.
+/// When enabled, uses a real embedding model via HTTP to ECAssistantLLM server.
 /// When disabled or model missing, falls back to TF-IDF hashing.
 /// </summary>
 public class EmbeddingConfig

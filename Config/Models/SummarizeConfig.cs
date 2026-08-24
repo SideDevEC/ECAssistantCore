@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 namespace ECAssistant.Core.Config;
 
 /// <summary>
-/// Summarization settings. When use_llm is true, uses StatelessExecutor
-/// with shared main weights. When false, falls back to extractive truncation.
+/// Summarization settings. When use_llm is true, uses HTTP streaming inference
+/// (stateless mode). When false, falls back to extractive truncation.
 /// </summary>
 public class SummarizeConfig
 {

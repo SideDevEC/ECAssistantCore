@@ -69,7 +69,7 @@ public class SessionBuilder
 
     /// <summary>
     /// Wire background task config into the session. Default: true.
-    /// Passes config.BackgroundTasks to the engine for StatelessExecutor use.
+    /// Passes config.BackgroundTasks to the engine for HTTP stateless inference use.
     /// </summary>
     public bool EnableBackgroundTasks { get; set; } = true;
 
@@ -127,8 +127,8 @@ public class SessionBuilder
             IVectorEmbedder? embedder = null;
             if (_config.Embedding != null && _config.Embedding.Enabled)
             {
-                var embedderClient = new OpenAIClient(_config.LlmServer.Endpoint);
-                embedder = new HttpEmbedder(embedderClient, _config.LlmServer.EmbeddingModelId);
+                var embedderClient = new OpenAIClient(_config.LlmProvider.Endpoint);
+                embedder = new HttpEmbedder(embedderClient, _config.LlmProvider.EmbeddingModelId);
             }
             
             await session.InitializeVectorMemoryAsync(vecDir, embedder);

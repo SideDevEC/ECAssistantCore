@@ -77,9 +77,8 @@ public sealed class AgentOrchestrator : IAsyncDisposable
       /// <summary>v10.18: Initialize sub-agent support. Creates SubAgentManager and registers ESubAgent tool.</summary>
      public void InitializeSubAgents(string defaultWorkingDir)
       {
-          // v10.23: Pass config + model path to SubAgentManager (no more hardcoded disk reads)
-          var modelPath = _config?.Llm.ModelPath ?? _engine.ModelPath;
-          _subAgentManager = new SubAgentManager(_engine, defaultWorkingDir, _logger, _out, _config, modelPath);
+          // v10.23: Pass config to SubAgentManager (no more hardcoded disk reads)
+          _subAgentManager = new SubAgentManager(_engine, defaultWorkingDir, _logger, _out, _config);
           _engine.RegisterTool(new Tools.SubAgent.ESubAgentTool(_subAgentManager, defaultWorkingDir));
           _toolWhitelist.Add("ESubAgent");
           _toolPolicy.SetPermission("ESubAgent", ToolPermissionLevel.Allowed, "Sub-agent spawning");
@@ -133,7 +132,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                 }
                 else
                 {
-             // v10.25: Try LLM-based decomposition via engine (StatelessExecutor with shared main weights)
+             // v10.25: Try LLM-based decomposition via engine (HTTP streaming, stateless mode)
             _out?.WriteInfo("Attempting LLM task decomposition...");
             var steps = await _engine.DecomposeTaskAsync(goal);
             if (steps != null && steps.Count > 0)

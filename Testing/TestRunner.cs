@@ -310,11 +310,7 @@ public sealed class TestRunner : IAsyncDisposable
         config.Llm = new LlmConfig
         {
             ModelPath = _modelPath,
-            GpuLayers = 15, // Match production config
             ContextSize = config.Llm.ContextSize,
-            Threads = config.Llm.Threads,
-            BatchSize = config.Llm.BatchSize,
-            UBatchSize = config.Llm.UBatchSize
         };
 
         // Build inference params
@@ -333,8 +329,8 @@ public sealed class TestRunner : IAsyncDisposable
         }
         else
         {
-            var client = new Transport.OpenAIClient(config.LlmServer.Endpoint);
-            var testInference = new Services.Http.HttpStreamingEngine(client, config.LlmServer.ModelId, "test");
+            var client = new Transport.OpenAIClient(config.LlmProvider.Endpoint);
+            var testInference = new Services.Http.HttpStreamingEngine(client, config.LlmProvider.ModelId, "test");
             var testKvCache = new Services.Http.RemoteKvCacheController(client);
             engine = new EAgentEngine(
                 sessionId: "test",
