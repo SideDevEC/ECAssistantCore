@@ -2,69 +2,65 @@ using System.Text.Json;
 using ECAssistant.Core.Config;
 using ECAssistant.Core.Engine;
 using ECAssistant.Core.Services;
+using ECAssistant.Core.Services.Http;
 using ECAssistant.Core.Interfaces;
-using LLama;
-using LLama.Common;
-using LLama.Native;
-using LLama.Sampling;
+using ECAssistant.Core.Transport;
 
 namespace ECAssistant.Core.Session;
 
 /// <summary>
 /// Session Manager — creates, tracks, and manages all sessions.
-///
-/// All sessions share the same loaded model weights (one GGUF in RAM).
-/// Each session has its own EAgentEngine with its own KV cache (LLamaContext).
-/// Inference is serialized via a shared SemaphoreSlim — only one GenerateAsync runs at a time.
-///
-/// v10.21: Supports discovering existing sessions on disk and loading them on startup.
+/// Uses ECAssistantLLM server via HTTP. No LLamaSharp dependency.
 /// </summary>
 public class SessionManager : IAsyncDisposable
 {
     private readonly Dictionary<string, AgentSession> _sessions = new(StringComparer.OrdinalIgnoreCase);
-    private readonly string _modelPath;
-    private readonly ModelParams _modelParams;
-    private readonly InferenceParams _inferenceParams;
     private readonly string _workingDir;
     private readonly SubAgentConfig _subAgentConfig;
-    private readonly SemaphoreSlim _inferenceLock = new(1, 1); private readonly SessionDiscovery _sessionDiscovery = new();
+    private readonly SemaphoreSlim _inferenceLock = new(1, 1);
+    private readonly SessionDiscovery _sessionDiscovery = new();
 
-    /// <summary>Shared model weights — loaded ONCE, shared across all sessions.</summary>
-    private readonly LLamaWeights _sharedWeights;
-
-    /// <summary>The currently active session (the one the UI is viewing).</summary>
+    /// <summary>The currently active session.</summary>
     public AgentSession? ActiveSession { get; private set; }
 
     /// <summary>The main session (always exists, always key "main").</summary>
     public AgentSession Main { get; private set; } = null!;
 
-    /// <summary>Config for creating new sessions.</summary>
     private readonly EAgentConfig _config;
-
     private int _sessionCounter = 0;
     private readonly ILogger _logger;
 
-    // ── Callbacks for startup loading (v10.21) ──
+    // HTTP infrastructure (shared across all sessions)
+    private readonly ServerLauncher _serverLauncher;
+    private readonly LlmServerClient _serverClient;
+    private readonly OpenAIClient _httpClient;
+    private readonly InferenceParamsFactory _inferenceParamsFactory;
+    private RemoteTokenizer _remoteTokenizer;
 
-    /// <summary>Called when a session is being loaded (for UI feedback). Receives session key.</summary>
+    /// <summary>Called when a session is being loaded.</summary>
     public Action<string>? OnSessionLoading { get; set; }
 
-    /// <summary>Called when a session has finished loading. Receives session key.</summary>
+    /// <summary>Called when a session has finished loading.</summary>
     public Action<string>? OnSessionLoaded { get; set; }
 
     /// <summary>
-    /// Create session manager. Loads model weights ONCE (does NOT create sessions yet).
-    /// Call LoadSessionsFromDiskAsync() or CreateSession() afterwards.
+    /// Create session manager. Ensures LLM server is running, registers as client.
     /// </summary>
     public SessionManager(EAgentConfig config, string resolvedModelPath, string workingDir, ILogger? logger = null)
     {
         _logger = logger ?? new Logger();
         _config = config;
-        _modelPath = resolvedModelPath;
         _workingDir = workingDir;
         _subAgentConfig = config.SubAgent;
 
-        // ── Pre-flight validation: catch misconfigurations before native code ──
+        // Setup HTTP infrastructure
+        var endpoint = config.LlmServer.Endpoint;
+        _serverLauncher = new ServerLauncher(config.LlmServer);
+        _serverClient = new LlmServerClient(endpoint);
+        _httpClient = new OpenAIClient(endpoint);
+        _inferenceParamsFactory = InferenceParamsFactory.Default;
+
+        // Validate config
         var validator = new ModelParamValidator(_logger);
         var validationError = validator.Validate(config, resolvedModelPath);
         if (validationError != null)
@@ -72,53 +68,31 @@ public class SessionManager : IAsyncDisposable
             _logger.Error("SessionManager", validationError.Message);
             throw validationError;
         }
+    }
 
-        _modelParams = new ModelParams(_modelPath)
-        {
-            GpuLayerCount = Math.Clamp(config.Llm.GpuLayers, 0, 100),
-            ContextSize = config.Llm.ContextSize,
-            Threads = config.Llm.Threads == -1 ? null : config.Llm.Threads,
-        };
+    /// <summary>
+    /// Ensure LLM server is running and client is registered.
+    /// Call this before creating sessions.
+    /// </summary>
+    public async Task InitializeAsync(CancellationToken ct = default)
+    {
+        _logger.Info("SessionManager", "Ensuring LLM server is running...");
+        var ok = await _serverLauncher.EnsureServerRunningAsync(ct);
+        if (!ok)
+            throw new InvalidOperationException("Failed to start LLM server");
 
-        _inferenceParams = InferenceParamsFactory.Default.Create(config);
+        _logger.Info("SessionManager", "Registering client with LLM server...");
+        var connected = await _serverClient.ConnectAsync("ECAssistant", "1.0.0", ct);
+        if (!connected)
+            throw new InvalidOperationException("Failed to register with LLM server");
 
-        // v10.21: Redirect native llama.cpp C++ logging through callback — keeps console clean.
-        // All load_tensors:, repack:, ggml_metal_, llama_context: etc go to file, not stderr/stdout.
-        try
-        {
-            LLama.Native.NativeLogConfig.llama_log_set(delegate (LLamaLogLevel level, string message)
-            {
-                if (level == LLamaLogLevel.Error)
-                    _logger.Error("LLAMA", message);
-                else if (level == LLamaLogLevel.Warning)
-                    _logger.Warn("LLAMA", message);
-                // Info/Debug → file only via Logger, never console
-                else
-                    _logger.Info("LLAMA", message);
-            });
-        }
-        catch { /* native lib may not be loaded yet — ignore */ }
+        // Setup tokenizer
+        _remoteTokenizer = new RemoteTokenizer(_httpClient, _config.LlmServer.ModelId);
 
-        // ── Load model weights ONCE — shared across all sessions ──
-        // Wrapped in try/catch: LLamaSharp throws native exceptions for GPU layer
-        // mismatches, corrupted files, OOM, etc. We translate to ModelLoadException
-        // with actionable diagnostics so the caller can display a helpful message.
-        try
-        {
-            _sharedWeights = LLamaWeights.LoadFromFile(_modelParams);
-        }
-        catch (Exception ex) when (ex is not ModelLoadException)
-        {
-            var mle = new ModelLoadException(
-                ModelLoadPhase.LoadWeights,
-                _modelPath,
-                config.Llm.GpuLayers,
-                config.Llm.ContextSize,
-                $"Failed to load model weights: {ex.GetType().Name}: {ex.Message}",
-                inner: ex);
-            _logger.Error("SessionManager", mle.ToDiagnosticString());
-            throw mle;
-        }
+        // Start heartbeat
+        _serverClient.StartHeartbeat(_config.LlmServer.HeartbeatIntervalSec, () => _sessions.Count);
+
+        _logger.Info("SessionManager", $"Connected to LLM server at {_config.LlmServer.Endpoint}");
     }
 
     /// <summary>Get a session by key.</summary>
@@ -132,15 +106,6 @@ public class SessionManager : IAsyncDisposable
     /// <summary>Number of sessions.</summary>
     public int Count => _sessions.Count;
 
-    /// <summary>Shared model weights (for sub-agent managers etc.).</summary>
-    public LLamaWeights SharedWeights => _sharedWeights;
-
-    /// <summary>Shared model params.</summary>
-    public ModelParams SharedModelParams => _modelParams;
-
-    /// <summary>Shared inference params.</summary>
-    public InferenceParams InferenceParams => _inferenceParams;
-
     /// <summary>Shared inference lock.</summary>
     public SemaphoreSlim InferenceLock => _inferenceLock;
 
@@ -153,28 +118,25 @@ public class SessionManager : IAsyncDisposable
     /// <summary>Agent config.</summary>
     public EAgentConfig Config => _config;
 
+    /// <summary>Server client.</summary>
+    public LlmServerClient ServerClient => _serverClient;
+
     // ── Session lifecycle ──────────────────────────────
 
     /// <summary>
     /// Discover existing sessions on disk and load them.
-    /// The most recently modified session becomes active.
-    /// If no sessions exist, creates a "main" session.
-    /// Returns the key of the session that was set as active.
     /// </summary>
     public async Task<string> LoadSessionsFromDiskAsync(
         Func<AgentSession, Task> initSessionAsync)
     {
-        // Migrate legacy transcript if needed
         _sessionDiscovery.MigrateLegacyTranscript(_workingDir);
         _sessionDiscovery.EnsureSessionsDir(_workingDir);
 
-        // Discover existing sessions
         var discovered = _sessionDiscovery.DiscoverSessions(_workingDir);
         string activeKey;
 
         if (discovered.Count == 0)
         {
-            // No sessions on disk — create main
             activeKey = "main";
             OnSessionLoading?.Invoke(activeKey);
             Main = CreateSession(activeKey, label: "Main Session");
@@ -183,9 +145,8 @@ public class SessionManager : IAsyncDisposable
         }
         else
         {
-            activeKey = discovered[0]; // most recently modified
+            activeKey = discovered[0];
 
-            // Load all discovered sessions
             foreach (var key in discovered)
             {
                 OnSessionLoading?.Invoke(key);
@@ -198,7 +159,6 @@ public class SessionManager : IAsyncDisposable
                 OnSessionLoaded?.Invoke(key);
             }
 
-            // Ensure main always exists
             if (Main == null)
             {
                 Main = CreateSession("main", label: "Main Session");
@@ -206,7 +166,6 @@ public class SessionManager : IAsyncDisposable
             }
         }
 
-        // Set active session
         var activeSession = Get(activeKey) ?? Main;
         ActiveSession = activeSession;
         _sessionDiscovery.TouchSessionMeta(_workingDir, activeKey);
@@ -216,25 +175,30 @@ public class SessionManager : IAsyncDisposable
 
     /// <summary>
     /// Create a new session with the given key.
-    /// The session uses shared model weights but gets its own LLamaContext (own KV cache).
+    /// Session gets its own KV cache on the LLM server.
     /// </summary>
     public AgentSession CreateSession(string key, string? label = null)
     {
         if (_sessions.ContainsKey(key))
             throw new InvalidOperationException($"Session already exists: {key}");
 
+        var inferenceParams = _inferenceParamsFactory.Create(_config);
+        inferenceParams.SessionId = key;
+
         var session = new AgentSession(
             key: key,
-            modelPath: _modelPath,
-            sharedWeights: _sharedWeights,
-            sharedModelParams: _modelParams,
-            inferenceParams: _inferenceParams,
+            sessionId: key,
+            endpoint: _config.LlmServer.Endpoint,
+            clientId: _serverClient.ClientId,
+            inferenceParams: inferenceParams,
             workingDir: _workingDir,
             inferenceLock: _inferenceLock,
             subAgentConfig: _subAgentConfig,
             label: label,
             logger: _logger,
-            config: _config);  // v10.23: pass config for sub-agent manager
+            config: _config,
+            httpClient: _httpClient,
+            remoteTokenizer: _remoteTokenizer);
 
         _sessions[key] = session;
         _sessionCounter++;
@@ -257,7 +221,7 @@ public class SessionManager : IAsyncDisposable
         return true;
     }
 
-    /// <summary>Switch active session by index (1-based, matching display).</summary>
+    /// <summary>Switch active session by index (1-based).</summary>
     public bool SwitchTo(int index)
     {
         var list = _sessions.Values.ToList();
@@ -278,14 +242,9 @@ public class SessionManager : IAsyncDisposable
     public async Task StopAllAsync()
     {
         foreach (var session in _sessions.Values)
-        {
             session.Stop();
-        }
-        // Wait for all runners to finish
         foreach (var session in _sessions.Values)
-        {
             await session.DisposeAsync();
-        }
         _sessions.Clear();
     }
 
@@ -298,11 +257,9 @@ public class SessionManager : IAsyncDisposable
         await session.DisposeAsync();
         _sessions.Remove(key);
 
-        // If this was the active session, switch to main
         if (ActiveSession == session)
             ActiveSession = Main;
 
-        // Clean up session directory
         try
         {
             var sessionDir = Path.Combine(_workingDir, ".sessions", key);
@@ -327,7 +284,7 @@ public class SessionManager : IAsyncDisposable
         return sb.ToString();
     }
 
-    /// <summary>Get session by index (1-based, matching display).</summary>
+    /// <summary>Get session by index (1-based).</summary>
     public AgentSession? GetByIndex(int index)
     {
         var list = _sessions.Values.ToList();
@@ -355,7 +312,8 @@ public class SessionManager : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         await StopAllAsync();
-        // Dispose shared weights after all sessions are gone
-        try { _sharedWeights.Dispose(); } catch { }
+        await _serverClient.DisposeAsync();
+        _serverLauncher.Dispose();
+        _httpClient.Dispose();
     }
 }

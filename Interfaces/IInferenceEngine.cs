@@ -5,11 +5,39 @@ using System.Threading.Tasks;
 namespace ECAssistant.Core.Interfaces;
 
 /// <summary>
-/// Abstracts LLM inference from concrete implementation.
+/// Abstracts LLM inference via HTTP (OpenAI-compatible endpoint).
+/// Supports both streaming and non-streaming generation.
 /// </summary>
 public interface IInferenceEngine
 {
-    Task<string> GenerateAsync(string prompt, CancellationToken ct = default);
-    Task<string> GenerateAsync(string prompt, GenerationParams parameters, CancellationToken ct = default);
-    void Dispose();
+    /// <summary>Stream tokens one by one via HTTP SSE.</summary>
+    IAsyncEnumerable<string> StreamAsync(
+        string prompt,
+        InferenceRequestParams parameters,
+        CancellationToken ct = default);
+
+    /// <summary>Generate full response (collects all tokens).</summary>
+    Task<string> GenerateAsync(
+        string prompt,
+        InferenceRequestParams parameters,
+        CancellationToken ct = default);
+
+    /// <summary>Server endpoint URL (e.g. http://localhost:8420).</summary>
+    string Endpoint { get; }
+}
+
+/// <summary>
+/// Parameters for an inference request. Maps to OpenAI chat completion fields.
+/// </summary>
+public sealed class InferenceRequestParams
+{
+    public string? ModelId { get; set; }
+    public string? SessionId { get; set; }
+    public int? MaxTokens { get; set; }
+    public float? Temperature { get; set; }
+    public float? TopP { get; set; }
+    public int? TopK { get; set; }
+    public float? RepeatPenalty { get; set; }
+    public string[]? Stop { get; set; }
+    public bool Stream { get; set; } = true;
 }

@@ -46,7 +46,7 @@ public class ContextManager : IContextManager
         var conversation = string.Join("\n", _messages.Select(m => $"[{m.Role}]: {m.Content}"));
         var fullPrompt = $"{prompt}\n\nConversation:\n{conversation}";
 
-        return await _inferenceEngine.GenerateAsync(fullPrompt);
+        return await _inferenceEngine.GenerateAsync(fullPrompt, new InferenceRequestParams());
     }
 
     public bool NeedsShift()

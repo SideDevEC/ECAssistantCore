@@ -1,13 +1,11 @@
-using LLama.Common;
-using LLama.Sampling;
 using ECAssistant.Core.Config;
+using ECAssistant.Core.Interfaces;
 
 namespace ECAssistant.Core.Services;
 
 /// <summary>
-/// Factory for creating InferenceParams from EAgentConfig.
-/// Centralizes all LLamaSharp-specific construction so callers don't need LLamaSharp references.
-/// Instance class (not static) for OOP compliance. Use Default or inject your own.
+/// Factory for creating InferenceRequestParams from EAgentConfig.
+/// Instance class (not static) for OOP compliance.
 /// </summary>
 public class InferenceParamsFactory
 {
@@ -15,52 +13,43 @@ public class InferenceParamsFactory
     public static readonly InferenceParamsFactory Default = new();
 
     /// <summary>
-    /// Create InferenceParams from an EAgentConfig's Inference and Sampling settings.
-    /// Uses TruncateAndReprefill overflow strategy (handles context window gracefully).
+    /// Create InferenceRequestParams from an EAgentConfig's Inference and Sampling settings.
     /// </summary>
-    public InferenceParams Create(EAgentConfig config)
+    public InferenceRequestParams Create(EAgentConfig config)
     {
-        return new InferenceParams
+        return new InferenceRequestParams
         {
             MaxTokens = config.Inference.MaxTokens,
-            AntiPrompts = config.Inference.AntiPrompts.Length > 0
-                ? config.Inference.AntiPrompts
-                : new[] { "</s>" },
-            OverflowStrategy = ContextOverflowStrategy.TruncateAndReprefill,
-            SamplingPipeline = new DefaultSamplingPipeline
-            {
-                Temperature = config.Sampling.Temperature,
-                TopP = config.Sampling.TopP,
-                TopK = config.Sampling.TopK,
-                RepeatPenalty = config.Sampling.RepeatPenalty
-            }
+            Temperature = config.Sampling.Temperature,
+            TopP = config.Sampling.TopP,
+            TopK = config.Sampling.TopK,
+            RepeatPenalty = config.Sampling.RepeatPenalty,
+            Stop = config.Inference.AntiPrompts,
+            Stream = true
         };
     }
 
     /// <summary>
-    /// Create InferenceParams with explicit values.
-    /// Used by sub-agents and secondary models that may override config defaults.
+    /// Create InferenceRequestParams with explicit values.
+    /// Used by sub-agents and secondary tasks that may override config defaults.
     /// </summary>
-    public InferenceParams Create(
+    public InferenceRequestParams Create(
         int maxTokens,
-        string[]? antiPrompts = null,
+        string[]? stop = null,
         float temperature = 0.8f,
         float topP = 0.9f,
         int topK = 40,
         float repeatPenalty = 1.1f)
     {
-        return new InferenceParams
+        return new InferenceRequestParams
         {
             MaxTokens = maxTokens,
-            AntiPrompts = antiPrompts ?? new[] { "</s>" },
-            OverflowStrategy = ContextOverflowStrategy.TruncateAndReprefill,
-            SamplingPipeline = new DefaultSamplingPipeline
-            {
-                Temperature = temperature,
-                TopP = topP,
-                TopK = topK,
-                RepeatPenalty = repeatPenalty
-            }
+            Temperature = temperature,
+            TopP = topP,
+            TopK = topK,
+            RepeatPenalty = repeatPenalty,
+            Stop = stop ?? new[] { "</s>" },
+            Stream = true
         };
     }
 }

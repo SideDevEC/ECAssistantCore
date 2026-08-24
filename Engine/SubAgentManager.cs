@@ -1,9 +1,6 @@
 using System.Text;
 using ECAssistant.Core.Session;
 using System.Collections.Concurrent;
-using LLama;
-using LLama.Common;
-using LLama.Sampling;
 using ECAssistant.Core.Config;
 using ECAssistant.Core.Tools;
 using ECAssistant.Core.Orchestration;
@@ -22,7 +19,7 @@ public sealed class SubAgentManager : IDisposable
     private readonly string _modelPath;
     private readonly int _gpuLayers;
     private readonly int _threadCount;
-    private readonly InferenceParams _inferenceParams;
+    private readonly InferenceRequestParams _inferenceParams;
     private readonly EAgentConfig _config;
     private readonly ConcurrentDictionary<string, ActiveSubAgent> _activeSubAgents = new();
     private readonly List<EAgentEngine> _childEngines = new();
@@ -268,11 +265,15 @@ public sealed class SubAgentManager : IDisposable
             var dirBefore = SnapshotDirectory(workingDir);
 
             // Create engine
+            // Create HTTP-based inference for sub-agent
+            var subSessionId = $"subagent-{Guid.NewGuid():N}";
+            var subClient = new Transport.OpenAIClient(_mainEngine.InferenceEngine.Endpoint);
+            var subInference = new Services.Http.HttpStreamingEngine(subClient, _config.LlmServer.ModelId, subSessionId);
+            var subKvCache = new Services.Http.RemoteKvCacheController(subClient);
             childEngine = new EAgentEngine(
-                modelPath: _modelPath,
-                contextSize: task.ContextSize,
-                gpuLayers: _gpuLayers,
-                threadCount: _threadCount,
+                sessionId: subSessionId,
+                inferenceEngine: subInference,
+                kvCacheController: subKvCache,
                 inferenceParams: _inferenceParams,
                 workingDir: workingDir,
                 logger: _logger);

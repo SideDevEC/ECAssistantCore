@@ -13,6 +13,8 @@ using ECAssistant.Core.Tools.Research;
 using ECAssistant.Core.Tools.Shell;
 using ECAssistant.Core.Tools.Web;
 using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Services.Http;
+using ECAssistant.Core.Transport;
 
 namespace ECAssistant.Core;
 
@@ -125,7 +127,8 @@ public class SessionBuilder
             IVectorEmbedder? embedder = null;
             if (_config.Embedding != null && _config.Embedding.Enabled)
             {
-                embedder = new LlamaEmbedder(_config.Embedding, _logger);
+                var embedderClient = new OpenAIClient(_config.LlmServer.Endpoint);
+                embedder = new HttpEmbedder(embedderClient, _config.LlmServer.EmbeddingModelId);
             }
             
             await session.InitializeVectorMemoryAsync(vecDir, embedder);

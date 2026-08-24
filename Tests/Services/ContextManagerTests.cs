@@ -166,20 +166,20 @@ public class ContextManagerTests
     [Fact]
     public async Task SummarizeAsync_CallsInferenceEngine()
     {
-        _mockEngine.Setup(e => e.GenerateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockEngine.Setup(e => e.GenerateAsync(It.IsAny<string>(), It.IsAny<InferenceRequestParams>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("summary result");
         var mgr = new ContextManager(_mockEngine.Object, _mockConfig.Object);
         mgr.AddMessage(new TranscriptMessage("user", "hello"));
         mgr.AddMessage(new TranscriptMessage("assistant", "hi there"));
         var result = await mgr.SummarizeAsync();
         Assert.Equal("summary result", result);
-        _mockEngine.Verify(e => e.GenerateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockEngine.Verify(e => e.GenerateAsync(It.IsAny<string>(), It.IsAny<InferenceRequestParams>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task SummarizeAsync_IncludesAllMessagesInPrompt()
     {
-        _mockEngine.Setup(e => e.GenerateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockEngine.Setup(e => e.GenerateAsync(It.IsAny<string>(), It.IsAny<InferenceRequestParams>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("summary");
         var mgr = new ContextManager(_mockEngine.Object, _mockConfig.Object);
         mgr.AddMessage(new TranscriptMessage("user", "important question"));
@@ -187,7 +187,7 @@ public class ContextManagerTests
         await mgr.SummarizeAsync();
         _mockEngine.Verify(e => e.GenerateAsync(
             It.Is<string>(s => s.Contains("important question") && s.Contains("important answer")),
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<InferenceRequestParams>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

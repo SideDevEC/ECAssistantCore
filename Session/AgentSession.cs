@@ -5,11 +5,10 @@ using ECAssistant.Core.Engine;
 using ECAssistant.Core.Memory;
 using ECAssistant.Core.Orchestration;
 using ECAssistant.Core.Services;
+using ECAssistant.Core.Services.Http;
+using ECAssistant.Core.Transport;
 using ECAssistant.Core.Interfaces;
 using ECAssistant.Core.Tools;
-using LLama;
-using LLama.Common;
-using LLama.Sampling;
 
 namespace ECAssistant.Core.Session;
 
@@ -93,16 +92,18 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     /// </summary>
     public AgentSession(
         string key,
-        string modelPath,
-        LLamaWeights sharedWeights,
-        ModelParams sharedModelParams,
-        InferenceParams inferenceParams,
+        string sessionId,
+        string endpoint,
+        string clientId,
+        InferenceRequestParams inferenceParams,
         string workingDir,
         SemaphoreSlim inferenceLock,
         SubAgentConfig? subAgentConfig = null,
         string? label = null,
         ILogger? logger = null,
-        EAgentConfig? config = null)  // v10.23: for passing to orchestrator/subagents
+        EAgentConfig? config = null,
+        OpenAIClient? httpClient = null,
+        RemoteTokenizer? remoteTokenizer = null)
     {
         _logger = logger ?? new Logger();
         Key = key;
@@ -117,25 +118,23 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         _sessionDir = Path.Combine(workingDir, ".sessions", key);
         Directory.CreateDirectory(_sessionDir);
 
-        // Open output file (append mode, UTF-8, auto-flush)
+        // Open output file
         _outputFilePath = Path.Combine(_sessionDir, "ui_output.jsonl");
         _outputFile = new StreamWriter(_outputFilePath, append: true, Encoding.UTF8) { AutoFlush = true };
 
-        // Create engine with SHARED weights — gets own LLamaContext (own KV cache)
-        var ctxSize = sharedModelParams.ContextSize ?? 16384;
-        var gpuLayers = sharedModelParams.GpuLayerCount;
-        var threads = (sharedModelParams.Threads ?? -1) == -1 ? Environment.ProcessorCount : (int)sharedModelParams.Threads!;
+        // Create HTTP-based inference + KV cache control
+        var client = httpClient ?? new OpenAIClient(endpoint, clientId);
+        var inferenceEngine = new HttpStreamingEngine(client, config?.LlmServer.ModelId ?? "main", sessionId);
+        var kvCacheController = new RemoteKvCacheController(client);
 
         _engine = new EAgentEngine(
-            modelPath: modelPath,
-            contextSize: ctxSize,
-            gpuLayers: gpuLayers,
-            threadCount: threads,
+            sessionId: sessionId,
+            inferenceEngine: inferenceEngine,
+            kvCacheController: kvCacheController,
             inferenceParams: inferenceParams,
             workingDir: workingDir,
-            sharedWeights: sharedWeights,
-            sharedModelParams: sharedModelParams,
-            logger: _logger);
+            logger: _logger,
+            tokenizer: remoteTokenizer);
 
         _engine.LoadContext();
         _engine.WireSummaryService();
@@ -156,11 +155,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     /// <summary>The engine powering this session.</summary>
     public EAgentEngine Engine => _engine;
 
-    /// <summary>ISessionContext: Shared model weights for tool LLM access.</summary>
-    public LLamaWeights? SharedWeights => _engine.SharedWeights;
 
-    /// <summary>ISessionContext: Shared model params for creating StatelessExecutor.</summary>
-    public ModelParams? SharedModelParams => _engine.SharedModelParams;
 
     /// <summary>ISessionContext: Background task config (decompose + summarize).</summary>
     public BackgroundTasksConfig? BackgroundTasks => _engine.BackgroundTasks;

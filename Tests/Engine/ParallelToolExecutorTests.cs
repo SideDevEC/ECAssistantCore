@@ -1,5 +1,5 @@
 using ECAssistant.Core.Engine;
-using ECAssistant.Core.Testing;
+using ECAssistant.Core.Engine;
 using ECAssistant.Core.Tools;
 using Moq;
 
@@ -14,7 +14,7 @@ public class ParallelToolExecutorTests
     private static ParallelToolExecutor CreateTestExecutor()
     {
         // Create a mock EAgentEngine via the mock-mode constructor path
-        var engine = new Testing.MockEngine("/tmp", cycleResponses: true);
+        var engine = new MockEngine("/tmp", cycleResponses: true);
         return new ParallelToolExecutor(
             engine,
             new ECAssistant.Core.Tools.ToolPolicy(),

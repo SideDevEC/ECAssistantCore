@@ -14,10 +14,10 @@ using ECAssistant.Core.Tools.Code;
 using ECAssistant.Core.Tools.Reader;
 using ECAssistant.Core.Analysis;
 using ECAssistant.Core.Services;
+using ECAssistant.Core.Services.Http;
 using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Transport;
 using ECAssistant.Core.UI;
-using LLama.Common;
-using LLama.Sampling;
 
 namespace ECAssistant.Core.Testing;
 
@@ -333,13 +333,18 @@ public sealed class TestRunner : IAsyncDisposable
         }
         else
         {
+            var client = new Transport.OpenAIClient(config.LlmServer.Endpoint);
+            var testInference = new Services.Http.HttpStreamingEngine(client, config.LlmServer.ModelId, "test");
+            var testKvCache = new Services.Http.RemoteKvCacheController(client);
             engine = new EAgentEngine(
-                modelPath: _modelPath,
-                workingDir: workingDir,
-                contextSize: config.Llm.ContextSize,
-                gpuLayers: config.Llm.GpuLayers,
-                threadCount: config.Llm.Threads,
+                sessionId: "test",
+                inferenceEngine: testInference,
+                kvCacheController: testKvCache,
                 inferenceParams: inferenceParams,
+                contextSize: config.Llm.ContextSize,
+                modelPath: _modelPath,
+                config: config,
+                workingDir: workingDir,
                 logger: _logger
             );
 

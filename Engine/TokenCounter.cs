@@ -1,68 +1,43 @@
 using System;
-using System.Linq;
-using LLama;
+using ECAssistant.Core.Services.Http;
 
 namespace ECAssistant.Core.Engine;
 
 /// <summary>
-/// Token counting using the real LLamaSharp tokenizer for accurate estimates.
-/// Falls back to char-based estimation if context is not yet loaded.
+/// Token counting via RemoteTokenizer (HTTP /eca/tokenize endpoint).
+/// Falls back to char-based estimation if server unavailable.
 /// </summary>
 public class TokenCounter
 {
-    private LLamaContext? _context;
+    private RemoteTokenizer? _tokenizer;
 
-    public TokenCounter(LLamaContext? context = null)
+    public TokenCounter(RemoteTokenizer? tokenizer = null)
     {
-        _context = context;
+        _tokenizer = tokenizer;
     }
 
-    public void Initialize(LLamaContext context) => _context = context;
+    public void Initialize(RemoteTokenizer tokenizer) => _tokenizer = tokenizer;
 
     public int Count(string? text)
     {
         if (string.IsNullOrEmpty(text)) return 0;
 
-        if (_context != null)
+        if (_tokenizer != null)
         {
-            try
-            {
-                var tokens = _context.Tokenize(text).ToList();
-                return tokens.Count;
-            }
-            catch { }
+            return _tokenizer.Count(text);
         }
 
-        var chars = text.Length;
-        var tokenBudget = (int)(chars / 3.8f);
-
-        var score = 0f;
-        var i = 0;
-        while (i < chars)
-        {
-            var c = text[i];
-            if (c == ' ' || c == '\n' || c == '\t') { score += 0.5f; }
-            else if (char.IsPunctuation(c)) { score += 1.2f; }
-            else if (char.IsUpper(c)) { score += 0.8f; }
-            i++;
-        }
-
-        tokenBudget = (int)(chars / (4.0f - score / chars));
-        return Math.Max(1, tokenBudget);
+        // Char-based fallback
+        return Math.Max(1, text.Length / 4);
     }
 
     public int EstimateUpper(string? text)
     {
         if (string.IsNullOrEmpty(text)) return 0;
 
-        if (_context != null)
+        if (_tokenizer != null)
         {
-            try
-            {
-                var tokens = _context.Tokenize(text).ToList();
-                return tokens.Count + 16;
-            }
-            catch { }
+            return _tokenizer.EstimateUpper(text);
         }
 
         return (int)(text.Length / 3.5f);
