@@ -118,6 +118,8 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         _subAgentConfig = subAgentConfig ?? new SubAgentConfig();
         _isLocalMode = isLocalMode;
         _toolPolicy = new ECAssistant.Core.Tools.ToolPolicy();
+        if (config?.ToolPermissions != null)
+            _toolPolicy.LoadFromConfig(config.ToolPermissions);
         _config = config;
 
         // Create session directory

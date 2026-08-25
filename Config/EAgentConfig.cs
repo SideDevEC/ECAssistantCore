@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Tools;
 
 namespace ECAssistant.Core.Config;
 
@@ -54,6 +55,9 @@ public class EAgentConfig
 
     [JsonPropertyName("llm_provider")]
     public LlmProviderConfig LlmProvider { get; set; } = new();
+
+    [JsonPropertyName("tool_permissions")]
+    public List<ToolPermissionConfigEntry>? ToolPermissions { get; set; }
 
     public string GetRootPath() => Path.GetFullPath(RootPath);
     public string GetMemoryDirectory() => Path.GetFullPath(Path.Combine(RootPath, "Memory"));
