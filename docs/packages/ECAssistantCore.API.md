@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 226  |  LOC: 20994  |  ~10297 tokens
+Types: 226  |  LOC: 21007  |  ~10303 tokens
 
 ---
 
@@ -305,7 +305,7 @@ Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: EAgentConfig
 > App settings — matches the nested structure in appsettings.json
-Cross-package deps: ECAssistant.Core.Interfaces
+Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Tools
 
 ### Class: EAgentConfigTests
 Implements: IDisposable

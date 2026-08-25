@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-08-25 (v11.6 — idle timeout, heartbeat reconnection, shutdown wiring, /v1/completions)
+**Updated:** 2026-08-25 (v11.7 — tool permission policy, blocked tools not registered, RunAsync refactor)
 **Status:** ✅ 857 Core tests + 64 LLM integration tests, 0 errors
 
 ## Overview
@@ -195,6 +195,32 @@ ECAssistantLLM server (model + GPU, shared)
 - Returns `EcaServiceBundle` with all services
 
 The actual HTTP wiring (`ServerLauncher` → `LlmServerClient` → `OpenAIClient` → `HttpStreamingEngine` / `RemoteKvCacheController` / `RemoteTokenizer`) happens inside `SessionManager` at `InitializeAsync`, using `LlmProviderConfig` (endpoint, mode, `auto_start`, `server_executable_path`, `heartbeat_interval_sec`, `host`, `port`).
+
+## Tool Permission Policy (v11.7)
+
+Three permission levels per tool: `Allowed` | `ApprovalRequired` | `Blocked`.
+
+**Config-driven** (`appsettings.json` → `tool_permissions` array):
+```json
+"tool_permissions": [
+  { "tool": "EShellAgent", "level": "ApprovalRequired", "reason": "Shell execution" },
+  { "tool": "EFileReaderTool", "level": "Allowed", "reason": "Read-only" },
+  { "tool": "EDangerousTool", "level": "Blocked", "reason": "Disabled" }
+]
+```
+
+**Defaults:**
+- Read-only tools (EFileReader, EWebSearch, EWebFetch, EDotnetBuild, ESubAgent, EFileResearch) → `Allowed`
+- Dangerous tools (EShellAgent, EGitTool, ECodeEditorTool, EBackgroundExecTool) → `ApprovalRequired`
+
+**Enforcement:**
+- `Blocked` tools are **not registered** — LLM never sees them, zero tokens wasted on descriptions or failed calls
+- `ApprovalRequired` tools are registered but `ParallelToolExecutor` calls `RequestApproval()` before execution → user sees `⚠ APPROVAL REQUIRED` + tool name + args → y/n prompt
+- `Allowed` tools execute immediately
+- Config overrides hardcoded defaults via `ToolPolicy.LoadFromConfig()` at session creation
+- Dynamic: any tool name works — custom/external tools just add an entry in config
+
+**Flow:** `appsettings.json` → `EAgentConfig.ToolPermissions` → `AgentSession` constructor → `ToolPolicy.LoadFromConfig()` → `SessionBuilder.EnsureAndRegister()` checks `IsBlocked` before registering → `ParallelToolExecutor.Check()` at execution time
 
 ## v10.31 — Port Control Flow
 
