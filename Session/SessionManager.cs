@@ -69,13 +69,13 @@ public class SessionManager : IAsyncDisposable
         {
             // ── Local mode: ECAssistantLLM server ──
             _serverLauncher = new ServerLauncher(provider);
-            _serverClient = new LlmServerClient(provider.Endpoint);
-            _httpClient = new OpenAIClient(provider.Endpoint);
+            _serverClient = new LlmServerClient(provider.ResolvedEndpoint);
+            _httpClient = new OpenAIClient(provider.ResolvedEndpoint);
         }
         else
         {
             // ── Remote mode: OpenAI-compatible API ──
-            _httpClient = new OpenAIClient(provider.Endpoint, apiKey: provider.ApiKey);
+            _httpClient = new OpenAIClient(provider.ResolvedEndpoint, apiKey: provider.ApiKey);
         }
 
         // Validate config (local mode needs model path; remote mode skips file validation)
@@ -116,11 +116,11 @@ public class SessionManager : IAsyncDisposable
             // Start heartbeat
             _serverClient.StartHeartbeat(_config.LlmProvider.HeartbeatIntervalSec, () => _sessions.Count);
 
-            _logger.Info("SessionManager", $"Connected to LLM server at {_config.LlmProvider.Endpoint}");
+            _logger.Info("SessionManager", $"Connected to LLM server at {_config.LlmProvider.ResolvedEndpoint}");
         }
         else
         {
-            _logger.Info("SessionManager", $"Remote mode: {_config.LlmProvider.Endpoint} (model: {_config.LlmProvider.ModelId})");
+            _logger.Info("SessionManager", $"Remote mode: {_config.LlmProvider.ResolvedEndpoint} (model: {_config.LlmProvider.ModelId})");
         }
     }
 
@@ -221,7 +221,7 @@ public class SessionManager : IAsyncDisposable
         var session = new AgentSession(
             key: key,
             sessionId: key,
-            endpoint: _config.LlmProvider.Endpoint,
+            endpoint: _config.LlmProvider.ResolvedEndpoint,
             clientId: IsLocalMode ? _serverClient!.ClientId : null,
             apiKey: IsRemoteMode ? _config.LlmProvider.ApiKey : null,
             inferenceParams: inferenceParams,

@@ -17,11 +17,38 @@ public sealed class LlmProviderConfig
 
     /// <summary>
     /// Server/API endpoint URL.
-    /// Local: http://localhost:8420 (ECAssistantLLM)
-    /// Remote: https://api.openai.com, https://api.deepseek.com, etc.
+    /// Local: derived from Host + Port (e.g. http://localhost:8420).
+    /// Remote: full URL from provider (e.g. https://api.openai.com).
+    /// In local mode, setting Port + Host is preferred over setting Endpoint directly.
     /// </summary>
     [JsonPropertyName("endpoint")]
     public string Endpoint { get; set; } = "http://localhost:8420";
+
+    /// <summary>
+    /// Port for the local ECAssistantLLM server. Default: 8420.
+    /// In local mode, this port is passed to the LLM server on startup and used
+    /// to build the endpoint URL if Endpoint is not explicitly set.
+    /// Ignored in remote mode.
+    /// </summary>
+    [JsonPropertyName("port")]
+    public int Port { get; set; } = 8420;
+
+    /// <summary>
+    /// Host for the local ECAssistantLLM server. Default: localhost.
+    /// Used with Port to build the endpoint URL in local mode.
+    /// Ignored in remote mode.
+    /// </summary>
+    [JsonPropertyName("host")]
+    public string Host { get; set; } = "localhost";
+
+    /// <summary>
+    /// Resolved endpoint URL. In local mode, derives from Host + Port.
+    /// In remote mode, returns Endpoint as-is.
+    /// </summary>
+    [JsonIgnore]
+    public string ResolvedEndpoint => IsLocal
+        ? $"http://{Host}:{Port}"
+        : Endpoint;
 
     /// <summary>
     /// API key for remote mode. Null/empty for local mode (ECAssistantLLM needs no key).

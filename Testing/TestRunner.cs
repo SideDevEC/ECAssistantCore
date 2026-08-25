@@ -329,7 +329,7 @@ public sealed class TestRunner : IAsyncDisposable
         }
         else
         {
-            var client = new Transport.OpenAIClient(config.LlmProvider.Endpoint);
+            var client = new Transport.OpenAIClient(config.LlmProvider.ResolvedEndpoint);
             var testInference = new Services.Http.HttpStreamingEngine(client, config.LlmProvider.ModelId, "test");
             var testKvCache = new Services.Http.RemoteKvCacheController(client);
             engine = new EAgentEngine(

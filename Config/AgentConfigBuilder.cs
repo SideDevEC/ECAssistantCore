@@ -51,6 +51,8 @@ public class AgentConfigBuilder
     private int _maxTurns = 10;
     private string _providerMode = "local";
     private string _providerEndpoint = "http://localhost:8420";
+    private int _providerPort = 8420;
+    private string _providerHost = "localhost";
     private string? _providerApiKey = null;
     private string _providerModelId = "main";
 
@@ -111,10 +113,12 @@ public class AgentConfigBuilder
     // ── LLM provider config ──
 
     /// <summary>Use local ECAssistantLLM server (spawns if needed, full KV cache support). Seeds initial JSON only.</summary>
-    public AgentConfigBuilder UseLocalLLM(string endpoint = "http://localhost:8420")
+    public AgentConfigBuilder UseLocalLLM(int port = 8420, string host = "localhost")
     {
         _providerMode = "local";
-        _providerEndpoint = endpoint;
+        _providerPort = port;
+        _providerHost = host;
+        _providerEndpoint = $"http://{host}:{port}";
         _providerApiKey = null;
         return this;
     }
@@ -210,6 +214,8 @@ public class AgentConfigBuilder
             {
                 Mode = _providerMode,
                 Endpoint = _providerEndpoint,
+                Port = _providerPort,
+                Host = _providerHost,
                 ApiKey = _providerApiKey,
                 ModelId = _providerModelId,
             },

@@ -125,6 +125,10 @@ public class EcaCompositionRoot
                 case "local":
                 case "use-local":
                     builder.UseLocalLLM(); break;
+                case "port":
+                    if (i + 1 < args.Length && int.TryParse(args[++i], out var portNum))
+                        builder.UseLocalLLM(port: portNum);
+                    break;
                 case "remote":
                 case "use-remote":
                     if (i + 2 < args.Length) { builder.UseRemoteLLM(args[i + 1], args[i + 2], args[i + 3]); i += 3; } break;

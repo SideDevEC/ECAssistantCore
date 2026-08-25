@@ -127,7 +127,7 @@ public class SessionBuilder
             IVectorEmbedder? embedder = null;
             if (_config.Embedding != null && _config.Embedding.Enabled)
             {
-                var embedderClient = new OpenAIClient(_config.LlmProvider.Endpoint);
+                var embedderClient = new OpenAIClient(_config.LlmProvider.ResolvedEndpoint);
                 embedder = new HttpEmbedder(embedderClient, _config.LlmProvider.EmbeddingModelId);
             }
             

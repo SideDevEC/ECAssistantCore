@@ -20,7 +20,7 @@ public sealed class ServerLauncher
     public ServerLauncher(LlmProviderConfig config)
     {
         _config = config ?? throw new ArgumentNullException(nameof(config));
-        _probeClient = new OpenAIClient(_config.Endpoint);
+        _probeClient = new OpenAIClient(_config.ResolvedEndpoint);
     }
 
     /// <summary>
@@ -45,8 +45,11 @@ public sealed class ServerLauncher
             return false;
 
         var args = "";
+        // Pass port override so Core controls which port the LLM server listens on
+        if (_config.IsLocal)
+            args = $"--port {_config.Port}";
         if (!string.IsNullOrEmpty(_config.ServerConfigPath))
-            args = $"\"{_config.ServerConfigPath}\"";
+            args += $" \"{_config.ServerConfigPath}\"";
 
         var psi = new ProcessStartInfo
         {
@@ -95,7 +98,7 @@ public sealed class ServerLauncher
             try
             {
                 // Send shutdown request — server will wind down if this is the last client
-                using var shutdownClient = new OpenAIClient(_config.Endpoint);
+                using var shutdownClient = new OpenAIClient(_config.ResolvedEndpoint);
                 await shutdownClient.PostJsonAsync("/eca/shutdown", "{}", ct);
             }
             catch { /* server may already be down */ }
