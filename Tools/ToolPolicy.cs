@@ -18,9 +18,20 @@ public class ToolPolicy
 
     private void SetDefaultPermissions()
     {
+        // ── Read-only tools: always allowed ──
         _permissions["EFileResearchTool"] = new ToolPermission { ToolName = "EFileResearchTool", Level = ToolPermissionLevel.Allowed, Reason = "Read-only research" };
         _permissions["EFileAnalyzer"] = new ToolPermission { ToolName = "EFileAnalyzer", Level = ToolPermissionLevel.Allowed, Reason = "Read-only analysis" };
-        _permissions["EShellAgent"] = new ToolPermission { ToolName = "EShellAgent", Level = ToolPermissionLevel.Allowed, Reason = "Primary tool — command execution" };
+        _permissions["EFileReaderTool"] = new ToolPermission { ToolName = "EFileReaderTool", Level = ToolPermissionLevel.Allowed, Reason = "Read-only file access" };
+        _permissions["EWebSearchTool"] = new ToolPermission { ToolName = "EWebSearchTool", Level = ToolPermissionLevel.Allowed, Reason = "Read-only web search" };
+        _permissions["EWebFetchTool"] = new ToolPermission { ToolName = "EWebFetchTool", Level = ToolPermissionLevel.Allowed, Reason = "Read-only web fetch" };
+        _permissions["EDotnetBuildTool"] = new ToolPermission { ToolName = "EDotnetBuildTool", Level = ToolPermissionLevel.Allowed, Reason = "Build only — no side effects" };
+        _permissions["ESubAgentTool"] = new ToolPermission { ToolName = "ESubAgentTool", Level = ToolPermissionLevel.Allowed, Reason = "Sub-agent orchestration" };
+
+        // ── Dangerous tools: require approval ──
+        _permissions["EShellAgent"] = new ToolPermission { ToolName = "EShellAgent", Level = ToolPermissionLevel.ApprovalRequired, Reason = "Shell command execution" };
+        _permissions["EGitTool"] = new ToolPermission { ToolName = "EGitTool", Level = ToolPermissionLevel.ApprovalRequired, Reason = "Git operations can push/commit" };
+        _permissions["ECodeEditorTool"] = new ToolPermission { ToolName = "ECodeEditorTool", Level = ToolPermissionLevel.ApprovalRequired, Reason = "File modification" };
+        _permissions["EBackgroundExecTool"] = new ToolPermission { ToolName = "EBackgroundExecTool", Level = ToolPermissionLevel.ApprovalRequired, Reason = "Background process execution" };
     }
 
     public void SetPermission(string toolName, ToolPermissionLevel level, string? reason = null)
