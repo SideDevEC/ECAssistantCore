@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 226  |  LOC: 21014  |  ~10303 tokens
+Types: 227  |  LOC: 21042  |  ~10322 tokens
 
 ---
 
@@ -887,6 +887,9 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Engine
 
 ### Class: SystemPromptBuilder
 > Builds a system prompt for ECAssistant.Core that includes the required
+
+### Class: SystemToolConfigEntry
+> Config entry for system-critical tools.
 
 ### Class: TaskPlanner
 > Task Planner — breaks complex requests into sub-tasks, tracks progress, and adapts.

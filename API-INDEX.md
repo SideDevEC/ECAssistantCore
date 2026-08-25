@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-25T20:26:50.399593+00:00
-Packages: 2  |  Types: 291
+Generated: 2026-08-25T20:31:13.516566+00:00
+Packages: 2  |  Types: 292
 
 ---
 
-## ECAssistantCore (226 types, ~21014 LOC)
+## ECAssistantCore (227 types, ~21042 LOC)
 
 - 🔵 IConfigProvider  (ECAssistantCore)
 - 🔵 IContextManager  (ECAssistantCore)
@@ -198,6 +198,7 @@ Packages: 2  |  Types: 291
 - 🟡 SummaryService  (ECAssistantCore)  deps: [Func]
 - 🟡 SummaryServiceTests  (ECAssistantCore)
 - 🟡 SystemPromptBuilder  (ECAssistantCore)
+- 🟡 SystemToolConfigEntry  (ECAssistantCore)
 - 🟡 TaskPlanner  (ECAssistantCore)  deps: [ILogger? logger =]
 - 🟡 TaskPlannerTests  (ECAssistantCore)
 - 🟡 TerminalAdapter : ITerminal  (ECAssistantCore)

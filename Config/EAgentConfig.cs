@@ -59,6 +59,14 @@ public class EAgentConfig
     [JsonPropertyName("tool_permissions")]
     public List<ToolPermissionConfigEntry>? ToolPermissions { get; set; }
 
+    /// <summary>
+    /// System-critical tools — always registered, cannot be disabled.
+    /// Only permission level can be changed (Allowed or ApprovalRequired).
+    /// Default is ApprovalRequired.
+    /// </summary>
+    [JsonPropertyName("system_tools")]
+    public List<SystemToolConfigEntry>? SystemTools { get; set; }
+
     public string GetRootPath() => Path.GetFullPath(RootPath);
     public string GetMemoryDirectory() => Path.GetFullPath(Path.Combine(RootPath, "Memory"));
     public string GetWorkspaceDirectory() => Path.GetFullPath(Path.Combine(RootPath, "Workspace"));

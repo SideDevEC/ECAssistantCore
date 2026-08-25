@@ -200,10 +200,19 @@ The actual HTTP wiring (`ServerLauncher` → `LlmServerClient` → `OpenAIClient
 
 Three permission levels per tool: `Allowed` | `ApprovalRequired` | `Blocked`.
 
-**Config-driven** (`appsettings.json` → `tool_permissions` array):
+**Config-driven** — two sections in `appsettings.json`:
+
+**`system_tools`** — system-critical tools, always registered, cannot be disabled. Only `Allowed` or `ApprovalRequired` (default). `Blocked` is rejected and clamped to `ApprovalRequired`. No `enabled` flag.
+```json
+"system_tools": [
+  { "tool": "EShellAgent", "level": "ApprovalRequired", "reason": "Shell execution — system-critical" }
+]
+```
+
+**`tool_permissions`** — optional tools, can be disabled or blocked. Has `enabled` flag in `tools` section.
 ```json
 "tool_permissions": [
-  { "tool": "EShellAgent", "level": "ApprovalRequired", "reason": "Shell execution" },
+  { "tool": "EGitTool", "level": "ApprovalRequired", "reason": "Git operations" },
   { "tool": "EFileReaderTool", "level": "Allowed", "reason": "Read-only" },
   { "tool": "EDangerousTool", "level": "Blocked", "reason": "Disabled" }
 ]
@@ -222,7 +231,7 @@ Three permission levels per tool: `Allowed` | `ApprovalRequired` | `Blocked`.
 - Config overrides hardcoded defaults via `ToolPolicy.LoadFromConfig()` at session creation
 - Dynamic: any tool name works — custom/external tools just add an entry in config
 
-**Flow:** `appsettings.json` → `EAgentConfig.ToolPermissions` → `AgentSession` constructor → `ToolPolicy.LoadFromConfig()` → `SessionBuilder.EnsureAndRegister()` checks `IsBlocked` before registering → `ParallelToolExecutor.Check()` at execution time
+**Flow:** `appsettings.json` → `system_tools` (loaded first, cannot be Blocked) + `tool_permissions` (loaded second, can override non-system tools) → `AgentSession` constructor → `ToolPolicy.LoadSystemTools()` + `ToolPolicy.LoadFromConfig()` → `SessionBuilder.EnsureAndRegister()` checks `IsBlocked` before registering → `ParallelToolExecutor.Check()` at execution time
 
 ## v10.31 — Port Control Flow
 

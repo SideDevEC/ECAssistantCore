@@ -79,4 +79,25 @@ public class ToolPolicy
                 SetPermission(entry.ToolName, level, entry.Reason);
         }
     }
+
+    /// <summary>
+    /// Load system-critical tool permissions. These cannot be Blocked —
+    /// only Allowed or ApprovalRequired. Default is ApprovalRequired.
+    /// </summary>
+    public void LoadSystemTools(List<SystemToolConfigEntry>? entries)
+    {
+        if (entries == null) return;
+        foreach (var entry in entries)
+        {
+            var level = Enum.TryParse<ToolPermissionLevel>(entry.Level, true, out var parsed)
+                ? parsed
+                : ToolPermissionLevel.ApprovalRequired;
+
+            // System tools can never be Blocked — clamp to ApprovalRequired
+            if (level == ToolPermissionLevel.Blocked)
+                level = ToolPermissionLevel.ApprovalRequired;
+
+            SetPermission(entry.ToolName, level, entry.Reason ?? "System-critical tool");
+        }
+    }
 }
