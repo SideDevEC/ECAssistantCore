@@ -13,112 +13,68 @@ public class ToolPolicyTests
 
         Assert.True(policy.IsAllowed("EFileResearchTool"));
         Assert.True(policy.IsAllowed("EFileAnalyzer"));
-        Assert.True(policy.IsAllowed("EShellAgent"));
+        Assert.True(policy.RequiresApproval("EShellAgent"));
     }
 
     [Fact]
-    public void GetPermissionLevel_UnknownTool_ReturnsAllowed()
+    public void UnknownTool_DefaultsToAllowed()
     {
         var policy = new ToolPolicy();
 
-        Assert.Equal(ToolPermissionLevel.Allowed, policy.GetPermissionLevel("UnknownTool"));
+        Assert.False(policy.RequiresApproval("UnknownTool"));
+        Assert.True(policy.IsAllowed("UnknownTool"));
     }
 
     // ── SetPermission ──
 
     [Fact]
-    public void SetPermission_Blocked_SetsBlockedLevel()
+    public void SetPermission_ApprovalRequired_Works()
     {
         var policy = new ToolPolicy();
 
-        policy.SetPermission("MyTool", ToolPermissionLevel.Blocked, "dangerous");
+        policy.SetPermission("MyTool", approvalRequired: true);
 
-        Assert.Equal(ToolPermissionLevel.Blocked, policy.GetPermissionLevel("MyTool"));
-        Assert.True(policy.IsBlocked("MyTool"));
-    }
-
-    [Fact]
-    public void SetPermission_ApprovalRequired_SetsApprovalLevel()
-    {
-        var policy = new ToolPolicy();
-
-        policy.SetPermission("MyTool", ToolPermissionLevel.ApprovalRequired);
-
-        Assert.Equal(ToolPermissionLevel.ApprovalRequired, policy.GetPermissionLevel("MyTool"));
         Assert.True(policy.RequiresApproval("MyTool"));
+        Assert.False(policy.IsAllowed("MyTool"));
     }
 
     [Fact]
-    public void SetPermission_Allowed_SetsAllowedLevel()
+    public void SetPermission_Allowed_Works()
     {
         var policy = new ToolPolicy();
-        policy.SetPermission("MyTool", ToolPermissionLevel.Blocked);
-        policy.SetPermission("MyTool", ToolPermissionLevel.Allowed);
+        policy.SetPermission("MyTool", approvalRequired: true);
+        policy.SetPermission("MyTool", approvalRequired: false);
 
         Assert.True(policy.IsAllowed("MyTool"));
+        Assert.False(policy.RequiresApproval("MyTool"));
     }
 
     [Fact]
     public void SetPermission_OverwritesExistingPermission()
     {
         var policy = new ToolPolicy();
-        policy.SetPermission("EShellAgent", ToolPermissionLevel.Blocked, "test");
+        policy.SetPermission("EShellAgent", approvalRequired: false, "test");
 
-        Assert.True(policy.IsBlocked("EShellAgent"));
-        Assert.False(policy.IsAllowed("EShellAgent"));
-    }
-
-    // ── IsAllowed / RequiresApproval / IsBlocked / IsUsable ──
-
-    [Fact]
-    public void IsAllowed_BlockedTool_ReturnsFalse()
-    {
-        var policy = new ToolPolicy();
-        policy.SetPermission("T", ToolPermissionLevel.Blocked);
-
-        Assert.False(policy.IsAllowed("T"));
-    }
-
-    [Fact]
-    public void RequiresApproval_AllowedTool_ReturnsFalse()
-    {
-        var policy = new ToolPolicy();
-
+        Assert.True(policy.IsAllowed("EShellAgent"));
         Assert.False(policy.RequiresApproval("EShellAgent"));
     }
 
+    // ── IsAllowed / RequiresApproval ──
+
     [Fact]
-    public void IsBlocked_AllowedTool_ReturnsFalse()
+    public void RequiresApproval_OnAllowedTool_ReturnsFalse()
     {
         var policy = new ToolPolicy();
 
-        Assert.False(policy.IsBlocked("EShellAgent"));
+        Assert.False(policy.RequiresApproval("EFileReaderTool"));
     }
 
     [Fact]
-    public void IsUsable_BlockedTool_ReturnsFalse()
-    {
-        var policy = new ToolPolicy();
-        policy.SetPermission("T", ToolPermissionLevel.Blocked);
-
-        Assert.False(policy.IsUsable("T"));
-    }
-
-    [Fact]
-    public void IsUsable_AllowedTool_ReturnsTrue()
+    public void IsAllowed_OnApprovalRequiredTool_ReturnsFalse()
     {
         var policy = new ToolPolicy();
 
-        Assert.True(policy.IsUsable("EShellAgent"));
-    }
-
-    [Fact]
-    public void IsUsable_ApprovalRequiredTool_ReturnsTrue()
-    {
-        var policy = new ToolPolicy();
-        policy.SetPermission("T", ToolPermissionLevel.ApprovalRequired);
-
-        Assert.True(policy.IsUsable("T"));
+        Assert.False(policy.IsAllowed("EShellAgent"));
     }
 
     // ── GetAllPermissions ──
@@ -131,7 +87,6 @@ public class ToolPolicyTests
         var all = policy.GetAllPermissions();
 
         Assert.Contains(all, p => p.ToolName == "EFileResearchTool");
-        Assert.Contains(all, p => p.ToolName == "EFileAnalyzer");
         Assert.Contains(all, p => p.ToolName == "EShellAgent");
     }
 
@@ -139,7 +94,7 @@ public class ToolPolicyTests
     public void GetAllPermissions_AfterSetPermission_IncludesNewTool()
     {
         var policy = new ToolPolicy();
-        policy.SetPermission("NewTool", ToolPermissionLevel.Allowed);
+        policy.SetPermission("NewTool", approvalRequired: false);
 
         var all = policy.GetAllPermissions();
 
@@ -154,7 +109,7 @@ public class ToolPolicyTests
         var policy = new ToolPolicy();
         var args = new Dictionary<string, string?>();
 
-        var decision = policy.Check("EShellAgent", args);
+        var decision = policy.Check("EFileReaderTool", args);
 
         Assert.True(decision.CanExecute);
         Assert.False(decision.NeedsApproval);
@@ -162,27 +117,12 @@ public class ToolPolicyTests
     }
 
     [Fact]
-    public void Check_BlockedTool_ReturnsCannotExecute()
-    {
-        var policy = new ToolPolicy();
-        policy.SetPermission("T", ToolPermissionLevel.Blocked);
-        var args = new Dictionary<string, string?>();
-
-        var decision = policy.Check("T", args);
-
-        Assert.False(decision.CanExecute);
-        Assert.False(decision.NeedsApproval);
-        Assert.Contains("blocked", decision.Message);
-    }
-
-    [Fact]
     public void Check_ApprovalRequiredTool_ReturnsNeedsApproval()
     {
         var policy = new ToolPolicy();
-        policy.SetPermission("T", ToolPermissionLevel.ApprovalRequired);
         var args = new Dictionary<string, string?>();
 
-        var decision = policy.Check("T", args);
+        var decision = policy.Check("EShellAgent", args);
 
         Assert.False(decision.CanExecute);
         Assert.True(decision.NeedsApproval);
@@ -209,8 +149,7 @@ public class ToolPolicyTests
 
         policy.LoadFromConfig(null);
 
-        // defaults remain unchanged
-        Assert.True(policy.IsAllowed("EShellAgent"));
+        Assert.True(policy.RequiresApproval("EShellAgent"));
     }
 
     [Fact]
@@ -220,7 +159,7 @@ public class ToolPolicyTests
 
         policy.LoadFromConfig(new List<ToolPermissionConfigEntry>());
 
-        Assert.True(policy.IsAllowed("EShellAgent"));
+        Assert.True(policy.RequiresApproval("EShellAgent"));
     }
 
     [Fact]
@@ -229,44 +168,67 @@ public class ToolPolicyTests
         var policy = new ToolPolicy();
         var entries = new List<ToolPermissionConfigEntry>
         {
-            new() { ToolName = "ToolA", Level = "Blocked", Reason = "danger" },
-            new() { ToolName = "ToolB", Level = "ApprovalRequired", Reason = "needs review" },
-            new() { ToolName = "ToolC", Level = "Allowed", Reason = "safe" },
+            new() { ToolName = "ToolA", ApprovalRequired = true, Reason = "needs review" },
+            new() { ToolName = "ToolB", ApprovalRequired = false, Reason = "safe" },
         };
 
         policy.LoadFromConfig(entries);
 
-        Assert.True(policy.IsBlocked("ToolA"));
-        Assert.True(policy.RequiresApproval("ToolB"));
-        Assert.True(policy.IsAllowed("ToolC"));
+        Assert.True(policy.RequiresApproval("ToolA"));
+        Assert.True(policy.IsAllowed("ToolB"));
     }
 
     [Fact]
-    public void LoadFromConfig_InvalidLevel_SkipsEntry()
+    public void LoadFromConfig_OverridesDefaults()
     {
         var policy = new ToolPolicy();
         var entries = new List<ToolPermissionConfigEntry>
         {
-            new() { ToolName = "BadTool", Level = "InvalidLevel" },
+            new() { ToolName = "EShellAgent", ApprovalRequired = false, Reason = "overridden" },
         };
 
         policy.LoadFromConfig(entries);
 
-        // Not set, so falls back to default Allowed
-        Assert.True(policy.IsAllowed("BadTool"));
+        Assert.True(policy.IsAllowed("EShellAgent"));
+    }
+
+    // ── LoadSystemTools ──
+
+    [Fact]
+    public void LoadSystemTools_NullEntries_DoesNothing()
+    {
+        var policy = new ToolPolicy();
+
+        policy.LoadSystemTools(null);
+
+        Assert.True(policy.RequiresApproval("EShellAgent"));
     }
 
     [Fact]
-    public void LoadFromConfig_CaseInsensitiveLevel_ParsesCorrectly()
+    public void LoadSystemTools_ValidEntry_SetsPermission()
     {
         var policy = new ToolPolicy();
-        var entries = new List<ToolPermissionConfigEntry>
+        var entries = new List<SystemToolConfigEntry>
         {
-            new() { ToolName = "T", Level = "blocked" },
+            new() { ToolName = "EShellAgent", ApprovalRequired = false, Reason = "test" },
         };
 
-        policy.LoadFromConfig(entries);
+        policy.LoadSystemTools(entries);
 
-        Assert.True(policy.IsBlocked("T"));
+        Assert.True(policy.IsAllowed("EShellAgent"));
+    }
+
+    [Fact]
+    public void LoadSystemTools_DefaultsToApprovalRequired()
+    {
+        var policy = new ToolPolicy();
+        var entries = new List<SystemToolConfigEntry>
+        {
+            new() { ToolName = "CustomTool" }, // ApprovalRequired defaults to true
+        };
+
+        policy.LoadSystemTools(entries);
+
+        Assert.True(policy.RequiresApproval("CustomTool"));
     }
 }

@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 227  |  LOC: 21042  |  ~10322 tokens
+Types: 227  |  LOC: 20976  |  ~10326 tokens
 
 ---
 
@@ -979,7 +979,7 @@ Implements: IDisposable
 Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Testing, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
 
 ### Class: ToolPolicy
-> Tool policy manager — checks permissions before tool execution.
+> Tool policy manager — checks if a tool requires user approval before execution.
 
 ### Class: ToolPolicyDecision
 > Result of a tool policy check.

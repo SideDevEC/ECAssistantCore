@@ -105,7 +105,7 @@ public class SubAgentIntegrationTests : IDisposable
 
         // Register a mock ESubAgent tool instead of InitializeSubAgents
         engine.RegisterTool(new MockSubAgentTool());
-        orchestrator.Policy.SetPermission("ESubAgent", ECAssistant.Core.Tools.ToolPermissionLevel.Allowed, "Test");
+        orchestrator.Policy.SetPermission("ESubAgent", approvalRequired: false, "Test");
 
         engine.AddResponse(
             "<lm><thinking>Spawn a sub-agent</thinking>" +
@@ -129,7 +129,7 @@ public class SubAgentIntegrationTests : IDisposable
         var (engine, orchestrator) = CreateEngineWithMockedTools(maxTurns: 5);
         // Register mock ESubAgent instead of InitializeSubAgents to avoid loading real model
         engine.RegisterTool(new MockSubAgentTool());
-        orchestrator.Policy.SetPermission("ESubAgent", ECAssistant.Core.Tools.ToolPermissionLevel.Allowed, "Test");
+        orchestrator.Policy.SetPermission("ESubAgent", approvalRequired: false, "Test");
 
         // Call ESubAgent without task argument
         engine.AddResponse("<lm><thinking>Spawn sub-agent without task</thinking><toolcall>ESubAgent</toolcall></lm>");
@@ -194,7 +194,7 @@ public class SubAgentIntegrationTests : IDisposable
         var (engine, orchestrator) = CreateEngineWithOrchestrator(maxTurns: 5);
         // Register mock ESubAgent instead of InitializeSubAgents to avoid loading real model
         engine.RegisterTool(new MockSubAgentTool());
-        orchestrator.Policy.SetPermission("ESubAgent", ECAssistant.Core.Tools.ToolPermissionLevel.Allowed, "Test");
+        orchestrator.Policy.SetPermission("ESubAgent", approvalRequired: false, "Test");
 
         engine.AddResponse(
             "<lm><thinking>Spawn two sub-agents</thinking>" +

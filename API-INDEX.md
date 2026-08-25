@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-25T20:31:13.516566+00:00
+Generated: 2026-08-25T20:40:48.656308+00:00
 Packages: 2  |  Types: 292
 
 ---
 
-## ECAssistantCore (227 types, ~21042 LOC)
+## ECAssistantCore (227 types, ~20976 LOC)
 
 - 🔵 IConfigProvider  (ECAssistantCore)
 - 🔵 IContextManager  (ECAssistantCore)
@@ -235,7 +235,7 @@ Packages: 2  |  Types: 292
 - 🟡 VectorSearchResult  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (65 types, ~9273 LOC)
+## Tests (65 types, ~9242 LOC)
 
 - 🟡 ApiUserController  (Tests)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (Tests)

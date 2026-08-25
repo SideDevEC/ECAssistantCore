@@ -198,23 +198,23 @@ The actual HTTP wiring (`ServerLauncher` → `LlmServerClient` → `OpenAIClient
 
 ## Tool Permission Policy (v11.7)
 
-Three permission levels per tool: `Allowed` | `ApprovalRequired` | `Blocked`.
+Two permission levels per tool: `approvalRequired: true/false`.
+To completely disable a tool, set `enabled: false` in the `tools` config section.
 
 **Config-driven** — two sections in `appsettings.json`:
 
-**`system_tools`** — system-critical tools, always registered, cannot be disabled. Only `Allowed` or `ApprovalRequired` (default). `Blocked` is rejected and clamped to `ApprovalRequired`. No `enabled` flag.
+**`system_tools`** — system-critical tools, always registered, cannot be disabled. `approvalRequired: true` (default) or `false`. No `enabled` flag.
 ```json
 "system_tools": [
-  { "tool": "EShellAgent", "level": "ApprovalRequired", "reason": "Shell execution — system-critical" }
+  { "tool": "EShellAgent", "approvalRequired": true, "reason": "Shell execution — system-critical" }
 ]
 ```
 
-**`tool_permissions`** — optional tools, can be disabled or blocked. Has `enabled` flag in `tools` section.
+**`tool_permissions`** — optional tools, can be disabled via `enabled: false` in `tools` section.
 ```json
 "tool_permissions": [
-  { "tool": "EGitTool", "level": "ApprovalRequired", "reason": "Git operations" },
-  { "tool": "EFileReaderTool", "level": "Allowed", "reason": "Read-only" },
-  { "tool": "EDangerousTool", "level": "Blocked", "reason": "Disabled" }
+  { "tool": "EGitTool", "approvalRequired": true, "reason": "Git operations" },
+  { "tool": "EFileReaderTool", "approvalRequired": false, "reason": "Read-only" }
 ]
 ```
 

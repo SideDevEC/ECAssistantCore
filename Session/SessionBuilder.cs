@@ -171,7 +171,7 @@ public class SessionBuilder
             foreach (var tool in externalTools)
             {
                 EnsureToolConfigSection(tool);
-                if (tool.IsEnabled && !session.Policy.IsBlocked(tool.Name))
+                if (tool.IsEnabled)
                     session.RegisterTool(tool);
             }
         }
@@ -244,7 +244,7 @@ public class SessionBuilder
             session.RegisterTool(tool);
             return;
         }
-        if (tool.IsEnabled && !session.Policy.IsBlocked(tool.Name))
+        if (tool.IsEnabled)
             session.RegisterTool(tool);
     }
 

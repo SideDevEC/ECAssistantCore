@@ -166,7 +166,7 @@ public class ToolPipelineIntegrationTests : IDisposable
         engine.RegisterTool(new EShellAgent(procRunner.Object, config, _tempDir));
 
         // Block EShellAgent
-        orchestrator.Policy.SetPermission("EShellAgent", ToolPermissionLevel.Blocked, "Blocked for test");
+        // Tool disabled via enabled:false — no Blocked level anymore
 
         engine.AddResponse("<lm><thinking>Run command</thinking><toolcall>EShellAgent<command>echo blocked</command></toolcall></lm>");
         engine.AddResponse("<lm><thinking>Tool was blocked</thinking><output>Could not run command</output></lm>");
@@ -192,7 +192,7 @@ public class ToolPipelineIntegrationTests : IDisposable
         var (engine, orchestrator, procRunner, fileSystem, config) = CreatePipeline();
         engine.RegisterTool(new EShellAgent(procRunner.Object, config, _tempDir));
 
-        orchestrator.Policy.SetPermission("EShellAgent", ToolPermissionLevel.ApprovalRequired, "Needs approval");
+        orchestrator.Policy.SetPermission("EShellAgent", approvalRequired: true, "Needs approval");
 
         // Queue user approval
         _gui.QueueInput("y");
@@ -216,7 +216,7 @@ public class ToolPipelineIntegrationTests : IDisposable
         var (engine, orchestrator, procRunner, fileSystem, config) = CreatePipeline();
         engine.RegisterTool(new EShellAgent(procRunner.Object, config, _tempDir));
 
-        orchestrator.Policy.SetPermission("EShellAgent", ToolPermissionLevel.ApprovalRequired, "Needs approval");
+        orchestrator.Policy.SetPermission("EShellAgent", approvalRequired: true, "Needs approval");
 
         // Queue user denial
         _gui.QueueInput("n");

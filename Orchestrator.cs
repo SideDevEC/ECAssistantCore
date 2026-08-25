@@ -81,7 +81,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
           _subAgentManager = new SubAgentManager(_engine, defaultWorkingDir, _logger, _out, _config);
           _engine.RegisterTool(new Tools.SubAgent.ESubAgentTool(_subAgentManager, defaultWorkingDir));
           _toolWhitelist.Add("ESubAgent");
-          _toolPolicy.SetPermission("ESubAgent", ToolPermissionLevel.Allowed, "Sub-agent spawning");
+          _toolPolicy.SetPermission("ESubAgent", approvalRequired: false, "Sub-agent spawning");
          _out?.WriteInfo("Sub-agent system initialized and ESubAgent tool registered.");
       }
 
