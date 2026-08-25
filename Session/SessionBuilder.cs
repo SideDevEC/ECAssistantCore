@@ -232,11 +232,18 @@ public class SessionBuilder
     }
 
     /// <summary>
-    /// Ensure config section exists, then register the tool if it's enabled.
+    /// Ensure config section exists, then register the tool if enabled and not blocked.
+    /// System-critical tools (IsSystemCritical = true) always register regardless of config.
+    /// System-critical tools also cannot be blocked by ToolPolicy.
     /// </summary>
     private void EnsureAndRegister(AgentSession session, EToolBase tool)
     {
         EnsureToolConfigSection(tool);
+        if (tool.IsSystemCritical)
+        {
+            session.RegisterTool(tool);
+            return;
+        }
         if (tool.IsEnabled && !session.Policy.IsBlocked(tool.Name))
             session.RegisterTool(tool);
     }

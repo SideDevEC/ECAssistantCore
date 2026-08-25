@@ -215,6 +215,8 @@ Three permission levels per tool: `Allowed` | `ApprovalRequired` | `Blocked`.
 
 **Enforcement:**
 - `Blocked` tools are **not registered** — LLM never sees them, zero tokens wasted on descriptions or failed calls
+- **System-critical tools** (`IsSystemCritical = true`) always register regardless of `enabled` or `Blocked` config — they cannot be disabled
+- Currently system-critical: `EShellAgent` only
 - `ApprovalRequired` tools are registered but `ParallelToolExecutor` calls `RequestApproval()` before execution → user sees `⚠ APPROVAL REQUIRED` + tool name + args → y/n prompt
 - `Allowed` tools execute immediately
 - Config overrides hardcoded defaults via `ToolPolicy.LoadFromConfig()` at session creation

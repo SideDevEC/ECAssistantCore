@@ -20,6 +20,9 @@ public abstract class EToolBase
           /// <summary>Whether this tool is enabled. Read from config.Tools[Name].enabled.</summary>
     public virtual bool IsEnabled { get; protected set; } = true;
 
+    /// <summary>If true, the tool cannot be disabled via config — it always registers.</summary>
+    public virtual bool IsSystemCritical => false;
+
                /// <summary>Example usage text shown to the LLM in the system prompt</summary>
     public abstract string UsageExample { get; }
 

@@ -29,6 +29,7 @@ public class EShellAgent : EToolBase
         "<toolcall>EShellAgent<command>Get-ChildItem</command></toolcall>";
 
     public override bool IsEnabled { get; protected set; } = true;
+    public override bool IsSystemCritical => true;
 
     public EShellAgent(IProcessRunner processRunner, EAgentConfig config, string workingDirectory)
     {
