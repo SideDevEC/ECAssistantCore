@@ -7,6 +7,7 @@ using ECAssistant.Core.Session;
 using ECAssistant.Core.Services;
 using ECAssistant.Core.Services.Http;
 using ECAssistant.Core.Tools;
+using ECAssistant.Core.Transport;
 
 namespace ECAssistant.Core.Engine;
 
@@ -27,11 +28,12 @@ public class EAgentEngine : IEngine
     public bool MockMode { get; set; }
 
      // ── HTTP transport — no in-process LLamaSharp ──
-    protected readonly IInferenceEngine? _inferenceEngine;
-    protected readonly IKvCacheController? _kvCacheController;
-    protected readonly RemoteTokenizer? _tokenizer;
-    protected readonly string _sessionId;
-    protected readonly InferenceRequestParams? _requestParams;
+    protected IInferenceEngine? _inferenceEngine;
+    protected IKvCacheController? _kvCacheController;
+    protected RemoteTokenizer? _tokenizer;
+    protected string _sessionId;
+    protected InferenceRequestParams? _requestParams;
+    protected string? _clientId;
 
     // ── Injectable service dependencies ──
     protected readonly IProcessRunner _processRunner;
@@ -123,6 +125,26 @@ public class EAgentEngine : IEngine
     public IKvCacheController? KvCacheController => _kvCacheController;
     public RemoteTokenizer? Tokenizer => _tokenizer;
     public string SessionId => _sessionId;
+
+    /// <summary>
+    /// Update HTTP client and client ID after server reconnection.
+    /// Replaces the inference engine and KV cache controller with new instances
+    /// bound to the new client ID.
+    /// </summary>
+    public void UpdateHttpClient(OpenAIClient newClient, string newClientId)
+    {
+        _clientId = newClientId;
+        // Recreate KV cache controller with new client
+        if (_kvCacheController is RemoteKvCacheController)
+        {
+            _kvCacheController = new RemoteKvCacheController(newClient);
+        }
+        // Recreate inference engine with new client
+        var modelId = _requestParams?.ModelId ?? "main";
+        _inferenceEngine = new HttpStreamingEngine(newClient, modelId, _sessionId);
+        // Reset KV session state so PrefillStaticPrefix recreates it
+        _kvSessionActive = false;
+    }
     public InferenceRequestParams? InferenceParams => _requestParams;
     public CancellationToken ExecutionToken => _cts?.Token ?? CancellationToken.None;
     public bool IsExecutionStopped => ExecutionToken.IsCancellationRequested;

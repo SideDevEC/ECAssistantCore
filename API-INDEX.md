@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-25T01:52:54.220929+00:00
+Generated: 2026-08-25T16:48:32.967389+00:00
 Packages: 2  |  Types: 291
 
 ---
 
-## ECAssistantCore (226 types, ~20790 LOC)
+## ECAssistantCore (226 types, ~20994 LOC)
 
 - 🔵 IConfigProvider  (ECAssistantCore)
 - 🔵 IContextManager  (ECAssistantCore)
@@ -129,7 +129,7 @@ Packages: 2  |  Types: 291
 - 🟡 LLMDecision  (ECAssistantCore)  deps: [bool, string, Dictionary, string? answerText =, List]
 - 🟡 LlmConfig  (ECAssistantCore)
 - 🟡 LlmProviderConfig  (ECAssistantCore)
-- 🟡 LlmServerClient : ILlmServerClient  (ECAssistantCore)  deps: [string, string? clientId =]
+- 🟡 LlmServerClient : ILlmServerClient  (ECAssistantCore)  deps: [string, string? clientId =, int maxHeartbeatFailures =, ILogger? logger =]
 - 🟡 LlmServerEndpointConfig  (ECAssistantCore)
 - 🟡 Logger : ILogger  (ECAssistantCore)  deps: [string, LogLevel minLevel =]
 - 🟡 LoggerTests : IDisposable  (ECAssistantCore)

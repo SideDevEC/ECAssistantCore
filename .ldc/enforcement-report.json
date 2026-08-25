@@ -1,6 +1,6 @@
 {
   "project": "ECAssistantCore",
-  "timestamp": "2026-08-25T01:52:54.222685+00:00",
+  "timestamp": "2026-08-25T16:48:32.969471+00:00",
   "total_violations": 26,
   "errors": 20,
   "warnings": 6,
@@ -8,157 +8,157 @@
     {
       "rule": "interface-first",
       "severity": "warning",
-      "file": "<project-root>/ECAssistantCore/Config/ConfigLoader.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Config/ConfigLoader.cs",
       "message": "Public class ConfigLoader in ECAssistantCore implements no interface \u2014 may be a boundary leak"
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> All ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> SmokeTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> ToolTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> MultiStepTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> CodeTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> ComplexTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> EdgeTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> ShellTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> ParallelTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> ErrorRecoveryTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> SubAgentTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> TagTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> StepMapperTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> SelfCorrectionTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> CrossPlatformTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> GitTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> DotnetTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> MemoryTests\n        ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> MockTests ="
     },
     {
       "rule": "no-statics",
       "severity": "error",
-      "file": "<project-root>/ECAssistantCore/Testing/EcaTests.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Testing/EcaTests.cs",
       "message": "Static mutable field found in EcaTests: static List<TestScenario> MockScenarios ="
     },
     {
       "rule": "interface-first",
       "severity": "warning",
-      "file": "<project-root>/ECAssistantCore/Engine/ModelParamValidator.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Engine/ModelParamValidator.cs",
       "message": "Public class ModelParamValidator in ECAssistantCore implements no interface \u2014 may be a boundary leak"
     },
     {
       "rule": "interface-first",
       "severity": "warning",
-      "file": "<project-root>/ECAssistantCore/Engine/StepMapper.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Engine/StepMapper.cs",
       "message": "Public class StepMapper in ECAssistantCore implements no interface \u2014 may be a boundary leak"
     },
     {
       "rule": "interface-first",
       "severity": "warning",
-      "file": "<project-root>/ECAssistantCore/Engine/ParallelToolExecutor.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Engine/ParallelToolExecutor.cs",
       "message": "Public class ParallelToolExecutor in ECAssistantCore implements no interface \u2014 may be a boundary leak"
     },
     {
       "rule": "interface-first",
       "severity": "warning",
-      "file": "<project-root>/ECAssistantCore/Engine/TaskPlanner.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Engine/TaskPlanner.cs",
       "message": "Public class TaskPlanner in ECAssistantCore implements no interface \u2014 may be a boundary leak"
     },
     {
       "rule": "interface-first",
       "severity": "warning",
-      "file": "<project-root>/ECAssistantCore/Session/SessionBuilder.cs",
+      "file": "/Users/localdev/agent/ECAssistant/ECAssistantCore/Session/SessionBuilder.cs",
       "message": "Public class SessionBuilder in ECAssistantCore implements no interface \u2014 may be a boundary leak"
     }
   ],

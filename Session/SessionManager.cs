@@ -22,6 +22,13 @@ public class SessionManager : IAsyncDisposable
     private readonly SemaphoreSlim _inferenceLock = new(1, 1);
     private readonly SessionDiscovery _sessionDiscovery = new();
 
+    // ── Idle timeout state ──
+    private Timer? _idleTimer;
+    private DateTime _lastUserActivity = DateTime.UtcNow;
+    private bool _isIdleDisconnected;
+    private int _idleTimeoutMin;
+    private readonly int _idleCheckIntervalSec = 60;
+
     /// <summary>The currently active session.</summary>
     public AgentSession? ActiveSession { get; private set; }
 
@@ -35,7 +42,7 @@ public class SessionManager : IAsyncDisposable
     // HTTP infrastructure (shared across all sessions)
     private readonly ServerLauncher? _serverLauncher;       // local mode only
     private readonly LlmServerClient? _serverClient;        // local mode only
-    private readonly OpenAIClient _httpClient;
+    private OpenAIClient _httpClient;
     private readonly InferenceParamsFactory _inferenceParamsFactory;
     private RemoteTokenizer? _remoteTokenizer;               // local mode only
 
@@ -44,6 +51,9 @@ public class SessionManager : IAsyncDisposable
 
     /// <summary>True if running in remote mode (cloud API, no KV cache).</summary>
     public bool IsRemoteMode => _config.LlmProvider.IsRemote;
+
+    /// <summary>True when client has disconnected from server due to idle timeout.</summary>
+    public bool IsIdleDisconnected => _isIdleDisconnected;
 
     /// <summary>Called when a session is being loaded.</summary>
     public Action<string>? OnSessionLoading { get; set; }
@@ -109,6 +119,10 @@ public class SessionManager : IAsyncDisposable
             var connected = await _serverClient!.ConnectAsync("ECAssistant", "1.0.0", ct);
             if (!connected)
                 throw new InvalidOperationException("Failed to register with LLM server");
+
+            // Recreate HTTP client with the registered client ID so X-Client-Id header is sent
+            _httpClient.Dispose();
+            _httpClient = new OpenAIClient(_config.LlmProvider.ResolvedEndpoint, clientId: _serverClient.ClientId);
 
             // Setup tokenizer (local mode only — remote APIs don't expose /eca/tokenize)
             _remoteTokenizer = new RemoteTokenizer(_httpClient, _config.LlmProvider.ModelId);
@@ -295,8 +309,120 @@ public class SessionManager : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Mark user activity (resets idle timer). Called on any user input.
+    /// If currently idle-disconnected, triggers reconnection.
+    /// </summary>
+    public void MarkUserActivity()
+    {
+        _lastUserActivity = DateTime.UtcNow;
+
+        if (_isIdleDisconnected && IsLocalMode)
+        {
+            _ = Task.Run(async () =>
+            {
+                try { await ReconnectAfterIdleAsync(); }
+                catch (Exception ex) { _logger.Error("SessionManager", $"Reconnect after idle failed: {ex.Message}"); }
+            });
+        }
+    }
+
+    /// <summary>
+    /// Start the idle watchdog timer. Call after initialization.
+    /// </summary>
+    public void StartIdleWatchdog(int idleTimeoutMin)
+    {
+        _idleTimeoutMin = idleTimeoutMin;
+        _idleTimer?.Dispose();
+        _idleTimer = new Timer(CheckIdle, null,
+            TimeSpan.FromSeconds(_idleCheckIntervalSec),
+            TimeSpan.FromSeconds(_idleCheckIntervalSec));
+        _logger.Info("SessionManager", $"Idle watchdog started — timeout {idleTimeoutMin} min");
+    }
+
+    private async void CheckIdle(object? state)
+    {
+        if (_isIdleDisconnected || !IsLocalMode || _idleTimeoutMin <= 0) return;
+
+        var idleFor = DateTime.UtcNow - _lastUserActivity;
+        if (idleFor.TotalMinutes < _idleTimeoutMin) return;
+
+        // User has been idle past the threshold — disconnect to free VRAM
+        _logger.Info("SessionManager", $"User idle for {idleFor.TotalMinutes:F0} min — disconnecting from LLM server to free resources");
+        _isIdleDisconnected = true;
+
+        try
+        {
+            // Stop heartbeat
+            _serverClient?.StopHeartbeat();
+
+            // Send shutdown request — server will wind down if we're the only client
+            await _serverLauncher!.StopServerAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.Warn("SessionManager", $"Idle disconnect error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Reconnect to the LLM server after an idle disconnect.
+    /// Re-registers as client, recreates KV cache sessions, and re-prefills.
+    /// </summary>
+    public async Task ReconnectAfterIdleAsync()
+    {
+        if (!_isIdleDisconnected || !IsLocalMode) return;
+
+        _logger.Info("SessionManager", "Reconnecting after idle — ensuring LLM server is running...");
+
+        // Ensure server is back up
+        var ok = await _serverLauncher!.EnsureServerRunningAsync();
+        if (!ok)
+        {
+            _logger.Error("SessionManager", "Failed to restart LLM server after idle");
+            return;
+        }
+
+        // Re-register as client
+        var connected = await _serverClient!.ConnectAsync("ECAssistant", "1.0.0");
+        if (!connected)
+        {
+            _logger.Error("SessionManager", "Failed to re-register with LLM server");
+            return;
+        }
+
+        // Recreate HTTP client with new clientId
+        _httpClient.Dispose();
+        _httpClient = new OpenAIClient(_config.LlmProvider.ResolvedEndpoint, clientId: _serverClient.ClientId);
+        _remoteTokenizer = new RemoteTokenizer(_httpClient, _config.LlmProvider.ModelId);
+
+        // Restart heartbeat
+        _serverClient.StartHeartbeat(_config.LlmProvider.HeartbeatIntervalSec, () => _sessions.Count);
+
+        // Recreate KV cache sessions on the server and re-prefill
+        foreach (var session in _sessions.Values)
+        {
+            try
+            {
+                session.UpdateClientId(_serverClient.ClientId, _httpClient);
+                await session.RecreateKvCacheSessionAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.Warn("SessionManager", $"Failed to restore session {session.Key}: {ex.Message}");
+            }
+        }
+
+        _isIdleDisconnected = false;
+        _lastUserActivity = DateTime.UtcNow;
+        _logger.Info("SessionManager", "Reconnected after idle — sessions restored");
+    }
+
     public async ValueTask DisposeAsync()
     {
+        // Stop idle watchdog
+        _idleTimer?.Dispose();
+
         // Stop all sessions
         StopAll();
 
@@ -305,9 +431,11 @@ public class SessionManager : IAsyncDisposable
         {
             try { await _serverClient!.DisconnectAsync(); }
             catch { /* best effort */ }
-            await _serverLauncher!.StopServerAsync();
+            try { await _serverLauncher!.StopServerAsync(); }
+            catch { /* best effort */ }
         }
 
-        _httpClient.Dispose();
+        try { _httpClient.Dispose(); }
+        catch { /* best effort */ }
     }
 }

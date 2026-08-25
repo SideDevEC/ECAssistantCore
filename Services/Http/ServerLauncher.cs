@@ -92,17 +92,17 @@ public sealed class ServerLauncher
     /// </summary>
     public async Task StopServerAsync(CancellationToken ct = default)
     {
-        // Try graceful shutdown via HTTP endpoint
+        // Always send graceful shutdown via HTTP endpoint — even if we didn't start the server
+        try
+        {
+            using var shutdownClient = new OpenAIClient(_config.ResolvedEndpoint);
+            await shutdownClient.PostJsonAsync("/eca/shutdown", "{}", ct);
+        }
+        catch { /* server may already be down */ }
+
+        // If we launched the process, wait for it and force-kill if needed
         if (_serverProcess != null && !_serverProcess.HasExited)
         {
-            try
-            {
-                // Send shutdown request — server will wind down if this is the last client
-                using var shutdownClient = new OpenAIClient(_config.ResolvedEndpoint);
-                await shutdownClient.PostJsonAsync("/eca/shutdown", "{}", ct);
-            }
-            catch { /* server may already be down */ }
-
             // Wait for process to exit gracefully
             var deadline = DateTime.UtcNow.AddSeconds(10);
             while (DateTime.UtcNow < deadline && _serverProcess != null && !_serverProcess.HasExited)

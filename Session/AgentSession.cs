@@ -46,6 +46,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     private readonly string _workingDir;
     private readonly string _sessionDir;
     private readonly SubAgentConfig _subAgentConfig;
+    private readonly bool _isLocalMode;
 
     // ── Output Buffer (file-based JSONL) ─────────────
     private readonly string _outputFilePath;
@@ -115,6 +116,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         _workingDir = workingDir;
         _inferenceLock = inferenceLock;
         _subAgentConfig = subAgentConfig ?? new SubAgentConfig();
+        _isLocalMode = isLocalMode;
         _toolPolicy = new ECAssistant.Core.Tools.ToolPolicy();
         _config = config;
 
@@ -159,6 +161,33 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         _engine.InitializeTaskPlanner();
 
         WriteSystem($"Session '{key}' created.");
+    }
+
+    /// <summary>
+    /// Update the client ID and HTTP client after reconnection.
+    /// Called by SessionManager.ReconnectAfterIdleAsync to rewire the session
+    /// to the new server connection.
+    /// </summary>
+    public void UpdateClientId(string newClientId, OpenAIClient newHttpClient)
+    {
+        _engine.UpdateHttpClient(newHttpClient, newClientId);
+    }
+
+    /// <summary>
+    /// Recreate the KV cache session on the LLM server and re-prefill the static prefix.
+    /// Called after reconnection to restore the session's server-side state.
+    /// </summary>
+    public async Task RecreateKvCacheSessionAsync()
+    {
+        if (!_isLocalMode) return;
+        try
+        {
+            await _engine.PrefillStaticPrefix();
+        }
+        catch (Exception ex)
+        {
+            _logger?.Warn("AgentSession", $"Re-prefill failed for {Key}: {ex.Message}");
+        }
     }
 
     /// <summary>The engine powering this session.</summary>

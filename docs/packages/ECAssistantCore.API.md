@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 226  |  LOC: 20790  |  ~10258 tokens
+Types: 226  |  LOC: 20994  |  ~10297 tokens
 
 ---
 
@@ -316,7 +316,7 @@ Cross-package deps: ECAssistant.Core.Config
 Implements: IEngine
 Constructor:
   - EAgentEngine(string sessionId, IInferenceEngine inferenceEngine, IKvCacheController kvCacheController, RemoteTokenizer? tokenizer = null, InferenceRequestParams? inferenceParams = null, uint contextSize = 8192, string modelPath = "", EAgentConfig? config = null, string? workingDir = null, ILogger? logger = null, EMemoryManager? memoryManager = null, ECAssistant.Core.Engine.SelfCorrectionManager? selfCorrection = null, ECAssistant.Core.Engine.ProjectContextManager? projectContext = null, TaskPlanner? taskPlanner = null)
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
 
 ### Class: EBackgroundExecTool
 > Background Exec Tool — lets the LLM start long-running processes
@@ -503,7 +503,7 @@ Cross-package deps: ECAssistant.Core.Orchestration
 
 ### Class: ExecutionState
 > v10.30: Core engine. All inference + KV cache control is HTTP-based via the
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
 
 ### Class: FailureAnalysis
 
@@ -609,7 +609,7 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools
 > Manages client lifecycle with ECAssistantLLM server.
 Implements: ILlmServerClient
 Constructor:
-  - LlmServerClient(string endpoint, string? clientId = null)
+  - LlmServerClient(string endpoint, string? clientId = null, int maxHeartbeatFailures = DefaultMaxFailures, ILogger? logger = null)
 Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Transport
 
 ### Class: LlmServerEndpointConfig
@@ -650,7 +650,7 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, Moq
 Implements: EAgentEngine
 Constructor:
   - MockEngine(Queue<string> responses, int maxIterations = 5, bool stopAfterFirstTool = false, string? workingDir = null, ISessionOutput? sessionOutput = null, string? workingDir = null, ISessionOutput? sessionOutput = null, bool cycleResponses = false)
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
 
 ### Class: MockSubAgentTool
 > Integration tests for sub-agent spawning through the orchestrator.
