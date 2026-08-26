@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-26T10:51:43.948094+00:00
+Generated: 2026-08-26T11:58:23.064443+00:00
 Packages: 2  |  Types: 298
 
 ---
 
-## ECAssistantCore (233 types, ~21033 LOC)
+## ECAssistantCore (233 types, ~21153 LOC)
 
 - 🔵 IConfigLoader  (ECAssistantCore)
 - 🔵 IConfigProvider  (ECAssistantCore)
@@ -178,7 +178,7 @@ Packages: 2  |  Types: 298
 - 🟡 SamplingConfig  (ECAssistantCore)
 - 🟡 SelfCorrectionManager : IDisposable  (ECAssistantCore)  deps: [string, ILogger? logger =]
 - 🟡 SelfCorrectionManagerTests  (ECAssistantCore)
-- 🟡 ServerLauncher  (ECAssistantCore)  deps: [LlmProviderConfig]
+- 🟡 ServerLauncher  (ECAssistantCore)  deps: [LlmProviderConfig, string]
 - 🟡 SessionBuilder : ISessionBuilder  (ECAssistantCore)  deps: [EAgentConfig, string, string, ILogger? logger =, BackgroundProcessManager? bgManager =]
 - 🟡 SessionDiscovery  (ECAssistantCore)
 - 🟡 SessionDiscoveryTests : IDisposable  (ECAssistantCore)

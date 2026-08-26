@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-08-26 (v11.8 — LDC compliance: 6 new interfaces extracted, 0 enforcement warnings)
+**Updated:** 2026-08-26 (v12.0 — root-based config, smart shell approval, build script, LDC compliance)
 **Status:** ✅ 857 Core tests + 64 LLM integration tests, 0 errors
 
 ## Overview

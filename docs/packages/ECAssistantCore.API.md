@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 233  |  LOC: 21033  |  ~10934 tokens
+Types: 233  |  LOC: 21153  |  ~10938 tokens
 
 ---
 
@@ -847,7 +847,7 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
 ### Class: ServerLauncher
 > Detects if ECAssistantLLM server is running. If not, launches it as a child process.
 Constructor:
-  - ServerLauncher(LlmProviderConfig config)
+  - ServerLauncher(LlmProviderConfig config, string appRoot)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Transport
 
 ### Class: SessionBuilder
