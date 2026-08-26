@@ -38,6 +38,7 @@ public class SessionManager : IAsyncDisposable
     private readonly EAgentConfig _config;
     private int _sessionCounter = 0;
     private readonly ILogger _logger;
+    private readonly string _appRoot;
 
     // HTTP infrastructure (shared across all sessions)
     private readonly ServerLauncher? _serverLauncher;       // local mode only
@@ -70,6 +71,7 @@ public class SessionManager : IAsyncDisposable
         _logger = logger ?? new Logger();
         _config = config;
         _workingDir = workingDir;
+        _appRoot = workingDir; // app root is the working directory
         _subAgentConfig = config.SubAgent;
 
         var provider = config.LlmProvider;
@@ -78,7 +80,7 @@ public class SessionManager : IAsyncDisposable
         if (provider.IsLocal)
         {
             // ── Local mode: ECAssistantLLM server ──
-            _serverLauncher = new ServerLauncher(provider);
+            _serverLauncher = new ServerLauncher(provider, _appRoot);
             _serverClient = new LlmServerClient(provider.ResolvedEndpoint);
             _httpClient = new OpenAIClient(provider.ResolvedEndpoint);
         }

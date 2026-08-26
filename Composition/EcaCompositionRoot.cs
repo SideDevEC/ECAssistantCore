@@ -70,6 +70,15 @@ public class EcaCompositionRoot
         if (config.Workspace?.Path != null)
             Directory.CreateDirectory(Path.Combine(_userConfigDir, config.Workspace.Path));
 
+        // ── Ensure LLM server root directory exists ──
+        // The LLM server home is {appRoot}/llm. It contains llm-server.json, logs, and models/.
+        // The server generates a default config on first run if none exists.
+        var llmRoot = string.IsNullOrEmpty(config.LlmProvider.ServerRootPath)
+            ? Path.Combine(_userConfigDir, "llm")
+            : config.LlmProvider.ServerRootPath;
+        Directory.CreateDirectory(llmRoot);
+        Directory.CreateDirectory(Path.Combine(llmRoot, "models"));
+
         // ── Services ──
         var bgManager = new BackgroundProcessManager();
         var fileWatcher = new FileWatcherService(_userConfigDir, logger: logger);

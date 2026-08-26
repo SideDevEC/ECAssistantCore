@@ -14,14 +14,28 @@ namespace ECAssistant.Core.Services.Http;
 public sealed class ServerLauncher
 {
     private readonly LlmProviderConfig _config;
+    private readonly string _appRoot;
     private readonly OpenAIClient _probeClient;
     private Process? _serverProcess;
 
-    public ServerLauncher(LlmProviderConfig config)
+    /// <summary>
+    /// Create the server launcher.
+    /// </summary>
+    /// <param name="config">LLM provider config</param>
+    /// <param name="appRoot">Application root directory (e.g. ~/ECAssistant). The LLM server home is {appRoot}/llm.</param>
+    public ServerLauncher(LlmProviderConfig config, string appRoot)
     {
         _config = config ?? throw new ArgumentNullException(nameof(config));
+        _appRoot = appRoot ?? throw new ArgumentNullException(nameof(appRoot));
         _probeClient = new OpenAIClient(_config.ResolvedEndpoint);
     }
+
+    /// <summary>
+    /// The LLM server root directory: {appRoot}/llm.
+    /// </summary>
+    public string LlmRoot => string.IsNullOrEmpty(_config.ServerRootPath)
+        ? Path.Combine(_appRoot, "llm")
+        : _config.ServerRootPath;
 
     /// <summary>
     /// Ensure server is running. If not detected and auto_start is true, launch it.
@@ -44,12 +58,13 @@ public sealed class ServerLauncher
         if (exePath == null)
             return false;
 
-        var args = "";
+        // Ensure LLM root directory exists
+        Directory.CreateDirectory(LlmRoot);
+
+        var args = $"--root \"{LlmRoot}\"";
         // Pass port override so Core controls which port the LLM server listens on
         if (_config.IsLocal)
-            args = $"--port {_config.Port}";
-        if (!string.IsNullOrEmpty(_config.ServerConfigPath))
-            args += $" \"{_config.ServerConfigPath}\"";
+            args += $" --port {_config.Port}";
 
         var psi = new ProcessStartInfo
         {

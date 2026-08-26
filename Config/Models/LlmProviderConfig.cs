@@ -90,9 +90,13 @@ public sealed class LlmProviderConfig
     [JsonPropertyName("heartbeat_interval_sec")]
     public int HeartbeatIntervalSec { get; set; } = 30;
 
-    /// <summary>Path to the server's llm-server.json (for auto-start, passed as arg).</summary>
-    [JsonPropertyName("server_config_path")]
-    public string? ServerConfigPath { get; set; }
+    /// <summary>
+    /// Root directory for the LLM server. If not set, defaults to {appRoot}/llm.
+    /// The LLM server creates llm-server.json, logs, and models/ under this directory.
+    /// Passed to the server via --root argument.
+    /// </summary>
+    [JsonPropertyName("server_root_path")]
+    public string? ServerRootPath { get; set; }
 
     // ── Convenience properties ──
 
