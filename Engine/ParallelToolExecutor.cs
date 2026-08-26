@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using ECAssistant.Core.Interfaces;
 using ECAssistant.Core.Tools;
 using ECAssistant.Core.Session;
 
@@ -14,10 +15,10 @@ namespace ECAssistant.Core.Engine;
 /// - Failures in one tool don't block other parallel tools
 /// - Per-tool policy checks and approval gates
 /// </summary>
-public class ParallelToolExecutor
+public class ParallelToolExecutor : IParallelToolExecutor
 {
     private readonly EAgentEngine _engine;
-    private readonly ToolPolicy _toolPolicy;
+    private readonly ECAssistant.Core.Tools.ToolPolicy _toolPolicy;
     private readonly Func<string, Dictionary<string, string?>, Task<EToolResult>> _executeToolFn;
     private readonly Action<string> _log;
     private readonly ISessionOutput? _out;
@@ -32,7 +33,7 @@ public class ParallelToolExecutor
     /// <param name="sessionOutput">Optional session output for approval requests</param>
     public ParallelToolExecutor(
         EAgentEngine engine,
-        ToolPolicy toolPolicy,
+        ECAssistant.Core.Tools.ToolPolicy toolPolicy,
         Func<string, Dictionary<string, string?>, Task<EToolResult>> executeToolFn,
         Action<string>? log = null,
         ISessionOutput? sessionOutput = null)

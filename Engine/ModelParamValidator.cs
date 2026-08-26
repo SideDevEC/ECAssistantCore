@@ -10,7 +10,7 @@ namespace ECAssistant.Core.Engine;
 /// Note: GPU layers, threads, batch size are server-side concerns
 /// (validated by ECAssistantLLM, not Core).
 /// </summary>
-public class ModelParamValidator
+public class ModelParamValidator : IModelParamValidator
 {
     private readonly ILogger? _logger;
 

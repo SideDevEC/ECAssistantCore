@@ -17,4 +17,4 @@ public record EcaServiceBundle(
     ILogger Logger,
     BackgroundProcessManager BackgroundProcesses,
     FileWatcherService FileWatcher,
-    SessionBuilder SessionBuilder);
+    ISessionBuilder SessionBuilder);

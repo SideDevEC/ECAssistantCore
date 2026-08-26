@@ -1,8 +1,14 @@
 # ECAssistantCore.API.md
 
-Types: 227  |  LOC: 20976  |  ~10326 tokens
+Types: 233  |  LOC: 21033  |  ~10934 tokens
 
 ---
+
+### Interface: IConfigLoader
+> Interface for loading EAgentConfig from JSON files.
+Methods:
+  - EAgentConfig Load(string filePath = "appsettings.json")
+Cross-package deps: ECAssistant.Core.Config
 
 ### Interface: IConfigProvider
 > Configuration access abstraction.
@@ -112,6 +118,13 @@ Methods:
   - Task<bool> LoadModelAsync(string modelId, string path, RemoteModelLoadOptions options, CancellationToken ct = default)
   - Task<bool> UnloadModelAsync(string modelId, CancellationToken ct = default)
 
+### Interface: IModelParamValidator
+> Interface for validating model parameters before loading.
+Methods:
+  - ModelLoadException? Validate(string modelPath, uint contextSize)
+  - ModelLoadException? Validate(EAgentConfig config, string resolvedModelPath)
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine
+
 ### Interface: IOutputListener
 > Listener interface for session output.
 Methods:
@@ -129,10 +142,33 @@ Methods:
   - void WriteColoredLine(string color, string text)
   - void Flush()
 
+### Interface: IParallelToolExecutor
+> Interface for parallel tool execution with dependency-aware scheduling.
+Methods:
+  - Task<BatchToolResult> ExecuteAsync(List<ToolCallRequest> toolCalls, CancellationToken ct = default)
+  - string CombineResults(BatchToolResult batch)
+  - string FormatConsoleSummary(BatchToolResult batch)
+Cross-package deps: ECAssistant.Core.Engine
+
 ### Interface: IProcessRunner
 > Abstract process execution.
 Methods:
   - Task<ProcessResult> ExecuteAsync(string command, string? workDir = null, CancellationToken ct = default)
+
+### Interface: ISessionBuilder
+> Interface for building and initializing AgentSessions with standard tools.
+Properties:
+  - List<EToolBase> ExternalTools { get; set; }
+  - bool RegisterBuiltInTools { get; set; }
+  - bool? EnableVectorMemory { get; set; }
+  - bool? EnableSubAgents { get; set; }
+  - bool EnableBackgroundTasks { get; set; }
+  - BackgroundProcessManager BackgroundManager { get; set; }
+Methods:
+  - Task BuildAsync(AgentSession session)
+  - Task BuildAsync(AgentSession session, List<EToolBase>? externalTools)
+  - void RegisterBuiltInToolsAsync(AgentSession session, List<EToolBase>? externalTools = null)
+Cross-package deps: ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Tools
 
 ### Interface: ISessionContext
 > Read-only session context exposed to tools.
@@ -164,6 +200,25 @@ Methods:
   - string GetStreamBuffer()
   - OutputState GetStreamState()
   - bool RequestApproval(string message)
+
+### Interface: IStepMapper
+> Interface for mapping sub-tasks to concrete tool calls.
+Methods:
+  - Task<ExecutionPlan> MapAsync(List<SubTask> subTasks, string originalGoal)
+Cross-package deps: ECAssistant.Core.Engine
+
+### Interface: ITaskPlanner
+> Interface for decomposing user requests into sub-tasks.
+Properties:
+  - SubTask? Current { get; set; }
+  - bool HasRemaining { get; set; }
+Methods:
+  - List<SubTask> Decompose(string request)
+  - void CompleteCurrent()
+  - void FailCurrent(string reason)
+  - string GetProgressContext()
+  - string GetSummary()
+Cross-package deps: ECAssistant.Core.Engine
 
 ### Interface: ITerminal
 > Terminal I/O abstraction.
@@ -244,6 +299,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services, ECAssist
 
 ### Class: ConfigLoader
 > Loads EAgentConfig from JSON files.
+Implements: IConfigLoader
 Constructor:
   - ConfigLoader(IFileSystem fileSystem)
 Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Services
@@ -315,7 +371,7 @@ Cross-package deps: ECAssistant.Core.Config
 > v10.30: Core engine. All inference + KV cache control is HTTP-based via the
 Implements: IEngine
 Constructor:
-  - EAgentEngine(string sessionId, IInferenceEngine inferenceEngine, IKvCacheController kvCacheController, RemoteTokenizer? tokenizer = null, InferenceRequestParams? inferenceParams = null, uint contextSize = 8192, string modelPath = "", EAgentConfig? config = null, string? workingDir = null, ILogger? logger = null, EMemoryManager? memoryManager = null, ECAssistant.Core.Engine.SelfCorrectionManager? selfCorrection = null, ECAssistant.Core.Engine.ProjectContextManager? projectContext = null, TaskPlanner? taskPlanner = null)
+  - EAgentEngine(string sessionId, IInferenceEngine inferenceEngine, IKvCacheController kvCacheController, RemoteTokenizer? tokenizer = null, InferenceRequestParams? inferenceParams = null, uint contextSize = 8192, string modelPath = "", EAgentConfig? config = null, string? workingDir = null, ILogger? logger = null, EMemoryManager? memoryManager = null, ECAssistant.Core.Engine.SelfCorrectionManager? selfCorrection = null, ECAssistant.Core.Engine.ProjectContextManager? projectContext = null, ITaskPlanner? taskPlanner = null)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
 
 ### Class: EBackgroundExecTool
@@ -665,6 +721,7 @@ Constructor:
 
 ### Class: ModelParamValidator
 > Pre-flight validation for model loading parameters.
+Implements: IModelParamValidator
 Constructor:
   - ModelParamValidator(ILogger? logger = null)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
@@ -696,9 +753,10 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.
 
 ### Class: ParallelToolExecutor
 > Executes dependency-ordered tool call groups in parallel.
+Implements: IParallelToolExecutor
 Constructor:
-  - ParallelToolExecutor(EAgentEngine engine, ToolPolicy toolPolicy, Func<string, Dictionary<string, string?>, Task<EToolResult>> executeToolFn, Action<string>? log = null, ISessionOutput? sessionOutput = null)
-Cross-package deps: ECAssistant.Core.Tools, ECAssistant.Core.Session
+  - ParallelToolExecutor(EAgentEngine engine, ECAssistant.Core.Tools.ToolPolicy toolPolicy, Func<string, Dictionary<string, string?>, Task<EToolResult>> executeToolFn, Action<string>? log = null, ISessionOutput? sessionOutput = null)
+Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Tools, ECAssistant.Core.Session
 
 ### Class: ParallelToolExecutorIntegrationTests
 > Integration tests for ParallelToolExecutor — dependency analysis and parallel
@@ -794,6 +852,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Transport
 
 ### Class: SessionBuilder
 > Builder for creating and initializing AgentSessions with standard tools.
+Implements: ISessionBuilder
 Constructor:
   - SessionBuilder(EAgentConfig config, string workingDir, string userConfigDir, ILogger? logger = null, BackgroundProcessManager? bgManager = null)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Services, ECAssistant.Core.Session, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Background, ECAssistant.Core.Tools.Build, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Git, ECAssistant.Core.Tools.Reader, ECAssistant.Core.Tools.Research, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Web, ECAssistant.Core.Interfaces, ECAssistant.Core.Services.Http, ECAssistant.Core.Transport
@@ -830,6 +889,7 @@ Cross-package deps: ECAssistant.Core.Tools
 
 ### Class: StepMapper
 > Step Mapper — takes decomposed sub-tasks and maps them to concrete tool calls.
+Implements: IStepMapper
 Constructor:
   - StepMapper(EAgentEngine engine, ILogger? logger = null)
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
@@ -893,6 +953,7 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Engine
 
 ### Class: TaskPlanner
 > Task Planner — breaks complex requests into sub-tasks, tracks progress, and adapts.
+Implements: ITaskPlanner
 Constructor:
   - TaskPlanner(ILogger? logger = null)
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
@@ -1022,7 +1083,7 @@ Constructor:
 ### Record: EcaServiceBundle
 > Bundle of all wired services returned by EcaCompositionRoot.Build().
 Constructor:
-  - EcaServiceBundle(EAgentConfig Config, string ModelPath, string WorkingDirectory, string UserConfigDirectory, ILogger Logger, BackgroundProcessManager BackgroundProcesses, FileWatcherService FileWatcher, SessionBuilder SessionBuilder)
+  - EcaServiceBundle(EAgentConfig Config, string ModelPath, string WorkingDirectory, string UserConfigDirectory, ILogger Logger, BackgroundProcessManager BackgroundProcesses, FileWatcherService FileWatcher, ISessionBuilder SessionBuilder)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 
 ### Record: GenerationParams

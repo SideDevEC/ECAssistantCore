@@ -97,8 +97,8 @@ public class EAgentEngine : IEngine
         get => _injectedProjectContext;
         set => _injectedProjectContext = value;
      }
-    private TaskPlanner? _injectedTaskPlanner;
-    public TaskPlanner? InjectedTaskPlanner
+    private ITaskPlanner? _injectedTaskPlanner;
+    public ITaskPlanner? InjectedTaskPlanner
     {
         get => _injectedTaskPlanner;
         set => _injectedTaskPlanner = value;
@@ -115,8 +115,8 @@ public class EAgentEngine : IEngine
     private SubAgentManager? _subAgentManager;
     private ECAssistant.Core.Engine.SelfCorrectionManager? _selfCorrection;
     private ECAssistant.Core.Engine.ProjectContextManager? _projectContext;
-    private TaskPlanner? _taskPlanner;
-    private StepMapper? _sharedStepMapper;
+    private ITaskPlanner? _taskPlanner;
+    private IStepMapper? _sharedStepMapper;
 
      // ── Public API ─────────────────────────────────────────────
 
@@ -157,8 +157,8 @@ public class EAgentEngine : IEngine
     public SubAgentManager SubAgentManager => _subAgentManager ??= CreateSubAgentManager();
     public ECAssistant.Core.Engine.SelfCorrectionManager? SelfCorrection => _selfCorrection;
     public ECAssistant.Core.Engine.ProjectContextManager? ProjectContext => _projectContext;
-    public TaskPlanner TaskPlanner => _taskPlanner ??= CreateTaskPlanner();
-    public StepMapper? SharedStepMapper => _sharedStepMapper ??= CreateStepMapper();
+    public ITaskPlanner TaskPlanner => _taskPlanner ??= CreateTaskPlanner();
+    public IStepMapper? SharedStepMapper => _sharedStepMapper ??= CreateStepMapper();
 
      // ── KV cache status (sync — read from cached snapshot) ──
     public bool IsKVCachePrefilled => _isPrefilled;
@@ -203,7 +203,7 @@ public class EAgentEngine : IEngine
         EMemoryManager? memoryManager = null,
         ECAssistant.Core.Engine.SelfCorrectionManager? selfCorrection = null,
         ECAssistant.Core.Engine.ProjectContextManager? projectContext = null,
-        TaskPlanner? taskPlanner = null)
+        ITaskPlanner? taskPlanner = null)
      {
         _logger = logger ?? new Logger();
         _injectedSelfCorrection = selfCorrection;
@@ -1402,11 +1402,11 @@ User: " + userRequest + "\n<lm>\n";
     protected virtual SubAgentManager CreateSubAgentManager()
          => new(this, _workingDir, _logger, _out, _config, _processRunner, _fileSystem, _httpClient);
 
-    protected virtual TaskPlanner CreateTaskPlanner()
-         => new(_logger);
+    protected virtual ITaskPlanner CreateTaskPlanner()
+         => new TaskPlanner(_logger);
 
-    protected virtual StepMapper CreateStepMapper()
-         => new(this, _logger);
+    protected virtual IStepMapper CreateStepMapper()
+         => new StepMapper(this, _logger);
 }
 
 // ── Execution state (v9.0) ────────────────────────────────

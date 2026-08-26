@@ -34,7 +34,7 @@ namespace ECAssistant.Core;
 ///   var builder = new SessionBuilder(config, workingDir, logger) { RegisterBuiltInTools = false };
 ///   builder.ExternalTools.Add(new MyCustomTool());
 /// </summary>
-public class SessionBuilder
+public class SessionBuilder : ISessionBuilder
 {
     private readonly EAgentConfig _config;
     private readonly string _workingDir;

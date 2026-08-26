@@ -13,7 +13,7 @@ namespace ECAssistant.Core.Engine;
 /// 4. Injects progress context into each prompt
 /// 5. Adapts if a sub-task fails (marks failed, continues with remaining)
 /// </summary>
-public class TaskPlanner
+public class TaskPlanner : ITaskPlanner
 {
     private readonly List<SubTask> _subTasks = new();
     private int _currentSubTask = 0;

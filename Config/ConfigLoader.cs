@@ -10,7 +10,7 @@ namespace ECAssistant.Core.Config;
 /// Loads EAgentConfig from JSON files.
 /// Falls back to embedded default appsettings.json from Core.dll if file not found.
 /// </summary>
-public class ConfigLoader
+public class ConfigLoader : IConfigLoader
 {
     private readonly IFileSystem _fileSystem;
 

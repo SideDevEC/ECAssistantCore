@@ -17,7 +17,7 @@ namespace ECAssistant.Core.Engine;
 /// - Better reasoning for tool selection and batching
 /// - The plan in context helps the LLM stay on track during execution
 /// </summary>
-public class StepMapper
+public class StepMapper : IStepMapper
 {
     private readonly EAgentEngine _engine;
     private readonly ILogger _logger;

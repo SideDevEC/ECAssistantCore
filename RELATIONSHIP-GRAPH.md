@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-08-25T21:22:38.530331+00:00
-Edges: 60  |  Packages: 2
+Generated: 2026-08-26T10:51:43.949115+00:00
+Edges: 67  |  Packages: 2
 
 ---
 
@@ -9,6 +9,7 @@ Edges: 60  |  Packages: 2
 
 - AgentSession ──implements──► ISessionContext (ECAssistantCore)
 - AgentSession ──implements──► ISessionOutput (ECAssistantCore)
+- ConfigLoader ──implements──► IConfigLoader (ECAssistantCore)
 - ConfigLoader ──uses──► IFileSystem (ECAssistantCore)
 - ConfigProvider ──implements──► IConfigProvider (ECAssistantCore)
 - ConfigProvider ──uses──► IFileSystem (ECAssistantCore)
@@ -43,6 +44,7 @@ Edges: 60  |  Packages: 2
 - EWebSearchTool ──implements──► EToolBase (ECAssistantCore)
 - EWebSearchTool ──uses──► IHttpClient (ECAssistantCore)
 - EcaServiceBundle ──uses──► ILogger (ECAssistantCore)
+- EcaServiceBundle ──uses──► ISessionBuilder (ECAssistantCore)
 - FileSystemAdapter ──implements──► IFileSystem (ECAssistantCore)
 - HttpClientAdapter ──implements──► IHttpClient (ECAssistantCore)
 - HttpEmbedder ──implements──► IVectorEmbedder (ECAssistantCore)
@@ -57,12 +59,17 @@ Edges: 60  |  Packages: 2
 - MemoryService ──uses──► IVectorStore (ECAssistantCore)
 - MockEngine ──implements──► EAgentEngine (ECAssistantCore)
 - MockSubAgentTool ──implements──► EToolBase (ECAssistantCore)
+- ModelParamValidator ──implements──► IModelParamValidator (ECAssistantCore)
 - NopKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
+- ParallelToolExecutor ──implements──► IParallelToolExecutor (ECAssistantCore)
 - PrefixCachedExtractor ──uses──► IInferenceEngine (ECAssistantCore)
 - PrefixCachedExtractor ──uses──► IKvCacheController (ECAssistantCore)
 - ProcessRunner ──implements──► IProcessRunner (ECAssistantCore)
 - RemoteKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
 - RemoteModelLoader ──implements──► IModelLoader (ECAssistantCore)
+- SessionBuilder ──implements──► ISessionBuilder (ECAssistantCore)
+- StepMapper ──implements──► IStepMapper (ECAssistantCore)
+- TaskPlanner ──implements──► ITaskPlanner (ECAssistantCore)
 - TerminalAdapter ──implements──► ITerminal (ECAssistantCore)
 - TestSessionOutput ──implements──► ISessionOutput (ECAssistantCore)
 - TfidfEmbedder ──implements──► IVectorEmbedder (ECAssistantCore)

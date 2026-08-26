@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-08-25 (v11.7 — tool permission policy, blocked tools not registered, RunAsync refactor)
+**Updated:** 2026-08-26 (v11.8 — LDC compliance: 6 new interfaces extracted, 0 enforcement warnings)
 **Status:** ✅ 857 Core tests + 64 LLM integration tests, 0 errors
 
 ## Overview
@@ -37,7 +37,7 @@ ECAssistantCore/            # Core engine, tools, sessions, memory (168 .cs file
 │    ├── SubAgent/          # SubAgentTask, SubAgentResult, SubAgentError
 │    ├── PrefixCachedExtractor.cs  # HTTP KV-cache reuse for long-lived extraction tasks
 │    └── TokenCounter.cs    # Wraps RemoteTokenizer (HTTP /eca/tokenize)
-├── Interfaces/             # 18 interfaces (IEngine, IInferenceEngine, IKvCacheController, ILlmServerClient, ...)
+├── Interfaces/             # 23 interfaces (IEngine, IInferenceEngine, IKvCacheController, ILlmServerClient, IConfigLoader, IModelParamValidator, IStepMapper, IParallelToolExecutor, ITaskPlanner, ISessionBuilder, ...)
 ├── Memory/                 # EMemoryManager, VectorMemoryStore
 ├── Services/               # Service implementations (Logger, ContextManager, InferenceParamsFactory, etc.)
 │    └── Http/              # HTTP-based services (see below)
@@ -99,7 +99,7 @@ ECAssistantConsole ←── [Core DLL, TUI DLL]
 - **Local mode:** Core → ECAssistantLLM (full KV cache, sessions, tokenizer via `/eca/*` extension endpoints).
 - **Remote mode:** Core → any OpenAI-compatible API (stateless, no `/eca/*` endpoints, no KV cache).
 
-## Key Interfaces (18)
+## Key Interfaces (23)
 
 | Interface | Implementation | Purpose |
 |-----------|---------------|---------|
@@ -121,6 +121,12 @@ ECAssistantConsole ←── [Core DLL, TUI DLL]
 | IOutputRenderer | ConsoleUiRenderer | Output rendering |
 | IToolPolicyEvaluator | ToolPolicy | Tool permission evaluation |
 | ISessionContext | AgentSession | Read-only session context exposed to tools |
+| IConfigLoader | ConfigLoader | JSON config file loading with embedded fallback |
+| IModelParamValidator | ModelParamValidator | Pre-flight model parameter validation |
+| IStepMapper | StepMapper | Maps decomposed sub-tasks to concrete tool calls via LLM |
+| IParallelToolExecutor | ParallelToolExecutor | Dependency-ordered parallel tool execution with policy gates |
+| ITaskPlanner | TaskPlanner | Decomposes complex requests into tracked sub-tasks |
+| ISessionBuilder | SessionBuilder | Builds and initializes AgentSessions with standard tools |
 
 **Transport (not interfaces, concrete classes in `Transport/`):**
 - `OpenAIClient` — `HttpClient` wrapper (PostJson/GetJson/Delete/PostStream/Ping), `X-Client-Id` header
