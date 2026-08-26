@@ -1,7 +1,7 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-08-26 (v12.0 — root-based config, smart shell approval, build script, LDC compliance)
-**Status:** ✅ 857 Core tests + 64 LLM integration tests, 0 errors
+**Updated:** 2026-08-26 (v12.1 — EWebFetch v2: structured HTML conversion + content extraction + offset paging)
+**Status:** ✅ 850 Core tests + 64 LLM integration tests, 0 errors
 
 ## Overview
 
@@ -37,9 +37,11 @@ ECAssistantCore/            # Core engine, tools, sessions, memory (168 .cs file
 │    ├── SubAgent/          # SubAgentTask, SubAgentResult, SubAgentError
 │    ├── PrefixCachedExtractor.cs  # HTTP KV-cache reuse for long-lived extraction tasks
 │    └── TokenCounter.cs    # Wraps RemoteTokenizer (HTTP /eca/tokenize)
-├── Interfaces/             # 23 interfaces (IEngine, IInferenceEngine, IKvCacheController, ILlmServerClient, IConfigLoader, IModelParamValidator, IStepMapper, IParallelToolExecutor, ITaskPlanner, ISessionBuilder, ...)
+├── Interfaces/             # 25 interfaces (IEngine, IInferenceEngine, IKvCacheController, ILlmServerClient, IConfigLoader, IModelParamValidator, IStepMapper, IParallelToolExecutor, ITaskPlanner, ISessionBuilder, IHtmlTextConverter, IReadableContentExtractor, ...)
 ├── Memory/                 # EMemoryManager, VectorMemoryStore
 ├── Services/               # Service implementations (Logger, ContextManager, InferenceParamsFactory, etc.)
+│    ├── HtmlTextConverter.cs       # IHtmlTextConverter — block-tag-aware HTML→text
+│    ├── ReadableContentExtractor.cs # IReadableContentExtractor — article/main extraction, boilerplate stripping
 │    └── Http/              # HTTP-based services (see below)
 ├── Session/                # AgentSession, SessionManager, SessionBuilder, SessionDiscovery
 │    └── ISessionContext    # Exposes Memory/VectorMemory/BackgroundTasks (NOT SharedWeights/SharedModelParams)
@@ -53,7 +55,8 @@ ECAssistantCore/            # Core engine, tools, sessions, memory (168 .cs file
      ├── EGit/              # Git operations
      ├── EResearch/         # File research
      ├── EShell/            # Shell command execution
-     ├── EWeb/              # Web search + fetch
+     ├── EWeb/              # Web search
+     └── Web/               # EWebFetch — fetch URL, extract readable content, convert to structured text (offset paging)
      ├── Policy/            # ToolPermission, ToolPolicyDecision
      ├── Reader/            # File reader
      ├── SubAgent/          # Sub-agent tool
@@ -99,7 +102,7 @@ ECAssistantConsole ←── [Core DLL, TUI DLL]
 - **Local mode:** Core → ECAssistantLLM (full KV cache, sessions, tokenizer via `/eca/*` extension endpoints).
 - **Remote mode:** Core → any OpenAI-compatible API (stateless, no `/eca/*` endpoints, no KV cache).
 
-## Key Interfaces (23)
+## Key Interfaces (25)
 
 | Interface | Implementation | Purpose |
 |-----------|---------------|---------|
@@ -114,7 +117,7 @@ ECAssistantConsole ←── [Core DLL, TUI DLL]
 | IContextManager | ContextManager | Context window management |
 | IConfigProvider | ConfigProvider | Config value access |
 | IFileSystem | FileSystemAdapter | File operations abstraction |
-| IHttpClient | HttpClientAdapter | HTTP requests |
+| IHttpClient | HttpClientAdapter | HTTP requests (browser-like headers, header-aware GET) |
 | ITerminal | TerminalAdapter | Terminal operations |
 | IProcessRunner | ProcessRunner | Process execution |
 | IVectorStore | InMemoryVectorStore | Vector storage |
@@ -127,6 +130,8 @@ ECAssistantConsole ←── [Core DLL, TUI DLL]
 | IParallelToolExecutor | ParallelToolExecutor | Dependency-ordered parallel tool execution with policy gates |
 | ITaskPlanner | TaskPlanner | Decomposes complex requests into tracked sub-tasks |
 | ISessionBuilder | SessionBuilder | Builds and initializes AgentSessions with standard tools |
+| IHtmlTextConverter | HtmlTextConverter | HTML→plain text with block-level structure preserved |
+| IReadableContentExtractor | ReadableContentExtractor | Extracts main content from HTML (article/main/body+boilerplate-strip) |
 
 **Transport (not interfaces, concrete classes in `Transport/`):**
 - `OpenAIClient` — `HttpClient` wrapper (PostJson/GetJson/Delete/PostStream/Ping), `X-Client-Id` header
@@ -262,16 +267,50 @@ To completely disable a tool, set `enabled: false` in the `tools` config section
 |------|-----------|-------|
 | Engine | 18 | ~250 |
 | Services | 11 | ~150 |
-| Tools | 12 | ~200 |
+| Tools | 15 | ~237 |
 | Session | 2 | ~50 |
 | Memory | 2 | ~40 |
 | Config | 2 | ~30 |
 | Integration | 10 | ~100 |
 | Analysis | 1 | ~20 |
 | UI | 1+4 | ~17 |
-| **Total** | **59+4** | **857** |
+| **Total** | **61+4** | **850** |
 
 `MockEngine` (in `EAgentEngine.cs`) now extends `EAgentEngine` with a no-op HTTP transport so tests run without a live ECAssistantLLM server.
+
+## EWebFetch v2 — Structured Content Pipeline (v12.1)
+
+EWebFetch was reworked to produce LLM-parseable output. The old tool returned a single unstructured text blob with boilerplate, which 8B models couldn't extract information from.
+
+**Pipeline:** `IHttpClient.GetAsync` → `IReadableContentExtractor.Extract` → `IHtmlTextConverter.Convert` → offset-based paging
+
+**IReadableContentExtractor** (`ReadableContentExtractor`):
+- Prefers `<article>` → `<main>` → `role="main"` containers
+- Falls back to `<body>` with nav/aside/footer/form/iframe/script stripped
+- Removes elements by boilerplate class/id patterns (nav, sidebar, cookie, banner, social, share, etc.)
+- Cleans share/social/nav sub-elements inside articles
+
+**IHtmlTextConverter** (`HtmlTextConverter`):
+- Converts block-level closing tags (`</p>`, `</div>`, `</h1>`…`</h6>`, `</li>`, `</tr>`, etc.) to newlines BEFORE stripping tags
+- Converts block-level opening tags to newlines too (heading starts, list items)
+- Removes `<script>`, `<style>`, `<noscript>`, `<head>`, HTML comments
+- Decodes HTML entities
+- Collapses 3+ consecutive blank lines to max 2
+- Result: structured plain text with paragraph/heading/list separation
+
+**HttpClientAdapter:**
+- Sends browser-like `User-Agent` + `Accept: text/html` + `Accept-Language` headers on all GETs
+- New `GetAsync(url, headers, ct)` overload on `IHttpClient` for custom header support
+- Prevents Cloudflare/bot-protection 403s and block pages
+
+**EWebFetchTool changes:**
+- Constructor injects `IHttpClient` + `IReadableContentExtractor` + `IHtmlTextConverter` + `EAgentConfig`
+- New `offset` arg (chars) — LLM can page through long content; output includes next-offset hint
+- Default `maxchars` raised from 6000 → 12000
+- `GetToolRules()` injects offset guidance into system prompt
+- Output format: `Fetched {url} (offset N, returning M of T total chars)\n\n{content}\n\n[truncated — call EWebFetch with offset X / End of page]`
+
+**Wiring:** `SessionBuilder.RegisterNativeTools` + `TestRunner` create `ReadableContentExtractor` + `HtmlTextConverter` instances and pass to `EWebFetchTool` constructor.
 
 ## Key Constraints
 
@@ -298,3 +337,4 @@ To completely disable a tool, set `enabled: false` in the `tools` config section
 - MockEngine uses a no-op HTTP transport constructor (model-independent tests, no static flags)
 - v11.4: Orchestrator gates decomposition — verb heuristic first (instant), then LLM 1-token classification (~0.15s)
 - v11.4: System prompt teaches LLM to learn from failed <thinking> blocks in conversation history
+- v12.1: EWebFetch uses IReadableContentExtractor + IHtmlTextConverter pipeline (fetch→extract→convert→page); HttpClientAdapter sends browser User-Agent + Accept headers; offset arg for paging long pages; default maxchars 12K; tool rules injected into system prompt with offset guidance
