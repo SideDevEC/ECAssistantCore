@@ -71,14 +71,26 @@ public sealed class ServerLauncher
             FileName = exePath,
             Arguments = args,
             UseShellExecute = false,
-            CreateNoWindow = false,
-            RedirectStandardOutput = false,
-            RedirectStandardError = false
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
         };
 
         try
         {
             _serverProcess = Process.Start(psi);
+            
+            // Discard stdout/stderr — the LLM server writes to its own log file
+            // via ServerLogger. Without this, llama.cpp output floods the terminal.
+            _serverProcess.OutputDataReceived += (_, _) => { };
+            _serverProcess.ErrorDataReceived += (_, e) =>
+            {
+                // Only capture fatal errors to our own log
+                if (e.Data != null && e.Data.Contains("FATAL"))
+                    System.Diagnostics.Debug.WriteLine($"[ServerLauncher] LLM fatal: {e.Data}");
+            };
+            _serverProcess.BeginOutputReadLine();
+            _serverProcess.BeginErrorReadLine();
         }
         catch (Exception)
         {
