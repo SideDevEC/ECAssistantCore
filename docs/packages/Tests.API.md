@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 65  |  LOC: 9242  |  ~2315 tokens
+Types: 67  |  LOC: 9567  |  ~2357 tokens
 
 ---
 
@@ -110,6 +110,9 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 ### Class: HomeController
 Cross-package deps: ECAssistant.Core.Analysis
 
+### Class: HtmlTextConverterTests
+Cross-package deps: ECAssistant.Core.Services
+
 ### Class: HttpClientAdapterTests
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
@@ -158,6 +161,9 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 
 ### Class: ProjectContextManagerTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
+
+### Class: ReadableContentExtractorTests
+Cross-package deps: ECAssistant.Core.Services
 
 ### Class: SelfCorrectionManagerTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq

@@ -190,6 +190,8 @@ public class SessionBuilder : ISessionBuilder
         var fileSystem = new FileSystemAdapter();
         var processRunner = new ProcessRunner();
         var httpClient = new HttpClientAdapter();
+        var contentExtractor = new ReadableContentExtractor();
+        var htmlConverter = new HtmlTextConverter();
 
         // Create all tool instances
         var shellAgent = new EShellAgent(processRunner, _config, _workingDir);
@@ -199,7 +201,7 @@ public class SessionBuilder : ISessionBuilder
         var gitTool = new EGitTool(processRunner, fileSystem, _config);
         var codeEditor = new ECodeEditorTool(fileSystem, _config);
         var fileReader = new EFileReaderTool(fileSystem, _config);
-        var webFetch = new EWebFetchTool(httpClient, _config);
+        var webFetch = new EWebFetchTool(httpClient, contentExtractor, htmlConverter, _config);
         var fileResearch = new EFileResearchTool(fileSystem, _config);
 
         // Ensure config sections exist for all tools (regardless of enabled state)

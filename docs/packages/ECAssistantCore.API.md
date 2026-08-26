@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 233  |  LOC: 21153  |  ~10938 tokens
+Types: 239  |  LOC: 21654  |  ~11198 tokens
 
 ---
 
@@ -46,10 +46,16 @@ Methods:
   - bool DirectoryExists(string path)
   - void CreateDirectory(string path)
 
+### Interface: IHtmlTextConverter
+> Converts raw HTML into structured plain text, preserving block-level
+Methods:
+  - string Convert(string html)
+
 ### Interface: IHttpClient
 > HTTP client abstraction.
 Methods:
   - Task<string> GetAsync(string url, CancellationToken ct = default)
+  - Task<string> GetAsync(string url, Dictionary<string, string>? headers, CancellationToken ct = default)
   - Task<string> PostAsync(string url, string content, CancellationToken ct = default)
 
 ### Interface: IInferenceEngine
@@ -154,6 +160,11 @@ Cross-package deps: ECAssistant.Core.Engine
 > Abstract process execution.
 Methods:
   - Task<ProcessResult> ExecuteAsync(string command, string? workDir = null, CancellationToken ct = default)
+
+### Interface: IReadableContentExtractor
+> Extracts the main readable content from an HTML page, discarding
+Methods:
+  - string Extract(string html)
 
 ### Interface: ISessionBuilder
 > Interface for building and initializing AgentSessions with standard tools.
@@ -522,10 +533,10 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Tools
 > Standardized tool call result that flows from any Tool back to the Agent.
 
 ### Class: EWebFetchTool
-> EWebFetch — fetch a URL's content and convert HTML to plain text.
+> EWebFetch — fetch a URL, extract main readable content, convert to
 Implements: EToolBase
 Constructor:
-  - EWebFetchTool(IHttpClient httpClient, EAgentConfig config)
+  - EWebFetchTool(IHttpClient httpClient, IReadableContentExtractor contentExtractor, IHtmlTextConverter htmlConverter, EAgentConfig config)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
 
 ### Class: EWebFetchToolTests
@@ -603,8 +614,16 @@ Cross-package deps: ECAssistant.Core.Interfaces
 ### Class: HomeController
 Cross-package deps: ECAssistant.Core.Analysis
 
+### Class: HtmlTextConverter
+> Converts HTML to plain text while preserving block-level structure.
+Implements: IHtmlTextConverter
+Cross-package deps: ECAssistant.Core.Interfaces
+
+### Class: HtmlTextConverterTests
+Cross-package deps: ECAssistant.Core.Services
+
 ### Class: HttpClientAdapter
-> Concrete HTTP client implementation.
+> Concrete HTTP client implementation with browser-like default headers
 Implements: IHttpClient, IDisposable
 Cross-package deps: ECAssistant.Core.Interfaces
 
@@ -802,6 +821,14 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
 
 ### Class: ProjectRelationship
+
+### Class: ReadableContentExtractor
+> Extracts the main readable content from a full HTML page.
+Implements: IReadableContentExtractor
+Cross-package deps: ECAssistant.Core.Interfaces
+
+### Class: ReadableContentExtractorTests
+Cross-package deps: ECAssistant.Core.Services
 
 ### Class: RemoteKvCacheController
 > HTTP-based KV cache controller. Manages server-side sessions (prefill, rewind, save, reset)

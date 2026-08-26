@@ -378,6 +378,8 @@ public sealed class TestRunner : IAsyncDisposable
         var processRunner = new ProcessRunner();
         var fileSystem = new FileSystemAdapter();
         var httpClient = new HttpClientAdapter();
+        var contentExtractor = new ReadableContentExtractor();
+        var htmlConverter = new HtmlTextConverter();
 
         // v10.24: Pass EAgentConfig to tools instead of ConfigProvider
         _shellAgent = new EShellAgent(processRunner, config, workingDir);
@@ -390,7 +392,7 @@ public sealed class TestRunner : IAsyncDisposable
 
         // v10.22: EFileReader + EWebFetch
         engine.RegisterTool(new EFileReaderTool(fileSystem, config));
-        engine.RegisterTool(new EWebFetchTool(httpClient, config));
+        engine.RegisterTool(new EWebFetchTool(httpClient, contentExtractor, htmlConverter, config));
 
         // File research tool
         engine.RegisterTool(new EFileResearchTool(fileSystem, config));

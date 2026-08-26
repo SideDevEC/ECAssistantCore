@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-08-26T11:58:23.065295+00:00
-Edges: 67  |  Packages: 2
+Generated: 2026-08-26T13:29:24.829403+00:00
+Edges: 71  |  Packages: 2
 
 ---
 
@@ -40,12 +40,15 @@ Edges: 67  |  Packages: 2
 - EShellAgent ──uses──► IProcessRunner (ECAssistantCore)
 - ESubAgentTool ──implements──► EToolBase (ECAssistantCore)
 - EWebFetchTool ──implements──► EToolBase (ECAssistantCore)
+- EWebFetchTool ──uses──► IHtmlTextConverter (ECAssistantCore)
 - EWebFetchTool ──uses──► IHttpClient (ECAssistantCore)
+- EWebFetchTool ──uses──► IReadableContentExtractor (ECAssistantCore)
 - EWebSearchTool ──implements──► EToolBase (ECAssistantCore)
 - EWebSearchTool ──uses──► IHttpClient (ECAssistantCore)
 - EcaServiceBundle ──uses──► ILogger (ECAssistantCore)
 - EcaServiceBundle ──uses──► ISessionBuilder (ECAssistantCore)
 - FileSystemAdapter ──implements──► IFileSystem (ECAssistantCore)
+- HtmlTextConverter ──implements──► IHtmlTextConverter (ECAssistantCore)
 - HttpClientAdapter ──implements──► IHttpClient (ECAssistantCore)
 - HttpEmbedder ──implements──► IVectorEmbedder (ECAssistantCore)
 - HttpStreamingEngine ──implements──► IInferenceEngine (ECAssistantCore)
@@ -65,6 +68,7 @@ Edges: 67  |  Packages: 2
 - PrefixCachedExtractor ──uses──► IInferenceEngine (ECAssistantCore)
 - PrefixCachedExtractor ──uses──► IKvCacheController (ECAssistantCore)
 - ProcessRunner ──implements──► IProcessRunner (ECAssistantCore)
+- ReadableContentExtractor ──implements──► IReadableContentExtractor (ECAssistantCore)
 - RemoteKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
 - RemoteModelLoader ──implements──► IModelLoader (ECAssistantCore)
 - SessionBuilder ──implements──► ISessionBuilder (ECAssistantCore)

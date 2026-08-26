@@ -1,17 +1,18 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-26T11:58:23.064443+00:00
-Packages: 2  |  Types: 298
+Generated: 2026-08-26T13:29:24.828715+00:00
+Packages: 2  |  Types: 306
 
 ---
 
-## ECAssistantCore (233 types, ~21153 LOC)
+## ECAssistantCore (239 types, ~21654 LOC)
 
 - 🔵 IConfigLoader  (ECAssistantCore)
 - 🔵 IConfigProvider  (ECAssistantCore)
 - 🔵 IContextManager  (ECAssistantCore)
 - 🔵 IEngine  (ECAssistantCore)
 - 🔵 IFileSystem  (ECAssistantCore)
+- 🔵 IHtmlTextConverter  (ECAssistantCore)
 - 🔵 IHttpClient  (ECAssistantCore)
 - 🔵 IInferenceEngine  (ECAssistantCore)
 - 🔵 IKvCacheController  (ECAssistantCore)
@@ -24,6 +25,7 @@ Packages: 2  |  Types: 298
 - 🔵 IOutputRenderer  (ECAssistantCore)
 - 🔵 IParallelToolExecutor  (ECAssistantCore)
 - 🔵 IProcessRunner  (ECAssistantCore)
+- 🔵 IReadableContentExtractor  (ECAssistantCore)
 - 🔵 ISessionBuilder  (ECAssistantCore)
 - 🔵 ISessionContext  (ECAssistantCore)
 - 🔵 ISessionOutput  (ECAssistantCore)
@@ -96,7 +98,7 @@ Packages: 2  |  Types: 298
 - 🟡 EToolBase  (ECAssistantCore)
 - 🟡 EToolBaseTests  (ECAssistantCore)
 - 🟡 EToolResult  (ECAssistantCore)
-- 🟡 EWebFetchTool : EToolBase  (ECAssistantCore)  deps: [IHttpClient, EAgentConfig]
+- 🟡 EWebFetchTool : EToolBase  (ECAssistantCore)  deps: [IHttpClient, IReadableContentExtractor, IHtmlTextConverter, EAgentConfig]
 - 🟡 EWebFetchToolTests  (ECAssistantCore)
 - 🟡 EWebSearchTool : EToolBase  (ECAssistantCore)  deps: [IHttpClient, EAgentConfig]
 - 🟡 EWebSearchToolTests  (ECAssistantCore)
@@ -121,6 +123,8 @@ Packages: 2  |  Types: 298
 - 🟡 FileWatcherService : IDisposable  (ECAssistantCore)  deps: [string, string filter =, ILogger? logger =]
 - 🟣 GenerationParams  (ECAssistantCore)  deps: [int, float, float, int, float]
 - 🟡 HomeController  (ECAssistantCore)
+- 🟡 HtmlTextConverter : IHtmlTextConverter  (ECAssistantCore)
+- 🟡 HtmlTextConverterTests  (ECAssistantCore)
 - 🟡 HttpClientAdapter : IHttpClient, IDisposable  (ECAssistantCore)
 - 🟡 HttpClientAdapterTests : IDisposable  (ECAssistantCore)
 - 🟡 HttpEmbedder : IVectorEmbedder  (ECAssistantCore)  deps: [OpenAIClient, string modelId =]
@@ -169,6 +173,8 @@ Packages: 2  |  Types: 298
 - 🟡 ProjectContextManager : IDisposable  (ECAssistantCore)  deps: [string, ILogger? logger =]
 - 🟡 ProjectContextManagerTests  (ECAssistantCore)
 - 🟡 ProjectRelationship  (ECAssistantCore)
+- 🟡 ReadableContentExtractor : IReadableContentExtractor  (ECAssistantCore)
+- 🟡 ReadableContentExtractorTests  (ECAssistantCore)
 - 🟡 RemoteKvCacheController : IKvCacheController  (ECAssistantCore)  deps: [OpenAIClient]
 - 🟡 RemoteModelInfo  (ECAssistantCore)
 - 🟡 RemoteModelLoadOptions  (ECAssistantCore)
@@ -241,7 +247,7 @@ Packages: 2  |  Types: 298
 - 🟡 VectorSearchResult  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (65 types, ~9242 LOC)
+## Tests (67 types, ~9567 LOC)
 
 - 🟡 ApiUserController  (Tests)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (Tests)
@@ -274,6 +280,7 @@ Packages: 2  |  Types: 298
 - 🟡 FailurePatternTests  (Tests)
 - 🟡 FileSystemAdapterTests : IDisposable  (Tests)
 - 🟡 HomeController  (Tests)
+- 🟡 HtmlTextConverterTests  (Tests)
 - 🟡 HttpClientAdapterTests : IDisposable  (Tests)
 - 🟡 InMemoryVectorStoreTests  (Tests)
 - 🟡 LoggerTests : IDisposable  (Tests)
@@ -287,6 +294,7 @@ Packages: 2  |  Types: 298
 - 🟡 ProcessRunnerTests  (Tests)
 - 🟡 ProgramGuiCollection  (Tests)
 - 🟡 ProjectContextManagerTests  (Tests)
+- 🟡 ReadableContentExtractorTests  (Tests)
 - 🟡 SelfCorrectionManagerTests  (Tests)
 - 🟡 SessionDiscoveryTests : IDisposable  (Tests)
 - 🟡 SessionManagementIntegrationTests : IDisposable  (Tests)
