@@ -350,8 +350,14 @@ public sealed class ModelInstallerService
 
         try
         {
-            if (!File.Exists(_appsettingsPath)) return;
-            if (JsonNode.Parse(File.ReadAllText(_appsettingsPath)) is not JsonObject appRoot) return;
+            // Missing appsettings (first-run runs before Build creates it) → minimal file;
+            // AgentConfigBuilder.Build treats an existing file as source of truth.
+            JsonObject? appRoot = null;
+            if (File.Exists(_appsettingsPath) &&
+                JsonNode.Parse(File.ReadAllText(_appsettingsPath)) is JsonObject parsed)
+                appRoot = parsed;
+
+            appRoot ??= new JsonObject();
             if (appRoot["llm"] is not JsonObject llm) appRoot["llm"] = llm = new JsonObject();
 
             llm["model_path"] = serverEntry["path"]?.GetValue<string>() ?? "";
