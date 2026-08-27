@@ -61,6 +61,7 @@ public sealed class RemoteProviderSetupWriter
         // Remote providers need a REAL embedding model id — the default "embeddings"
         // only exists on the local ECAssistantLLM server and would 404 remotely.
         config.LlmProvider.EmbeddingModelId = provider.EmbeddingModelId;
+        config.LlmProvider.VisionEnabled = provider.VisionEnabled == true;
 
         config.LlmProviders ??= new MultiLlmProvidersConfig();
         config.LlmProviders.DefaultProvider = provider.Name;

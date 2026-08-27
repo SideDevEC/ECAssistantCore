@@ -29,7 +29,11 @@ public sealed class RemoteProviderConfig
     public string ModelId { get; set; } = "";
 
     /// <summary>Optional embedding model ID on this provider (null = no embeddings here).</summary>
-    [JsonPropertyName("embedding_model_id")]
+        /// <summary>Whether this remote model accepts image input (vision-capable).</summary>
+    [JsonPropertyName("vision_enabled")]
+    public bool? VisionEnabled { get; set; }
+
+[JsonPropertyName("embedding_model_id")]
     public string? EmbeddingModelId { get; set; }
 
     /// <summary>If true, this provider is preferred when default_provider is not set.</summary>

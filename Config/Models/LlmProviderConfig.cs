@@ -69,6 +69,15 @@ public sealed class LlmProviderConfig
     /// Local: must match an embedding model in llm-server.json
     /// Remote: e.g. "text-embedding-3-small" (null = embeddings disabled)
     /// </summary>
+    /// <summary>
+    /// Whether the active provider supports vision (image input). For remote providers
+    /// this is declared during setup (model-dependent); for local installs it is set
+    /// automatically when a model with an mmproj projector is installed.
+    /// Integrating applications read this to decide whether image input is offered.
+    /// </summary>
+    [JsonPropertyName("vision_enabled")]
+    public bool VisionEnabled { get; set; } = false;
+
     [JsonPropertyName("embedding_model_id")]
     public string? EmbeddingModelId { get; set; } = "embeddings";
 

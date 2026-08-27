@@ -25,7 +25,8 @@ public class RemoteProviderSetupWriterTests
             Endpoint = "https://api.openai.com/v1",
             ApiKey = "sk-test",
             ModelId = "gpt-4o-mini",
-            EmbeddingModelId = "text-embedding-3-small"
+            EmbeddingModelId = "text-embedding-3-small",
+            VisionEnabled = true
         });
 
         var json = File.ReadAllText(path);
@@ -37,6 +38,7 @@ public class RemoteProviderSetupWriterTests
         Assert.Equal("gpt-4o-mini", config.LlmProvider.ModelId);
         Assert.Equal("keyfile:api-openai-com.key", config.LlmProvider.ApiKey);
         Assert.Equal("text-embedding-3-small", config.LlmProvider.EmbeddingModelId);
+        Assert.True(config.LlmProvider.VisionEnabled);
         Assert.NotNull(config.LlmProviders);
         Assert.Equal("api.openai.com", config.LlmProviders!.DefaultProvider);
         Assert.Single(config.LlmProviders.Providers);

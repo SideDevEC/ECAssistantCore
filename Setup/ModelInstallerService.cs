@@ -335,14 +335,14 @@ public sealed class ModelInstallerService
 
         File.WriteAllText(_serverConfigPath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
 
-        // Keep appsettings.json llm.model_path in sync so local startup validates after install
-        UpdateAppsettingsModelPath(newEntry);
+        // Keep appsettings.json llm.model_path (+ vision flag) in sync so local startup validates after install
+        UpdateAppsettingsModelPath(newEntry, hasVision: !string.IsNullOrEmpty(entry.MmprojFile));
 
         return $"Config updated: '{entry.Id}' added to {_serverConfigPath}.";
     }
 
     /// <summary>Point appsettings.json llm.model_path at the installed primary file (skip embedding entries).</summary>
-    private void UpdateAppsettingsModelPath(JsonObject serverEntry)
+    private void UpdateAppsettingsModelPath(JsonObject serverEntry, bool hasVision)
     {
         if (_appsettingsPath == null) return;
         if (serverEntry["is_embedding"]?.GetValue<bool>() == true)
@@ -359,8 +359,11 @@ public sealed class ModelInstallerService
 
             appRoot ??= new JsonObject();
             if (appRoot["llm"] is not JsonObject llm) appRoot["llm"] = llm = new JsonObject();
-
             llm["model_path"] = serverEntry["path"]?.GetValue<string>() ?? "";
+
+            // Vision capability flag lives on the provider (llm_provider) — read by integrating apps
+            if (appRoot["llm_provider"] is not JsonObject provider) appRoot["llm_provider"] = provider = new JsonObject();
+            provider["vision_enabled"] = hasVision;
             File.WriteAllText(_appsettingsPath, appRoot.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
         }
         catch { /* config sync is best-effort — llm-server.json remains authoritative for the server */ }
