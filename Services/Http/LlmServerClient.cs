@@ -19,6 +19,8 @@ public sealed class LlmServerClient : ILlmServerClient
     private bool _disposed;
     private int _consecutiveHeartbeatFailures;
     private readonly int _maxHeartbeatFailures;
+    private DateTime _lastReconnectAttemptUtc = DateTime.MinValue;
+    private static readonly TimeSpan ReconnectCooldown = TimeSpan.FromSeconds(30);
     private string _clientName = "";
     private string? _clientVersion;
     private DateTime _lastHeartbeatSuccess;
@@ -120,6 +122,12 @@ public sealed class LlmServerClient : ILlmServerClient
     {
         if (_disposed) return false;
 
+        // Hysteresis: after a failed reconnect, wait out a cooldown before trying again —
+        // prevents socket churn when the server is down (heartbeat fires every interval).
+        var now = DateTime.UtcNow;
+        if (now - _lastReconnectAttemptUtc < ReconnectCooldown) return false;
+        _lastReconnectAttemptUtc = now;
+
         try
         {
             _logger?.Info("LlmServerClient", $"Reconnecting to LLM server as {_clientName}...");
@@ -143,6 +151,7 @@ public sealed class LlmServerClient : ILlmServerClient
                 _consecutiveHeartbeatFailures = 0;
                 _lastHeartbeatSuccess = DateTime.UtcNow;
                 _logger?.Info("LlmServerClient", $"Reconnected as client {ClientId}");
+                _lastReconnectAttemptUtc = DateTime.MinValue; // allow immediate reconnects again
                 OnReconnected?.Invoke(ClientId);
                 return true;
             }
