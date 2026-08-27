@@ -12,4 +12,7 @@ public interface ISecureKeyStore
 
     /// <summary>Read a key by file name relative to the store directory.</summary>
     string GetKey(string fileName);
+
+    /// <summary>Encrypt and store a key under the given file name immediately (no plaintext residue).</summary>
+    void SetKey(string fileName, string plaintext);
 }

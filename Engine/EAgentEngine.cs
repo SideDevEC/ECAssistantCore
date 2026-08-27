@@ -373,7 +373,18 @@ public class EAgentEngine : IEngine
      {
         if (_vectorMemory == null)
             _vectorMemory = new VectorMemoryStore(storeDir, _logger);
-        await _vectorMemory.InitializeAsync();
+
+        if (embedder != null)
+        {
+            // Real embedder (HTTP/local) — hand it to the store as the generator
+            await _vectorMemory.InitializeAsync(text => System.Threading.Tasks.Task.FromResult(embedder.Embed(text)));
+        }
+        else
+        {
+            // No embedder configured — TF-IDF keyword hashing keeps vector memory functional
+            var tfidf = new ECAssistant.Core.Services.TfidfEmbedder();
+            await _vectorMemory.InitializeAsync(text => System.Threading.Tasks.Task.FromResult(tfidf.Embed(text)));
+        }
      }
 
     public async Task InitializeProjectContextAsync(string workingDir)

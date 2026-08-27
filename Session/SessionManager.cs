@@ -527,6 +527,19 @@ public class SessionManager : IAsyncDisposable
         _logger.Info("SessionManager", "Reconnected after idle — sessions restored");
     }
 
+    /// <summary>
+    /// Stop the local LLM server (heartbeat disconnect + graceful shutdown + force-kill fallback).
+    /// Used by /reinstall to reset to a clean state.
+    /// </summary>
+    public async Task StopLocalServerAsync()
+    {
+        if (!IsLocalMode || _serverLauncher == null) return;
+        try { await _serverClient!.DisconnectAsync(); }
+        catch { /* best effort */ }
+        try { await _serverLauncher.StopServerAsync(); }
+        catch { /* best effort */ }
+    }
+
     public async ValueTask DisposeAsync()
     {
         // Stop idle watchdog

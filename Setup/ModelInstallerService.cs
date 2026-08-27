@@ -42,6 +42,55 @@ public sealed class ModelInstallerService
         return primary != null && File.Exists(Path.Combine(_modelsDir, primary.Filename));
     }
 
+    /// <summary>Quick reachability probe for HuggingFace (5s timeout). Downloads need this.</summary>
+    public static async Task<bool> IsInternetAvailableAsync()
+    {
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+            using var resp = await http.GetAsync("https://huggingface.co", HttpCompletionOption.ResponseHeadersRead);
+            return true; // any HTTP response means DNS+TLS+routing work
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>Free disk space (GB) on the volume hosting the models dir; null when unavailable.</summary>
+    public double? GetFreeSpaceGb()
+    {
+        try
+        {
+            var root = Path.GetPathRoot(Path.GetFullPath(_modelsDir));
+            if (root == null) return null;
+            return new DriveInfo(root).AvailableFreeSpace / 1073741824.0;
+        }
+        catch { return null; }
+    }
+
+    /// <summary>All GGUF files in the models folder as (name, sizeGB), sorted by name.</summary>
+    public IReadOnlyList<(string Filename, double SizeGb)> ListModelFiles()
+    {
+        if (!Directory.Exists(_modelsDir)) return Array.Empty<(string, double)>();
+        return Directory.EnumerateFiles(_modelsDir, "*.gguf")
+            .Select(f => (Path.GetFileName(f), new FileInfo(f).Length / 1073741824.0))
+            .OrderBy(t => t.Item1, StringComparer.OrdinalIgnoreCase)
+            .Select(t => (t.Item1, t.Item2))
+            .ToList();
+    }
+
+    /// <summary>Delete a model GGUF from the models folder. Name-only (no path segments).</summary>
+    public bool RemoveModelFile(string filename)
+    {
+        if (string.IsNullOrWhiteSpace(filename) || filename.Contains('/') || filename.Contains('\\') || filename.Contains(".."))
+            return false;
+        var path = Path.Combine(_modelsDir, filename);
+        if (!File.Exists(path)) return false;
+        File.Delete(path);
+        return true;
+    }
+
     /// <summary>
     /// Download all files of the entry (skipping files already present),
     /// then merge the model into llm-server.json.
@@ -135,6 +184,93 @@ public sealed class ModelInstallerService
     /// Merge this entry into llm-server.json — adds/replaces a model entry by id,
     /// sets mmproj_path for vision, and keeps all other config intact.
     /// </summary>
+    /// <summary>
+    /// Register a model GGUF that already exists in the models folder (not in the catalog)
+    /// into llm-server.json as a chat model. No download, config only.
+    /// Defaults: CPU inference (gpu_layers 0), 64k context, batch 512; a matching
+    /// sibling mmproj projector is auto-detected and linked for vision.
+    /// </summary>
+    /// <param name="isEmbedding">Register as embedding model (is_embedding + mean pooling) instead of chat.</param>
+    public string RegisterLocalModelFile(string filename, bool isEmbedding = false)
+    {
+        var entry = new ModelCatalogEntry
+        {
+            Id = "local-" + Path.GetFileNameWithoutExtension(filename).ToLowerInvariant().Replace('.', '-'),
+            DisplayName = Path.GetFileNameWithoutExtension(filename),
+            Category = isEmbedding ? CatalogModelCategory.Embedding : CatalogModelCategory.Chat,
+            HfRepo = "local",
+            Quant = "local",
+            Notes = "Existing local model file.",
+            // Conservative defaults: CPU inference + 64k context (2k for embeddings) — users can tune in config
+            SuggestedConfig = new CatalogSuggestedConfig
+            {
+                GpuLayers = 0,
+                ContextSize = isEmbedding ? 2048u : 65536u,
+                BatchSize = isEmbedding ? 0 : 512
+            },
+            MmprojFile = isEmbedding ? null : DetectSiblingMmproj(filename)
+        };
+        entry.Files.Add(new CatalogModelFile { Filename = filename, SizeGb = 0 });
+        return ApplyToServerConfig(entry);
+    }
+
+    /// <summary>
+    /// Look for a mmproj*.gguf projector in the models dir that shares enough of the
+    /// model's name tokens to plausibly belong to it (e.g. mmproj-Qwen2.5-VL-7B-Instruct
+    /// ↔ Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf). Returns the file name or null.
+    /// </summary>
+    private string? DetectSiblingMmproj(string modelFilename)
+    {
+        if (!Directory.Exists(_modelsDir)) return null;
+
+        var candidates = Directory.EnumerateFiles(_modelsDir, "mmproj*.gguf")
+            .Select(Path.GetFileName)
+            .Where(n => n != null)
+            .Cast<string>()
+            .ToList();
+        if (candidates.Count == 0) return null;
+
+        var modelTokens = Tokenize(modelFilename).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (modelTokens.Count == 0) return null;
+
+        string? best = null;
+        var bestScore = 0.0;
+        foreach (var c in candidates)
+        {
+            var tokens = Tokenize(c).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var overlap = modelTokens.Count(t => tokens.Contains(t));
+            var score = (double)overlap / modelTokens.Count;
+            if (score > bestScore)
+            {
+                bestScore = score;
+                best = c;
+            }
+        }
+
+        // Require a clear majority of the model's name tokens in the projector name
+        return bestScore >= 0.5 ? best : null;
+    }
+
+    // Stateless utility — no mutable state.
+    private static IEnumerable<string> Tokenize(string filename) =>
+        filename.Split(new[] { '-', '_', '.', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+            .Where(t => t.Length > 1 && !IsQuantToken(t));
+
+    // Stateless utility — no mutable state.
+    public static bool LooksLikeEmbeddingModel(string filename) =>
+        System.Text.RegularExpressions.Regex.IsMatch(
+            Path.GetFileName(filename),
+            "minilm|embed|e5-|bge|gte-|nomic-embed|arctic-embed|jina-embed",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+    private static bool IsQuantToken(string token) =>
+        token.Equals("gguf", StringComparison.OrdinalIgnoreCase) ||
+        token.StartsWith("mmproj", StringComparison.OrdinalIgnoreCase) ||
+        token.Equals("f16", StringComparison.OrdinalIgnoreCase) ||
+        token.Equals("f32", StringComparison.OrdinalIgnoreCase) ||
+        System.Text.RegularExpressions.Regex.IsMatch(token, "^(i?q|q)[0-9].*", System.Text.RegularExpressions.RegexOptions.IgnoreCase) ||
+        token.All(char.IsDigit);
+
     public string ApplyToServerConfig(ModelCatalogEntry entry)
     {
         JsonNode root;
@@ -184,6 +320,8 @@ public sealed class ModelInstallerService
         };
         if (entry.Category == CatalogModelCategory.Embedding)
             newEntry["pooling_type"] = "mean";
+        if (entry.SuggestedConfig.BatchSize > 0)
+            newEntry["batch_size"] = entry.SuggestedConfig.BatchSize;
         if (!string.IsNullOrEmpty(entry.MmprojFile))
             newEntry["mmproj_path"] = Path.Combine(_modelsDir, entry.MmprojFile);
 

@@ -89,6 +89,31 @@ public class ModelInstallerConfigTests : IDisposable
         Assert.True(File.Exists(_configPath));
     }
 
+    [Fact]
+    public void RegisterLocalModelFile_AutoDetectsMmproj_AndWritesDefaults()
+    {
+        File.WriteAllText(Path.Combine(_modelsDir, "Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf"), "fake");
+        File.WriteAllText(Path.Combine(_modelsDir, "mmproj-Qwen2.5-VL-7B-Instruct-f16.gguf"), "fake");
+        using var http = new HttpClient();
+        var installer = new ModelInstallerService(http, _modelsDir, _configPath);
+
+        installer.RegisterLocalModelFile("Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf");
+
+        var json = File.ReadAllText(_configPath);
+        Assert.Contains("\"batch_size\": 512", json);
+        Assert.Contains("\"context_size\": 65536", json);
+        Assert.Contains("\"gpu_layers\": 0", json);
+        Assert.Contains("mmproj-Qwen2.5-VL-7B-Instruct-f16.gguf", json);
+
+        // A different model with no token overlap must NOT get the projector linked
+        File.WriteAllText(Path.Combine(_modelsDir, "Llama-3-8B-Instruct-Q4_K_M.gguf"), "fake");
+        installer.RegisterLocalModelFile("Llama-3-8B-Instruct-Q4_K_M.gguf");
+        var second = File.ReadAllText(_configPath);
+        Assert.Contains("local-llama-3-8b-instruct", second);
+        // exactly one mmproj_path in the whole config → only the Qwen entry got one
+        Assert.Equal(1, System.Text.RegularExpressions.Regex.Matches(second, "mmproj_path").Count);
+    }
+
     private static ModelCatalogEntry ChatEntry() => new()
     {
         Id = "test-chat", DisplayName = "Test Chat", Category = CatalogModelCategory.Chat,

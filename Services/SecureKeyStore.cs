@@ -50,6 +50,19 @@ public sealed class SecureKeyStore : ISecureKeyStore
     /// <summary>Directory holding the key files.</summary>
     public string KeysDirectory => _directory;
 
+    /// <summary>Encrypt and store a key immediately — atomic write, owner-only permissions.</summary>
+    public void SetKey(string fileName, string plaintext)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+            throw new ArgumentException("Key file name must not be empty", nameof(fileName));
+        if (fileName.Contains('/') || fileName.Contains('\\') || fileName.Contains(".."))
+            throw new ArgumentException($"Key file name '{fileName}' must be a plain file name (no path segments)", nameof(fileName));
+        if (string.IsNullOrWhiteSpace(plaintext))
+            throw new ArgumentException("Key value must not be empty", nameof(plaintext));
+
+        WriteEncrypted(Path.Combine(_directory, fileName), plaintext.Trim());
+    }
+
     /// <summary>Read a key by file name relative to the store directory.</summary>
     public string GetKey(string fileName)
     {

@@ -38,6 +38,10 @@ public sealed class CatalogSuggestedConfig
 
     [JsonPropertyName("context_size")]
     public uint ContextSize { get; set; } = 8192;
+
+    /// <summary>Prompt-processing batch size. 0 = omit (library default).</summary>
+    [JsonPropertyName("batch_size")]
+    public int BatchSize { get; set; } = 0;
 }
 
 /// <summary>
