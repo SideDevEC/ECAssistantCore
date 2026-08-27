@@ -385,3 +385,12 @@ EWebFetch was reworked to produce LLM-parseable output. The old tool returned a 
 - `InferenceRequestParams.ImageDataUris` carries images per call (cleared after streaming — params object is shared across turns); `HttpStreamingEngine` serializes OpenAI content-parts arrays when images are present
 - Remote mode: works with any vision-capable OpenAI-compatible API. Local mode: server needs `mmproj_path` on the model config (see ECAssistantLLM ARCHITECTURE "Vision")
 - Context window: each attached image adds a flat 800-token budget estimate (`ContextWindow.TokensPerImage`)
+
+## First-Run Model Installer (2026-08-27)
+
+- New `Setup/` package: `ModelCatalogDocument` + `ModelCatalogEntry` (data-driven catalog), `FirstRunDetector`, `ModelInstallerService`
+- `model-catalog.json` — lives in app root dir; **auto-written with built-in defaults on first load** so it stays user-editable; adding a model = one JSON entry
+- Catalog entry: id, name, category (Chat/Vision/Embedding), hf_repo, files (incl. mmproj sidecar for vision), suggested config, recommended flag
+- `FirstRunDetector.Evaluate` → NeedsSetup when models/ has no GGUFs and llm-server.json references no existing files
+- `ModelInstallerService.InstallAsync` — HF `resolve/main` download, resume via `.part` + Range header, stall timeout, per-file skip when present; then `ApplyToServerConfig` merges the model entry (mmproj_path for vision, is_embedding/pooling for embeddings) without touching other config sections
+- No UI dependency — TUI/Console own interaction

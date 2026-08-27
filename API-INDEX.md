@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-27T11:33:13.564227+00:00
-Packages: 2  |  Types: 327
+Generated: 2026-08-27T14:17:42.405724+00:00
+Packages: 2  |  Types: 340
 
 ---
 
-## ECAssistantCore (254 types, ~23065 LOC)
+## ECAssistantCore (265 types, ~23631 LOC)
 
 - 🔵 IConfigLoader  (ECAssistantCore)
 - 🔵 IConfigProvider  (ECAssistantCore)
@@ -50,6 +50,8 @@ Packages: 2  |  Types: 327
 - 🟡 BgProcessInfo  (ECAssistantCore)
 - 🟣 BuildError  (ECAssistantCore)  deps: [string, int, string, string]
 - 🟡 BuildErrorParser  (ECAssistantCore)
+- 🟡 CatalogModelFile  (ECAssistantCore)
+- 🟡 CatalogSuggestedConfig  (ECAssistantCore)
 - 🟡 ConfigIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 ConfigLoader : IConfigLoader  (ECAssistantCore)  deps: [IFileSystem]
 - 🟡 ConfigLoaderTests  (ECAssistantCore)
@@ -68,6 +70,7 @@ Packages: 2  |  Types: 327
 - 🟡 DecomposeConfig  (ECAssistantCore)
 - 🟡 DependencyGroup  (ECAssistantCore)
 - 🟡 DependencyGroupTests  (ECAssistantCore)
+- 🟣 DownloadProgress  (ECAssistantCore)  deps: [string, long, long, double, double]
 - 🟡 EAgentConfig  (ECAssistantCore)
 - 🟡 EAgentConfigTests : IDisposable  (ECAssistantCore)
 - 🟡 EAgentEngine : IEngine  (ECAssistantCore)  deps: [string, IInferenceEngine, IKvCacheController, RemoteTokenizer? tokenizer =, InferenceRequestParams? inferenceParams =, uint contextSize =, string modelPath =, EAgentConfig? config =, string? workingDir =, ILogger? logger =, EMemoryManager? memoryManager =, SelfCorrectionManager? selfCorrection =, ProjectContextManager? projectContext =, ITaskPlanner? taskPlanner =]
@@ -125,6 +128,8 @@ Packages: 2  |  Types: 327
 - 🟡 FileSystemAdapter : IFileSystem  (ECAssistantCore)
 - 🟡 FileSystemAdapterTests : IDisposable  (ECAssistantCore)
 - 🟡 FileWatcherService : IDisposable  (ECAssistantCore)  deps: [string, string filter =, ILogger? logger =]
+- 🟡 FirstRunDetector  (ECAssistantCore)  deps: [string, string]
+- 🟡 FirstRunStatus  (ECAssistantCore)
 - 🟣 GenerationParams  (ECAssistantCore)  deps: [int, float, float, int, float]
 - 🟡 HomeController  (ECAssistantCore)
 - 🟡 HtmlTextConverter : IHtmlTextConverter  (ECAssistantCore)
@@ -141,6 +146,7 @@ Packages: 2  |  Types: 327
 - 🟡 InferenceConfig  (ECAssistantCore)
 - 🟡 InferenceParamsFactory  (ECAssistantCore)
 - 🟡 InferenceRequestParams  (ECAssistantCore)
+- 🟣 InstallResult  (ECAssistantCore)  deps: [bool, string, IReadOnlyList]
 - 🟡 InterfaceConfig  (ECAssistantCore)
 - 🟡 KvCacheStatus  (ECAssistantCore)
 - 🟡 LLMDecision  (ECAssistantCore)  deps: [bool, string, Dictionary, string? answerText =, List]
@@ -161,6 +167,11 @@ Packages: 2  |  Types: 327
 - 🟡 MemoryServiceTests  (ECAssistantCore)
 - 🟡 MockEngine : EAgentEngine  (ECAssistantCore)  deps: [Queue, int maxIterations =, bool stopAfterFirstTool =, string? workingDir =, ISessionOutput? sessionOutput =, string? workingDir =, ISessionOutput? sessionOutput =, bool cycleResponses =]
 - 🟡 MockSubAgentTool : EToolBase  (ECAssistantCore)
+- 🟡 ModelCatalogDocument  (ECAssistantCore)
+- 🟡 ModelCatalogEntry  (ECAssistantCore)
+- 🟡 ModelCatalogTests : IDisposable  (ECAssistantCore)
+- 🟡 ModelInstallerConfigTests : IDisposable  (ECAssistantCore)
+- 🟡 ModelInstallerService  (ECAssistantCore)  deps: [HttpClient, string, string]
 - 🟡 ModelLoadException : Exception  (ECAssistantCore)  deps: [ModelLoadPhase, string, int, uint, string, Exception? inner =]
 - 🟡 ModelParamValidator : IModelParamValidator  (ECAssistantCore)  deps: [ILogger? logger =]
 - 🟡 MultiLlmProvidersConfig  (ECAssistantCore)
@@ -262,7 +273,7 @@ Packages: 2  |  Types: 327
 - 🟡 VectorSearchResult  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (73 types, ~10272 LOC)
+## Tests (75 types, ~10462 LOC)
 
 - 🟡 ApiUserController  (Tests)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (Tests)
@@ -307,6 +318,8 @@ Packages: 2  |  Types: 327
 - 🟡 MemoryIntegrationTests : IDisposable  (Tests)
 - 🟡 MemoryServiceTests  (Tests)
 - 🟡 MockSubAgentTool : EToolBase  (Tests)
+- 🟡 ModelCatalogTests : IDisposable  (Tests)
+- 🟡 ModelInstallerConfigTests : IDisposable  (Tests)
 - 🟡 MyTests  (Tests)
 - 🟡 OrchestratorIntegrationTests : IDisposable  (Tests)
 - 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (Tests)

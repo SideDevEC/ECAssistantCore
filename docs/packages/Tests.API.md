@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 73  |  LOC: 10272  |  ~2581 tokens
+Types: 75  |  LOC: 10462  |  ~2672 tokens
 
 ---
 
@@ -157,6 +157,16 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, Moq
 > Integration tests for sub-agent spawning through the orchestrator.
 Implements: EToolBase
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Testing, ECAssistant.Core.Tools, ECAssistant.Core.UI
+
+### Class: ModelCatalogTests
+> Catalog loading, default generation, validation, first-run detection.
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Setup, Xunit
+
+### Class: ModelInstallerConfigTests
+> Config merge behaviour — mmproj wiring, id replacement, config preservation.
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Setup, Xunit
 
 ### Class: MyTests
 Cross-package deps: ECAssistant.Core.Analysis

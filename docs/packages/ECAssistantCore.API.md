@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 254  |  LOC: 23065  |  ~11892 tokens
+Types: 265  |  LOC: 23631  |  ~12270 tokens
 
 ---
 
@@ -320,6 +320,12 @@ Cross-package deps: ECAssistant.Core.Tools
 ### Class: BuildErrorParser
 > Parser for .NET build output — extracts errors and warnings.
 
+### Class: CatalogModelFile
+> Model category — drives config generation and UI grouping.
+
+### Class: CatalogSuggestedConfig
+> Model category — drives config generation and UI grouping.
+
 ### Class: ConfigIntegrationTests
 > Integration tests for the config loading pipeline — uses real FileSystemAdapter
 Implements: IDisposable
@@ -636,6 +642,14 @@ Constructor:
   - FileWatcherService(string watchPath, string filter = "*.*", ILogger? logger = null)
 Cross-package deps: ECAssistant.Core.Interfaces
 
+### Class: FirstRunDetector
+> First-run / installed-model state.
+Constructor:
+  - FirstRunDetector(string modelsDir, string serverConfigPath)
+
+### Class: FirstRunStatus
+> First-run / installed-model state.
+
 ### Class: HomeController
 Cross-package deps: ECAssistant.Core.Analysis
 
@@ -779,6 +793,27 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 > Integration tests for sub-agent spawning through the orchestrator.
 Implements: EToolBase
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Testing, ECAssistant.Core.Tools, ECAssistant.Core.UI
+
+### Class: ModelCatalogDocument
+> Root document for model-catalog.json. Lives in the app root dir;
+
+### Class: ModelCatalogEntry
+> Model category — drives config generation and UI grouping.
+
+### Class: ModelCatalogTests
+> Catalog loading, default generation, validation, first-run detection.
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Setup, Xunit
+
+### Class: ModelInstallerConfigTests
+> Config merge behaviour — mmproj wiring, id replacement, config preservation.
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Setup, Xunit
+
+### Class: ModelInstallerService
+> Progress callback payload for a running download.
+Constructor:
+  - ModelInstallerService(HttpClient http, string modelsDir, string serverConfigPath)
 
 ### Class: ModelLoadException
 > Exception thrown when model loading or context creation fails.
@@ -1171,6 +1206,11 @@ Cross-package deps: ECAssistant.Core.Memory, ECAssistant.Core.Services
 Constructor:
   - BuildError(string File, int Line, string Code, string Message)
 
+### Record: DownloadProgress
+> Progress callback payload for a running download.
+Constructor:
+  - DownloadProgress(string Filename, long BytesReceived, long? TotalBytes, double Percent, double MbPerSecond)
+
 ### Record: EcaServiceBundle
 > Bundle of all wired services returned by EcaCompositionRoot.Build().
 Constructor:
@@ -1185,6 +1225,11 @@ Constructor:
 > Parses <c>[image:&lt;path&gt;]</c> attachment tokens out of user input.
 Constructor:
   - ImageRef(string OriginalPath, string FullPath, string DataUri)
+
+### Record: InstallResult
+> Progress callback payload for a running download.
+Constructor:
+  - InstallResult(bool Success, string Message, IReadOnlyList<string> DownloadedFiles)
 
 ### Record: MemoryEntry
 Constructor:
