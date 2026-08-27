@@ -15,10 +15,12 @@ public sealed class LlmProviderRegistry : ILlmProviderRegistry
     private readonly string? _defaultName;
     private readonly string? _flagDefaultName;
     private readonly bool _fallbackEnabled;
+    private readonly SecureKeyStore? _keyStore;
     public IReadOnlyList<string> ValidationErrors { get; }
 
-    public LlmProviderRegistry(MultiLlmProvidersConfig? section, ILogger? logger = null)
+    public LlmProviderRegistry(MultiLlmProvidersConfig? section, ILogger? logger = null, SecureKeyStore? keyStore = null)
     {
+        _keyStore = keyStore;
         var errors = new List<string>();
         if (section == null || section.Providers.Count == 0)
         {
@@ -55,7 +57,7 @@ public sealed class LlmProviderRegistry : ILlmProviderRegistry
             }
 
             string? apiKey;
-            try { apiKey = ResolveApiKey(entry.ApiKey); }
+            try { apiKey = ResolveApiKey(entry.ApiKey, _keyStore); }
             catch (Exception ex)
             {
                 errors.Add($"provider '{entry.Name}' api_key reference failed: {ex.Message} — skipped");
@@ -80,16 +82,31 @@ public sealed class LlmProviderRegistry : ILlmProviderRegistry
         _flagDefaultName = flagDefault;
     }
 
-    /// <summary>Resolve literal vs "file:<path>" API key reference.</summary>
-    public static string? ResolveApiKey(string? value)
+    /// <summary>
+    /// Resolve API key value. Schemes:
+    /// - literal (passes through)
+    /// - "file:<path>"  → raw file read (no encryption, ~/ expanded)
+    /// - "keyfile:<name>" → SecureKeyStore: self-encrypting managed key folder.
+    /// Empty/null returns null.
+    /// </summary>
+    public static string? ResolveApiKey(string? value, SecureKeyStore? keyStore = null)
     {
         if (string.IsNullOrWhiteSpace(value)) return null;
 
-        const string prefix = "file:";
-        if (!value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        const string filePrefix = "file:";
+        const string keyfilePrefix = "keyfile:";
+
+        if (value.StartsWith(keyfilePrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            if (keyStore == null)
+                throw new InvalidOperationException("'keyfile:' requires a configured keys_directory (SecureKeyStore)");
+            return keyStore.GetKey(value[keyfilePrefix.Length..].Trim());
+        }
+
+        if (!value.StartsWith(filePrefix, StringComparison.OrdinalIgnoreCase))
             return value;
 
-        var rawPath = value[prefix.Length..].Trim();
+        var rawPath = value[filePrefix.Length..].Trim();
         if (rawPath.StartsWith("~/"))
             rawPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), rawPath[2..]);
 

@@ -51,6 +51,7 @@ public class SessionManager : IAsyncDisposable
 
     // Multi-provider remote selection (null values = fall back to llm_provider section)
     private ILlmProviderRegistry? _registry;
+    private SecureKeyStore? _keyStore;
     private string? _effectiveEndpoint;
     private string? _effectiveApiKey;
     private string? _effectiveModelId;
@@ -133,7 +134,10 @@ public class SessionManager : IAsyncDisposable
         else
         {
             // ── Remote mode: multi-provider registry, else single llm_provider ──
-            _registry = new LlmProviderRegistry(config.LlmProviders, _logger);
+            var keysDir = config.LlmProviders?.KeysDirectory ?? "keys";
+            var keysPath = Path.IsPathRooted(keysDir) ? keysDir : Path.Combine(_appRoot, keysDir);
+            _keyStore = new SecureKeyStore(keysPath, _logger);
+            _registry = new LlmProviderRegistry(config.LlmProviders, _logger, _keyStore);
             foreach (var err in _registry.ValidationErrors)
                 _logger.Warn("SessionManager", $"llm_providers: {err}");
 

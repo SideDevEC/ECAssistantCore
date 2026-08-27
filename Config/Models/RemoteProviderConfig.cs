@@ -60,4 +60,13 @@ public sealed class MultiLlmProvidersConfig
     /// <summary>The configured remote providers.</summary>
     [JsonPropertyName("providers")]
     public List<RemoteProviderConfig> Providers { get; set; } = new();
+
+    /// <summary>
+    /// Folder for API key files referenced via "keyfile:<name>".
+    /// Relative paths resolve against the app root. Files are self-encrypting:
+    /// plaintext keys are encrypted in place on first startup (cross-platform,
+    /// owner-only permissions). Default: "keys".
+    /// </summary>
+    [JsonPropertyName("keys_directory")]
+    public string? KeysDirectory { get; set; }
 }
