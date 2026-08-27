@@ -16,6 +16,7 @@ namespace ECAssistant.Core.Session;
 /// </summary>
 public class SessionManager : IAsyncDisposable
 {
+    private readonly object _sessionsLock = new();
     private readonly Dictionary<string, AgentSession> _sessions = new(StringComparer.OrdinalIgnoreCase);
     private readonly string _workingDir;
     private readonly SubAgentConfig _subAgentConfig;
@@ -28,6 +29,7 @@ public class SessionManager : IAsyncDisposable
     private bool _isIdleDisconnected;
     private int _idleTimeoutMin;
     private readonly int _idleCheckIntervalSec = 60;
+    private int _reconnectInProgress;
 
     /// <summary>The currently active session.</summary>
     public AgentSession? ActiveSession { get; private set; }
@@ -142,14 +144,20 @@ public class SessionManager : IAsyncDisposable
 
     /// <summary>Get a session by key.</summary>
     public AgentSession? Get(string key)
-        => _sessions.GetValueOrDefault(key);
+    {
+        lock (_sessionsLock)
+            return _sessions.GetValueOrDefault(key);
+    }
 
     /// <summary>List all sessions.</summary>
     public IReadOnlyList<AgentSession> List()
-        => _sessions.Values.ToList();
+    {
+        lock (_sessionsLock)
+            return _sessions.Values.ToList();
+    }
 
     /// <summary>Number of sessions.</summary>
-    public int Count => _sessions.Count;
+    public int Count { get { lock (_sessionsLock) return _sessions.Count; } }
 
     /// <summary>Shared inference lock.</summary>
     public SemaphoreSlim InferenceLock => _inferenceLock;
@@ -251,7 +259,8 @@ public class SessionManager : IAsyncDisposable
             remoteTokenizer: _remoteTokenizer,
             isLocalMode: IsLocalMode);
 
-        _sessions[key] = session;
+        lock (_sessionsLock)
+            _sessions.Add(key, session);
         _sessionCounter++;
         return session;
     }
@@ -266,7 +275,11 @@ public class SessionManager : IAsyncDisposable
     /// <summary>Switch the active session to the one with this key.</summary>
     public bool SwitchTo(string key)
     {
-        if (!_sessions.TryGetValue(key, out var session)) return false;
+        AgentSession? session;
+        lock (_sessionsLock)
+        {
+            if (!_sessions.TryGetValue(key, out session)) return false;
+        }
         ActiveSession = session;
         _sessionDiscovery.TouchSessionMeta(_workingDir, key);
         return true;
@@ -275,7 +288,9 @@ public class SessionManager : IAsyncDisposable
     /// <summary>Switch active session by index (1-based).</summary>
     public bool SwitchTo(int index)
     {
-        var list = _sessions.Values.ToList();
+        List<AgentSession> list;
+        lock (_sessionsLock)
+            list = _sessions.Values.ToList();
         if (index < 1 || index > list.Count) return false;
         ActiveSession = list[index - 1];
         _sessionDiscovery.TouchSessionMeta(_workingDir, ActiveSession.Key);
@@ -292,16 +307,23 @@ public class SessionManager : IAsyncDisposable
     /// <summary>Stop all sessions.</summary>
     public void StopAll()
     {
-        foreach (var session in _sessions.Values)
+        List<AgentSession> sessions;
+        lock (_sessionsLock)
+            sessions = _sessions.Values.ToList();
+        foreach (var session in sessions)
             session.Stop();
     }
 
     /// <summary>Delete a session.</summary>
     public void DeleteSession(string key)
     {
-        if (!_sessions.TryGetValue(key, out var session)) return;
+        AgentSession? session;
+        lock (_sessionsLock)
+        {
+            if (!_sessions.TryGetValue(key, out session)) return;
+            _sessions.Remove(key);
+        }
         session.Stop();
-        _sessions.Remove(key);
         // Clean up session directory
         var sessionDir = Path.Combine(_workingDir, ".sessions", key);
         if (Directory.Exists(sessionDir))
@@ -375,6 +397,22 @@ public class SessionManager : IAsyncDisposable
     {
         if (!_isIdleDisconnected || !IsLocalMode) return;
 
+        // Reentrancy guard — rapid MarkUserActivity calls must not spawn parallel reconnects
+        if (Interlocked.Exchange(ref _reconnectInProgress, 1) == 1) return;
+        try
+        {
+            await ReconnectAfterIdleCoreAsync();
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _reconnectInProgress, 0);
+        }
+    }
+
+    private async Task ReconnectAfterIdleCoreAsync()
+    {
+        if (!_isIdleDisconnected || !IsLocalMode) return;
+
         _logger.Info("SessionManager", "Reconnecting after idle — ensuring LLM server is running...");
 
         // Ensure server is back up
@@ -402,7 +440,10 @@ public class SessionManager : IAsyncDisposable
         _serverClient.StartHeartbeat(_config.LlmProvider.HeartbeatIntervalSec, () => _sessions.Count);
 
         // Recreate KV cache sessions on the server and re-prefill
-        foreach (var session in _sessions.Values)
+        List<AgentSession> sessions;
+        lock (_sessionsLock)
+            sessions = _sessions.Values.ToList();
+        foreach (var session in sessions)
         {
             try
             {

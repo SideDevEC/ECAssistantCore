@@ -622,7 +622,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
             }
             else
             {
-                // Session is running — queue the prompt
+                // Session is running or stopping — queue the prompt
                 lock (_queueLock)
                 {
                     _promptQueue.Enqueue(input);
@@ -717,8 +717,15 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         }
 
         SetRunState(SessionRunState.Idle);
-        _executionCts?.Dispose();
-        _executionCts = null;
+
+        // Dispose only the CTS we created — a concurrent Prompt() that saw Idle may have
+        // already replaced _executionCts with a fresh one for the next run.
+        lock (_stateLock)
+        {
+            var cts = _executionCts;
+            _executionCts = null;
+            cts?.Dispose();
+        }
     }
 
     /// <summary>Stop the current execution (scoped to this session only).</summary>

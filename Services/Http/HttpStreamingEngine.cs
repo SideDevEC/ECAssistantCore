@@ -42,10 +42,16 @@ public sealed class HttpStreamingEngine : IInferenceEngine
     {
         var body = BuildRequestBody(prompt, parameters, stream: true);
         var response = await _client.PostStreamAsync("/v1/chat/completions", body, ct);
-        using var stream = await response.Content.ReadAsStreamAsync(ct);
-
-        await foreach (var token in SseParser.ParseTokenStreamAsync(stream, ct))
-            yield return token;
+        await using var stream = await response.Content.ReadAsStreamAsync(ct);
+        try
+        {
+            await foreach (var token in SseParser.ParseTokenStreamAsync(stream, ct))
+                yield return token;
+        }
+        finally
+        {
+            response.Dispose(); // release the connection even on mid-stream cancellation
+        }
     }
 
     /// <summary>

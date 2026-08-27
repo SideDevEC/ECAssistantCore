@@ -214,9 +214,14 @@ public sealed class LlmServerClient : ILlmServerClient
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
+
+        // Disconnect BEFORE marking disposed — IsConnected must still be true,
+        // otherwise DisconnectAsync returns early and the server never learns we left.
+        try { await DisconnectAsync(); }
+        catch { /* best effort */ }
+
         _disposed = true;
         _heartbeatTimer?.Dispose();
-        await DisconnectAsync();
         _client.Dispose();
     }
 }
