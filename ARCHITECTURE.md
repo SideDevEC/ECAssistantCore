@@ -285,6 +285,15 @@ To completely disable a tool, set `enabled: false` in the `tools` config section
 
 No admin/elevated rights required anywhere: user-scope crypto, non-privileged ports (>1024), all state inside the app root.
 
+## Hardening (2026-08-27)
+
+- **ConfigLoader** — partial user `appsettings.json` now deep-merges over embedded defaults (previously absent sections reset to empty); malformed JSON falls back to defaults
+- **ToolPolicy** — shell redirection (`>`, `>>`, `<`, quote-aware) is classified as write → requires approval
+- **AgentOrchestrator** — honors `tool.IsEnabled`; disabled tools return `[BLOCKED]` result instead of executing
+- **SessionRegistry / VramBudget** — reserve+release centralized in registry; all destroy paths symmetric
+- **LlmServerClient** — reconnect hysteresis (30s cooldown), disconnect-before-dispose ordering
+- **EWebFetchTool tests** — Moq setup-ordering corrected (defaults in ctor; specifics win)
+
 ## Test Coverage
 
 | Area | Test Files | Tests |
@@ -298,7 +307,7 @@ No admin/elevated rights required anywhere: user-scope crypto, non-privileged po
 | Integration | 10 | ~100 |
 | Analysis | 1 | ~20 |
 | UI | 1+4 | ~17 |
-| **Total** | **62+4** | **~905** |
+| **Total** | **62+4** | **914** |
 
 `MockEngine` (in `EAgentEngine.cs`) now extends `EAgentEngine` with a no-op HTTP transport so tests run without a live ECAssistantLLM server.
 

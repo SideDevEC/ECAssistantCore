@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 250  |  LOC: 22616  |  ~11724 tokens
+Types: 251  |  LOC: 22711  |  ~11756 tokens
 
 ---
 
@@ -375,6 +375,9 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Services
 
 ### Class: ConversationTranscriptTests
 Cross-package deps: ECAssistant.Core.Engine
+
+### Class: DebugProbeTests
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Web
 
 ### Class: DecisionResult
 

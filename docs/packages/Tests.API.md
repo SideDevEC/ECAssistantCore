@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 71  |  LOC: 10121  |  ~2499 tokens
+Types: 72  |  LOC: 10150  |  ~2531 tokens
 
 ---
 
@@ -34,6 +34,9 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Services
 
 ### Class: ConversationTranscriptTests
 Cross-package deps: ECAssistant.Core.Engine
+
+### Class: DebugProbeTests
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Web
 
 ### Class: DependencyGroupTests
 Cross-package deps: ECAssistant.Core.Engine
