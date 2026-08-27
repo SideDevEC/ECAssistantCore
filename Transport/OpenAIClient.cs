@@ -71,7 +71,10 @@ public sealed class OpenAIClient : IDisposable
     /// </summary>
     public async Task<HttpResponseMessage> PostStreamAsync(string path, string jsonBody, CancellationToken ct = default)
     {
-        using var req = CreateRequest(HttpMethod.Post, path, jsonBody);
+        // NOTE: no `using` here — disposing the HttpRequestMessage while the response
+        // stream is still being consumed can abort streaming. Request disposal is
+        // unnecessary (GC handles it; HttpClient does not require it).
+        var req = CreateRequest(HttpMethod.Post, path, jsonBody);
         var resp = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
         resp.EnsureSuccessStatusCode();
         return resp;
