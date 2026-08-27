@@ -704,6 +704,11 @@ public sealed class AgentOrchestrator : IAsyncDisposable
         if (tool == null)
             throw new InvalidOperationException($"Unknown tool: {toolName}");
 
+        if (!tool.IsEnabled)
+        {
+            _logger?.Info("Orchestrator", $"Tool blocked (disabled): {tool.Name}");
+            return EToolResult.Failure(toolName, "[BLOCKED] Tool is disabled by configuration.");
+        }
         _logger?.Debug("Orchestrator", $"Executing: {tool.Name}");
          // v10.9.3: Pass execution cancellation token to tool
         return await tool.ExecuteAsync(args, _engine.ExecutionToken);

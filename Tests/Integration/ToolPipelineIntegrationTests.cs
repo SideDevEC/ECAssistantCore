@@ -163,10 +163,11 @@ public class ToolPipelineIntegrationTests : IDisposable
     public async Task ToolPolicy_BlockedTool_ToolNotExecuted()
     {
         var (engine, orchestrator, procRunner, fileSystem, config) = CreatePipeline();
-        engine.RegisterTool(new EShellAgent(procRunner.Object, config, _tempDir));
 
-        // Block EShellAgent
-        // Tool disabled via enabled:false — no Blocked level anymore
+        // Disable EShellAgent via config (enabled:false) — orchestrator must honor IsEnabled
+        var disabled = System.Text.Json.JsonSerializer.SerializeToElement(new { enabled = false });
+        config.Tools["EShellAgent"] = disabled;
+        engine.RegisterTool(new EShellAgent(procRunner.Object, config, _tempDir));
 
         engine.AddResponse("<lm><thinking>Run command</thinking><toolcall>EShellAgent<command>echo blocked</command></toolcall></lm>");
         engine.AddResponse("<lm><thinking>Tool was blocked</thinking><output>Could not run command</output></lm>");
@@ -221,7 +222,7 @@ public class ToolPipelineIntegrationTests : IDisposable
         // Queue user denial
         _gui.QueueInput("n");
 
-        engine.AddResponse("<lm><thinking>Run command</thinking><toolcall>EShellAgent<command>echo denied</command></toolcall></lm>");
+        engine.AddResponse("<lm><thinking>Run command</thinking><toolcall>EShellAgent<command>rm -rf build-output</command></toolcall></lm>");
         engine.AddResponse("<lm><thinking>Denied, reporting</thinking><output>Command was denied</output></lm>");
 
         procRunner
@@ -242,6 +243,8 @@ public class ToolPipelineIntegrationTests : IDisposable
         var (engine, orchestrator, procRunner, fileSystem, config) = CreatePipeline();
         engine.RegisterTool(new EShellAgent(procRunner.Object, config, _tempDir));
 
+        // Redirect (>) is a WRITE — policy requires approval; queue user approval.
+        _gui.QueueInput("y");
         engine.AddResponse("<lm><thinking>Create a file</thinking><toolcall>EShellAgent<command>echo test-content > created.txt</command></toolcall></lm>");
         engine.AddResponse("<lm><thinking>File created</thinking><output>File created</output></lm>");
 

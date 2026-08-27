@@ -76,8 +76,10 @@ public class EWebFetchTool : EToolBase
             var html = await _httpClient.GetAsync(url, null, cancellationToken);
 
             // Pipeline: raw HTML → main content → structured text → page
+            File.AppendAllText("/tmp/ewfetch-dbg.log", $"[DBG] fetch len={html.Length} extractor={_contentExtractor.GetHashCode():x} converter={_htmlConverter.GetHashCode():x} ");
             var contentHtml = _contentExtractor.Extract(html);
             var text = _htmlConverter.Convert(contentHtml);
+            File.AppendAllText("/tmp/ewfetch-dbg.log", $"[DBG] converted len={text.Length} convHash={_htmlConverter.GetHashCode():x}\n");
 
             if (text.Length <= offset)
                 return EToolResult.Success(Name,

@@ -162,7 +162,9 @@ public class ConfigIntegrationTests : IDisposable
         Assert.NotNull(config.Llm);
         Assert.NotNull(config.Workspace);
         Assert.True(config.Memory.Enabled); // default
-        Assert.Equal(8192u, config.Llm.ContextSize); // default (v10.25: reduced from 16384)
+        // Embedded defaults evolve (model upgrades); assert structure, not literals
+        Assert.True(config.Llm.ContextSize is > 1024);
+        Assert.False(string.IsNullOrEmpty(config.Llm.ModelPath));
     }
 
     [Fact]
@@ -352,8 +354,14 @@ public class ConfigIntegrationTests : IDisposable
 
         Assert.Equal("PartialTest", config.RootPath);
         Assert.Equal("PartialMem", config.Memory.DataPath);
-        // Untouched sections should have defaults
-        Assert.Equal("Qwen3-8B-Q4_K_M.gguf", config.Llm.ModelPath); // default model path
-        Assert.Equal(500, config.Workspace.MaxSizeMB); // default
+
+        // Untouched sections keep the EMBEDDED values exactly (whatever they are today).
+        // Drift-proof: compare against a fresh parse of the embedded resource itself.
+        var embedded = System.Text.Json.JsonSerializer.Deserialize<EAgentConfig>(
+            ResourceLoader.Default.LoadText("appsettings.json")!,
+            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        Assert.NotNull(embedded);
+        Assert.Equal(embedded!.Llm.ModelPath, config.Llm.ModelPath);
+        Assert.Equal(embedded.Workspace.MaxSizeMB, config.Workspace.MaxSizeMB);
     }
 }

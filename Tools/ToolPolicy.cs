@@ -83,6 +83,10 @@ public class ToolPolicy
             var trimmed = sub.Trim();
             if (string.IsNullOrEmpty(trimmed)) continue;
 
+            // ── Shell redirection writes files: > >> < << heredocs ──
+            // Detect outside quotes to tolerate echo "a > b" style literals.
+            if (HasRedirection(trimmed)) return false;
+
             // Handle pipe: check the leftmost command (pipe receivers are read-only consumers)
             // but if any part of the pipe writes files, require approval
             var pipeParts = trimmed.Split('|');
@@ -113,6 +117,21 @@ public class ToolPolicy
 
         // All sub-commands are read-only
         return true;
+    }
+
+    /// <summary>True when an unquoted shell redirection operator is present.</summary>
+    private static bool HasRedirection(string command)
+    {
+        var inDouble = false; var inSingle = false;
+        for (var i = 0; i < command.Length; i++)
+        {
+            var ch = command[i];
+            if (ch == '"' && !inSingle) inDouble = !inDouble;
+            else if (ch == '\'' && !inDouble) inSingle = !inSingle;
+            else if (!inDouble && !inSingle && ch == '>' ) return true;   // > and >>
+            else if (!inDouble && !inSingle && ch == '<' ) return true;   // < and <<
+        }
+        return false;
     }
 
     /// <summary>

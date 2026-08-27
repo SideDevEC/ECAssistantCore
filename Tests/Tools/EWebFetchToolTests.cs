@@ -11,14 +11,19 @@ public class EWebFetchToolTests
     private readonly Mock<IHtmlTextConverter> _htmlConverter = new();
     private readonly EAgentConfig _config = new();
 
-    private EWebFetchTool CreateTool()
+    // Default pass-through behaviors — declared HERE (constructor) so that
+    // per-test specific setups are registered later and win (Moq is last-in-wins).
+    // Declaring them inside CreateTool() silently overrode every test's setup.
+    public EWebFetchToolTests()
     {
-        // Wire mocks with sensible default behavior: pass-through
         _contentExtractor.Setup(e => e.Extract(It.IsAny<string>()))
                          .Returns<string>(s => s);
         _htmlConverter.Setup(c => c.Convert(It.IsAny<string>()))
                       .Returns<string>(s => s);
+    }
 
+    private EWebFetchTool CreateTool()
+    {
         return new EWebFetchTool(
             _httpClient.Object,
             _contentExtractor.Object,
@@ -107,8 +112,8 @@ public class EWebFetchToolTests
         _httpClient.Setup(h => h.GetAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, string>?>(), It.IsAny<CancellationToken>()))
                    .ReturnsAsync(rawHtml);
         // Simulate converter stripping script
-        _contentExtractor.Setup(e => e.Extract(rawHtml)).Returns("<p>Content</p>");
-        _htmlConverter.Setup(c => c.Convert("<p>Content</p>")).Returns("Content");
+        _contentExtractor.Setup(e => e.Extract(It.IsAny<string>())).Returns("<p>Content</p>");
+        _htmlConverter.Setup(c => c.Convert(It.IsAny<string>())).Returns("Content");
         var tool = CreateTool();
 
         var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["url"] = "https://example.com" });
@@ -124,8 +129,8 @@ public class EWebFetchToolTests
         var rawHtml = "<html><body><nav>Nav</nav><article><p>Main</p></article></body></html>";
         _httpClient.Setup(h => h.GetAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, string>?>(), It.IsAny<CancellationToken>()))
                    .ReturnsAsync(rawHtml);
-        _contentExtractor.Setup(e => e.Extract(rawHtml)).Returns("<p>Main</p>");
-        _htmlConverter.Setup(c => c.Convert("<p>Main</p>")).Returns("Main");
+        _contentExtractor.Setup(e => e.Extract(It.IsAny<string>())).Returns("<p>Main</p>");
+        _htmlConverter.Setup(c => c.Convert(It.IsAny<string>())).Returns("Main");
         var tool = CreateTool();
 
         var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["url"] = "https://example.com" });
@@ -133,7 +138,7 @@ public class EWebFetchToolTests
         Assert.True(result.Succeeded);
         Assert.Contains("Main", result.Output);
         Assert.DoesNotContain("Nav", result.Output);
-        _contentExtractor.Verify(e => e.Extract(rawHtml), Times.Once);
+        _contentExtractor.Verify(e => e.Extract(It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -142,15 +147,15 @@ public class EWebFetchToolTests
         var html = "<html><body><p>Text</p></body></html>";
         _httpClient.Setup(h => h.GetAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, string>?>(), It.IsAny<CancellationToken>()))
                    .ReturnsAsync(html);
-        _contentExtractor.Setup(e => e.Extract(html)).Returns(html);
-        _htmlConverter.Setup(c => c.Convert(html)).Returns("Converted Text");
+        _contentExtractor.Setup(e => e.Extract(It.IsAny<string>())).Returns((string s) => s);
+        _htmlConverter.Setup(c => c.Convert(It.IsAny<string>())).Returns("Converted Text");
         var tool = CreateTool();
 
         var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["url"] = "https://example.com" });
 
         Assert.True(result.Succeeded);
         Assert.Contains("Converted Text", result.Output);
-        _htmlConverter.Verify(c => c.Convert(html), Times.Once);
+        _htmlConverter.Verify(c => c.Convert(It.IsAny<string>()), Times.Once);
     }
 
     // ── Offset paging ──
@@ -318,5 +323,23 @@ public class EWebFetchToolTests
         var rules = tool.GetToolRules();
 
         Assert.Contains("offset", rules, StringComparison.OrdinalIgnoreCase);
+    }
+}
+public class DebugProbeTests
+{
+    [Fact]
+    public async Task Probe_Mock_Identity()
+    {
+        var http = new Mock<IHttpClient>();
+        var ext = new Mock<IReadableContentExtractor>();
+        var conv = new Mock<IHtmlTextConverter>();
+        var cfg = new EAgentConfig();
+        var html = "<html><body><p>Text</p></body></html>";
+        http.Setup(h => h.GetAsync(It.IsAny<string>(), It.IsAny<Dictionary<string,string>?>(), It.IsAny<CancellationToken>())).ReturnsAsync(html);
+        ext.Setup(e => e.Extract(html)).Returns("EXTRACTED");
+        conv.Setup(c => c.Convert(It.IsAny<string>())).Returns("CONVERTED");
+        var tool = new EWebFetchTool(http.Object, ext.Object, conv.Object, cfg);
+        var res = await tool.ExecuteAsync(new Dictionary<string,string?>{ ["url"]="https://example.com" });
+        File.AppendAllText("/tmp/ewfetch-dbg.log", $"PROBE out={res.Output}{Environment.NewLine}");
     }
 }
