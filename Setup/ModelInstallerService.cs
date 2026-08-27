@@ -24,15 +24,18 @@ public sealed class ModelInstallerService
     private readonly HttpClient _http;
     private readonly string _modelsDir;
     private readonly string _serverConfigPath;
+    private readonly string? _appsettingsPath;
 
     /// <summary>Timeout per download request. Multi-GB files need long streams; this caps stalls, not total time.</summary>
     private static readonly TimeSpan StallTimeout = TimeSpan.FromSeconds(60);
 
-    public ModelInstallerService(HttpClient http, string modelsDir, string serverConfigPath)
+    /// <param name="appsettingsPath">Optional — when set, ApplyToServerConfig also updates llm.model_path so local startup is valid after install.</param>
+    public ModelInstallerService(HttpClient http, string modelsDir, string serverConfigPath, string? appsettingsPath = null)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
         _modelsDir = modelsDir ?? throw new ArgumentNullException(nameof(modelsDir));
         _serverConfigPath = serverConfigPath ?? throw new ArgumentNullException(nameof(serverConfigPath));
+        _appsettingsPath = appsettingsPath;
     }
 
     /// <summary>True when the primary file of the entry already exists in models/.</summary>
@@ -331,6 +334,29 @@ public sealed class ModelInstallerService
             models.Add(newEntry);
 
         File.WriteAllText(_serverConfigPath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+
+        // Keep appsettings.json llm.model_path in sync so local startup validates after install
+        UpdateAppsettingsModelPath(newEntry);
+
         return $"Config updated: '{entry.Id}' added to {_serverConfigPath}.";
+    }
+
+    /// <summary>Point appsettings.json llm.model_path at the installed primary file (skip embedding entries).</summary>
+    private void UpdateAppsettingsModelPath(JsonObject serverEntry)
+    {
+        if (_appsettingsPath == null) return;
+        if (serverEntry["is_embedding"]?.GetValue<bool>() == true)
+            return;
+
+        try
+        {
+            if (!File.Exists(_appsettingsPath)) return;
+            if (JsonNode.Parse(File.ReadAllText(_appsettingsPath)) is not JsonObject appRoot) return;
+            if (appRoot["llm"] is not JsonObject llm) appRoot["llm"] = llm = new JsonObject();
+
+            llm["model_path"] = serverEntry["path"]?.GetValue<string>() ?? "";
+            File.WriteAllText(_appsettingsPath, appRoot.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch { /* config sync is best-effort — llm-server.json remains authoritative for the server */ }
     }
 }
