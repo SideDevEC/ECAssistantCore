@@ -10,6 +10,8 @@ namespace ECAssistant.Core.Engine;
 public class ContextWindow
 {
     private readonly List<TranscriptMessage> _messages = new();
+    private readonly object _messagesLock = new();
+    private int _summarizeInProgress = 0;
     private readonly TokenCounter _tokenCounter;
     private readonly uint _maxTokens;
     private SummaryService? _summaryService;
@@ -35,7 +37,8 @@ public class ContextWindow
         var tokens = _tokenCounter.Count(content);
         var msg = TranscriptMessage.User(content);
         msg.EstimatedTokens = tokens;
-        _messages.Add(msg);
+        lock (_messagesLock)
+            _messages.Add(msg);
         return tokens;
     }
 
@@ -44,7 +47,8 @@ public class ContextWindow
         var tokens = _tokenCounter.Count(content);
         var msg = TranscriptMessage.Assistant(content);
         msg.EstimatedTokens = tokens;
-        _messages.Add(msg);
+        lock (_messagesLock)
+            _messages.Add(msg);
         return tokens;
     }
 
@@ -53,103 +57,150 @@ public class ContextWindow
         var tokens = _tokenCounter.Count(content);
         var msg = TranscriptMessage.ToolOutput(content, toolName);
         msg.EstimatedTokens = tokens;
-        _messages.Add(msg);
+        lock (_messagesLock)
+            _messages.Add(msg);
         return tokens;
     }
 
     public int AddSystemMessage(string content)
     {
         var tokens = _tokenCounter.Count(content);
-        if (_messages.Count == 0 || _messages[0].Role != "system")
+        lock (_messagesLock)
         {
-            var msg = TranscriptMessage.System(content);
-            msg.EstimatedTokens = tokens;
-            _messages.Insert(0, msg);
-        }
-        else
-        {
-            _messages[0].Content = content;
-            _messages[0].EstimatedTokens = tokens;
+            if (_messages.Count == 0 || _messages[0].Role != "system")
+            {
+                var msg = TranscriptMessage.System(content);
+                msg.EstimatedTokens = tokens;
+                _messages.Insert(0, msg);
+            }
+            else
+            {
+                _messages[0].Content = content;
+                _messages[0].EstimatedTokens = tokens;
+            }
         }
         return tokens;
     }
 
     public List<TranscriptMessage> GetWindowMessages()
     {
-        var totalEst = 0;
-        foreach (var m in _messages) totalEst += m.EstimatedTokens;
-
-        if (totalEst > (int)_maxTokens)
+        int totalEst = 0;
+        lock (_messagesLock)
         {
-            SummarizeOldest(totalEst);
-            return _messages.ToList();
-        }
-        else if (totalEst > (int)_autoSummarizeThreshold && _messages.Count > 10)
-        {
-            SummarizeOldest(totalEst);
-            return _messages.ToList();
+            foreach (var m in _messages) totalEst += m.EstimatedTokens;
         }
 
-        return _messages.ToList();
+        if (totalEst > (int)_maxTokens ||
+            (totalEst > (int)_autoSummarizeThreshold && MessageCount > 10))
+        {
+            SummarizeOldest(totalEst);
+        }
+
+        List<TranscriptMessage> snapshot;
+        lock (_messagesLock)
+            snapshot = _messages.ToList();
+        return snapshot;
     }
 
     public void SetSummaryService(SummaryService service) => _summaryService = service;
 
     public bool RemoveLastAssistantMessage()
     {
-        for (int i = _messages.Count - 1; i >= 0; i--)
+        lock (_messagesLock)
         {
-            if (_messages[i].Role == "assistant")
+            for (int i = _messages.Count - 1; i >= 0; i--)
             {
-                _messages.RemoveAt(i);
-                return true;
+                if (_messages[i].Role == "assistant")
+                {
+                    _messages.RemoveAt(i);
+                    return true;
+                }
             }
         }
         return false;
     }
 
-    public void Clear() => _messages.Clear();
+    public void Clear() { lock (_messagesLock) _messages.Clear(); }
 
     public bool IsWithinBudget()
     {
-        var total = 0;
-        foreach (var m in _messages) total += m.EstimatedTokens;
-        return total <= _maxTokens;
+        lock (_messagesLock)
+        {
+            var total = 0;
+            foreach (var m in _messages) total += m.EstimatedTokens;
+            return total <= _maxTokens;
+        }
     }
 
     public int GetTotalTokens()
     {
-        var total = 0;
-        foreach (var m in _messages) total += m.EstimatedTokens;
-        return total;
+        lock (_messagesLock)
+        {
+            var total = 0;
+            foreach (var m in _messages) total += m.EstimatedTokens;
+            return total;
+        }
     }
 
-    public int MessageCount => _messages.Count;
+    public int MessageCount { get { lock (_messagesLock) return _messages.Count; } }
     public uint MaxTokens => _maxTokens;
 
-    private async void SummarizeOldest(int currentTotal)
+    /// <summary>
+    /// Trims old messages when over budget and replaces them with a summary.
+    /// The trim is synchronous (memory control must be immediate); the LLM summary
+    /// completes in the background and is then inserted after the leading system
+    /// message(s). A guard prevents overlapping summarize runs.
+    /// </summary>
+    private void SummarizeOldest(int currentTotal)
     {
         if (currentTotal <= _maxTokens) return;
+        if (Interlocked.Exchange(ref _summarizeInProgress, 1) == 1) return;
 
-        var keepCount = Math.Max(5, (int)(_messages.Count * 0.3f));
-        var oldMessages = new List<TranscriptMessage>();
-
-        while (_messages.Count > keepCount && currentTotal > _maxTokens)
+        try
         {
-            var removed = _messages[0];
-            oldMessages.Add(removed);
-            currentTotal -= removed.EstimatedTokens;
-            _messages.RemoveAt(0);
-        }
+            int count;
+            lock (_messagesLock)
+                count = _messages.Count;
+            var keepCount = Math.Max(5, (int)(count * 0.3f));
+            var oldMessages = new List<TranscriptMessage>();
 
-        if (_summaryService != null && oldMessages.Count > 3)
-        {
-            try
+            lock (_messagesLock)
             {
-                var summary = await _summaryService.SummarizeAsync(oldMessages, preferWarmSession: true);
-                _messages.Insert(0, TranscriptMessage.System(summary));
+                while (_messages.Count > keepCount && currentTotal > _maxTokens)
+                {
+                    var removed = _messages[0];
+                    oldMessages.Add(removed);
+                    currentTotal -= removed.EstimatedTokens;
+                    _messages.RemoveAt(0);
+                }
             }
-            catch { }
+
+            if (_summaryService == null || oldMessages.Count <= 3) return;
+
+            // Fire-and-forget but NOT async void: exceptions are contained here.
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var summary = await _summaryService.SummarizeAsync(oldMessages, preferWarmSession: true);
+                    var summaryMsg = TranscriptMessage.System(summary);
+                    lock (_messagesLock)
+                    {
+                        // Insert after any leading system message(s) so the real system prompt stays first
+                        var insertAt = 0;
+                        while (insertAt < _messages.Count && _messages[insertAt].Role == "system" && insertAt < oldMessages.Count && oldMessages[insertAt].Role == "system")
+                            insertAt++;
+                        while (insertAt < _messages.Count && _messages[insertAt].Role == "system")
+                            insertAt++;
+                        _messages.Insert(insertAt, summaryMsg);
+                    }
+                }
+                catch { /* summarization is best-effort — old messages are already trimmed */ }
+            });
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _summarizeInProgress, 0);
         }
     }
 

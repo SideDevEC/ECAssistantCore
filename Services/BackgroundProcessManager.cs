@@ -36,9 +36,11 @@ public class BackgroundProcessManager : IDisposable
         var psi = new ProcessStartInfo
         {
             FileName = isWindows ? "powershell.exe" : isMacOS ? "/bin/zsh" : "/bin/bash",
+            // Execute the temp script file directly — never interpolate the raw command
+            // into -c (breaks on embedded quotes).
             Arguments = isWindows
                 ? $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{tempScript}\""
-                : $"-c \"{command}\"",
+                : $"\"{tempScript}\"",
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,

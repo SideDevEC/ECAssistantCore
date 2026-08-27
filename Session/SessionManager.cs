@@ -297,8 +297,11 @@ public class SessionManager : IAsyncDisposable
     /// </summary>
     public AgentSession CreateSession(string key, string? label = null)
     {
-        if (_sessions.ContainsKey(key))
-            throw new InvalidOperationException($"Session already exists: {key}");
+        lock (_sessionsLock)
+        {
+            if (_sessions.ContainsKey(key))
+                throw new InvalidOperationException($"Session already exists: {key}");
+        }
 
         var inferenceParams = _inferenceParamsFactory.Create(_config);
         inferenceParams.SessionId = key;
@@ -322,14 +325,14 @@ public class SessionManager : IAsyncDisposable
 
         lock (_sessionsLock)
             _sessions.Add(key, session);
-        _sessionCounter++;
+        Interlocked.Increment(ref _sessionCounter);
         return session;
     }
 
     /// <summary>Create a new auto-named session.</summary>
     public AgentSession CreateSession(string? label = null)
     {
-        var key = $"session-{++_sessionCounter}";
+        var key = $"session-{Interlocked.Increment(ref _sessionCounter)}";
         return CreateSession(key, label);
     }
 
@@ -361,8 +364,10 @@ public class SessionManager : IAsyncDisposable
     /// <summary>Stop a specific session's execution.</summary>
     public void StopSession(string key)
     {
-        if (_sessions.TryGetValue(key, out var session))
-            session.Stop();
+        AgentSession? session;
+        lock (_sessionsLock)
+            _sessions.TryGetValue(key, out session);
+        session?.Stop();
     }
 
     /// <summary>Stop all sessions.</summary>

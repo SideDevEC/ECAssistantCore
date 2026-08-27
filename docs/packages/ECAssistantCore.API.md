@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 251  |  LOC: 22823  |  ~11771 tokens
+Types: 251  |  LOC: 22886  |  ~11771 tokens
 
 ---
 

@@ -111,6 +111,9 @@ public class ECodeEditorTool : EToolBase
 
         var content = await Task.Run(() => _fileSystem.ReadFile(fullPath));
 
+        if (oldText.Length == 0)
+            return "ECodeEditor: old_text must not be empty.";
+
         if (!content.Contains(oldText))
         {
             var similar = FindSimilarLines(content, oldText);
@@ -205,6 +208,8 @@ public class ECodeEditorTool : EToolBase
 
         if (string.IsNullOrEmpty(pattern))
             return "ECodeEditor: Missing 'pattern'.";
+        if (pattern.Length == 0)
+            return "ECodeEditor: pattern must not be empty.";
 
         var files = GetFiles(filter);
         var modifiedFiles = new List<string>();
@@ -299,7 +304,20 @@ public class ECodeEditorTool : EToolBase
         var exclude = new[] { Path.DirectorySeparatorChar + "bin", Path.DirectorySeparatorChar + "obj", Path.DirectorySeparatorChar + ".git" };
         return ListFilesRecursive(_workingDir)
             .Where(f => !exclude.Any(ex => f.Contains(ex)))
+            .Where(f => MatchesFilter(Path.GetFileName(f), filter))
             .ToList();
+    }
+
+    /// <summary>Wildcard match against the file_filter argument (supports comma-separated patterns, e.g. "*.cs,*.md").</summary>
+    private static bool MatchesFilter(string fileName, string filter)
+    {
+        if (string.IsNullOrWhiteSpace(filter) || filter == "*.*" || filter == "*") return true;
+        return filter.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Any(p =>
+            {
+                var regex = "^" + Regex.Escape(p).Replace("\\*", ".*").Replace("\\?", ".") + "$";
+                return Regex.IsMatch(fileName, regex, RegexOptions.IgnoreCase);
+            });
     }
 
     private List<string> ListFilesRecursive(string directory)
@@ -317,6 +335,7 @@ public class ECodeEditorTool : EToolBase
 
     private int CountOccurrences(string content, string pattern)
     {
+        if (string.IsNullOrEmpty(pattern)) return 0; // empty pattern would loop forever
         int count = 0, pos = 0;
         while ((pos = content.IndexOf(pattern, pos, StringComparison.Ordinal)) >= 0)
         {

@@ -371,3 +371,10 @@ EWebFetch was reworked to produce LLM-parseable output. The old tool returned a 
 - v11.4: Orchestrator gates decomposition — verb heuristic first (instant), then LLM 1-token classification (~0.15s)
 - v11.4: System prompt teaches LLM to learn from failed <thinking> blocks in conversation history
 - v12.1: EWebFetch uses IReadableContentExtractor + IHtmlTextConverter pipeline (fetch→extract→convert→page); HttpClientAdapter sends browser User-Agent + Accept headers; offset arg for paging long pages; default maxchars 12K; tool rules injected into system prompt with offset guidance
+
+## Audit Fixes (2026-08-27)
+
+- `ContextWindow`: all `_messages` access locked via `_messagesLock`; summarization guarded against overlap (`_summarizeInProgress`); LLM summary inserts asynchronously after leading system message(s) — no more async-void race on the live list
+- `BackgroundProcessManager`: unix/macOS branch now executes the temp script file directly (was inline `-c "{command}"`, broke on embedded quotes)
+- `SessionManager`: `StopSession`/`CreateSession` dictionary access moved under `_sessionsLock`; session counter is `Interlocked`
+- `ECodeEditorTool`: empty `old_text`/`pattern` rejected before `CountOccurrences` (was an infinite loop); `file_filter` wildcard matching actually applied in search/replace-all
