@@ -49,11 +49,55 @@ public class SessionManager : IAsyncDisposable
     private readonly InferenceParamsFactory _inferenceParamsFactory;
     private RemoteTokenizer? _remoteTokenizer;               // local mode only
 
+    // Multi-provider remote selection (null values = fall back to llm_provider section)
+    private ILlmProviderRegistry? _registry;
+    private string? _effectiveEndpoint;
+    private string? _effectiveApiKey;
+    private string? _effectiveModelId;
+
     /// <summary>True if running in local mode (ECAssistantLLM with KV cache).</summary>
     public bool IsLocalMode => _config.LlmProvider.IsLocal;
 
     /// <summary>True if running in remote mode (cloud API, no KV cache).</summary>
     public bool IsRemoteMode => _config.LlmProvider.IsRemote;
+
+    /// <summary>Endpoint of the selected remote provider (registry) or llm_provider config.</summary>
+    public string EffectiveEndpoint => _effectiveEndpoint ?? _config.LlmProvider.ResolvedEndpoint;
+
+    /// <summary>API key of the selected remote provider, else llm_provider config.</summary>
+    public string? EffectiveApiKey => _effectiveApiKey ?? _config.LlmProvider.ApiKey;
+
+    /// <summary>Model ID of the selected remote provider, else llm_provider config.</summary>
+    public string EffectiveModelId => _effectiveModelId ?? _config.LlmProvider.ModelId;
+
+    /// <summary>
+    /// Pick the remote provider. Fallback disabled: just Default.
+    /// Fallback enabled: first provider whose health endpoint answers within 5s.
+    /// No registry/multi-config: returns null (single llm_provider path is used).
+    /// </summary>
+    private async Task<RemoteProvider?> SelectRemoteProviderAsync(CancellationToken ct = default)
+    {
+        if (_registry == null || _registry.Providers.Count == 0) return null;
+
+        var candidates = _registry.OrderedCandidates();
+        var fallbackOn = _config.LlmProviders?.FallbackEnabled == true;
+        if (!fallbackOn || candidates.Count <= 1)
+            return candidates.FirstOrDefault();
+
+        foreach (var candidate in candidates)
+        {
+            using var probe = new OpenAIClient(candidate.Endpoint, apiKey: candidate.ApiKey);
+            if (await probe.PingAsync(ct))
+            {
+                _logger.Info("SessionManager", $"Provider '{candidate.Name}' healthy — selected");
+                return candidate;
+            }
+            _logger.Warn("SessionManager", $"Provider '{candidate.Name}' unreachable — trying next");
+        }
+
+        _logger.Error("SessionManager", $"All {candidates.Count} providers unreachable — using default anyway");
+        return candidates[0];
+    }
 
     /// <summary>True when client has disconnected from server due to idle timeout.</summary>
     public bool IsIdleDisconnected => _isIdleDisconnected;
@@ -88,8 +132,21 @@ public class SessionManager : IAsyncDisposable
         }
         else
         {
-            // ── Remote mode: OpenAI-compatible API ──
-            _httpClient = new OpenAIClient(provider.ResolvedEndpoint, apiKey: provider.ApiKey);
+            // ── Remote mode: multi-provider registry, else single llm_provider ──
+            _registry = new LlmProviderRegistry(config.LlmProviders, _logger);
+            foreach (var err in _registry.ValidationErrors)
+                _logger.Warn("SessionManager", $"llm_providers: {err}");
+
+            var selected = SelectRemoteProviderAsync().GetAwaiter().GetResult();
+            if (selected != null)
+            {
+                _effectiveEndpoint = selected.Endpoint;
+                _effectiveApiKey = selected.ApiKey;
+                _effectiveModelId = selected.ModelId;
+                _logger.Info("SessionManager", $"Remote mode via provider '{selected.Name}' ({selected.Endpoint}, model: {selected.ModelId})");
+            }
+
+            _httpClient = new OpenAIClient(_effectiveEndpoint!, apiKey: _effectiveApiKey);
         }
 
         // Validate config (local mode needs model path; remote mode skips file validation)
@@ -138,7 +195,7 @@ public class SessionManager : IAsyncDisposable
         }
         else
         {
-            _logger.Info("SessionManager", $"Remote mode: {_config.LlmProvider.ResolvedEndpoint} (model: {_config.LlmProvider.ModelId})");
+            _logger.Info("SessionManager", $"Remote mode: {EffectiveEndpoint} (model: {EffectiveModelId})");
         }
     }
 
@@ -245,9 +302,9 @@ public class SessionManager : IAsyncDisposable
         var session = new AgentSession(
             key: key,
             sessionId: key,
-            endpoint: _config.LlmProvider.ResolvedEndpoint,
+            endpoint: EffectiveEndpoint,
             clientId: IsLocalMode ? _serverClient!.ClientId : null,
-            apiKey: IsRemoteMode ? _config.LlmProvider.ApiKey : null,
+            apiKey: IsRemoteMode ? EffectiveApiKey : null,
             inferenceParams: inferenceParams,
             workingDir: _workingDir,
             inferenceLock: _inferenceLock,

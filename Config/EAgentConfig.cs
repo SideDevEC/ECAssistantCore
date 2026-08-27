@@ -56,6 +56,14 @@ public class EAgentConfig
     [JsonPropertyName("llm_provider")]
     public LlmProviderConfig LlmProvider { get; set; } = new();
 
+    /// <summary>
+    /// Multi-provider section (OpenClaw-style). When present with valid entries,
+    /// remote mode resolves through the registry (default provider + optional fallback).
+    /// Local mode is unaffected. Null/empty = single-provider "llm_provider" behavior.
+    /// </summary>
+    [JsonPropertyName("llm_providers")]
+    public MultiLlmProvidersConfig? LlmProviders { get; set; }
+
     [JsonPropertyName("tool_permissions")]
     public List<ToolPermissionConfigEntry>? ToolPermissions { get; set; }
 
