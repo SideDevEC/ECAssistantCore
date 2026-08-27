@@ -44,6 +44,7 @@ public class SessionManager : IAsyncDisposable
 
     // HTTP infrastructure (shared across all sessions)
     private readonly ServerLauncher? _serverLauncher;       // local mode only
+    private ServerLauncher? _embeddingServerLauncher;       // remote main + local embeddings
     private readonly LlmServerClient? _serverClient;        // local mode only
     private OpenAIClient _httpClient;
     private readonly InferenceParamsFactory _inferenceParamsFactory;
@@ -148,6 +149,24 @@ public class SessionManager : IAsyncDisposable
                 _effectiveApiKey = selected.ApiKey;
                 _effectiveModelId = selected.ModelId;
                 _logger.Info("SessionManager", $"Remote mode via provider '{selected.Name}' ({selected.Endpoint}, model: {selected.ModelId})");
+
+                // Local embeddings + remote main AI → spawn the local LLM server solely
+                // for embedding workloads (vector memory). Main inference stays remote.
+                if (string.Equals(config.Embedding?.Mode, "local", StringComparison.OrdinalIgnoreCase))
+                {
+                    var embeddingProvider = new LlmProviderConfig
+                    {
+                        Mode = "local",
+                        Endpoint = config.Embedding.Endpoint ?? $"http://localhost:{config.LlmProvider.Port}",
+                        ServerRootPath = Path.Combine(_appRoot, "llm")
+                    };
+                    _embeddingServerLauncher = new ServerLauncher(embeddingProvider, _appRoot);
+                    var embedOk = _embeddingServerLauncher.EnsureServerRunningAsync().GetAwaiter().GetResult();
+                    if (embedOk)
+                        _logger.Info("SessionManager", "Embedding server started locally (main AI stays remote)");
+                    else
+                        _logger.Warn("SessionManager", "Local embedding server failed to start — vector memory may be unavailable");
+                }
             }
 
             _httpClient = new OpenAIClient(_effectiveEndpoint!, apiKey: _effectiveApiKey);
@@ -554,6 +573,13 @@ public class SessionManager : IAsyncDisposable
             try { await _serverClient!.DisconnectAsync(); }
             catch { /* best effort */ }
             try { await _serverLauncher!.StopServerAsync(); }
+            catch { /* best effort */ }
+        }
+
+        // Remote main + local embeddings: stop the embedding server as well
+        if (_embeddingServerLauncher != null)
+        {
+            try { await _embeddingServerLauncher.StopServerAsync(); }
             catch { /* best effort */ }
         }
 

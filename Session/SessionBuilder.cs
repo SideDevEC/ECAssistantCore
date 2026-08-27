@@ -110,6 +110,23 @@ public class SessionBuilder : ISessionBuilder
         await BuildAsync(session, ExternalTools.Count > 0 ? ExternalTools : null);
     }
 
+    /// <summary>Embeddings endpoint: local embedding mode → local server (spawned independently); otherwise the main provider.</summary>
+    private string ResolveEmbeddingEndpoint()
+    {
+        var emb = _config.Embedding;
+        if (emb != null && string.Equals(emb.Mode, "local", StringComparison.OrdinalIgnoreCase))
+            return emb.Endpoint ?? $"http://localhost:{_config.LlmProvider.Port}";
+        return _config.LlmProvider.ResolvedEndpoint;
+    }
+
+    private string ResolveEmbeddingModelId()
+    {
+        var emb = _config.Embedding;
+        if (emb != null && string.Equals(emb.Mode, "local", StringComparison.OrdinalIgnoreCase))
+            return emb.ModelId ?? "embeddings";
+        return _config.LlmProvider.EmbeddingModelId ?? "embeddings";
+    }
+
     /// <summary>
     /// Build a fully initialized session with external tools + standard tools + secondary model.
     /// External tools are registered first (if enabled), then built-in tools.

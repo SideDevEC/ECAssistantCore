@@ -12,6 +12,23 @@ public class EmbeddingConfig
     [JsonPropertyName("enabled")]
     public bool Enabled { get; init; } = true;
 
+    /// <summary>
+    /// Where embeddings are computed, independent of the main LLM mode:
+    /// "local"  → the local ECAssistantLLM server serves embeddings (spawned even when
+    ///            the main AI is remote — it runs only for embedding workloads).
+    /// "remote" → the main provider's embedding endpoint/model (default when empty).
+    /// </summary>
+    [JsonPropertyName("mode")]
+    public string Mode { get; init; } = "";
+
+    /// <summary>Override endpoint for local embedding mode (default: local server, port from llm_provider).</summary>
+    [JsonPropertyName("endpoint")]
+    public string? Endpoint { get; init; }
+
+    /// <summary>Override model id for local embedding mode (default: "embeddings").</summary>
+    [JsonPropertyName("model_id")]
+    public string? ModelId { get; init; }
+
     [JsonPropertyName("model_path")]
     public string ModelPath { get; init; } = "models/all-MiniLM-L6-v2-Q5_K_M.gguf";
 
