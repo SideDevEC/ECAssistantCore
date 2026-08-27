@@ -1028,11 +1028,18 @@ User: " + userRequest + "\n<lm>\n";
         _turnCount++;
         _escPressed = false;
 
+        // Vision: extract [image:<path>] attachments into data URIs, strip tokens from the prompt.
+        var (cleanPrompt, imageRefs) = ImageAttachmentParser.Extract(userPrompt, _workingDir);
+        var imageDataUris = imageRefs.Select(r => r.DataUri).ToList();
+        if (imageRefs.Count > 0)
+            _out?.WriteInfo($"[Vision] Attached {imageRefs.Count} image(s) to this turn");
+
         if (_turnCount == 1)
          {
             _transcript.AddUser(userPrompt);
-            _contextWindow.AddUserMessage(userPrompt);
          }
+
+        var effectivePrompt = cleanPrompt.Length > 0 ? cleanPrompt : userPrompt;
 
         _logger?.Debug("Context", $"Turn {_turnCount} | Budget: {_contextWindow.GetTotalTokens()}/{_contextWindow.MaxTokens} tokens");
 
@@ -1107,11 +1114,11 @@ User: " + userRequest + "\n<lm>\n";
             if (_turnCount == 1)
              {
                 _transcript.AddUser(userPrompt);
-                 _contextWindow.AddUserMessage(userPrompt);
+                _contextWindow.AddUserMessage(effectivePrompt, imageDataUris);
              }
          }
 
-        var incrementalInput = BuildIncrementalInput(userPrompt);
+        var incrementalInput = BuildIncrementalInput(effectivePrompt);
 
         try
          {
@@ -1155,10 +1162,22 @@ User: " + userRequest + "\n<lm>\n";
                 var tokenCount = 0;
 
                  // Stream via the HTTP inference engine (server owns the KV cache).
-                await foreach (var token in _inferenceEngine!.StreamAsync(
-                    incrementalInput,
-                     _requestParams ?? InferenceParamsFactory.Default.Create(_config),
-                    cts.Token))
+                InferenceRequestParams requestParams;
+                if (_requestParams != null)
+                 {
+                    // Attach images for this call only — params object is shared across turns.
+                    _requestParams.ImageDataUris = imageDataUris;
+                    requestParams = _requestParams;
+                 }
+                else
+                    requestParams = InferenceParamsFactory.Default.Create(_config);
+
+                try
+                 {
+                    await foreach (var token in _inferenceEngine!.StreamAsync(
+                        incrementalInput,
+                        requestParams,
+                        cts.Token))
                  {
                     if (ExecutionToken.IsCancellationRequested)
                      {
@@ -1193,6 +1212,13 @@ User: " + userRequest + "\n<lm>\n";
                     _out?.WriteLine($"── End Token Stream ({tokenCount} tokens) ──", OutputState.Bold);
                     _out?.BlankLine();
                 }
+                 }
+                finally
+                 {
+                    // Clear per-call image attachments — params object is shared across turns.
+                    if (_requestParams != null)
+                        _requestParams.ImageDataUris = new List<string>();
+                 }
              }
             catch (OperationCanceledException)
              {

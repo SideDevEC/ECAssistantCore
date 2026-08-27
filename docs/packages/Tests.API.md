@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 72  |  LOC: 10211  |  ~2531 tokens
+Types: 73  |  LOC: 10272  |  ~2581 tokens
 
 ---
 
@@ -124,6 +124,11 @@ Cross-package deps: ECAssistant.Core.Services
 ### Class: HttpClientAdapterTests
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
+
+### Class: ImageAttachmentParserTests
+> [image:path] attachment extraction — file resolution, mime mapping, error tolerance.
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Engine, Xunit
 
 ### Class: InMemoryVectorStoreTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces

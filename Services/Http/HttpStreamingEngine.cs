@@ -82,12 +82,18 @@ public sealed class HttpStreamingEngine : IInferenceEngine
 
     private string BuildRequestBody(string prompt, InferenceRequestParams parameters, bool stream)
     {
+        // Multimodal: when images are attached, send OpenAI content-parts array
+        // (text part + one image_url data-URI part per image).
+        object content = parameters.ImageDataUris is { Count: > 0 }
+            ? BuildMultimodalContent(prompt, parameters.ImageDataUris)
+            : prompt;
+
         var req = new
         {
             model = parameters.ModelId ?? _defaultModelId,
             messages = new[]
             {
-                new { role = "user", content = prompt }
+                new { role = "user", content }
             },
             stream,
             temperature = parameters.Temperature,
@@ -100,6 +106,33 @@ public sealed class HttpStreamingEngine : IInferenceEngine
         };
 
         return JsonSerializer.Serialize(req, JsonOptions);
+    }
+
+    /// <summary>
+    /// Build OpenAI multimodal content parts. Images become data-URI image_url parts.
+    /// </summary>
+    private static System.Text.Json.JsonElement BuildMultimodalContent(string text, IReadOnlyList<string> imageDataUris)
+    {
+        using var ms = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(ms))
+        {
+            writer.WriteStartArray();
+            writer.WriteStartObject();
+            writer.WriteString("type", "text");
+            writer.WriteString("text", text);
+            writer.WriteEndObject();
+            foreach (var uri in imageDataUris)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("type", "image_url");
+                writer.WriteStartObject("image_url");
+                writer.WriteString("url", uri);
+                writer.WriteEndObject();
+                writer.WriteEndObject();
+            }
+            writer.WriteEndArray();
+        }
+        return System.Text.Json.JsonDocument.Parse(ms.ToArray()).RootElement.Clone();
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new()

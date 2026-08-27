@@ -378,3 +378,10 @@ EWebFetch was reworked to produce LLM-parseable output. The old tool returned a 
 - `BackgroundProcessManager`: unix/macOS branch now executes the temp script file directly (was inline `-c "{command}"`, broke on embedded quotes)
 - `SessionManager`: `StopSession`/`CreateSession` dictionary access moved under `_sessionsLock`; session counter is `Interlocked`
 - `ECodeEditorTool`: empty `old_text`/`pattern` rejected before `CountOccurrences` (was an infinite loop); `file_filter` wildcard matching actually applied in search/replace-all
+
+## Vision (2026-08-27)
+
+- `[image:<path>]` tokens in user input are extracted by `ImageAttachmentParser` (png/jpg/jpeg/webp/gif/bmp) into base64 data URIs; stripped from the prompt, missing files get a note appended
+- `InferenceRequestParams.ImageDataUris` carries images per call (cleared after streaming — params object is shared across turns); `HttpStreamingEngine` serializes OpenAI content-parts arrays when images are present
+- Remote mode: works with any vision-capable OpenAI-compatible API. Local mode: server needs `mmproj_path` on the model config (see ECAssistantLLM ARCHITECTURE "Vision")
+- Context window: each attached image adds a flat 800-token budget estimate (`ContextWindow.TokensPerImage`)

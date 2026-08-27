@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-27T10:38:36.526753+00:00
-Packages: 2  |  Types: 323
+Generated: 2026-08-27T11:15:11.163209+00:00
+Packages: 2  |  Types: 327
 
 ---
 
-## ECAssistantCore (251 types, ~22886 LOC)
+## ECAssistantCore (254 types, ~23065 LOC)
 
 - 🔵 IConfigLoader  (ECAssistantCore)
 - 🔵 IConfigProvider  (ECAssistantCore)
@@ -133,6 +133,9 @@ Packages: 2  |  Types: 323
 - 🟡 HttpClientAdapterTests : IDisposable  (ECAssistantCore)
 - 🟡 HttpEmbedder : IVectorEmbedder  (ECAssistantCore)  deps: [OpenAIClient, string modelId =]
 - 🟡 HttpStreamingEngine : IInferenceEngine  (ECAssistantCore)  deps: [OpenAIClient, string defaultModelId =, string? defaultSessionId =]
+- 🟡 ImageAttachmentParser  (ECAssistantCore)
+- 🟡 ImageAttachmentParserTests : IDisposable  (ECAssistantCore)
+- 🟣 ImageRef  (ECAssistantCore)  deps: [string, string, string]
 - 🟡 InMemoryVectorStore : IVectorStore  (ECAssistantCore)
 - 🟡 InMemoryVectorStoreTests  (ECAssistantCore)
 - 🟡 InferenceConfig  (ECAssistantCore)
@@ -259,7 +262,7 @@ Packages: 2  |  Types: 323
 - 🟡 VectorSearchResult  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (72 types, ~10211 LOC)
+## Tests (73 types, ~10272 LOC)
 
 - 🟡 ApiUserController  (Tests)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (Tests)
@@ -296,6 +299,7 @@ Packages: 2  |  Types: 323
 - 🟡 HomeController  (Tests)
 - 🟡 HtmlTextConverterTests  (Tests)
 - 🟡 HttpClientAdapterTests : IDisposable  (Tests)
+- 🟡 ImageAttachmentParserTests : IDisposable  (Tests)
 - 🟡 InMemoryVectorStoreTests  (Tests)
 - 🟡 LlmProviderRegistryTests : IDisposable  (Tests)
 - 🟡 LlmServerClientReconnectTests  (Tests)

@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 251  |  LOC: 22886  |  ~11771 tokens
+Types: 254  |  LOC: 23065  |  ~11892 tokens
 
 ---
 
@@ -670,6 +670,14 @@ Constructor:
   - HttpStreamingEngine(OpenAIClient client, string defaultModelId = "main", string? defaultSessionId = null)
 Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Transport
 
+### Class: ImageAttachmentParser
+> Parses <c>[image:&lt;path&gt;]</c> attachment tokens out of user input.
+
+### Class: ImageAttachmentParserTests
+> [image:path] attachment extraction — file resolution, mime mapping, error tolerance.
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Engine, Xunit
+
 ### Class: InMemoryVectorStore
 > In-memory vector store implementation.
 Implements: IVectorStore
@@ -1172,6 +1180,11 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services, ECAssist
 ### Record: GenerationParams
 Constructor:
   - GenerationParams(int MaxTokens, float Temperature, float TopP, int TopK, float RepeatPenalty)
+
+### Record: ImageRef
+> Parses <c>[image:&lt;path&gt;]</c> attachment tokens out of user input.
+Constructor:
+  - ImageRef(string OriginalPath, string FullPath, string DataUri)
 
 ### Record: MemoryEntry
 Constructor:

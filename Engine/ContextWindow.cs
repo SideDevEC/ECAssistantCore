@@ -12,6 +12,9 @@ public class ContextWindow
     private readonly List<TranscriptMessage> _messages = new();
     private readonly object _messagesLock = new();
     private int _summarizeInProgress = 0;
+
+    /// <summary>Flat token estimate per attached image for budgeting.</summary>
+    public const int TokensPerImage = 800;
     private readonly TokenCounter _tokenCounter;
     private readonly uint _maxTokens;
     private SummaryService? _summaryService;
@@ -33,10 +36,19 @@ public class ContextWindow
     }
 
     public int AddUserMessage(string content)
+        => AddUserMessage(content, null);
+
+    /// <summary>
+    /// Add a user message with attached images (data URIs) for vision-capable models.
+    /// Each image adds a flat token estimate (~800 tokens).
+    /// </summary>
+    public int AddUserMessage(string content, IReadOnlyList<string>? imageDataUris)
     {
-        var tokens = _tokenCounter.Count(content);
+        var tokens = _tokenCounter.Count(content) + Math.Max(0, imageDataUris?.Count ?? 0) * TokensPerImage;
         var msg = TranscriptMessage.User(content);
         msg.EstimatedTokens = tokens;
+        if (imageDataUris is { Count: > 0 })
+            msg.ImageDataUris.AddRange(imageDataUris);
         lock (_messagesLock)
             _messages.Add(msg);
         return tokens;

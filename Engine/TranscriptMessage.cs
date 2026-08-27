@@ -19,6 +19,12 @@ public class TranscriptMessage
      /// <summary>Estimated token count for this message (pre-computed)</summary>
     public int EstimatedTokens { get; set; }
 
+    /// <summary>
+    /// Images attached to this message as base64 data URIs (vision-capable models).
+    /// Empty list = text-only message.
+    /// </summary>
+    public List<string> ImageDataUris { get; set; } = new();
+
      /// <summary>When this message was created</summary>
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 

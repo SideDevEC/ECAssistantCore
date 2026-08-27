@@ -40,4 +40,10 @@ public sealed class InferenceRequestParams
     public float? RepeatPenalty { get; set; }
     public string[]? Stop { get; set; }
     public bool Stream { get; set; } = true;
+
+    /// <summary>
+    /// Images attached to this request as base64 data URIs (vision-capable models only).
+    /// Sent as OpenAI multimodal content parts on the user message.
+    /// </summary>
+    public List<string> ImageDataUris { get; set; } = new();
 }
