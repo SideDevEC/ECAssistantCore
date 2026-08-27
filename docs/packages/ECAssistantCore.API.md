@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 265  |  LOC: 23631  |  ~12270 tokens
+Types: 269  |  LOC: 23976  |  ~12450 tokens
 
 ---
 
@@ -182,6 +182,7 @@ Properties:
   - string KeysDirectory { get; set; }
 Methods:
   - string GetKey(string fileName)
+  - void SetKey(string fileName, string plaintext)
 
 ### Interface: ISessionBuilder
 > Interface for building and initializing AgentSessions with standard tools.
@@ -939,6 +940,15 @@ Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Transport
 ### Class: RemoteProviderConfig
 > A single remote OpenAI-compatible provider entry.
 
+### Class: RemoteProviderSetupWriter
+> Writes remote (OpenAI-compatible) provider settings chosen during first-run
+Constructor:
+  - RemoteProviderSetupWriter(string appsettingsPath, string? keysDirectory = null)
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services
+
+### Class: RemoteProviderSetupWriterTests
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup
+
 ### Class: RemoteTokenizer
 > HTTP-based tokenizer. Calls /eca/tokenize on the server for accurate token counting.
 Constructor:
@@ -1185,6 +1195,15 @@ Cross-package deps: ECAssistant.Core.Engine
 ### Class: VectorEntry
 
 ### Class: VectorMemoryConfig
+
+### Class: VectorMemorySetupWriter
+> Persists the user's vector-memory choice from first-run/install into
+Constructor:
+  - VectorMemorySetupWriter(string appsettingsPath)
+
+### Class: VectorMemorySetupWriterTests
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Setup
 
 ### Class: VectorMemoryStore
 > Vector Memory Store — semantic search over memory entries using embeddings.

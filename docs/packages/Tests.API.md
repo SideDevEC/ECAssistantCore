@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 75  |  LOC: 10462  |  ~2672 tokens
+Types: 77  |  LOC: 10588  |  ~2727 tokens
 
 ---
 
@@ -196,6 +196,9 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
 ### Class: ReadableContentExtractorTests
 Cross-package deps: ECAssistant.Core.Services
 
+### Class: RemoteProviderSetupWriterTests
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup
+
 ### Class: SecureKeyStoreTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services
 
@@ -268,6 +271,10 @@ Cross-package deps: ECAssistant.Core.Tools
 > Integration tests for ConversationTranscript persistence —
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Engine
+
+### Class: VectorMemorySetupWriterTests
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Setup
 
 ### Class: VectorMemoryStoreTests
 Implements: IDisposable

@@ -394,3 +394,9 @@ EWebFetch was reworked to produce LLM-parseable output. The old tool returned a 
 - `FirstRunDetector.Evaluate` → NeedsSetup when models/ has no GGUFs and llm-server.json references no existing files
 - `ModelInstallerService.InstallAsync` — HF `resolve/main` download, resume via `.part` + Range header, stall timeout, per-file skip when present; then `ApplyToServerConfig` merges the model entry (mmproj_path for vision, is_embedding/pooling for embeddings) without touching other config sections
 - No UI dependency — TUI/Console own interaction
+
+## Changelog — 2026-08-27 (Installer + Embeddings)
+
+- **Setup/**: `RemoteProviderSetupWriter` (remote config + keyfile ref), `VectorMemorySetupWriter` (vector_memory.enabled), installer hardening (internet probe, disk check, retry, orphan GGUF registration `RegisterLocalModelFile`, sibling mmproj auto-detect, `CatalogSuggestedConfig.BatchSize`)
+- **Services/**: `SecureKeyStore.SetKey` — encrypt-on-save (new on `ISecureKeyStore`); key never stored plaintext in appsettings
+- **Engine/**: `EAgentEngine.InitializeVectorMemoryAsync` now wires the embedder into the store (was dropped) + TfidfEmbedder fallback when none

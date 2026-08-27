@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-27T14:21:13.938717+00:00
-Packages: 2  |  Types: 340
+Generated: 2026-08-27T18:01:30.071884+00:00
+Packages: 2  |  Types: 346
 
 ---
 
-## ECAssistantCore (265 types, ~23631 LOC)
+## ECAssistantCore (269 types, ~23976 LOC)
 
 - 🔵 IConfigLoader  (ECAssistantCore)
 - 🔵 IConfigProvider  (ECAssistantCore)
@@ -203,6 +203,8 @@ Packages: 2  |  Types: 340
 - 🟡 RemoteModelLoader : IModelLoader  (ECAssistantCore)  deps: [OpenAIClient]
 - 🟣 RemoteProvider  (ECAssistantCore)  deps: [string, string, string, string, string]
 - 🟡 RemoteProviderConfig  (ECAssistantCore)
+- 🟡 RemoteProviderSetupWriter  (ECAssistantCore)  deps: [string, string? keysDirectory =]
+- 🟡 RemoteProviderSetupWriterTests  (ECAssistantCore)
 - 🟡 RemoteTokenizer  (ECAssistantCore)  deps: [OpenAIClient, string modelId =]
 - 🟡 ResourceLoader  (ECAssistantCore)
 - 🟡 SamplingConfig  (ECAssistantCore)
@@ -267,13 +269,15 @@ Packages: 2  |  Types: 340
 - 🟣 TranscriptMessage  (ECAssistantCore)  deps: [string, string, string? ToolCallId =]
 - 🟡 VectorEntry  (ECAssistantCore)
 - 🟡 VectorMemoryConfig  (ECAssistantCore)
+- 🟡 VectorMemorySetupWriter  (ECAssistantCore)  deps: [string]
+- 🟡 VectorMemorySetupWriterTests : IDisposable  (ECAssistantCore)
 - 🟡 VectorMemoryStore : IDisposable  (ECAssistantCore)  deps: [string, ILogger? logger =]
 - 🟡 VectorMemoryStoreTests : IDisposable  (ECAssistantCore)
 - 🟣 VectorResult  (ECAssistantCore)  deps: [string, string, float]
 - 🟡 VectorSearchResult  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (75 types, ~10462 LOC)
+## Tests (77 types, ~10588 LOC)
 
 - 🟡 ApiUserController  (Tests)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (Tests)
@@ -328,6 +332,7 @@ Packages: 2  |  Types: 340
 - 🟡 ProgramGuiCollection  (Tests)
 - 🟡 ProjectContextManagerTests  (Tests)
 - 🟡 ReadableContentExtractorTests  (Tests)
+- 🟡 RemoteProviderSetupWriterTests  (Tests)
 - 🟡 SecureKeyStoreTests  (Tests)
 - 🟡 SelfCorrectionManagerTests  (Tests)
 - 🟡 SessionDiscoveryTests : IDisposable  (Tests)
@@ -349,4 +354,5 @@ Packages: 2  |  Types: 340
 - 🟡 ToolPipelineIntegrationTests : IDisposable  (Tests)
 - 🟡 ToolPolicyTests  (Tests)
 - 🟡 TranscriptIntegrationTests : IDisposable  (Tests)
+- 🟡 VectorMemorySetupWriterTests : IDisposable  (Tests)
 - 🟡 VectorMemoryStoreTests : IDisposable  (Tests)
