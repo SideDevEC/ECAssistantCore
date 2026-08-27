@@ -222,7 +222,7 @@ public sealed class ModelInstallerService
     /// model's name tokens to plausibly belong to it (e.g. mmproj-Qwen2.5-VL-7B-Instruct
     /// ↔ Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf). Returns the file name or null.
     /// </summary>
-    private string? DetectSiblingMmproj(string modelFilename)
+    public string? DetectSiblingMmproj(string modelFilename)
     {
         if (!Directory.Exists(_modelsDir)) return null;
 
