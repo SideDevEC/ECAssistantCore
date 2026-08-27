@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-27T09:17:33.843255+00:00
+Generated: 2026-08-27T10:25:25.397144+00:00
 Packages: 2  |  Types: 323
 
 ---
 
-## ECAssistantCore (251 types, ~22711 LOC)
+## ECAssistantCore (251 types, ~22823 LOC)
 
 - 🔵 IConfigLoader  (ECAssistantCore)
 - 🔵 IConfigProvider  (ECAssistantCore)
@@ -219,7 +219,7 @@ Packages: 2  |  Types: 323
 - 🟡 SubAgentTaskTests  (ECAssistantCore)
 - 🟡 SubTask  (ECAssistantCore)
 - 🟡 SummarizeConfig  (ECAssistantCore)
-- 🟡 SummaryService  (ECAssistantCore)  deps: [Func]
+- 🟡 SummaryService  (ECAssistantCore)  deps: [Func, Func]
 - 🟡 SummaryServiceTests  (ECAssistantCore)
 - 🟡 SystemPromptBuilder  (ECAssistantCore)
 - 🟡 SystemToolConfigEntry  (ECAssistantCore)
@@ -259,7 +259,7 @@ Packages: 2  |  Types: 323
 - 🟡 VectorSearchResult  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (72 types, ~10150 LOC)
+## Tests (72 types, ~10211 LOC)
 
 - 🟡 ApiUserController  (Tests)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (Tests)

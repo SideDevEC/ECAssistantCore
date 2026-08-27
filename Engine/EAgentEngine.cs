@@ -350,7 +350,15 @@ public class EAgentEngine : IEngine
         if (_inferenceEngine == null)
             return;
 
-        var summaryService = new SummaryService(p => _inferenceEngine.GenerateAsync(p, BuildStatelessParams(), CancellationToken.None));
+        var summaryService = new SummaryService(
+            p => _inferenceEngine.GenerateAsync(p, BuildStatelessParams(), CancellationToken.None),
+            prompt =>
+            {
+                var warmParams = BuildWarmSessionParams();
+                return warmParams != null
+                    ? _inferenceEngine.GenerateAsync(prompt, warmParams, CancellationToken.None)
+                    : _inferenceEngine.GenerateAsync(prompt, BuildStatelessParams(), CancellationToken.None);
+            });
         _contextWindow.SetSummaryService(summaryService);
         _logger?.Info("Engine", "SummaryService wired with main model (HTTP transport).");
     }
@@ -405,7 +413,23 @@ public class EAgentEngine : IEngine
         return p;
      }
 
-    private InferenceRequestParams BuildStatelessParams(int maxTokens, string[]? stop, float temperature = 0.1f, float topP = 0.8f, int topK = 40, float repeatPenalty = 1.0f)
+    /// <summary>
+    /// Build request params bound to the live main session (warm KV cache).
+    /// Used by compaction/summarization so the already-prefilled conversation is reused
+    /// (decode-only) instead of a cold stateless prefill.
+    /// Returns null when no warm session is available — callers must fall back to stateless.
+    /// </summary>
+    private InferenceRequestParams? BuildWarmSessionParams()
+    {
+        if (!_kvSessionActive || _sessionId == null)
+            return null;
+
+        var p = BuildStatelessParams();
+        p.SessionId = _sessionId; // warm path — reuse prefilled conversation in cache
+        return p;
+    }
+
+     private InferenceRequestParams BuildStatelessParams(int maxTokens, string[]? stop, float temperature = 0.1f, float topP = 0.8f, int topK = 40, float repeatPenalty = 1.0f)
      {
         var p = BuildStatelessParams();
         p.MaxTokens = maxTokens;
@@ -1030,18 +1054,32 @@ User: " + userRequest + "\n<lm>\n";
             if (_inferenceEngine != null && (_backgroundTasks?.Summarize.UseLlm ?? true))
              {
                 var summarizeConfig = _backgroundTasks?.Summarize;
-                var summaryParams = BuildStatelessParams(
-                    Math.Max(100, summarizeConfig?.MaxTokens ?? 200),
-                    summarizeConfig?.AntiPrompts ?? new[] { "User:", "Question:", "</lm>" },
-                    summarizeConfig?.Temperature ?? 0.1f,
-                    summarizeConfig?.TopP ?? 0.8f,
-                    summarizeConfig?.TopK ?? 40,
-                    summarizeConfig?.RepeatPenalty ?? 1.1f);
+                var warmParams = BuildWarmSessionParams();
                 try
                  {
+                    // v10.31: Warm-session compaction — the conversation being summarized is
+                    // already in the main session's KV cache, so infer inside it (decode-only)
+                    // instead of a cold stateless call. Fall back to stateless if no warm session.
+                    InferenceRequestParams ResolveParams()
+                     {
+                        if (warmParams != null)
+                         {
+                            warmParams.MaxTokens = Math.Max(100, summarizeConfig?.MaxTokens ?? 200);
+                            warmParams.Stop = summarizeConfig?.AntiPrompts ?? new[] { "User:", "Question:", "</lm>" };
+                            warmParams.Temperature = summarizeConfig?.Temperature ?? 0.1f;
+                            return warmParams;
+                         }
+                        return BuildStatelessParams(
+                            Math.Max(100, summarizeConfig?.MaxTokens ?? 200),
+                            summarizeConfig?.AntiPrompts ?? new[] { "User:", "Question:", "</lm>" },
+                            summarizeConfig?.Temperature ?? 0.1f,
+                            summarizeConfig?.TopP ?? 0.8f,
+                            summarizeConfig?.TopK ?? 40,
+                            summarizeConfig?.RepeatPenalty ?? 1.1f);
+                    }
                     var result = await _inferenceEngine.GenerateAsync(
-                         $"You are a summarization assistant. Wrap your summary in <lm></lm> tags.\nSummarize this conversation concisely. Keep facts, decisions, and tool results only. Max 3 sentences. Plain text inside the tags.\n\n{convText}\n\n<lm>",
-                        summaryParams, CancellationToken.None);
+                        $"You are a summarization assistant. Wrap your summary in <lm></lm> tags.\nSummarize this conversation concisely. Keep facts, decisions, and tool results only. Max 3 sentences. Plain text inside the tags.\n\n{convText}\n\n<lm>",
+                        ResolveParams(), CancellationToken.None);
                     summaryText = System.Text.RegularExpressions.Regex.Replace(result.Trim(), @"<[^>]+>", "");
                  }
                 catch (OperationCanceledException) { }

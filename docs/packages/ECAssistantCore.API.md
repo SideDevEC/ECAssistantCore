@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 251  |  LOC: 22711  |  ~11756 tokens
+Types: 251  |  LOC: 22823  |  ~11771 tokens
 
 ---
 
@@ -1022,7 +1022,7 @@ Cross-package deps: ECAssistant.Core.Engine
 ### Class: SummaryService
 > Handles LLM-based summarization of old conversation context.
 Constructor:
-  - SummaryService(Func<string, Task<string>>? generateAsync = null)
+  - SummaryService(Func<string, Task<string>>? generateAsync = null, Func<string, Task<string>>? warmSessionGenerateAsync = null)
 Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: SummaryServiceTests

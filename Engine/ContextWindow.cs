@@ -146,7 +146,7 @@ public class ContextWindow
         {
             try
             {
-                var summary = await _summaryService.SummarizeAsync(oldMessages);
+                var summary = await _summaryService.SummarizeAsync(oldMessages, preferWarmSession: true);
                 _messages.Insert(0, TranscriptMessage.System(summary));
             }
             catch { }

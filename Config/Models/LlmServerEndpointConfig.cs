@@ -9,7 +9,7 @@ namespace ECAssistant.Core.Config;
 public sealed class LlmServerEndpointConfig
 {
     [JsonPropertyName("endpoint")]
-    public string Endpoint { get; set; } = "http://localhost:8420";
+    public string Endpoint { get; set; } = "http://localhost:58777";
 
     /// <summary>If true, Core launches ECAssistantLLM as a child process when server not detected.</summary>
     [JsonPropertyName("auto_start")]

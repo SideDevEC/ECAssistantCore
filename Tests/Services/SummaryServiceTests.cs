@@ -163,4 +163,73 @@ public class SummaryServiceTests
         var result = await service.SummarizeAsync(messages);
         Assert.Contains("[Summary of 5 messages", result);
     }
+
+    // ── v3: warm-session compaction ──
+
+    [Fact]
+    public async Task SummarizeAsync_PreferWarmSession_UsesWarmGenerator()
+    {
+        var statelessCalled = false;
+        Func<string, Task<string>> stateless = _ => { statelessCalled = true; return Task.FromResult("cold"); };
+        Func<string, Task<string>> warm = prompt =>
+        {
+            Assert.Contains("Conversation:", prompt); // same shared prompt format
+            return Task.FromResult("warm summary");
+        };
+        var service = new SummaryService(stateless, warm);
+        var messages = new List<TranscriptMessage> { TranscriptMessage.User("a"), TranscriptMessage.User("b"), TranscriptMessage.User("c") };
+        var result = await service.SummarizeAsync(messages, preferWarmSession: true);
+        Assert.Contains("warm summary", result);
+        Assert.False(statelessCalled);
+    }
+
+    [Fact]
+    public async Task SummarizeAsync_PreferWarmSession_NoWarmGenerator_FallsBackToStateless()
+    {
+        Func<string, Task<string>> stateless = _ => Task.FromResult("cold summary");
+        var service = new SummaryService(stateless, null);
+        var messages = new List<TranscriptMessage> { TranscriptMessage.User("a"), TranscriptMessage.User("b"), TranscriptMessage.User("c") };
+        var result = await service.SummarizeAsync(messages, preferWarmSession: true);
+        Assert.Contains("cold summary", result);
+    }
+
+    [Fact]
+    public async Task SummarizeAsync_PreferWarmSession_WarmThrows_FallsBackToStateless()
+    {
+        Func<string, Task<string>> stateless = _ => Task.FromResult("cold summary");
+        Func<string, Task<string>> warm = _ => throw new InvalidOperationException("kv cache gone");
+        var service = new SummaryService(stateless, warm);
+        var messages = new List<TranscriptMessage> { TranscriptMessage.User("a"), TranscriptMessage.User("b"), TranscriptMessage.User("c") };
+        var result = await service.SummarizeAsync(messages, preferWarmSession: true);
+        Assert.Contains("cold summary", result);
+    }
+
+    [Fact]
+    public async Task SummarizeAsync_PreferWarmSession_WarmReturnsEmpty_FallsBackToStateless()
+    {
+        Func<string, Task<string>> stateless = _ => Task.FromResult("cold summary");
+        Func<string, Task<string>> warm = _ => Task.FromResult("  ");
+        var service = new SummaryService(stateless, warm);
+        var messages = new List<TranscriptMessage> { TranscriptMessage.User("a"), TranscriptMessage.User("b"), TranscriptMessage.User("c") };
+        var result = await service.SummarizeAsync(messages, preferWarmSession: true);
+        Assert.Contains("cold summary", result);
+    }
+
+    [Fact]
+    public async Task SummarizeAsync_PreferWarmSession_EscapesAngleBrackets()
+    {
+        Func<string, Task<string>> warm = _ => Task.FromResult("bad <tag> inside");
+        var service = new SummaryService(null, warm);
+        var messages = new List<TranscriptMessage> { TranscriptMessage.User("a"), TranscriptMessage.User("b"), TranscriptMessage.User("c") };
+        var result = await service.SummarizeAsync(messages, preferWarmSession: true);
+        Assert.Contains("&lt;tag&gt;", result);
+        Assert.DoesNotContain("<tag>", result);
+    }
+
+    [Fact]
+    public void Constructor_WithBothGenerators_CreatesInstance()
+    {
+        var service = new SummaryService(_ => Task.FromResult("a"), _ => Task.FromResult("b"));
+        Assert.NotNull(service);
+    }
 }

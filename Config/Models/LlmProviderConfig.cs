@@ -17,21 +17,21 @@ public sealed class LlmProviderConfig
 
     /// <summary>
     /// Server/API endpoint URL.
-    /// Local: derived from Host + Port (e.g. http://localhost:8420).
+    /// Local: derived from Host + Port (e.g. http://localhost:58777).
     /// Remote: full URL from provider (e.g. https://api.openai.com).
     /// In local mode, setting Port + Host is preferred over setting Endpoint directly.
     /// </summary>
     [JsonPropertyName("endpoint")]
-    public string Endpoint { get; set; } = "http://localhost:8420";
+    public string Endpoint { get; set; } = "http://localhost:58777";
 
     /// <summary>
-    /// Port for the local ECAssistantLLM server. Default: 8420.
+    /// Port for the local ECAssistantLLM server. Default: 58777.
     /// In local mode, this port is passed to the LLM server on startup and used
     /// to build the endpoint URL if Endpoint is not explicitly set.
     /// Ignored in remote mode.
     /// </summary>
     [JsonPropertyName("port")]
-    public int Port { get; set; } = 8420;
+    public int Port { get; set; } = 58777;
 
     /// <summary>
     /// Host for the local ECAssistantLLM server. Default: localhost.
