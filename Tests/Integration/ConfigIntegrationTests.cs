@@ -116,8 +116,7 @@ public class ConfigIntegrationTests : IDisposable
         // LLM section
         Assert.Equal("model.gguf", config.Llm.ModelPath);
         Assert.Equal(8192u, config.Llm.ContextSize);
-        Assert.Equal(10, config.Llm.GpuLayers);
-        Assert.Equal(4, config.Llm.Threads);
+        // GpuLayers/Threads moved to llm-server.json (LlmConfig no longer has them)
 
         // Sampling section
         Assert.Equal(0.5f, config.Sampling.Temperature);
@@ -240,10 +239,7 @@ public class ConfigIntegrationTests : IDisposable
             {
                 ModelPath = "rt_model.gguf",
                 ContextSize = 32768,
-                GpuLayers = 20,
-                Threads = 8,
-                BatchSize = 512,
-                UBatchSize = 256
+                // GpuLayers/Threads/BatchSize moved to llm-server.json
             },
             Sampling = new SamplingConfig
             {
@@ -305,8 +301,7 @@ public class ConfigIntegrationTests : IDisposable
 
         Assert.Equal("rt_model.gguf", loaded.Llm.ModelPath);
         Assert.Equal(32768u, loaded.Llm.ContextSize);
-        Assert.Equal(20, loaded.Llm.GpuLayers);
-        Assert.Equal(8, loaded.Llm.Threads);
+        // GpuLayers/Threads moved to llm-server.json
 
         Assert.Equal(0.7f, loaded.Sampling.Temperature);
         Assert.Equal(0.95f, loaded.Sampling.TopP);
