@@ -64,6 +64,14 @@ public class EAgentConfig
     [JsonPropertyName("llm_providers")]
     public MultiLlmProvidersConfig? LlmProviders { get; set; }
 
+    /// <summary>
+    /// THE integration answer: "can ECAssistant handle vision (image input)?"
+    /// Mode-independent — true for a local install with an mmproj-wired model,
+    /// or a remote provider declared vision-capable at setup.
+    /// </summary>
+    [JsonIgnore]
+    public bool SupportsVision => LlmProvider?.VisionEnabled ?? false;
+
     [JsonPropertyName("tool_permissions")]
     public List<ToolPermissionConfigEntry>? ToolPermissions { get; set; }
 
