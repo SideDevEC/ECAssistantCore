@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-08-26T13:29:24.829403+00:00
-Edges: 71  |  Packages: 2
+Generated: 2026-08-27T08:22:00.135926+00:00
+Edges: 73  |  Packages: 2
 
 ---
 
@@ -53,6 +53,7 @@ Edges: 71  |  Packages: 2
 - HttpEmbedder ──implements──► IVectorEmbedder (ECAssistantCore)
 - HttpStreamingEngine ──implements──► IInferenceEngine (ECAssistantCore)
 - InMemoryVectorStore ──implements──► IVectorStore (ECAssistantCore)
+- LlmProviderRegistry ──implements──► ILlmProviderRegistry (ECAssistantCore)
 - LlmServerClient ──implements──► ILlmServerClient (ECAssistantCore)
 - Logger ──implements──► ILogger (ECAssistantCore)
 - MemoryService ──implements──► IMemoryService (ECAssistantCore)
@@ -71,6 +72,7 @@ Edges: 71  |  Packages: 2
 - ReadableContentExtractor ──implements──► IReadableContentExtractor (ECAssistantCore)
 - RemoteKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
 - RemoteModelLoader ──implements──► IModelLoader (ECAssistantCore)
+- SecureKeyStore ──implements──► ISecureKeyStore (ECAssistantCore)
 - SessionBuilder ──implements──► ISessionBuilder (ECAssistantCore)
 - StepMapper ──implements──► IStepMapper (ECAssistantCore)
 - TaskPlanner ──implements──► ITaskPlanner (ECAssistantCore)

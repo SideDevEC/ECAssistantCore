@@ -15,10 +15,10 @@ public sealed class LlmProviderRegistry : ILlmProviderRegistry
     private readonly string? _defaultName;
     private readonly string? _flagDefaultName;
     private readonly bool _fallbackEnabled;
-    private readonly SecureKeyStore? _keyStore;
+    private readonly ISecureKeyStore? _keyStore;
     public IReadOnlyList<string> ValidationErrors { get; }
 
-    public LlmProviderRegistry(MultiLlmProvidersConfig? section, ILogger? logger = null, SecureKeyStore? keyStore = null)
+    public LlmProviderRegistry(MultiLlmProvidersConfig? section, ILogger? logger = null, ISecureKeyStore? keyStore = null)
     {
         _keyStore = keyStore;
         var errors = new List<string>();
@@ -72,7 +72,7 @@ public sealed class LlmProviderRegistry : ILlmProviderRegistry
                 entry.EmbeddingModelId));
         }
 
-        if (_defaultName is { Length: > 0 } && Resolve(_defaultName) == null)
+        if (_defaultName is { Length: > 0 } && GetByName(_defaultName) == null)
             errors.Add($"default_provider '{_defaultName}' not found among valid providers");
 
         foreach (var e in errors)
@@ -89,7 +89,7 @@ public sealed class LlmProviderRegistry : ILlmProviderRegistry
     /// - "keyfile:<name>" → SecureKeyStore: self-encrypting managed key folder.
     /// Empty/null returns null.
     /// </summary>
-    public static string? ResolveApiKey(string? value, SecureKeyStore? keyStore = null)
+    public static string? ResolveApiKey(string? value, ISecureKeyStore? keyStore = null)
     {
         if (string.IsNullOrWhiteSpace(value)) return null;
 
@@ -120,11 +120,11 @@ public sealed class LlmProviderRegistry : ILlmProviderRegistry
     public IReadOnlyList<RemoteProvider> Providers => _providers;
 
     public RemoteProvider? Default =>
-        Resolve(_defaultName)
-        ?? Resolve(_flagDefaultName)
+        GetByName(_defaultName)
+        ?? GetByName(_flagDefaultName)
         ?? _providers.FirstOrDefault();
 
-    public RemoteProvider? Resolve(string? name)
+    public RemoteProvider? GetByName(string? name)
     {
         if (string.IsNullOrWhiteSpace(name)) return null;
         return _providers.FirstOrDefault(p => p.Name.Equals(name.Trim(), StringComparison.OrdinalIgnoreCase));
@@ -134,7 +134,7 @@ public sealed class LlmProviderRegistry : ILlmProviderRegistry
     {
         if (_providers.Count == 0) return Array.Empty<RemoteProvider>();
 
-        var preferred = Resolve(preferredName);
+        var preferred = GetByName(preferredName);
         preferred ??= Default;
         if (preferred == null) return Array.Empty<RemoteProvider>();
 

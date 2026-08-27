@@ -25,7 +25,7 @@ public interface ILlmProviderRegistry
     RemoteProvider? Default { get; }
 
     /// <summary>Resolve by exact name (case-insensitive). Null if unknown.</summary>
-    RemoteProvider? Resolve(string? name);
+    RemoteProvider? GetByName(string? name);
 
     /// <summary>
     /// Ordered candidates to try. Fallback disabled (or one entry): just the preferred/default.

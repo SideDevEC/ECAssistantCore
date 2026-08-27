@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 67  |  LOC: 9567  |  ~2357 tokens
+Types: 71  |  LOC: 10121  |  ~2499 tokens
 
 ---
 
@@ -103,6 +103,11 @@ Cross-package deps: ECAssistant.Core.Engine
 ### Class: FailurePatternTests
 Cross-package deps: ECAssistant.Core.Engine
 
+### Class: FakeLlmServer
+> Minimal fake of the ECAssistantLLM endpoints used by LlmServerClient:
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Services.Http
+
 ### Class: FileSystemAdapterTests
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
@@ -119,6 +124,14 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 
 ### Class: InMemoryVectorStoreTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
+
+### Class: LlmProviderRegistryTests
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services
+
+### Class: LlmServerClientReconnectTests
+> Minimal fake of the ECAssistantLLM endpoints used by LlmServerClient:
+Cross-package deps: ECAssistant.Core.Services.Http
 
 ### Class: LoggerTests
 Implements: IDisposable
@@ -164,6 +177,9 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
 
 ### Class: ReadableContentExtractorTests
 Cross-package deps: ECAssistant.Core.Services
+
+### Class: SecureKeyStoreTests
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services
 
 ### Class: SelfCorrectionManagerTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq

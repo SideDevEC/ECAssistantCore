@@ -1,5 +1,6 @@
 using System.Text;
 using ECAssistant.Core.Interfaces;
+// ISecureKeyStore implemented below
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,7 +21,7 @@ namespace ECAssistant.Core.Services;
 /// (different machine / deleted key ring) throws — provider is skipped with a
 /// clear error instead of silently misusing a garbage key.
 /// </summary>
-public sealed class SecureKeyStore
+public sealed class SecureKeyStore : ISecureKeyStore
 {
     public const string HeaderPrefix = "ECAKEY1:";
     private const string Purpose = "ECAssistant.ApiKeys.v1";

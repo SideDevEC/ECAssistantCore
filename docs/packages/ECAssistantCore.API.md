@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 239  |  LOC: 21654  |  ~11198 tokens
+Types: 250  |  LOC: 22616  |  ~11724 tokens
 
 ---
 
@@ -80,6 +80,16 @@ Methods:
   - Task<bool> RewindAsync(string sessionId, CancellationToken ct = default)
   - Task<bool> ResetAsync(string sessionId, CancellationToken ct = default)
   - Task<KvCacheStatus?> GetStatusAsync(string sessionId, CancellationToken ct = default)
+
+### Interface: ILlmProviderRegistry
+> A fully-resolved remote provider ready for engine construction.
+Properties:
+  - IReadOnlyList<string> ValidationErrors { get; set; }
+  - IReadOnlyList<RemoteProvider> Providers { get; set; }
+  - RemoteProvider? Default { get; set; }
+Methods:
+  - RemoteProvider? GetByName(string? name)
+  - IReadOnlyList<RemoteProvider> OrderedCandidates(string? preferredName = null)
 
 ### Interface: ILlmServerClient
 > Client lifecycle management for ECAssistantLLM server.
@@ -165,6 +175,13 @@ Methods:
 > Extracts the main readable content from an HTML page, discarding
 Methods:
   - string Extract(string html)
+
+### Interface: ISecureKeyStore
+> Cross-platform self-encrypting API key store.
+Properties:
+  - string KeysDirectory { get; set; }
+Methods:
+  - string GetKey(string fileName)
 
 ### Interface: ISessionBuilder
 > Interface for building and initializing AgentSessions with standard tools.
@@ -543,7 +560,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Web
 
 ### Class: EWebSearchTool
-> Web Search Tool — lets the LLM search the web using DuckDuckGo Instant Answer API.
+> Web Search Tool — lets the LLM search the web using Bing search results.
 Implements: EToolBase
 Constructor:
   - EWebSearchTool(IHttpClient httpClient, EAgentConfig config)
@@ -558,7 +575,7 @@ Constructor:
   - EcaCompositionRoot(string userConfigDir, string[] args)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 
-### Class: EcaTests
+### Class: EcaTestSuite
 > Predefined test scenarios for ECAssistant.
 Cross-package deps: ECAssistant.Core.Orchestration
 
@@ -584,6 +601,11 @@ Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: FailurePatternTests
 Cross-package deps: ECAssistant.Core.Engine
+
+### Class: FakeLlmServer
+> Minimal fake of the ECAssistantLLM endpoints used by LlmServerClient:
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Services.Http
 
 ### Class: FileChange
 
@@ -680,12 +702,27 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools
 ### Class: LlmProviderConfig
 > LLM provider configuration. Supports two modes:
 
+### Class: LlmProviderRegistry
+> Resolves the "llm_providers" config section into concrete RemoteProvider records.
+Implements: ILlmProviderRegistry
+Constructor:
+  - LlmProviderRegistry(MultiLlmProvidersConfig? section, ILogger? logger = null, ISecureKeyStore? keyStore = null)
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
+
+### Class: LlmProviderRegistryTests
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services
+
 ### Class: LlmServerClient
 > Manages client lifecycle with ECAssistantLLM server.
 Implements: ILlmServerClient
 Constructor:
   - LlmServerClient(string endpoint, string? clientId = null, int maxHeartbeatFailures = DefaultMaxFailures, ILogger? logger = null)
 Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Transport
+
+### Class: LlmServerClientReconnectTests
+> Minimal fake of the ECAssistantLLM endpoints used by LlmServerClient:
+Cross-package deps: ECAssistant.Core.Services.Http
 
 ### Class: LlmServerEndpointConfig
 > Core-side config for connecting to ECAssistantLLM server.
@@ -744,6 +781,9 @@ Implements: IModelParamValidator
 Constructor:
   - ModelParamValidator(ILogger? logger = null)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
+
+### Class: MultiLlmProvidersConfig
+> A single remote OpenAI-compatible provider entry.
 
 ### Class: MyTests
 Cross-package deps: ECAssistant.Core.Analysis
@@ -850,6 +890,9 @@ Constructor:
   - RemoteModelLoader(OpenAIClient client)
 Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Transport
 
+### Class: RemoteProviderConfig
+> A single remote OpenAI-compatible provider entry.
+
 ### Class: RemoteTokenizer
 > HTTP-based tokenizer. Calls /eca/tokenize on the server for accurate token counting.
 Constructor:
@@ -860,6 +903,16 @@ Cross-package deps: ECAssistant.Core.Transport
 > Loads embedded resources from the Core DLL.
 
 ### Class: SamplingConfig
+
+### Class: SecureKeyStore
+> Cross-platform encrypted-at-rest API key store.
+Implements: ISecureKeyStore
+Constructor:
+  - SecureKeyStore(string directory, ILogger? logger = null)
+Cross-package deps: ECAssistant.Core.Interfaces
+
+### Class: SecureKeyStoreTests
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services
 
 ### Class: SelfCorrectionManager
 > Self-Correction Manager — detects failure loops, manages file rollback snapshots,
@@ -1124,6 +1177,11 @@ Constructor:
 ### Record: ProcessResult
 Constructor:
   - ProcessResult(int ExitCode, string StdOut, string StdErr, bool TimedOut)
+
+### Record: RemoteProvider
+> A fully-resolved remote provider ready for engine construction.
+Constructor:
+  - RemoteProvider(string Name, string Endpoint, string? ApiKey, string ModelId, string? EmbeddingModelId)
 
 ### Record: TranscriptMessage
 Constructor:

@@ -7,10 +7,10 @@ namespace ECAssistant.Core.Testing;
 /// These exercise the full agent pipeline: LLM → orchestrator → tools → LLM → output.
 /// Each test runs in its own sandboxed directory to avoid side effects.
 /// </summary>
-public static class EcaTests
+public sealed class EcaTestSuite
 {
     /// <summary>Get all predefined test scenarios.</summary>
-    public static List<TestScenario> All => new()
+    public List<TestScenario> All => new()
     {
         // ── Tier 1: Smoke Tests ─────────────────────────────────
 
@@ -771,84 +771,84 @@ public static class EcaTests
             },
         },
     };
-    public static List<TestScenario> ByNamePrefix(string prefix)
+    public List<TestScenario> ByNamePrefix(string prefix)
         => All.Where(t => t.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToList();
 
     /// <summary>Get only the smoke tests (quick, basic).</summary>
-    public static List<TestScenario> SmokeTests
+    public List<TestScenario> SmokeTests
         => ByNamePrefix("smoke_");
 
     /// <summary>Get only the tool tests (single tool call).</summary>
-    public static List<TestScenario> ToolTests
+    public List<TestScenario> ToolTests
         => ByNamePrefix("tool_");
 
     /// <summary>Get only the multi-step tests.</summary>
-    public static List<TestScenario> MultiStepTests
+    public List<TestScenario> MultiStepTests
         => ByNamePrefix("multi_");
 
     /// <summary>Get only the code tests.</summary>
-    public static List<TestScenario> CodeTests
+    public List<TestScenario> CodeTests
         => ByNamePrefix("code_");
 
     /// <summary>Get only the complex tests.</summary>
-    public static List<TestScenario> ComplexTests
+    public List<TestScenario> ComplexTests
         => ByNamePrefix("complex_");
 
     /// <summary>Get only the edge case tests.</summary>
-    public static List<TestScenario> EdgeTests
+    public List<TestScenario> EdgeTests
         => ByNamePrefix("edge_");
 
     /// <summary>Get only the shell tests.</summary>
-    public static List<TestScenario> ShellTests
+    public List<TestScenario> ShellTests
         => ByNamePrefix("shell_");
 
     /// <summary>Get only the parallel tests.</summary>
-    public static List<TestScenario> ParallelTests
+    public List<TestScenario> ParallelTests
         => ByNamePrefix("parallel_");
 
     /// <summary>Get only the error recovery tests.</summary>
-    public static List<TestScenario> ErrorRecoveryTests
+    public List<TestScenario> ErrorRecoveryTests
         => ByNamePrefix("error_").Concat(ByNamePrefix("resilience_")).ToList();
 
     /// <summary>Get only the sub-agent tests.</summary>
-    public static List<TestScenario> SubAgentTests
+    public List<TestScenario> SubAgentTests
         => ByNamePrefix("subagent_");
 
     /// <summary>Get only the <lm> tag tests.</summary>
-    public static List<TestScenario> TagTests
+    public List<TestScenario> TagTests
         => ByNamePrefix("tag_");
 
     /// <summary>Get only the StepMapper tests.</summary>
-    public static List<TestScenario> StepMapperTests
+    public List<TestScenario> StepMapperTests
         => ByNamePrefix("stepmapper_");
 
     /// <summary>Get only the self-correction tests.</summary>
-    public static List<TestScenario> SelfCorrectionTests
+    public List<TestScenario> SelfCorrectionTests
         => ByNamePrefix("selfcorrect_");
 
     /// <summary>Get only the cross-platform tests.</summary>
-    public static List<TestScenario> CrossPlatformTests
+    public List<TestScenario> CrossPlatformTests
         => ByNamePrefix("xplatform_");
 
     /// <summary>Get only the git tests.</summary>
-    public static List<TestScenario> GitTests
+    public List<TestScenario> GitTests
         => ByNamePrefix("git_");
 
     /// <summary>Get only the dotnet build tests.</summary>
-    public static List<TestScenario> DotnetTests
+    public List<TestScenario> DotnetTests
         => ByNamePrefix("dotnet_");
 
     /// <summary>Get only the memory system tests.</summary>
-    public static List<TestScenario> MemoryTests
+    public List<TestScenario> MemoryTests
         => ByNamePrefix("memory_");
 
     // ── v10.22: Mock Engine Tests (model-independent, deterministic) ──────────
 
     /// <summary>Get only the mock engine tests.</summary>
-    public static List<TestScenario> MockTests => ByNamePrefix("mock_");
+    public List<TestScenario> MockTests => ByNamePrefix("mock_");
 
     /// <summary>All mock engine test scenarios (model-independent).</summary>
-    public static List<TestScenario> MockScenarios => new()
+    public List<TestScenario> MockScenarios => new()
     {
         // ── Mock: Direct answer ──
         new TestScenario

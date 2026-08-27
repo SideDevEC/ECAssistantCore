@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-26T13:29:24.828715+00:00
-Packages: 2  |  Types: 306
+Generated: 2026-08-27T08:22:00.135264+00:00
+Packages: 2  |  Types: 321
 
 ---
 
-## ECAssistantCore (239 types, ~21654 LOC)
+## ECAssistantCore (250 types, ~22616 LOC)
 
 - 🔵 IConfigLoader  (ECAssistantCore)
 - 🔵 IConfigProvider  (ECAssistantCore)
@@ -16,6 +16,7 @@ Packages: 2  |  Types: 306
 - 🔵 IHttpClient  (ECAssistantCore)
 - 🔵 IInferenceEngine  (ECAssistantCore)
 - 🔵 IKvCacheController  (ECAssistantCore)
+- 🔵 ILlmProviderRegistry  (ECAssistantCore)
 - 🔵 ILlmServerClient : IAsyncDisposable  (ECAssistantCore)
 - 🔵 ILogger  (ECAssistantCore)
 - 🔵 IMemoryService  (ECAssistantCore)
@@ -26,6 +27,7 @@ Packages: 2  |  Types: 306
 - 🔵 IParallelToolExecutor  (ECAssistantCore)
 - 🔵 IProcessRunner  (ECAssistantCore)
 - 🔵 IReadableContentExtractor  (ECAssistantCore)
+- 🔵 ISecureKeyStore  (ECAssistantCore)
 - 🔵 ISessionBuilder  (ECAssistantCore)
 - 🔵 ISessionContext  (ECAssistantCore)
 - 🔵 ISessionOutput  (ECAssistantCore)
@@ -104,7 +106,7 @@ Packages: 2  |  Types: 306
 - 🟡 EWebSearchToolTests  (ECAssistantCore)
 - 🟡 EcaCompositionRoot  (ECAssistantCore)  deps: [string, string]
 - 🟣 EcaServiceBundle  (ECAssistantCore)  deps: [EAgentConfig, string, string, string, ILogger, BackgroundProcessManager, FileWatcherService, ISessionBuilder]
-- 🟡 EcaTests  (ECAssistantCore)
+- 🟡 EcaTestSuite  (ECAssistantCore)
 - 🟡 EmbeddingConfig  (ECAssistantCore)
 - 🟡 ExecutionPlan  (ECAssistantCore)
 - 🟡 ExecutionState  (ECAssistantCore)
@@ -113,6 +115,7 @@ Packages: 2  |  Types: 306
 - 🟡 FailureEntry  (ECAssistantCore)
 - 🟡 FailureEntryTests  (ECAssistantCore)
 - 🟡 FailurePatternTests  (ECAssistantCore)
+- 🟡 FakeLlmServer : IDisposable  (ECAssistantCore)
 - 🟡 FileChange  (ECAssistantCore)
 - 🟡 FileContext  (ECAssistantCore)
 - 🟡 FileInfoData  (ECAssistantCore)
@@ -139,7 +142,10 @@ Packages: 2  |  Types: 306
 - 🟡 LLMDecision  (ECAssistantCore)  deps: [bool, string, Dictionary, string? answerText =, List]
 - 🟡 LlmConfig  (ECAssistantCore)
 - 🟡 LlmProviderConfig  (ECAssistantCore)
+- 🟡 LlmProviderRegistry : ILlmProviderRegistry  (ECAssistantCore)  deps: [MultiLlmProvidersConfig, ILogger? logger =, ISecureKeyStore? keyStore =]
+- 🟡 LlmProviderRegistryTests : IDisposable  (ECAssistantCore)
 - 🟡 LlmServerClient : ILlmServerClient  (ECAssistantCore)  deps: [string, string? clientId =, int maxHeartbeatFailures =, ILogger? logger =]
+- 🟡 LlmServerClientReconnectTests  (ECAssistantCore)
 - 🟡 LlmServerEndpointConfig  (ECAssistantCore)
 - 🟡 Logger : ILogger  (ECAssistantCore)  deps: [string, LogLevel minLevel =]
 - 🟡 LoggerTests : IDisposable  (ECAssistantCore)
@@ -153,6 +159,7 @@ Packages: 2  |  Types: 306
 - 🟡 MockSubAgentTool : EToolBase  (ECAssistantCore)
 - 🟡 ModelLoadException : Exception  (ECAssistantCore)  deps: [ModelLoadPhase, string, int, uint, string, Exception? inner =]
 - 🟡 ModelParamValidator : IModelParamValidator  (ECAssistantCore)  deps: [ILogger? logger =]
+- 🟡 MultiLlmProvidersConfig  (ECAssistantCore)
 - 🟡 MyTests  (ECAssistantCore)
 - 🟡 NopKvCacheController : IKvCacheController  (ECAssistantCore)
 - 🟡 OpenAIClient : IDisposable  (ECAssistantCore)  deps: [string, string? clientId =, string? apiKey =, TimeSpan? timeout =]
@@ -179,9 +186,13 @@ Packages: 2  |  Types: 306
 - 🟡 RemoteModelInfo  (ECAssistantCore)
 - 🟡 RemoteModelLoadOptions  (ECAssistantCore)
 - 🟡 RemoteModelLoader : IModelLoader  (ECAssistantCore)  deps: [OpenAIClient]
+- 🟣 RemoteProvider  (ECAssistantCore)  deps: [string, string, string, string, string]
+- 🟡 RemoteProviderConfig  (ECAssistantCore)
 - 🟡 RemoteTokenizer  (ECAssistantCore)  deps: [OpenAIClient, string modelId =]
 - 🟡 ResourceLoader  (ECAssistantCore)
 - 🟡 SamplingConfig  (ECAssistantCore)
+- 🟡 SecureKeyStore : ISecureKeyStore  (ECAssistantCore)  deps: [string, ILogger? logger =]
+- 🟡 SecureKeyStoreTests  (ECAssistantCore)
 - 🟡 SelfCorrectionManager : IDisposable  (ECAssistantCore)  deps: [string, ILogger? logger =]
 - 🟡 SelfCorrectionManagerTests  (ECAssistantCore)
 - 🟡 ServerLauncher  (ECAssistantCore)  deps: [LlmProviderConfig, string]
@@ -247,7 +258,7 @@ Packages: 2  |  Types: 306
 - 🟡 VectorSearchResult  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (67 types, ~9567 LOC)
+## Tests (71 types, ~10121 LOC)
 
 - 🟡 ApiUserController  (Tests)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (Tests)
@@ -278,11 +289,14 @@ Packages: 2  |  Types: 306
 - 🟡 FailureAnalysisTests  (Tests)
 - 🟡 FailureEntryTests  (Tests)
 - 🟡 FailurePatternTests  (Tests)
+- 🟡 FakeLlmServer : IDisposable  (Tests)
 - 🟡 FileSystemAdapterTests : IDisposable  (Tests)
 - 🟡 HomeController  (Tests)
 - 🟡 HtmlTextConverterTests  (Tests)
 - 🟡 HttpClientAdapterTests : IDisposable  (Tests)
 - 🟡 InMemoryVectorStoreTests  (Tests)
+- 🟡 LlmProviderRegistryTests : IDisposable  (Tests)
+- 🟡 LlmServerClientReconnectTests  (Tests)
 - 🟡 LoggerTests : IDisposable  (Tests)
 - 🟡 MemoryIntegrationTests : IDisposable  (Tests)
 - 🟡 MemoryServiceTests  (Tests)
@@ -295,6 +309,7 @@ Packages: 2  |  Types: 306
 - 🟡 ProgramGuiCollection  (Tests)
 - 🟡 ProjectContextManagerTests  (Tests)
 - 🟡 ReadableContentExtractorTests  (Tests)
+- 🟡 SecureKeyStoreTests  (Tests)
 - 🟡 SelfCorrectionManagerTests  (Tests)
 - 🟡 SessionDiscoveryTests : IDisposable  (Tests)
 - 🟡 SessionManagementIntegrationTests : IDisposable  (Tests)

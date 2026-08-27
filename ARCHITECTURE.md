@@ -261,20 +261,44 @@ To completely disable a tool, set `enabled: false` in the `tools` config section
 - **`Config/ContextParams.cs` DELETED** (was LLamaSharp-specific)
 - `TokenCounter` uses `RemoteTokenizer` (HTTP `/eca/tokenize`, char-based fallback)
 
+## Multi-Provider LLMs & Secure Key Store (v12.2)
+
+**Summary:** Remote mode can use multiple OpenAI-compatible providers; local mode unchanged. Host apps configure everything — zero code required.
+
+### Config (`llm_providers` section)
+- `providers[]` — `name`, `endpoint`, `api_key`, `model_id`, `embedding_model_id`, `is_default`
+- `default_provider` — explicit name wins; else `is_default: true`; else first valid entry
+- `fallback_enabled` — **opt-in**: strict single provider when false (default); when true, health-probes candidates at startup (5s timeout each), first healthy wins
+- Back-compat: empty/missing section = legacy single `llm_provider` behavior. Local mode ignores this section entirely.
+- Failover happens at session start only (mid-stream failover deliberately out)
+
+### Components
+- **`ILlmProviderRegistry` / `LlmProviderRegistry`** — parses config into `RemoteProvider` records; skips invalid entries with logged `ValidationErrors`; `GetByName(name)` lookup; `OrderedCandidates()` implements the fallback ordering
+- **`ISecureKeyStore` / `SecureKeyStore`** — cross-platform self-encrypting key files (Data Protection keyring under `{keys_directory}/keyring`, purpose string `ECAssistant.ApiKeys.v1`); plaintext files auto-migrate to encrypted in place on first read (`ECAKEY1:` header format); atomic writes; owner-only POSIX perms on non-Windows; name-only references (path escape rejected)
+
+### API key schemes (per provider entry)
+| Scheme | Behavior |
+|---|---|
+| literal | passes through (discouraged in config) |
+| `file:<path>` | raw file read, `~/` expanded, trimmed — no encryption |
+| `keyfile:<name>` | managed via SecureKeyStore — self-encrypting, path-escape guarded |
+
+No admin/elevated rights required anywhere: user-scope crypto, non-privileged ports (>1024), all state inside the app root.
+
 ## Test Coverage
 
 | Area | Test Files | Tests |
 |------|-----------|-------|
 | Engine | 18 | ~250 |
-| Services | 11 | ~150 |
+| Services | 11+ | ~160 |
 | Tools | 15 | ~237 |
 | Session | 2 | ~50 |
 | Memory | 2 | ~40 |
-| Config | 2 | ~30 |
+| Config | 3 | ~45 |
 | Integration | 10 | ~100 |
 | Analysis | 1 | ~20 |
 | UI | 1+4 | ~17 |
-| **Total** | **61+4** | **850** |
+| **Total** | **62+4** | **~905** |
 
 `MockEngine` (in `EAgentEngine.cs`) now extends `EAgentEngine` with a no-op HTTP transport so tests run without a live ECAssistantLLM server.
 
