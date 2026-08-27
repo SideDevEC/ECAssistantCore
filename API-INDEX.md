@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-27T18:01:30.071884+00:00
-Packages: 2  |  Types: 346
+Generated: 2026-08-27T21:07:04.796200+00:00
+Packages: 2  |  Types: 347
 
 ---
 
-## ECAssistantCore (269 types, ~23976 LOC)
+## ECAssistantCore (270 types, ~24082 LOC)
 
 - 🔵 IConfigLoader  (ECAssistantCore)
 - 🔵 IConfigProvider  (ECAssistantCore)
@@ -112,6 +112,7 @@ Packages: 2  |  Types: 346
 - 🟣 EcaServiceBundle  (ECAssistantCore)  deps: [EAgentConfig, string, string, string, ILogger, BackgroundProcessManager, FileWatcherService, ISessionBuilder]
 - 🟡 EcaTestSuite  (ECAssistantCore)
 - 🟡 EmbeddingConfig  (ECAssistantCore)
+- 🟡 EmbeddingSetupWriter  (ECAssistantCore)  deps: [string]
 - 🟡 ExecutionPlan  (ECAssistantCore)
 - 🟡 ExecutionState  (ECAssistantCore)
 - 🟡 FailureAnalysis  (ECAssistantCore)
@@ -171,7 +172,7 @@ Packages: 2  |  Types: 346
 - 🟡 ModelCatalogEntry  (ECAssistantCore)
 - 🟡 ModelCatalogTests : IDisposable  (ECAssistantCore)
 - 🟡 ModelInstallerConfigTests : IDisposable  (ECAssistantCore)
-- 🟡 ModelInstallerService  (ECAssistantCore)  deps: [HttpClient, string, string]
+- 🟡 ModelInstallerService  (ECAssistantCore)  deps: [HttpClient, string, string, string? appsettingsPath =]
 - 🟡 ModelLoadException : Exception  (ECAssistantCore)  deps: [ModelLoadPhase, string, int, uint, string, Exception? inner =]
 - 🟡 ModelParamValidator : IModelParamValidator  (ECAssistantCore)  deps: [ILogger? logger =]
 - 🟡 MultiLlmProvidersConfig  (ECAssistantCore)
@@ -277,7 +278,7 @@ Packages: 2  |  Types: 346
 - 🟡 VectorSearchResult  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (77 types, ~10588 LOC)
+## Tests (77 types, ~10590 LOC)
 
 - 🟡 ApiUserController  (Tests)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (Tests)

@@ -400,3 +400,10 @@ EWebFetch was reworked to produce LLM-parseable output. The old tool returned a 
 - **Setup/**: `RemoteProviderSetupWriter` (remote config + keyfile ref), `VectorMemorySetupWriter` (vector_memory.enabled), installer hardening (internet probe, disk check, retry, orphan GGUF registration `RegisterLocalModelFile`, sibling mmproj auto-detect, `CatalogSuggestedConfig.BatchSize`)
 - **Services/**: `SecureKeyStore.SetKey` — encrypt-on-save (new on `ISecureKeyStore`); key never stored plaintext in appsettings
 - **Engine/**: `EAgentEngine.InitializeVectorMemoryAsync` now wires the embedder into the store (was dropped) + TfidfEmbedder fallback when none
+
+## Changelog — 2026-08-27 (evening: embeddings independence + vision flag)
+
+- **Config/**: `EmbeddingConfig.Mode` ("local"|"remote") + `Endpoint`/`ModelId` overrides — embeddings are independent of the main LLM mode. `LlmProviderConfig.VisionEnabled` + `RemoteProviderConfig.VisionEnabled` + `EAgentConfig.SupportsVision` (mode-agnostic integration answer)
+- **Session/**: `SessionManager` spawns a local LLM server for embeddings when main AI is remote but `embedding.mode=local` (`_embeddingServerLauncher`, ctor sync-over-async pattern, disposed on shutdown). `SessionBuilder.ResolveEmbeddingEndpoint/ModelId` route the embedder by embedding mode (local → localhost + "embeddings"; remote → provider endpoint/model)
+- **Setup/**: `EmbeddingSetupWriter` (embedding.mode persistence); `ModelInstallerService` keeps `llm.model_path` + `llm_provider.vision_enabled` in sync (creates minimal appsettings when missing — critical during first-run); `SecureKeyStore.SetKey`; `DetectSiblingMmproj` public (vision pairing); `LooksLikeEmbeddingModel` public
+- **Interfaces/**: `ISecureKeyStore.SetKey(fileName, plaintext)` — encrypt-on-save

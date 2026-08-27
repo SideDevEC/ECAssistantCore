@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 269  |  LOC: 23976  |  ~12450 tokens
+Types: 270  |  LOC: 24082  |  ~12503 tokens
 
 ---
 
@@ -592,6 +592,11 @@ Cross-package deps: ECAssistant.Core.Orchestration
 ### Class: EmbeddingConfig
 > Configuration for the embedding model used by vector memory.
 
+### Class: EmbeddingSetupWriter
+> Persists the user's embeddings choice from first-run/install into appsettings.json:
+Constructor:
+  - EmbeddingSetupWriter(string appsettingsPath)
+
 ### Class: ExecutionPlan
 > An execution plan — the output of the mapping phase.
 
@@ -814,7 +819,7 @@ Cross-package deps: ECAssistant.Core.Setup, Xunit
 ### Class: ModelInstallerService
 > Progress callback payload for a running download.
 Constructor:
-  - ModelInstallerService(HttpClient http, string modelsDir, string serverConfigPath)
+  - ModelInstallerService(HttpClient http, string modelsDir, string serverConfigPath, string? appsettingsPath = null)
 
 ### Class: ModelLoadException
 > Exception thrown when model loading or context creation fails.
