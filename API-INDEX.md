@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-27T21:07:04.796200+00:00
-Packages: 2  |  Types: 347
+Generated: 2026-08-28T07:46:55.390871+00:00
+Packages: 2  |  Types: 353
 
 ---
 
-## ECAssistantCore (270 types, ~24082 LOC)
+## ECAssistantCore (273 types, ~24450 LOC)
 
 - 🔵 IConfigLoader  (ECAssistantCore)
 - 🔵 IConfigProvider  (ECAssistantCore)
@@ -112,6 +112,7 @@ Packages: 2  |  Types: 347
 - 🟣 EcaServiceBundle  (ECAssistantCore)  deps: [EAgentConfig, string, string, string, ILogger, BackgroundProcessManager, FileWatcherService, ISessionBuilder]
 - 🟡 EcaTestSuite  (ECAssistantCore)
 - 🟡 EmbeddingConfig  (ECAssistantCore)
+- 🟡 EmbeddingRoutingTests  (ECAssistantCore)
 - 🟡 EmbeddingSetupWriter  (ECAssistantCore)  deps: [string]
 - 🟡 ExecutionPlan  (ECAssistantCore)
 - 🟡 ExecutionState  (ECAssistantCore)
@@ -148,6 +149,7 @@ Packages: 2  |  Types: 347
 - 🟡 InferenceParamsFactory  (ECAssistantCore)
 - 🟡 InferenceRequestParams  (ECAssistantCore)
 - 🟣 InstallResult  (ECAssistantCore)  deps: [bool, string, IReadOnlyList]
+- 🟡 InstallerVisionEmbeddingTests : IDisposable  (ECAssistantCore)
 - 🟡 InterfaceConfig  (ECAssistantCore)
 - 🟡 KvCacheStatus  (ECAssistantCore)
 - 🟡 LLMDecision  (ECAssistantCore)  deps: [bool, string, Dictionary, string? answerText =, List]
@@ -238,6 +240,7 @@ Packages: 2  |  Types: 347
 - 🟡 SummarizeConfig  (ECAssistantCore)
 - 🟡 SummaryService  (ECAssistantCore)  deps: [Func, Func]
 - 🟡 SummaryServiceTests  (ECAssistantCore)
+- 🟡 SupportsVisionTests  (ECAssistantCore)
 - 🟡 SystemPromptBuilder  (ECAssistantCore)
 - 🟡 SystemToolConfigEntry  (ECAssistantCore)
 - 🟡 TaskPlanner : ITaskPlanner  (ECAssistantCore)  deps: [ILogger? logger =]
@@ -278,7 +281,7 @@ Packages: 2  |  Types: 347
 - 🟡 VectorSearchResult  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (77 types, ~10590 LOC)
+## Tests (80 types, ~10958 LOC)
 
 - 🟡 ApiUserController  (Tests)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (Tests)
@@ -307,6 +310,7 @@ Packages: 2  |  Types: 347
 - 🟡 EToolBaseTests  (Tests)
 - 🟡 EWebFetchToolTests  (Tests)
 - 🟡 EWebSearchToolTests  (Tests)
+- 🟡 EmbeddingRoutingTests  (Tests)
 - 🟡 FailureAnalysisTests  (Tests)
 - 🟡 FailureEntryTests  (Tests)
 - 🟡 FailurePatternTests  (Tests)
@@ -317,6 +321,7 @@ Packages: 2  |  Types: 347
 - 🟡 HttpClientAdapterTests : IDisposable  (Tests)
 - 🟡 ImageAttachmentParserTests : IDisposable  (Tests)
 - 🟡 InMemoryVectorStoreTests  (Tests)
+- 🟡 InstallerVisionEmbeddingTests : IDisposable  (Tests)
 - 🟡 LlmProviderRegistryTests : IDisposable  (Tests)
 - 🟡 LlmServerClientReconnectTests  (Tests)
 - 🟡 LoggerTests : IDisposable  (Tests)
@@ -345,6 +350,7 @@ Packages: 2  |  Types: 347
 - 🟡 SubAgentResultTests  (Tests)
 - 🟡 SubAgentTaskTests  (Tests)
 - 🟡 SummaryServiceTests  (Tests)
+- 🟡 SupportsVisionTests  (Tests)
 - 🟡 TaskPlannerTests  (Tests)
 - 🟡 Test  (Tests)
 - 🟡 Test  (Tests)

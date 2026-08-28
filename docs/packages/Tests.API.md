@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 77  |  LOC: 10590  |  ~2727 tokens
+Types: 80  |  LOC: 10958  |  ~2867 tokens
 
 ---
 
@@ -97,6 +97,10 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 ### Class: EWebSearchToolTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Web
 
+### Class: EmbeddingRoutingTests
+> Embedding routing: embedding.mode is independent of the main LLM mode.
+Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Setup, Xunit
+
 ### Class: FailureAnalysisTests
 Cross-package deps: ECAssistant.Core.Engine
 
@@ -132,6 +136,11 @@ Cross-package deps: ECAssistant.Core.Engine, Xunit
 
 ### Class: InMemoryVectorStoreTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
+
+### Class: InstallerVisionEmbeddingTests
+> Vision-capability + embeddings-mode wiring: mmproj pairing, vision_enabled flag,
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Setup
 
 ### Class: LlmProviderRegistryTests
 Implements: IDisposable
@@ -237,6 +246,10 @@ Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: SummaryServiceTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Engine
+
+### Class: SupportsVisionTests
+> SupportsVision is the single, mode-independent capability answer for
+Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, Xunit
 
 ### Class: TaskPlannerTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq

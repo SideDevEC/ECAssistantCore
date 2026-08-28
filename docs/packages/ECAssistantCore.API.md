@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 270  |  LOC: 24082  |  ~12503 tokens
+Types: 273  |  LOC: 24450  |  ~12643 tokens
 
 ---
 
@@ -592,6 +592,10 @@ Cross-package deps: ECAssistant.Core.Orchestration
 ### Class: EmbeddingConfig
 > Configuration for the embedding model used by vector memory.
 
+### Class: EmbeddingRoutingTests
+> Embedding routing: embedding.mode is independent of the main LLM mode.
+Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Setup, Xunit
+
 ### Class: EmbeddingSetupWriter
 > Persists the user's embeddings choice from first-run/install into appsettings.json:
 Constructor:
@@ -714,6 +718,11 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
 
 ### Class: InferenceRequestParams
 > Abstracts LLM inference via HTTP (OpenAI-compatible endpoint).
+
+### Class: InstallerVisionEmbeddingTests
+> Vision-capability + embeddings-mode wiring: mmproj pairing, vision_enabled flag,
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Setup
 
 ### Class: InterfaceConfig
 > UI and output configuration. Verbose/silent controls token stream visibility.
@@ -1085,6 +1094,10 @@ Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: SummaryServiceTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Engine
+
+### Class: SupportsVisionTests
+> SupportsVision is the single, mode-independent capability answer for
+Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, Xunit
 
 ### Class: SystemPromptBuilder
 > Builds a system prompt for ECAssistant.Core that includes the required
