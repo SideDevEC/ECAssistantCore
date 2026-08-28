@@ -111,7 +111,7 @@ public class SessionBuilder : ISessionBuilder
     }
 
     /// <summary>Embeddings endpoint: local embedding mode → local server (spawned independently); otherwise the main provider.</summary>
-    private string ResolveEmbeddingEndpoint()
+    internal string ResolveEmbeddingEndpoint()
     {
         var emb = _config.Embedding;
         if (emb != null && string.Equals(emb.Mode, "local", StringComparison.OrdinalIgnoreCase))
@@ -119,7 +119,7 @@ public class SessionBuilder : ISessionBuilder
         return _config.LlmProvider.ResolvedEndpoint;
     }
 
-    private string ResolveEmbeddingModelId()
+    internal string ResolveEmbeddingModelId()
     {
         var emb = _config.Embedding;
         if (emb != null && string.Equals(emb.Mode, "local", StringComparison.OrdinalIgnoreCase))
@@ -144,8 +144,8 @@ public class SessionBuilder : ISessionBuilder
             IVectorEmbedder? embedder = null;
             if (_config.Embedding != null && _config.Embedding.Enabled)
             {
-                var embedderClient = new OpenAIClient(_config.LlmProvider.ResolvedEndpoint);
-                embedder = new HttpEmbedder(embedderClient, _config.LlmProvider.EmbeddingModelId);
+                var embedderClient = new OpenAIClient(ResolveEmbeddingEndpoint());
+                embedder = new HttpEmbedder(embedderClient, ResolveEmbeddingModelId());
             }
             
             await session.InitializeVectorMemoryAsync(vecDir, embedder);
