@@ -864,7 +864,9 @@ User: " + userRequest + "\n<lm>\n";
                 sb.AppendLine("</result></tooloutput>");
                 sb.AppendLine();
              }
-            sb.AppendLine("Continue the task. Output the next <toolcall> or your final answer in <output>...</output>.");
+            sb.AppendLine("Continue the task. First check: if the tool results above already fully answer the user's request, you MUST finish NOW with <output>the final answer</output>.");
+            sb.AppendLine("Do NOT repeat a tool call that already succeeded with the same arguments — repeating it adds nothing. Only call a tool again if you need DIFFERENT data.");
+            sb.AppendLine("If you truly need more data, output the next <toolcall>. Otherwise output <output>the final answer</output>.");
          }
 
         return sb.ToString();
