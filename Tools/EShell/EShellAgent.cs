@@ -44,6 +44,9 @@ public class EShellAgent : EToolBase
         if (OperatingSystem.IsWindows())
         {
             return "This host runs PowerShell (pwsh/Windows PowerShell) — use PowerShell syntax.\n" + rules +
+                   "Windows quirks:\n" +
+                   "- There is no head/tail: use Get-Content -TotalCount N (first lines) / -Tail N (last lines)\n" +
+                   "- Files may have CRLF line endings — end-of-line regex patterns need to account for \\r\n" +
                    "Examples (valid on this host):\n" +
                    "Get-ChildItem -Force ~\\Desktop          # list with types, incl. hidden\n" +
                    "Get-ChildItem \"~\\Desktop\\My Folder\"    # quoted path with spaces\n" +
@@ -55,14 +58,29 @@ public class EShellAgent : EToolBase
         if (OperatingSystem.IsMacOS())
         {
             return "This host runs macOS — the shell is zsh (BSD userland: some GNU options differ, e.g. date has no -d).\n" + rules +
+                   "macOS quirks:\n" +
+                   "- ~ does NOT expand inside quotes: use ~/\"My Folder\" (tilde outside, quote only the rest)\n" +
+                   "- Listings may contain .DS_Store / ._* metadata files — filter them out before counting\n" +
+                   "- APFS stores some filenames Unicode-decomposed (NFD): a composed-text search can match nothing\n" +
+                   "- sed in-place editing needs an empty backup arg: sed -i '' \"s/a/b/\" file\n" +
                    "Examples (valid on this host):\n" +
                    "ls -la ~/Desktop                         # list with types, sizes, permissions\n" +
-                   "ls -la ~/Desktop/\"My Folder\"            # quoted path with spaces\n" +
+                   "ls -la ~/Desktop/\"My Folder\"            # tilde outside the quotes!\n" +
                    "find ~/Desktop -maxdepth 1 -type d       # only folders\n" +
                    "head -n 20 ~/Desktop/notes.txt           # read a file\n" +
                    "cp ~/Desktop/a.txt ~/Documents/b.txt     # copy\n" +
                    "date '+%A %B %e, %Y'                     # formatted date (BSD syntax)\n";
         }
+        return "This host runs Linux — the shell is bash (GNU userland).\n" + rules +
+               "Linux quirks:\n" +
+               "- ~ does NOT expand inside quotes: use ~/\"My Folder\" (tilde outside, quote only the rest)\n" +
+               "Examples (valid on this host):\n" +
+               "ls -la ~/Desktop                         # list with types, sizes, permissions\n" +
+               "ls -la ~/Desktop/\"My Folder\"            # tilde outside the quotes!\n" +
+               "find ~/Desktop -maxdepth 1 -type d       # only folders\n" +
+               "head -n 20 ~/Desktop/notes.txt           # read a file\n" +
+               "cp ~/Desktop/a.txt ~/Documents/b.txt     # copy\n" +
+               "date -d tomorrow '+%A %B %e, %Y'         # GNU date\n";
 
         return "This host runs Linux — the shell is bash (GNU userland).\n" + rules +
                "Examples (valid on this host):\n" +
