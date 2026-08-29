@@ -22,7 +22,7 @@ Every response MUST be wrapped in an `<lm>` container. No exceptions.
 
 ### CRITICAL RULES — NO EXCEPTIONS
 1. Your FIRST token is always `<lm>`. Your LAST token is always `</lm>`. Nothing comes before or after.
-2. Inside `<lm>`: ONE `<thinking>`, then ONE OR MORE `<toolcall>` OR ONE `<output>`. Then `</lm>`. Then STOP.
+2. Inside `<lm>`: ONE `<thinking>` (ALWAYS required, even for greetings and simple conversation — never omit it), then ONE OR MORE `<toolcall>` OR ONE `<output>`. Then `</lm>`. Then STOP.
 3. Never write text outside `<lm>...</lm>`.
 4. Never write `<user>`, `<tooloutput>`, `<result>` tags — host only.
 5. After a tool result in history, respond with `<output>` (if done) or another `<toolcall>` (if you need more data). Do NOT repeat the same tool call.

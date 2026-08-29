@@ -111,14 +111,12 @@ public sealed class AgentOrchestrator : IAsyncDisposable
          // v10.6: Decompose the request into sub-tasks using TaskPlanner
          // v11.4: Gate — skip decomposition for conversational questions
          var planner = _engine.TaskPlanner;
-         // v12.0: classify ONCE — conversational goals get a direct chat reply (no tool-loop)
-         var isChatGoal = LooksConversational(goal) || await _engine.IsConversationalAsync(goal);
          if (planner != null)
          {
             List<SubTask>? decomposed = null;
 
             // v11.4: Fast gate — action verb check (instant, zero cost)
-            if (isChatGoal)
+            if (LooksConversational(goal))
             {
                 _out?.WriteDim("Conversational question — skipping decomposition.");
                 decomposed = new List<SubTask> { new SubTask { Description = goal, Status = SubTaskStatus.Pending } };
@@ -215,7 +213,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
             _logger?.Info("Orchestrator", $"Turn {_turnCount + 1}/{_maxTurns}");
 
                   // v12.0: chat-classified goals answer directly — no toolcall demanded
-              var llmResponse = await _engine.GenerateAsync(goal, isChatGoal);
+              var llmResponse = await _engine.GenerateAsync(goal);
 
               // v10.11.1: Check if generation was stopped by user (ESC) — bail out immediately,
               // don't attempt format retries on the "(Stopped by user)" string.
@@ -513,7 +511,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                          "<lm><thinking>brief reasoning</thinking><output>your answer</output></lm>\n" +
                          "Here is a full worked example for the question 'hey whats up':\n" +
                          "<lm><thinking>Just a greeting, no task.</thinking><output>Hey! Not much — how can I help you today?</output></lm>\n" +
-                         "Do NOT write any text outside the <lm> container. Do NOT skip the tags. Note: <thinking> may be omitted, but <output> is always required.\n" +
+                         "Do NOT write any text outside the <lm> container. Do NOT skip any tags. <thinking> is REQUIRED — never omit it.\n" +
                          "Now answer the previous question using the correct format.");
                      _turnCount++;
                     continue;

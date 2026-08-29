@@ -565,56 +565,7 @@ User: " + userRequest + "\n<lm>\n";
          }
      }
 
-    /// <summary>Classify user intent as TASK or CHAT (stateless). true = conversational.</summary>
-    public async Task<bool> IsConversationalAsync(string userRequest)
-     {
-        if (_inferenceEngine == null)
-            return false;
-
-        var prompt = "Is this a task needing tools (files, shell, web, system access), or a conversational question? " +
-            "A request to actually DO something is TASK even when phrased as a question ('can you …?'). " +
-            "Only greetings, small-talk and questions about your capabilities are CHAT. " +
-            "The user's message may be in any language — classify by meaning, not language. Reply only TASK or CHAT.\n\n" +
-            "User: hello\nCHAT\n" +
-            "User: create a file\nTASK\n" +
-            "User: what can you do?\nCHAT\n" +
-            "User: fix the bug in Program.cs\nTASK\n" +
-            "User: how are you?\nCHAT\n" +
-            "User: read the log file and find errors\nTASK\n" +
-            "User: can you help me?\nCHAT\n" +
-            "User: list all the files on my desktop\nTASK\n" +
-            "User: can you list the files on my desktop?\nTASK\n" +
-            "User: can you search the web for news?\nTASK\n" +
-            "User: erstelle eine neue Datei\nTASK\n" +
-            "User: wie geht's dir?\nCHAT\n" +
-            "User: analiza estos datos y genera un informe\nTASK\n" +
-            "User: dosyayı düzelt\nTASK\n" +
-            "User: nasılsın?\nCHAT\n" +
-            $"User: {userRequest}\n";
-
-        try
-         {
-            // Thinking models (e.g. Qwen3.5) burn tokens inside <think> before answering —
-            // give the classifier enough budget, then strip think blocks before parsing.
-            var quickParams = BuildStatelessParams(512, new[] { "\n", "User:" }, 0.1f, 0.8f, 40, 1.0f);
-            for (var attempt = 1; attempt <= 2; attempt++)
-             {
-                var raw = await _inferenceEngine.GenerateAsync(prompt, quickParams, CancellationToken.None);
-                var cleaned = StripThinkBlocks(raw).Trim().ToUpperInvariant();
-                _logger?.Info("Intent", $"Classification (try {attempt}) for '{userRequest.Substring(0, Math.Min(userRequest.Length, 40))}': {cleaned}");
-                if (cleaned.Contains("TASK")) return false;
-                if (cleaned.Contains("CHAT")) return true;
-                // Empty/ambiguous (thinking models sometimes emit nothing) — retry once, then default to TASK.
-             }
-            return false;
-         }
-        catch (OperationCanceledException)
-         {
-            return false;
-         }
-     }
-
-     // ── System prompt building ─────────────────────────────────
+    // ── System prompt building ─────────────────────────────────
 
     /// <summary>Build system+tools prompt — system prompt + runtime tool self-registration.</summary>
     private string BuildSystemToolsPrompt()
@@ -861,7 +812,7 @@ User: " + userRequest + "\n<lm>\n";
      // ── Incremental input building ─────────────────────────────
 
      /// <summary>Build only the new tokens to feed since the last turn.</summary>
-    private string BuildIncrementalInput(string userRequest, bool chatMode = false)
+    private string BuildIncrementalInput(string userRequest)
      {
         var sb = new StringBuilder();
 
@@ -899,19 +850,9 @@ User: " + userRequest + "\n<lm>\n";
             sb.AppendLine(userRequest);
             sb.AppendLine("</user>");
             sb.AppendLine();
-            if (chatMode)
-             {
-                sb.AppendLine("The user message above is a conversational remark or question. Respond to it directly and naturally. Do not call tools. Do not start a task.");
-                sb.AppendLine("You MUST wrap your reply in these EXACT tags — here is a worked example:");
-                sb.AppendLine("");
-                sb.AppendLine("<lm><output>Hey! Not much — how can I help you today?</output></lm>");
-                sb.AppendLine("");
-                sb.AppendLine("Now reply to the user's message using exactly this <lm><output>…</output></lm> format. Never write text outside the tags.");
-             }
-            else
-             {
-                sb.AppendLine("The user message above is your task. Follow the execution plan if provided. Start working. Output your first <toolcall> now.");
-             }
+            sb.AppendLine("The user message above is the user's request. Decide yourself:");
+            sb.AppendLine("- If it needs tools (files, shell, web, system), start working and output your first <toolcall> now.");
+            sb.AppendLine("- If it can be answered directly (greetings, questions, conversation), respond with <output>your answer</output>.");
          }
         else
          {
@@ -1080,7 +1021,7 @@ User: " + userRequest + "\n<lm>\n";
      /// Generate text from the LLM using incremental KV cache feed.
      /// v10.30: streaming via IInferenceEngine.StreamAsync — no in-process executor.
      /// </summary>
-    public virtual async Task<string> GenerateAsync(string userPrompt, bool chatMode = false)
+    public virtual async Task<string> GenerateAsync(string userPrompt)
      {
         _lifecycle.IncrementTurn();
         _lifecycle.EscPressed = false;
@@ -1175,7 +1116,7 @@ User: " + userRequest + "\n<lm>\n";
              }
          }
 
-        var incrementalInput = BuildIncrementalInput(effectivePrompt, chatMode);
+        var incrementalInput = BuildIncrementalInput(effectivePrompt);
 
         try
          {
