@@ -577,7 +577,7 @@ User: " + userRequest + "\n<lm>\n";
          {
             // Thinking models (e.g. Qwen3.5) burn tokens inside <think> before answering —
             // give the classifier enough budget, then strip think blocks before parsing.
-            var quickParams = BuildStatelessParams(64, new[] { "\n", "User:" }, 0.1f, 0.8f, 40, 1.0f);
+            var quickParams = BuildStatelessParams(512, new[] { "\n", "User:" }, 0.1f, 0.8f, 40, 1.0f);
             var raw = await _inferenceEngine.GenerateAsync(prompt, quickParams, CancellationToken.None);
             var cleaned = StripThinkBlocks(raw).Trim().ToUpperInvariant();
             _logger?.Info("Intent", $"Classification for '{userRequest.Substring(0, Math.Min(userRequest.Length, 40))}': {cleaned}");
