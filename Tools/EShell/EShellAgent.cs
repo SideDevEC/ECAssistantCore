@@ -39,7 +39,10 @@ public class EShellAgent : EToolBase
             "1. ALWAYS quote paths that contain spaces. An unquoted path is split into multiple arguments and fails.\n" +
             "2. When the user asks about file types, folders vs files, sizes or permissions, use a listing form that SHOWS entry types — a plain name-only listing cannot answer that.\n" +
             "3. If a command fails with an unknown-option or syntax error, the syntax is wrong for this shell — adapt the syntax for the next attempt (do not repeat it).\n" +
-            "4. Prefer one well-formed command that answers the whole question over several narrow ones.\n";
+            "4. Prefer one well-formed command that answers the whole question over several narrow ones.\n" +
+            "5. NEVER run interactive programs (editors like nano/vim, pagers like less/more, top, prompts waiting for input) — they hang this tool forever.\n" +
+            "6. Glob patterns (*, ?) do NOT match dotfiles (.env, .gitignore, .*) — a glob listing can look empty while hidden files exist.\n" +
+            "7. Read the error message PRECISELY — it names the real problem: 'No such file' = wrong path, 'Permission denied' = access, 'Is a directory' = missing recursive flag. Each has a completely different fix.\n";
 
         if (OperatingSystem.IsWindows())
         {
@@ -47,6 +50,9 @@ public class EShellAgent : EToolBase
                    "Windows quirks:\n" +
                    "- There is no head/tail: use Get-Content -TotalCount N (first lines) / -Tail N (last lines)\n" +
                    "- Files may have CRLF line endings — end-of-line regex patterns need to account for \\r\n" +
+                   "- '>' redirection in Windows PowerShell writes UTF-16 — downstream tools may see garbled bytes\n" +
+                   "- Reserved filenames cannot be created: CON, PRN, AUX, NUL, COM1…\n" +
+                   "- OneDrive paths may hold placeholder files that are not on disk until opened\n" +
                    "Examples (valid on this host):\n" +
                    "Get-ChildItem -Force ~\\Desktop          # list with types, incl. hidden\n" +
                    "Get-ChildItem \"~\\Desktop\\My Folder\"    # quoted path with spaces\n" +
@@ -63,6 +69,7 @@ public class EShellAgent : EToolBase
                    "- Listings may contain .DS_Store / ._* metadata files — filter them out before counting\n" +
                    "- APFS stores some filenames Unicode-decomposed (NFD): a composed-text search can match nothing\n" +
                    "- sed in-place editing needs an empty backup arg: sed -i '' \"s/a/b/\" file\n" +
+                   "- BSD find has NO -printf; BSD grep has NO -P (use -E); there is NO timeout and NO readlink -f on this host\n" +
                    "Examples (valid on this host):\n" +
                    "ls -la ~/Desktop                         # list with types, sizes, permissions\n" +
                    "ls -la ~/Desktop/\"My Folder\"            # tilde outside the quotes!\n" +
@@ -74,6 +81,7 @@ public class EShellAgent : EToolBase
         return "This host runs Linux — the shell is bash (GNU userland).\n" + rules +
                "Linux quirks:\n" +
                "- ~ does NOT expand inside quotes: use ~/\"My Folder\" (tilde outside, quote only the rest)\n" +
+               "- GNU tools: find -printf, timeout, readlink -f and grep -P all exist here (unlike macOS)\n" +
                "Examples (valid on this host):\n" +
                "ls -la ~/Desktop                         # list with types, sizes, permissions\n" +
                "ls -la ~/Desktop/\"My Folder\"            # tilde outside the quotes!\n" +
