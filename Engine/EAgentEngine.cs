@@ -585,6 +585,34 @@ User: " + userRequest + "\n<lm>\n";
                 sb.AppendLine();
              }
          }
+
+        sb.Append(BuildHostEnvironmentSection());
+        return sb.ToString();
+     }
+
+    /// <summary>
+    /// v12.8: Self-awareness — the model learns the host application's runtime layout
+    /// (config, models, sessions, memory, logs) so it can operate on the app itself
+    /// (inspect configs, read transcripts, tune llm-server.json) with real paths.
+    /// </summary>
+    private string BuildHostEnvironmentSection()
+     {
+        var sb = new StringBuilder();
+        sb.AppendLine("## HOST ENVIRONMENT");
+        sb.AppendLine();
+        sb.AppendLine("You are integrated into an application whose runtime files live at the paths below.");
+        sb.AppendLine("Shell commands and file tools can access all of them directly:");
+        sb.AppendLine();
+        sb.AppendLine($"- App root (user config directory): {_workingDir}");
+        sb.AppendLine($"- appsettings.json (provider, embedding, vector memory settings): {Path.Combine(_workingDir, "appsettings.json")}");
+        sb.AppendLine($"- llm-server.json (registered models, gpu_layers, context sizes): {Path.Combine(_workingDir, "llm", "llm-server.json")}");
+        sb.AppendLine($"- Model files (GGUF + mmproj): {Path.Combine(_workingDir, "llm", "models")}");
+        sb.AppendLine($"- Session transcripts: {Path.Combine(_workingDir, ".sessions")}");
+        sb.AppendLine($"- Vector memory index: {Path.Combine(_workingDir, "vecmem")}");
+        sb.AppendLine($"- Application log: {Path.Combine(_workingDir, "ECAssistant.log")}");
+        sb.AppendLine();
+        sb.AppendLine("When the user asks about the app itself — its configuration, models, memory or history — these are the paths to inspect. Do not modify config files unless the user explicitly asks for it.");
+        sb.AppendLine();
         return sb.ToString();
      }
 
