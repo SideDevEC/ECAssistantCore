@@ -94,7 +94,7 @@ public class ProjectContextManager : IDisposable
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { _logger.Debug("ProjectContext", $"Non-critical error ignored: {ex.Message}"); }
         }
 
         _context.ProjectType = DetectProjectType();

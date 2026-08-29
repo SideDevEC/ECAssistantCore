@@ -19,10 +19,10 @@ namespace ECAssistant.Core.Engine;
 /// </summary>
 public class StepMapper : IStepMapper
 {
-    private readonly EAgentEngine _engine;
+    private readonly IEngineToolContext _engine;
     private readonly ILogger _logger;
 
-    public StepMapper(EAgentEngine engine, ILogger? logger = null)
+    public StepMapper(IEngineToolContext engine, ILogger? logger = null)
     {
         _engine = engine;
         _logger = logger ?? new Logger();
@@ -99,7 +99,7 @@ Combine steps into one call when possible (e.g., batch shell commands).
         // We feed this as a special prompt and parse the <plan> block
         var response = await _engine.GeneratePlanAsync(prompt);
 
-        return ParsePlan(response, subTasks);
+        return ParsePlan(response ?? "", subTasks);
     }
 
     /// <summary>Parse the LLM's <plan> response into an ExecutionPlan.</summary>

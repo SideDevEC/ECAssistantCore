@@ -322,10 +322,10 @@ public sealed class TestRunner : IAsyncDisposable
         {
             // v10.22: Mock engine — no GGUF needed, returns predefined responses
             engine = new MockEngine(workingDir);
-            engine.MockMode = true;
+            engine.SetMockMode(true);
             engine.LoadContext();
             engine.WireSummaryService();
-            engine.MockMode = false; // Reset for safety
+            engine.SetMockMode(false); // Reset for safety
         }
         else
         {

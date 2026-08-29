@@ -190,7 +190,7 @@ public class SelfCorrectionManager : IDisposable
         foreach (var snap in oldSnapshots)
         {
             var path = Path.Combine(_snapshotDir, snap.SnapshotId);
-            try { if (File.Exists(path)) File.Delete(path); } catch { }
+            try { if (File.Exists(path)) File.Delete(path); } catch (Exception ex) { _logger?.Debug("SelfCorrection", $"Non-critical error ignored: {ex.Message}"); }
         }
     }
 }

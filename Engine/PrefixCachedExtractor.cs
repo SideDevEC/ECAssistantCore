@@ -122,7 +122,7 @@ public class PrefixCachedExtractor : IAsyncDisposable
         _disposed = true;
 
         try { await _kvCache.DestroySessionAsync(_sessionId); }
-        catch { }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[PrefixCachedExtractor] Non-critical error ignored: {ex.Message}"); }
 
         _lock.Dispose();
         await ValueTask.CompletedTask;

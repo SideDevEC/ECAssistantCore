@@ -14,10 +14,12 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="ECAssistant.Core.Tests" />
+    <InternalsVisibleTo Include="ECAssistant.Core.TestSupport" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="Tests/**" />
+    <Compile Remove="TestSupport/**" />
   </ItemGroup>
 
   <ItemGroup>

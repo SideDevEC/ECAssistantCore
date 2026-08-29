@@ -1,16 +1,17 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-28T07:46:55.390871+00:00
-Packages: 2  |  Types: 353
+Generated: 2026-08-29T08:19:28.802860+00:00
+Packages: 3  |  Types: 364
 
 ---
 
-## ECAssistantCore (273 types, ~24450 LOC)
+## ECAssistantCore (276 types, ~24527 LOC)
 
 - 🔵 IConfigLoader  (ECAssistantCore)
 - 🔵 IConfigProvider  (ECAssistantCore)
 - 🔵 IContextManager  (ECAssistantCore)
 - 🔵 IEngine  (ECAssistantCore)
+- 🔵 IEngineToolContext  (ECAssistantCore)
 - 🔵 IFileSystem  (ECAssistantCore)
 - 🔵 IHtmlTextConverter  (ECAssistantCore)
 - 🔵 IHttpClient  (ECAssistantCore)
@@ -32,6 +33,7 @@ Packages: 2  |  Types: 353
 - 🔵 ISessionContext  (ECAssistantCore)
 - 🔵 ISessionOutput  (ECAssistantCore)
 - 🔵 IStepMapper  (ECAssistantCore)
+- 🔵 ISubAgentEngineHost  (ECAssistantCore)
 - 🔵 ITaskPlanner  (ECAssistantCore)
 - 🔵 ITerminal  (ECAssistantCore)
 - 🔵 IToolPolicyEvaluator  (ECAssistantCore)
@@ -73,7 +75,7 @@ Packages: 2  |  Types: 353
 - 🟣 DownloadProgress  (ECAssistantCore)  deps: [string, long, long, double, double]
 - 🟡 EAgentConfig  (ECAssistantCore)
 - 🟡 EAgentConfigTests : IDisposable  (ECAssistantCore)
-- 🟡 EAgentEngine : IEngine  (ECAssistantCore)  deps: [string, IInferenceEngine, IKvCacheController, RemoteTokenizer? tokenizer =, InferenceRequestParams? inferenceParams =, uint contextSize =, string modelPath =, EAgentConfig? config =, string? workingDir =, ILogger? logger =, EMemoryManager? memoryManager =, SelfCorrectionManager? selfCorrection =, ProjectContextManager? projectContext =, ITaskPlanner? taskPlanner =]
+- 🟡 EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost  (ECAssistantCore)  deps: [string, IInferenceEngine, IKvCacheController, RemoteTokenizer? tokenizer =, InferenceRequestParams? inferenceParams =, uint contextSize =, string modelPath =, EAgentConfig? config =, string? workingDir =, ILogger? logger =, EMemoryManager? memoryManager =, SelfCorrectionManager? selfCorrection =, ProjectContextManager? projectContext =, ITaskPlanner? taskPlanner =]
 - 🟡 EBackgroundExecTool : EToolBase  (ECAssistantCore)  deps: [BackgroundProcessManager, IProcessRunner, IFileSystem, EAgentConfig]
 - 🟡 EBackgroundExecToolTests : IDisposable  (ECAssistantCore)
 - 🟡 ECodeEditorTool : EToolBase  (ECAssistantCore)  deps: [IFileSystem, EAgentConfig]
@@ -114,6 +116,7 @@ Packages: 2  |  Types: 353
 - 🟡 EmbeddingConfig  (ECAssistantCore)
 - 🟡 EmbeddingRoutingTests  (ECAssistantCore)
 - 🟡 EmbeddingSetupWriter  (ECAssistantCore)  deps: [string]
+- 🟡 ExecutionLifecycleState  (ECAssistantCore)
 - 🟡 ExecutionPlan  (ECAssistantCore)
 - 🟡 ExecutionState  (ECAssistantCore)
 - 🟡 FailureAnalysis  (ECAssistantCore)
@@ -220,18 +223,18 @@ Packages: 2  |  Types: 353
 - 🟡 SessionDiscovery  (ECAssistantCore)
 - 🟡 SessionDiscoveryTests : IDisposable  (ECAssistantCore)
 - 🟡 SessionManagementIntegrationTests : IDisposable  (ECAssistantCore)
-- 🟡 SessionManager : IAsyncDisposable  (ECAssistantCore)  deps: [EAgentConfig, string, string, ILogger? logger =]
+- 🟡 SessionManager : IAsyncDisposable  (ECAssistantCore)  deps: [EAgentConfig, string, string, ILogger? logger =, Func, Func, LlmServerClient? serverClient =, SecureKeyStore? keyStore =, ILlmProviderRegistry? providerRegistry =, IModelParamValidator? modelParamValidator =]
 - 🟡 SessionQueueTests  (ECAssistantCore)
 - 🟡 SingleToolResult  (ECAssistantCore)
 - 🟡 SseParser  (ECAssistantCore)
-- 🟡 StepMapper : IStepMapper  (ECAssistantCore)  deps: [EAgentEngine, ILogger? logger =]
+- 🟡 StepMapper : IStepMapper  (ECAssistantCore)  deps: [IEngineToolContext, ILogger? logger =]
 - 🟡 StepMapperTests  (ECAssistantCore)
 - 🟡 StringUtil  (ECAssistantCore)
 - 🟡 SubAgentConfig  (ECAssistantCore)
 - 🟡 SubAgentError  (ECAssistantCore)
 - 🟡 SubAgentErrorTests  (ECAssistantCore)
 - 🟡 SubAgentIntegrationTests : IDisposable  (ECAssistantCore)
-- 🟡 SubAgentManager : IDisposable  (ECAssistantCore)  deps: [EAgentEngine, string mainWorkingDir =, ILogger? logger =, ISessionOutput? sessionOutput =, EAgentConfig? config =, IProcessRunner? processRunner =, IFileSystem? fileSystem =, IHttpClient? httpClient =, BackgroundProcessManager? bgManager =]
+- 🟡 SubAgentManager : IDisposable  (ECAssistantCore)  deps: [ISubAgentEngineHost, string mainWorkingDir =, ILogger? logger =, ISessionOutput? sessionOutput =, EAgentConfig? config =, IProcessRunner? processRunner =, IFileSystem? fileSystem =, IHttpClient? httpClient =, BackgroundProcessManager? bgManager =]
 - 🟡 SubAgentResult  (ECAssistantCore)
 - 🟡 SubAgentResultTests  (ECAssistantCore)
 - 🟡 SubAgentTask  (ECAssistantCore)
@@ -281,7 +284,18 @@ Packages: 2  |  Types: 353
 - 🟡 VectorSearchResult  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (80 types, ~10958 LOC)
+## TestSupport (8 types, ~1441 LOC)
+
+- 🟡 EGuiTestHarness : EGuiBase  (TestSupport)
+- 🟡 EcaTestSuite  (TestSupport)
+- 🟡 MockEngine : EAgentEngine  (TestSupport)  deps: [Queue, int maxIterations =, bool stopAfterFirstTool =, string? workingDir =, ISessionOutput? sessionOutput =, string? workingDir =, ISessionOutput? sessionOutput =, bool cycleResponses =]
+- 🟡 TestContext  (TestSupport)
+- 🟡 TestResult  (TestSupport)
+- 🟡 TestRunner : IAsyncDisposable  (TestSupport)  deps: [string, string? testRootDir =, ILogger? logger =]
+- 🟡 TestScenario  (TestSupport)
+- 🟡 TestSessionOutput : ISessionOutput  (TestSupport)  deps: [EGuiTestHarness]
+
+## Tests (80 types, ~10957 LOC)
 
 - 🟡 ApiUserController  (Tests)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (Tests)

@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 273  |  LOC: 24450  |  ~12643 tokens
+Types: 276  |  LOC: 24527  |  ~12841 tokens
 
 ---
 
@@ -35,6 +35,14 @@ Methods:
   - Task StartAsync(string userMessage)
   - Task RunAsync(CancellationToken ct = default)
   - void Dispose()
+
+### Interface: IEngineToolContext
+> Read-only view of the engine's tool surface used by planning components
+Properties:
+  - IReadOnlyList<EToolBase> Tools { get; set; }
+Methods:
+  - Task<string?> GeneratePlanAsync(string userRequest)
+Cross-package deps: ECAssistant.Core.Tools
 
 ### Interface: IFileSystem
 > File system abstraction.
@@ -236,6 +244,12 @@ Methods:
   - Task<ExecutionPlan> MapAsync(List<SubTask> subTasks, string originalGoal)
 Cross-package deps: ECAssistant.Core.Engine
 
+### Interface: ISubAgentEngineHost
+> Host-side surface the SubAgentManager needs from the main engine.
+Properties:
+  - IInferenceEngine? InferenceEngine { get; set; }
+  - CancellationToken ExecutionToken { get; set; }
+
 ### Interface: ITaskPlanner
 > Interface for decomposing user requests into sub-tasks.
 Properties:
@@ -263,7 +277,7 @@ Methods:
 > Evaluates tool permissions.
 Methods:
   - bool IsToolAllowed(string toolName)
-  - ToolPolicy GetPolicy(string toolName)
+  - ToolPermissionRecord GetPolicy(string toolName)
 
 ### Interface: IVectorEmbedder
 > Text embedding abstraction.
@@ -407,7 +421,7 @@ Cross-package deps: ECAssistant.Core.Config
 
 ### Class: EAgentEngine
 > v10.30: Core engine. All inference + KV cache control is HTTP-based via the
-Implements: IEngine
+Implements: IEngine, IEngineToolContext, ISubAgentEngineHost
 Constructor:
   - EAgentEngine(string sessionId, IInferenceEngine inferenceEngine, IKvCacheController kvCacheController, RemoteTokenizer? tokenizer = null, InferenceRequestParams? inferenceParams = null, uint contextSize = 8192, string modelPath = "", EAgentConfig? config = null, string? workingDir = null, ILogger? logger = null, EMemoryManager? memoryManager = null, ECAssistant.Core.Engine.SelfCorrectionManager? selfCorrection = null, ECAssistant.Core.Engine.ProjectContextManager? projectContext = null, ITaskPlanner? taskPlanner = null)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
@@ -600,6 +614,9 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.
 > Persists the user's embeddings choice from first-run/install into appsettings.json:
 Constructor:
   - EmbeddingSetupWriter(string appsettingsPath)
+
+### Class: ExecutionLifecycleState
+> Execution lifecycle state for the main agent loop (CTS, ESC flag, turn counter).
 
 ### Class: ExecutionPlan
 > An execution plan — the output of the mapping phase.
@@ -798,11 +815,11 @@ Cross-package deps: ECAssistant.Core.Interfaces
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, Moq
 
 ### Class: MockEngine
-> v10.30: Core engine. All inference + KV cache control is HTTP-based via the
+> Mock engine for testing — no real model loaded. Returns pre-queued responses.
 Implements: EAgentEngine
 Constructor:
   - MockEngine(Queue<string> responses, int maxIterations = 5, bool stopAfterFirstTool = false, string? workingDir = null, ISessionOutput? sessionOutput = null, string? workingDir = null, ISessionOutput? sessionOutput = null, bool cycleResponses = false)
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
+Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Session
 
 ### Class: MockSubAgentTool
 > Integration tests for sub-agent spawning through the orchestrator.
@@ -884,7 +901,7 @@ Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Testing, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
 
 ### Class: ParallelToolExecutorTests
-Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Engine, ECAssistant.Core.Tools, Moq
+Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools, Moq
 
 ### Class: PlannedToolCall
 > A single planned tool call — concrete mapping from a sub-task to a tool + args.
@@ -1023,7 +1040,7 @@ Cross-package deps: ECAssistant.Core.Session
 > Session Manager — creates, tracks, and manages all sessions.
 Implements: IAsyncDisposable
 Constructor:
-  - SessionManager(EAgentConfig config, string resolvedModelPath, string workingDir, ILogger? logger = null)
+  - SessionManager(EAgentConfig config, string resolvedModelPath, string workingDir, ILogger? logger = null, Func<string, string?, string?, OpenAIClient>? openAIClientFactory = null, Func<LlmProviderConfig, string, ServerLauncher>? serverLauncherFactory = null, LlmServerClient? serverClient = null, SecureKeyStore? keyStore = null, ILlmProviderRegistry? providerRegistry = null, IModelParamValidator? modelParamValidator = null)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Interfaces, ECAssistant.Core.Transport
 
 ### Class: SessionQueueTests
@@ -1041,7 +1058,7 @@ Cross-package deps: ECAssistant.Core.Tools
 > Step Mapper — takes decomposed sub-tasks and maps them to concrete tool calls.
 Implements: IStepMapper
 Constructor:
-  - StepMapper(EAgentEngine engine, ILogger? logger = null)
+  - StepMapper(IEngineToolContext engine, ILogger? logger = null)
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 
 ### Class: StepMapperTests
@@ -1068,7 +1085,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.
 > Sub-agent task definition — what the main agent wants a sub-agent to do.
 Implements: IDisposable
 Constructor:
-  - SubAgentManager(EAgentEngine mainEngine, string mainWorkingDir = "", ILogger? logger = null, ISessionOutput? sessionOutput = null, EAgentConfig? config = null, ECAssistant.Core.Interfaces.IProcessRunner? processRunner = null, ECAssistant.Core.Interfaces.IFileSystem? fileSystem = null, ECAssistant.Core.Interfaces.IHttpClient? httpClient = null, Services.BackgroundProcessManager? bgManager = null)
+  - SubAgentManager(ISubAgentEngineHost mainEngine, string mainWorkingDir = "", ILogger? logger = null, ISessionOutput? sessionOutput = null, EAgentConfig? config = null, ECAssistant.Core.Interfaces.IProcessRunner? processRunner = null, ECAssistant.Core.Interfaces.IFileSystem? fileSystem = null, ECAssistant.Core.Interfaces.IHttpClient? httpClient = null, Services.BackgroundProcessManager? bgManager = null)
 Cross-package deps: ECAssistant.Core.Session, ECAssistant.Core.Config, ECAssistant.Core.Tools, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 
 ### Class: SubAgentResult

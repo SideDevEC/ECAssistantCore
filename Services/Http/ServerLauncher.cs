@@ -78,7 +78,7 @@ public sealed class ServerLauncher
 
         try
         {
-            _serverProcess = Process.Start(psi);
+            _serverProcess = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start LLM server process.");
             
             // Discard stdout/stderr — the LLM server writes to its own log file
             // via ServerLogger. Without this, llama.cpp output floods the terminal.
@@ -145,7 +145,7 @@ public sealed class ServerLauncher
                     _serverProcess.Kill();
                     _serverProcess.WaitForExit(5000);
                 }
-                catch { }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[ServerLauncher] Non-critical error ignored: {ex.Message}"); }
             }
         }
         _serverProcess?.Dispose();
@@ -161,7 +161,7 @@ public sealed class ServerLauncher
         {
             StopServerAsync().Wait(TimeSpan.FromSeconds(15));
         }
-        catch { }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[ServerLauncher] Non-critical error ignored: {ex.Message}"); }
     }
 
     private string? ResolveExecutablePath()

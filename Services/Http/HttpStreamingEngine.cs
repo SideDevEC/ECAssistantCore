@@ -17,7 +17,6 @@ public sealed class HttpStreamingEngine : IInferenceEngine
     private readonly OpenAIClient _client;
     private readonly string _defaultModelId;
     private readonly string? _defaultSessionId;
-    private readonly bool _ownsClient;
 
     public string Endpoint => _client.BaseUrl;
 
@@ -29,7 +28,6 @@ public sealed class HttpStreamingEngine : IInferenceEngine
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _defaultModelId = defaultModelId;
         _defaultSessionId = defaultSessionId;
-        _ownsClient = false;
     }
 
     /// <summary>
@@ -75,7 +73,7 @@ public sealed class HttpStreamingEngine : IInferenceEngine
                 return content ?? "";
             }
         }
-        catch { }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HttpStreamingEngine] Non-critical error ignored: {ex.Message}"); }
 
         return "";
     }

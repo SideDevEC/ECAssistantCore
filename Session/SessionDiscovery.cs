@@ -57,7 +57,7 @@ public class SessionDiscovery
         var targetPath = Path.Combine(mainSessionDir, "transcript.json");
         if (File.Exists(targetPath)) return;
 
-        try { File.Copy(legacyPath, targetPath); } catch { }
+        try { File.Copy(legacyPath, targetPath); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[SessionDiscovery] Non-critical error ignored: {ex.Message}"); }
     }
 
     public void EnsureSessionsDir(string workingDir)
@@ -83,7 +83,7 @@ public class SessionDiscovery
             var json = JsonSerializer.Serialize(meta, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(metaPath, json);
         }
-        catch { }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[SessionDiscovery] Non-critical error ignored: {ex.Message}"); }
     }
 
     private class SessionMeta

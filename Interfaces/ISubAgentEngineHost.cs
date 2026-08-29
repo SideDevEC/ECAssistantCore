@@ -1,0 +1,15 @@
+namespace ECAssistant.Core.Interfaces;
+
+/// <summary>
+/// Host-side surface the SubAgentManager needs from the main engine.
+/// Decouples SubAgentManager from the concrete EAgentEngine, breaking the
+/// circular <c>this</c> reference in the object graph.
+/// </summary>
+public interface ISubAgentEngineHost
+{
+    /// <summary>Inference engine of the host (used to derive sub-agent endpoints).</summary>
+    IInferenceEngine? InferenceEngine { get; }
+
+    /// <summary>Cancellation token of the host execution (ESC propagation).</summary>
+    CancellationToken ExecutionToken { get; }
+}

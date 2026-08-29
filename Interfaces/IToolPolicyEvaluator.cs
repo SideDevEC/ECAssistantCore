@@ -6,5 +6,5 @@ namespace ECAssistant.Core.Interfaces;
 public interface IToolPolicyEvaluator
 {
     bool IsToolAllowed(string toolName);
-    ToolPolicy GetPolicy(string toolName);
+    ToolPermissionRecord GetPolicy(string toolName);
 }

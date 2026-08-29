@@ -17,15 +17,18 @@ namespace ECAssistant.Core.Engine;
 /// server). No in-process LLamaSharp weights or context.
 /// Implements IEngine for testing/abstraction.
 /// </summary>
-public class EAgentEngine : IEngine
+public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
 {
     protected readonly string _modelPath;
     protected readonly uint _contextSize;
     protected readonly EAgentConfig _config;
     protected readonly string _workingDir;
-    protected readonly ILogger _logger;
+    protected readonly ILogger _logger = new Logger();
     protected readonly ISessionOutput? _out;
-    public bool MockMode { get; set; }
+    public bool MockMode { get; private set; }
+
+    /// <summary>Explicit mock-mode toggle (write-only flag; kept for test harness).</summary>
+    public void SetMockMode(bool enabled) => MockMode = enabled;
 
      // ── HTTP transport — no in-process LLamaSharp ──
     protected IInferenceEngine? _inferenceEngine;
@@ -47,19 +50,12 @@ public class EAgentEngine : IEngine
     protected ConversationTranscript _transcript;
 
      // ── KV cache state (local mirror of server-side status) ──
-    private bool _isPrefilled;
-    private uint _kvContextSize;
-    private int _kvApproxTokens;
-    private double _kvEstimatedMB;
+    private readonly KvCacheState _kvState = new();
 
-     // ── Execution lifecycle ──
-    private CancellationTokenSource? _cts;
-    protected bool _escPressed;
-    protected int _turnCount;
+     // ── Execution lifecycle (thread-safe: CTS, ESC flag, turn counter) ──
+    protected readonly ExecutionLifecycleState _lifecycle = new();
     private string? _systemPromptText;
     private string? _cachedStaticPrefix;
-    private bool _kvSessionActive;
-    private int _consecutiveRewindFailures = 0;
     private const int MaxRewindFailures = 2;
 
     // ── Output mode (verbose/silent) ──
@@ -112,6 +108,7 @@ public class EAgentEngine : IEngine
 
      // ── Shared components (lazily created / injected) ──
     private readonly List<EToolBase> _tools = new();
+    private readonly object _toolsLock = new();
     private SubAgentManager? _subAgentManager;
     private ECAssistant.Core.Engine.SelfCorrectionManager? _selfCorrection;
     private ECAssistant.Core.Engine.ProjectContextManager? _projectContext;
@@ -120,7 +117,10 @@ public class EAgentEngine : IEngine
 
      // ── Public API ─────────────────────────────────────────────
 
-    public ISessionOutput? SessionOutput { get; set; }
+    public ISessionOutput? SessionOutput { get; private set; }
+
+    /// <summary>Attach or replace the session output renderer.</summary>
+    public void SetSessionOutput(ISessionOutput? output) => SessionOutput = output;
     public IInferenceEngine? InferenceEngine => _inferenceEngine;
     public IKvCacheController? KvCacheController => _kvCacheController;
     public RemoteTokenizer? Tokenizer => _tokenizer;
@@ -143,17 +143,26 @@ public class EAgentEngine : IEngine
         var modelId = _requestParams?.ModelId ?? "main";
         _inferenceEngine = new HttpStreamingEngine(newClient, modelId, _sessionId);
         // Reset KV session state so PrefillStaticPrefix recreates it
-        _kvSessionActive = false;
+        _kvState.SessionActive = false;
     }
     public InferenceRequestParams? InferenceParams => _requestParams;
-    public CancellationToken ExecutionToken => _cts?.Token ?? CancellationToken.None;
+    public CancellationToken ExecutionToken => _lifecycle.Token;
     public bool IsExecutionStopped => ExecutionToken.IsCancellationRequested;
     public string ModelPath => _modelPath;
-    public int MaxIterations { get; set; } = 10;
+    public int MaxIterations { get; private set; } = 10;
+
+    /// <summary>Set the max-iterations guard for the main loop.</summary>
+    public void SetMaxIterations(int max)
+     {
+        if (max > 0) MaxIterations = max;
+     }
     public ContextWindow ContextWindow => _contextWindow;
     public ConversationTranscript Transcript => _transcript;
     public EMemoryManager Memory => _memoryManager;
-    public List<EToolBase> Tools => _tools;
+    public IReadOnlyList<EToolBase> Tools
+     {
+        get { lock (_toolsLock) return _tools.ToArray(); }
+     }
     public SubAgentManager SubAgentManager => _subAgentManager ??= CreateSubAgentManager();
     public ECAssistant.Core.Engine.SelfCorrectionManager? SelfCorrection => _selfCorrection;
     public ECAssistant.Core.Engine.ProjectContextManager? ProjectContext => _projectContext;
@@ -161,27 +170,25 @@ public class EAgentEngine : IEngine
     public IStepMapper? SharedStepMapper => _sharedStepMapper ??= CreateStepMapper();
 
      // ── KV cache status (sync — read from cached snapshot) ──
-    public bool IsKVCachePrefilled => _isPrefilled;
-    public uint KVCacheContextSize => _kvContextSize;
+    public bool IsKVCachePrefilled => _kvState.IsPrefilled;
+    public uint KVCacheContextSize => _kvState.ContextSize;
     public double KVCacheUsageRatio =>
-        _kvContextSize > 0 ? (double)_kvApproxTokens / _kvContextSize : 0.0;
-    public double KVCacheEstimatedMB => _kvEstimatedMB;
-    public int UsedTokens => _kvApproxTokens;
-    public int MaxContextTokens => (int)_kvContextSize;
+        _kvState.ContextSize > 0 ? (double)_kvState.ApproxTokens / _kvState.ContextSize : 0.0;
+    public double KVCacheEstimatedMB => _kvState.EstimatedMB;
+    public int UsedTokens => _kvState.ApproxTokens;
+    public int MaxContextTokens => (int)_kvState.ContextSize;
     public double ContextUsagePercent =>
-        _kvContextSize > 0 ? _kvApproxTokens * 100.0 / _kvContextSize : 0.0;
+        _kvState.ContextSize > 0 ? _kvState.ApproxTokens * 100.0 / _kvState.ContextSize : 0.0;
     public int TokensUntilSummarize
      {
         get
          {
-            var threshold = _contextWindow?.MaxTokens != 0
-                 ? (int)(_contextWindow.MaxTokens * 0.5)
-                 : 0;
-            return Math.Max(0, threshold - _kvApproxTokens);
+            var threshold = (int)((_contextWindow?.MaxTokens ?? 0) * 0.5);
+            return Math.Max(0, threshold - _kvState.ApproxTokens);
          }
      }
     public bool IsContextNearOverflow =>
-        _kvContextSize > 0 && _kvApproxTokens > _kvContextSize * 0.8;
+        _kvState.ContextSize > 0 && _kvState.ApproxTokens > _kvState.ContextSize * 0.8;
 
      // ── Constructor (HTTP transport) ───────────────────────────
 
@@ -205,7 +212,7 @@ public class EAgentEngine : IEngine
         ECAssistant.Core.Engine.ProjectContextManager? projectContext = null,
         ITaskPlanner? taskPlanner = null)
      {
-        _logger = logger ?? new Logger();
+        if (logger != null) _logger = logger;
         _injectedSelfCorrection = selfCorrection;
         _injectedProjectContext = projectContext;
         _injectedTaskPlanner = taskPlanner;
@@ -219,7 +226,7 @@ public class EAgentEngine : IEngine
 
         _modelPath = modelPath;
         _contextSize = contextSize;
-        _kvContextSize = contextSize;
+        _kvState.ContextSize = contextSize;
         _config = config ?? new EAgentConfig();
         _backgroundTasks = _config.BackgroundTasks;
         _workingDir = string.IsNullOrEmpty(workingDir) ? AppContext.BaseDirectory : workingDir;
@@ -432,7 +439,7 @@ public class EAgentEngine : IEngine
     /// </summary>
     private InferenceRequestParams? BuildWarmSessionParams()
     {
-        if (!_kvSessionActive || _sessionId == null)
+        if (!_kvState.SessionActive || _sessionId == null)
             return null;
 
         var p = BuildStatelessParams();
@@ -608,7 +615,7 @@ User: " + userRequest + "\n<lm>\n";
      /// <summary>Prefill the static prefix (system prompt + tools) into the server KV cache. Idempotent.</summary>
     public virtual async Task PrefillStaticPrefix()
      {
-        if (_isPrefilled) return;
+        if (_kvState.IsPrefilled) return;
 
         _cachedStaticPrefix = BuildSystemToolsPrompt();
         _out?.WriteInfo($"[KVCache] Prefilling static prefix ({_cachedStaticPrefix.Length} chars)...");
@@ -616,12 +623,12 @@ User: " + userRequest + "\n<lm>\n";
 
         try
          {
-            if (!_kvSessionActive && _kvCacheController != null)
+            if (!_kvState.SessionActive && _kvCacheController != null)
              {
                 try
                  {
                     await _kvCacheController.CreateSessionAsync(_sessionId);
-                    _kvSessionActive = true;
+                    _kvState.SessionActive = true;
                  }
                 catch (Exception ex)
                  {
@@ -633,7 +640,7 @@ User: " + userRequest + "\n<lm>\n";
              {
                 await _kvCacheController.PrefillAsync(_sessionId, _cachedStaticPrefix);
                 await RefreshKvStatusAsync();
-                _isPrefilled = true;
+                _kvState.IsPrefilled = true;
              }
          }
         catch (Exception ex)
@@ -654,10 +661,10 @@ User: " + userRequest + "\n<lm>\n";
             var status = await _kvCacheController.GetStatusAsync(_sessionId);
             if (status != null)
              {
-                _kvContextSize = status.ContextSize > 0 ? status.ContextSize : _kvContextSize;
-                _kvApproxTokens = status.ApproxTokens;
-                _kvEstimatedMB = status.EstimatedVramMb;
-                _isPrefilled = status.IsPrefilled || _isPrefilled;
+                _kvState.ContextSize = status.ContextSize > 0 ? status.ContextSize : _kvState.ContextSize;
+                _kvState.ApproxTokens = status.ApproxTokens;
+                _kvState.EstimatedMB = status.EstimatedVramMb;
+                _kvState.IsPrefilled = status.IsPrefilled || _kvState.IsPrefilled;
              }
          }
         catch { /* status is best-effort */ }
@@ -672,8 +679,8 @@ User: " + userRequest + "\n<lm>\n";
         try
          {
             await _kvCacheController.ResetAsync(_sessionId);
-            _isPrefilled = false;
-            _kvApproxTokens = 0;
+            _kvState.IsPrefilled = false;
+            _kvState.ApproxTokens = 0;
          }
         catch (Exception ex)
          {
@@ -705,27 +712,27 @@ User: " + userRequest + "\n<lm>\n";
 
          // Fast path: server-side rewind
         bool rewindOK = false;
-        if (_consecutiveRewindFailures < MaxRewindFailures && _kvCacheController != null)
+        if (_kvState.ConsecutiveRewindFailures < MaxRewindFailures && _kvCacheController != null)
          {
             try
              {
                 await _kvCacheController.RewindAsync(_sessionId);
                 rewindOK = true;
-                _consecutiveRewindFailures = 0;
+                _kvState.ConsecutiveRewindFailures = 0;
                 _out?.WriteInfo("[KVCache] Rewound to pre-generation state (format retry, fast path).");
              }
             catch (Exception ex)
              {
-                _consecutiveRewindFailures++;
-                _logger?.Warn("KVCache", $"Rewind failed (attempt {_consecutiveRewindFailures}/{MaxRewindFailures}): {ex.Message}");
+                _kvState.ConsecutiveRewindFailures++;
+                _logger?.Warn("KVCache", $"Rewind failed (attempt {_kvState.ConsecutiveRewindFailures}/{MaxRewindFailures}): {ex.Message}");
              }
          }
 
          // Fallback: full KV cache rebuild
         if (!rewindOK)
          {
-            _out?.WriteWarning("[KVCache] " + (_consecutiveRewindFailures >= MaxRewindFailures
-                 ? $"Rewind failed {_consecutiveRewindFailures}x — forcing full rebuild."
+            _out?.WriteWarning("[KVCache] " + (_kvState.ConsecutiveRewindFailures >= MaxRewindFailures
+                 ? $"Rewind failed {_kvState.ConsecutiveRewindFailures}x — forcing full rebuild."
                  : "No saved state — forcing full rebuild."));
 
             await ResetAndRebuildCacheAsync();
@@ -774,7 +781,7 @@ User: " + userRequest + "\n<lm>\n";
                  }
              }
 
-            _consecutiveRewindFailures = 0;
+            _kvState.ConsecutiveRewindFailures = 0;
             _out?.WriteSuccess("[KVCache] Cache rebuilt for format retry (fallback path).");
          }
     }
@@ -799,7 +806,7 @@ User: " + userRequest + "\n<lm>\n";
      {
         _contextWindow.Clear();
         _transcript.Messages.Clear();
-        _turnCount = 0;
+        _lifecycle.TurnCount = 0;
         _out?.WriteInfo("[Context] History and transcript cleared.");
     }
 
@@ -807,21 +814,21 @@ User: " + userRequest + "\n<lm>\n";
     public void ClearContextWindowOnly()
      {
         _contextWindow.Clear();
-        _turnCount = 0;
+        _lifecycle.TurnCount = 0;
         _out?.WriteInfo("[Context] Context window cleared (transcript preserved).");
     }
 
      /// <summary>Reset the turn counter for a new user request.</summary>
     public virtual void ResetTurnCount()
      {
-        _turnCount = 0;
+        _lifecycle.TurnCount = 0;
     }
 
      /// <summary>Reset KV cache dynamic context for a new user request (keeps static prefix).</summary>
     public virtual void ResetForNewRequest()
      {
-        _turnCount = 0;
-        _escPressed = false;
+        _lifecycle.TurnCount = 0;
+        _lifecycle.EscPressed = false;
     }
 
      // ── Incremental input building ─────────────────────────────
@@ -831,7 +838,7 @@ User: " + userRequest + "\n<lm>\n";
      {
         var sb = new StringBuilder();
 
-        if (_turnCount == 1)
+        if (_lifecycle.TurnCount == 1)
          {
             var memoryInject = GetMemoryInjection(userRequest);
             var projectCtx = GetProjectContextInjection(userRequest);
@@ -898,7 +905,7 @@ User: " + userRequest + "\n<lm>\n";
                 if (!vecResults.StartsWith("(No semantic"))
                     sb.AppendLine(vecResults);
              }
-            catch { }
+            catch (Exception ex) { _logger?.Debug("Engine", $"Non-critical error ignored: {ex.Message}"); }
          }
 
         if (_memoryManager != null)
@@ -919,7 +926,7 @@ User: " + userRequest + "\n<lm>\n";
 
     public void RegisterTool(EToolBase tool)
      {
-        _tools.Add(tool);
+        lock (_toolsLock) _tools.Add(tool);
         _out?.WriteInfo($"[Tool] Registered: {tool.Name}");
     }
 
@@ -1036,8 +1043,8 @@ User: " + userRequest + "\n<lm>\n";
      /// </summary>
     public virtual async Task<string> GenerateAsync(string userPrompt)
      {
-        _turnCount++;
-        _escPressed = false;
+        _lifecycle.IncrementTurn();
+        _lifecycle.EscPressed = false;
 
         // Vision: extract [image:<path>] attachments into data URIs, strip tokens from the prompt.
         var (cleanPrompt, imageRefs) = ImageAttachmentParser.Extract(userPrompt, _workingDir);
@@ -1045,14 +1052,14 @@ User: " + userRequest + "\n<lm>\n";
         if (imageRefs.Count > 0)
             _out?.WriteInfo($"[Vision] Attached {imageRefs.Count} image(s) to this turn");
 
-        if (_turnCount == 1)
+        if (_lifecycle.TurnCount == 1)
          {
             _transcript.AddUser(userPrompt);
          }
 
         var effectivePrompt = cleanPrompt.Length > 0 ? cleanPrompt : userPrompt;
 
-        _logger?.Debug("Context", $"Turn {_turnCount} | Budget: {_contextWindow.GetTotalTokens()}/{_contextWindow.MaxTokens} tokens");
+        _logger?.Debug("Context", $"Turn {_lifecycle.TurnCount} | Budget: {_contextWindow.GetTotalTokens()}/{_contextWindow.MaxTokens} tokens");
 
          // KV cache overflow handling — rebuild with summarized conversation
         var tokenBudget = _contextWindow.GetTotalTokens();
@@ -1112,7 +1119,7 @@ User: " + userRequest + "\n<lm>\n";
                 _out?.WriteInfo($"[KVCache] Re-injected summary: {summaryText.Length} chars");
              }
 
-            if (_turnCount > 1)
+            if (_lifecycle.TurnCount > 1)
              {
                 var lastToolMsg = allMessages.LastOrDefault(m => m.Role == "tool_output");
                 var lastUserMsg = allMessages.LastOrDefault(m => m.Role == "user");
@@ -1122,7 +1129,7 @@ User: " + userRequest + "\n<lm>\n";
                      _contextWindow.AddUserMessage(lastUserMsg.Content);
              }
 
-            if (_turnCount == 1)
+            if (_lifecycle.TurnCount == 1)
              {
                 _transcript.AddUser(userPrompt);
                 _contextWindow.AddUserMessage(effectivePrompt, imageDataUris);
@@ -1133,19 +1140,19 @@ User: " + userRequest + "\n<lm>\n";
 
         try
          {
-            _logger?.Debug("Engine", $"Incremental input: {incrementalInput.Length} chars, Turn: {_turnCount}");
+            _logger?.Debug("Engine", $"Incremental input: {incrementalInput.Length} chars, Turn: {_lifecycle.TurnCount}");
 
             var promptDumpPath = Path.Combine(_workingDir, "last_prompt.txt");
             try
              {
                 File.WriteAllText(promptDumpPath,
-                     $"=== INCREMENTAL INPUT (Turn {_turnCount}) ===\n{incrementalInput}\n\n=== STATIC PREFIX (cached) ===\n{_cachedStaticPrefix ?? "(not prefilled)"}");
+                     $"=== INCREMENTAL INPUT (Turn {_lifecycle.TurnCount}) ===\n{incrementalInput}\n\n=== STATIC PREFIX (cached) ===\n{_cachedStaticPrefix ?? "(not prefilled)"}");
              }
-            catch { }
+            catch (Exception ex) { _logger?.Debug("Engine", $"Non-critical error ignored: {ex.Message}"); }
 
             if (_logger?.IsDebugEnabled == true)
              {
-                _out?.WriteInfo($"[IncrementalInput] Turn {_turnCount} — {incrementalInput.Length} chars");
+                _out?.WriteInfo($"[IncrementalInput] Turn {_lifecycle.TurnCount} — {incrementalInput.Length} chars");
                 _out?.WriteDim(new string('=', 60));
                 _out?.WriteDim(incrementalInput);
                 _out?.WriteDim(new string('=', 60));
@@ -1168,7 +1175,7 @@ User: " + userRequest + "\n<lm>\n";
                 var stopTags = new[] { "</lm>" };
                 var showTokenStream = _verbose && !_silent;
                 if (showTokenStream)
-                    _out?.WriteLine($"── Token Stream (Turn {_turnCount}) ── [ESC to stop] ──", OutputState.Bold);
+                    _out?.WriteLine($"── Token Stream (Turn {_lifecycle.TurnCount}) ── [ESC to stop] ──", OutputState.Bold);
                 _out?.StartStream(OutputState.Raw);
                 var tokenCount = 0;
 
@@ -1192,7 +1199,7 @@ User: " + userRequest + "\n<lm>\n";
                  {
                     if (ExecutionToken.IsCancellationRequested)
                      {
-                         _escPressed = true;
+                         _lifecycle.EscPressed = true;
                          _out?.StopStream();
                          _out?.BlankLine();
                          _out?.WriteError("[Stop] Generation stopped by user (ESC).");
@@ -1267,7 +1274,7 @@ User: " + userRequest + "\n<lm>\n";
              _out?.BlankLine();
              _logger?.Info("Engine", $"Response: {cleanResponse.Length} chars");
 
-            if (ExecutionToken.IsCancellationRequested || _escPressed)
+            if (ExecutionToken.IsCancellationRequested || _lifecycle.EscPressed)
              {
                  _out?.WriteWarning("[Engine] Execution stopped — not storing partial response.");
                 if (_kvCacheController != null)
@@ -1430,22 +1437,11 @@ User: " + userRequest + "\n<lm>\n";
 
      // ── Execution lifecycle ────────────────────────────────────
 
-    public void StartExecution()
-     {
-         _cts = new CancellationTokenSource();
-         _escPressed = false;
-    }
+    public void StartExecution() => _lifecycle.Start();
 
-    public void StopExecution()
-     {
-         _cts?.Cancel();
-    }
+    public void StopExecution() => _lifecycle.Stop();
 
-    public void EndExecution()
-     {
-         _cts?.Dispose();
-         _cts = null;
-    }
+    public void EndExecution() => _lifecycle.End();
 
      // ── IEngine implementation (lifecycle adapter) ─────────────
 
@@ -1462,11 +1458,17 @@ User: " + userRequest + "\n<lm>\n";
     }
 
     public void Dispose()
-         => DisposeAsync().AsTask().GetAwaiter().GetResult();
+     {
+        // Safe sync path: the awaited operations in DisposeAsync are HTTP calls on a
+        // dedicated HttpClient without a captured SynchronizationContext, so blocking
+        // here cannot deadlock. Prefer DisposeAsync when already async.
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
+    }
 
     public async ValueTask DisposeAsync()
      {
-        try { if (_kvSessionActive && _kvCacheController != null) await _kvCacheController.DestroySessionAsync(_sessionId); } catch { }
+        try { if (_kvState.SessionActive && _kvCacheController != null) await _kvCacheController.DestroySessionAsync(_sessionId); }
+        catch (Exception ex) { _logger?.Warn("Dispose", $"KV session destroy failed: {ex.Message}"); }
         foreach (var t in _tools)
             if (t is IDisposable d) d.Dispose();
          _out?.WriteInfo("[Exit] Engine disposed.");
@@ -1476,7 +1478,6 @@ User: " + userRequest + "\n<lm>\n";
 
     protected virtual SubAgentManager CreateSubAgentManager()
          => new(this, _workingDir, _logger, _out, _config, _processRunner, _fileSystem, _httpClient);
-
     protected virtual ITaskPlanner CreateTaskPlanner()
          => new TaskPlanner(_logger);
 
@@ -1497,186 +1498,3 @@ public class ExecutionState
     public List<string> History { get; set; } = new();
 }
 
-// ── Mock engine for testing ──────────────────────────────────
-
-/// <summary>
-/// Mock engine for testing — no real model loaded. Returns pre-queued responses.
-/// Uses no-op HTTP transport so tests don't require a running ECAssistantLLM server.
-/// </summary>
-public class MockEngine : EAgentEngine
-{
-    private readonly Queue<string> _responses = new();
-    private readonly bool _stopAfterFirstTool;
-    private readonly bool _cycleResponses;
-    private readonly ISessionOutput? _mockOut;
-    private readonly List<string> _allResponses = new();
-    private string? _defaultResponse;
-
-    public List<(string toolName, string output)> ToolResults { get; } = new();
-    public int GenerateCallCount { get; private set; }
-    public IReadOnlyList<string> ConsumedResponses => _allResponses;
-    public Action<string>? OnResponseConsumed { get; set; }
-    public Action<string>? OnGenerateCalled { get; set; }
-
-    public MockEngine(Queue<string> responses, int maxIterations = 5,
-        bool stopAfterFirstTool = false, string? workingDir = null, ISessionOutput? sessionOutput = null)
-        : base("mock-" + Guid.NewGuid().ToString("N")[..8],
-            InferenceEngineNoop.Instance, KvCacheNoop.Instance,
-            tokenizer: null,
-            inferenceParams: new InferenceRequestParams(),
-            contextSize: 8192,
-            modelPath: "mock",
-            workingDir: workingDir)
-    {
-        _responses = responses;
-        MockMode = true;
-        _stopAfterFirstTool = stopAfterFirstTool;
-        _mockOut = sessionOutput;
-        MaxIterations = maxIterations;
-        SessionOutput = sessionOutput;
-    }
-
-    public MockEngine(string? workingDir = null, ISessionOutput? sessionOutput = null, bool cycleResponses = false)
-        : base("mock-" + Guid.NewGuid().ToString("N")[..8],
-            InferenceEngineNoop.Instance, KvCacheNoop.Instance,
-            tokenizer: null,
-            inferenceParams: new InferenceRequestParams(),
-            contextSize: 8192,
-            modelPath: "mock",
-            workingDir: workingDir)
-    {
-        MockMode = true;
-        _stopAfterFirstTool = false;
-        _cycleResponses = cycleResponses;
-        _mockOut = sessionOutput;
-        MaxIterations = 5;
-        SessionOutput = sessionOutput;
-    }
-
-    public void EnqueueResponse(string response) => _responses.Enqueue(response);
-    public void AddResponse(string response) => _responses.Enqueue(response);
-    public void AddResponses(params string[] responses) { foreach (var r in responses) _responses.Enqueue(r); }
-    public void SetDefaultResponse(string response) => _defaultResponse = response;
-    public void ClearResponses() { _responses.Clear(); _allResponses.Clear(); GenerateCallCount = 0; }
-    public int QueuedCount => _responses.Count;
-
-    public override void AddToolResult(string toolName, string output)
-    {
-        ToolResults.Add((toolName, output));
-        base.AddToolResult(toolName, output);
-    }
-
-    public override Task PrefillStaticPrefix()
-    {
-        _mockOut?.WriteInfo("[MockEngine] PrefillStaticPrefix (no-op)");
-        return Task.CompletedTask;
-    }
-
-    public override Task ResetAndRebuildCacheAsync()
-    {
-        _mockOut?.WriteInfo("[MockEngine] ResetAndRebuildCacheAsync (no-op)");
-        return Task.CompletedTask;
-    }
-
-    public override Task RebuildCacheAfterStopAsync()
-    {
-        _mockOut?.WriteInfo("[MockEngine] RebuildCacheAfterStopAsync (no-op)");
-        return Task.CompletedTask;
-    }
-
-    public override Task RemoveLastAssistantResponseAsync()
-    {
-        _contextWindow.RemoveLastAssistantMessage();
-        _mockOut?.WriteInfo("[MockEngine] RemoveLastAssistantResponseAsync (context window only)");
-        return Task.CompletedTask;
-    }
-
-    public override async Task<string> GenerateAsync(string userPrompt)
-    {
-        _turnCount = 0;
-        GenerateCallCount++;
-        OnGenerateCalled?.Invoke(userPrompt);
-
-        string response;
-        if (_responses.Count > 0)
-        {
-            response = _responses.Dequeue();
-            if (_cycleResponses) _responses.Enqueue(response);
-        }
-        else if (_defaultResponse != null)
-            response = _defaultResponse;
-        else
-            response = "(No more queued responses)";
-
-        _allResponses.Add(response);
-        OnResponseConsumed?.Invoke(response);
-
-        _mockOut?.WriteInfo($"[MockEngine] Returning queued response ({response.Length} chars)");
-
-        if (response.StartsWith("<assistant>", StringComparison.OrdinalIgnoreCase))
-            response = response.Substring("<assistant>".Length).Trim();
-
-        const int maxResponseLength = 2000;
-        if (response.Length > maxResponseLength)
-        {
-            response = response.Substring(0, maxResponseLength) + "\n[response truncated for testing]";
-            _mockOut?.WriteWarning($"[MockEngine] Response truncated to {maxResponseLength} chars");
-        }
-
-        _transcript.AddAssistant(response);
-        _contextWindow.AddAssistantMessage(response);
-
-        if (_stopAfterFirstTool)
-        {
-            foreach (var t in Tools)
-            {
-                if (t.Name.Equals("eshellagent", StringComparison.OrdinalIgnoreCase) ||
-                    t.Name.Equals("ecodeeditor", StringComparison.OrdinalIgnoreCase))
-                {
-                    _escPressed = true;
-                    StopExecution();
-                    break;
-                }
-            }
-        }
-
-        await Task.CompletedTask;
-        return response;
-    }
-
-    protected override SubAgentManager CreateSubAgentManager()
-        => new(this, _workingDir, _logger, _mockOut, _config, _processRunner, _fileSystem, _httpClient);
-
-    /// <summary>No-op inference engine for mock mode.</summary>
-    internal sealed class InferenceEngineNoop : IInferenceEngine
-    {
-        public static readonly InferenceEngineNoop Instance = new();
-        public string Endpoint => "mock";
-        public Task<string> GenerateAsync(string prompt, InferenceRequestParams parameters, CancellationToken ct = default)
-            => Task.FromResult("");
-        public IAsyncEnumerable<string> StreamAsync(string prompt, InferenceRequestParams parameters, CancellationToken ct = default)
-        {
-            return StreamNoop(ct);
-        }
-
-        private static async IAsyncEnumerable<string> StreamNoop([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
-        {
-            await Task.CompletedTask;
-            yield break;
-        }
-    }
-
-    /// <summary>No-op KV cache controller for mock mode.</summary>
-    internal sealed class KvCacheNoop : IKvCacheController
-    {
-        public static readonly KvCacheNoop Instance = new();
-        public Task<bool> CreateSessionAsync(string sessionId, CancellationToken ct = default) => Task.FromResult(true);
-        public Task<bool> DestroySessionAsync(string sessionId, CancellationToken ct = default) => Task.FromResult(true);
-        public Task<bool> PrefillAsync(string sessionId, string text, CancellationToken ct = default) => Task.FromResult(true);
-        public Task<bool> SaveStateAsync(string sessionId, CancellationToken ct = default) => Task.FromResult(true);
-        public Task<bool> RewindAsync(string sessionId, CancellationToken ct = default) => Task.FromResult(true);
-        public Task<bool> ResetAsync(string sessionId, CancellationToken ct = default) => Task.FromResult(true);
-        public Task<KvCacheStatus?> GetStatusAsync(string sessionId, CancellationToken ct = default)
-            => Task.FromResult<KvCacheStatus?>(null);
-    }
-}

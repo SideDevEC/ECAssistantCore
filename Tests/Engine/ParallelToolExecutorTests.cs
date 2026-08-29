@@ -1,5 +1,4 @@
 using ECAssistant.Core.Engine;
-using ECAssistant.Core.Engine;
 using ECAssistant.Core.Tools;
 using Moq;
 

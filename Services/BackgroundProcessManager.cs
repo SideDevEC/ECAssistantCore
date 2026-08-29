@@ -73,17 +73,17 @@ public class BackgroundProcessManager : IDisposable
                 var completed = await Task.Run(() => proc.WaitForExit(timeoutSeconds * 1000));
                 if (!completed && !proc.HasExited)
                 {
-                    try { proc.Kill(entireProcessTree: true); } catch { }
+                    try { proc.Kill(entireProcessTree: true); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[BackgroundProcessManager] Non-critical error ignored: {ex.Message}"); }
                     bgProc.TimedOut = true;
                 }
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[BackgroundProcessManager] Non-critical error ignored: {ex.Message}"); }
             finally
             {
                 bgProc.CompletedAt = DateTime.UtcNow;
                 bgProc.ExitCode = proc.HasExited ? proc.ExitCode : -1;
                 bgProc.IsFinished = true;
-                try { File.Delete(tempScript); } catch { }
+                try { File.Delete(tempScript); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[BackgroundProcessManager] Non-critical error ignored: {ex.Message}"); }
             }
         });
 
@@ -181,7 +181,7 @@ public class BackgroundProcessManager : IDisposable
     {
         foreach (var bg in _processes.Values)
         {
-            try { if (!bg.Process.HasExited) bg.Process.Kill(entireProcessTree: true); } catch { }
+            try { if (!bg.Process.HasExited) bg.Process.Kill(entireProcessTree: true); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[BackgroundProcessManager] Non-critical error ignored: {ex.Message}"); }
         }
         _processes.Clear();
     }

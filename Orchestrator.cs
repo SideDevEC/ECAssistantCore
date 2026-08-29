@@ -906,7 +906,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
      {
-        try { _subAgentManager?.Dispose(); } catch { }
+        try { _subAgentManager?.Dispose(); } catch (Exception ex) { _logger?.Debug("Orchestrator", $"Non-critical error ignored: {ex.Message}"); }
         await Task.CompletedTask;
      }
 }

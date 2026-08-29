@@ -15,7 +15,7 @@ namespace ECAssistant.Core.Engine;
 
 public sealed class SubAgentManager : IDisposable
 {
-    private readonly EAgentEngine _mainEngine;
+    private readonly ISubAgentEngineHost _mainEngine;
     private readonly InferenceRequestParams _inferenceParams;
     private readonly EAgentConfig _config;
     private readonly ConcurrentDictionary<string, ActiveSubAgent> _activeSubAgents = new();
@@ -33,27 +33,27 @@ public sealed class SubAgentManager : IDisposable
     private readonly ECAssistant.Core.Interfaces.IHttpClient _httpClient;
 
     /// <summary>Maximum concurrent sub-agents.</summary>
-    public int MaxConcurrent { get; set; } = 3;
+    public int MaxConcurrent { get; } = 3;
 
     /// <summary>Default context size for sub-agents — from subagent config.</summary>
-    public uint DefaultContextSize { get; set; } = 16384;
+    public uint DefaultContextSize { get; } = 16384;
 
     /// <summary>Default max turns for sub-agents — from subagent config.</summary>
-    public int DefaultMaxTurns { get; set; } = 5;
+    public int DefaultMaxTurns { get; } = 5;
 
     /// <summary>Default timeout in seconds for sub-agents — from subagent config.</summary>
-    public int DefaultTimeoutSeconds { get; set; } = 120;
+    public int DefaultTimeoutSeconds { get; } = 120;
 
     /// <summary>Default max retries for sub-agents — from subagent config.</summary>
-    public int DefaultMaxRetries { get; set; } = 1;
+    public int DefaultMaxRetries { get; } = 1;
 
     /// <summary>Default max tool calls for sub-agents — from subagent config.</summary>
-    public int DefaultMaxToolCalls { get; set; } = 20;
+    public int DefaultMaxToolCalls { get; } = 20;
 
     /// <summary>All currently active sub-agent handles (for monitoring/cancellation).</summary>
     public IReadOnlyDictionary<string, ActiveSubAgent> ActiveAgents => _activeSubAgents;
 
-    public SubAgentManager(EAgentEngine mainEngine, string mainWorkingDir = "", ILogger? logger = null, ISessionOutput? sessionOutput = null,
+    public SubAgentManager(ISubAgentEngineHost mainEngine, string mainWorkingDir = "", ILogger? logger = null, ISessionOutput? sessionOutput = null,
         EAgentConfig? config = null,
         ECAssistant.Core.Interfaces.IProcessRunner? processRunner = null,
         ECAssistant.Core.Interfaces.IFileSystem? fileSystem = null,
@@ -217,7 +217,7 @@ public sealed class SubAgentManager : IDisposable
                 agent.Cts.Cancel();
                 agent.Engine?.StopExecution();
             }
-            catch { }
+            catch (Exception ex) { _logger?.Debug("SubAgent", $"Non-critical error ignored: {ex.Message}"); }
         }
 
         _out?.WriteTag("SubAgent", $"Cancelled {count} sub-agent(s).", OutputState.Warning);
@@ -261,7 +261,8 @@ public sealed class SubAgentManager : IDisposable
             // Create engine
             // Create HTTP-based inference for sub-agent
             var subSessionId = $"subagent-{Guid.NewGuid():N}";
-            var subClient = new Transport.OpenAIClient(_mainEngine.InferenceEngine.Endpoint);
+            var subClient = new Transport.OpenAIClient(_mainEngine.InferenceEngine?.Endpoint
+                ?? throw new InvalidOperationException("Main engine has no inference engine — cannot spawn sub-agent."));
             var subInference = new Services.Http.HttpStreamingEngine(subClient, _config.LlmProvider.ModelId, subSessionId);
             var subKvCache = new Services.Http.RemoteKvCacheController(subClient);
             childEngine = new EAgentEngine(
@@ -310,7 +311,7 @@ public sealed class SubAgentManager : IDisposable
             _ = Task.Run(() =>
             {
                 try { linkedCts.Token.WaitHandle.WaitOne(); }
-                catch { }
+                catch (Exception ex) { _logger?.Debug("SubAgent", $"Non-critical error ignored: {ex.Message}"); }
                 if (linkedCts.Token.IsCancellationRequested)
                     childEngine.StopExecution();
             });
@@ -456,7 +457,7 @@ public sealed class SubAgentManager : IDisposable
 
             if (childEngine != null)
             {
-                try { await childEngine.DisposeAsync(); } catch { }
+                try { await childEngine.DisposeAsync(); } catch (Exception ex) { _logger?.Debug("SubAgent", $"Non-critical error ignored: {ex.Message}"); }
                 lock (_lock) _childEngines.Remove(childEngine);
             }
         }
@@ -480,7 +481,7 @@ public sealed class SubAgentManager : IDisposable
                 files[rel] = File.GetLastWriteTimeUtc(f);
             }
         }
-        catch { }
+        catch (Exception ex) { _logger?.Debug("SubAgent", $"Non-critical error ignored: {ex.Message}"); }
         return files;
     }
 
@@ -502,7 +503,7 @@ public sealed class SubAgentManager : IDisposable
                 }
             }
         }
-        catch { }
+        catch (Exception ex) { _logger?.Debug("SubAgent", $"Non-critical error ignored: {ex.Message}"); }
         return modified;
     }
 
@@ -525,7 +526,7 @@ public sealed class SubAgentManager : IDisposable
         {
             foreach (var e in _childEngines)
             {
-                try { e.DisposeAsync().AsTask().Wait(1000); } catch { }
+                try { e.DisposeAsync().AsTask().Wait(1000); } catch (Exception ex) { _logger?.Debug("SubAgent", $"Non-critical error ignored: {ex.Message}"); }
             }
             _childEngines.Clear();
         }

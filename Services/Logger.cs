@@ -66,7 +66,7 @@ public class Logger : ILogger
         lock (_lock)
         {
             try { File.AppendAllText(_logFilePath, line + Environment.NewLine); }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Logger] Log write failed: {ex.Message}"); }
         }
     }
 

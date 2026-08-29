@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 80  |  LOC: 10958  |  ~2867 tokens
+Types: 80  |  LOC: 10957  |  ~2861 tokens
 
 ---
 
@@ -191,7 +191,7 @@ Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Testing, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
 
 ### Class: ParallelToolExecutorTests
-Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Engine, ECAssistant.Core.Tools, Moq
+Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools, Moq
 
 ### Class: ProcessRunnerTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces

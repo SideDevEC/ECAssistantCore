@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Library</OutputType>
+    <RootNamespace>ECAssistant.Core.TestSupport</RootNamespace>
+    <AssemblyName>ECAssistant.Core.TestSupport</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <Description>Test-support harness for ECAssistant.Core (TestRunner, scenarios, MockEngine). Not for production use.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ECAssistant.Core.csproj" />
+  </ItemGroup>
+
+</Project>

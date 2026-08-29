@@ -93,8 +93,9 @@ public sealed class OpenAIClient : IDisposable
             var json = await GetJsonAsync("/eca/health", cts.Token);
             return json.Contains("\"status\":\"ok\"") || json.Contains("\"status\": \"ok\"");
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[OpenAIClient] Health check failed: {ex.Message}");
             return false;
         }
     }

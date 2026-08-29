@@ -16,11 +16,11 @@ Two provider modes (`LlmProviderConfig.mode`):
 ## OOP Principles
 
 - **Encapsulation:** Config models are init-only (immutable); 2 documented exceptions for builder-mutated properties
-- **No globals or statics:** Dependencies injected via constructors. No static classes, no static mutable state. Utility classes (StringUtil, InferenceParamsFactory, ResourceLoader, AgentConfigBuilder) are instance classes with `Default` shared instance. The only allowed static methods are factory methods on immutable data classes (EToolResult.Success, TranscriptMessage.User, ToolPolicy.Allowed, AgentConfigBuilder.Create, etc.) and pure protected instance helpers on EToolBase (ReadConfig, ReadCfg, IsToolEnabled)
+- **No globals or statics:** Dependencies injected via constructors. No static classes, no static mutable state. Utility classes (StringUtil, InferenceParamsFactory, ResourceLoader, AgentConfigBuilder) are instance classes with `Default` shared instance. The only allowed static methods are factory methods on immutable data classes (EToolResult.Success, TranscriptMessage.User, ToolPermissionRecord construction, AgentConfigBuilder.Create, etc.) and pure protected instance helpers on EToolBase (ReadConfig, ReadCfg, IsToolEnabled)
 - **No cross-dependencies:** Layers depend only on the layer below
 - **Single responsibility:** One type per file, one interface = one concern
 - **Modular & interchangeable:** Every service behind an interface, mockable via Moq
-- **Testable by design:** 857 unit + integration tests, MockEngine for model-independent testing
+- **Testable by design:** 977 unit + integration tests; MockEngine/TestRunner live in the TestSupport project (kept out of the production package)
 - **Composition root:** Central `EcaCompositionRoot` wires all services
 - **Terminal abstraction:** `ITerminalOutput` decouples TUI from `System.Console`
 
@@ -45,7 +45,6 @@ ECAssistantCore/            # Core engine, tools, sessions, memory (168 .cs file
 │    └── Http/              # HTTP-based services (see below)
 ├── Session/                # AgentSession, SessionManager, SessionBuilder, SessionDiscovery
 │    └── ISessionContext    # Exposes Memory/VectorMemory/BackgroundTasks (NOT SharedWeights/SharedModelParams)
-├── Testing/                # TestRunner, MockEngine (in EAgentEngine.cs), TestScenario, EcaTests
 ├── Transport/              # OpenAIClient (HttpClient wrapper), SseParser (SSE token stream)
 └── Tools/                  # EToolBase + 12 built-in tools
      ├── EBackground/       # Background process execution
@@ -309,7 +308,7 @@ No admin/elevated rights required anywhere: user-scope crypto, non-privileged po
 | UI | 1+4 | ~17 |
 | **Total** | **62+4** | **914** |
 
-`MockEngine` (in `EAgentEngine.cs`) now extends `EAgentEngine` with a no-op HTTP transport so tests run without a live ECAssistantLLM server.
+`MockEngine` (now in the separate `ECAssistant.Core.TestSupport` project) extends `EAgentEngine` with a no-op HTTP transport so tests run without a live ECAssistantLLM server. TestRunner/TestScenario/EcaTests also live in TestSupport.
 
 ## EWebFetch v2 — Structured Content Pipeline (v12.1)
 
@@ -349,7 +348,7 @@ EWebFetch was reworked to produce LLM-parseable output. The old tool returned a 
 
 - No static classes, no static mutable state
 - Utility classes use instance methods with `Default` shared instance (StringUtil, InferenceParamsFactory, ResourceLoader, AgentConfigBuilder)
-- Factory methods on immutable data classes are the only allowed static methods (EToolResult.Success, TranscriptMessage.User, ToolPolicy.Allowed, AgentConfigBuilder.Create, etc.)
+- Factory methods on immutable data classes are the only allowed static methods (EToolResult.Success, TranscriptMessage.User, ToolPermissionRecord construction, AgentConfigBuilder.Create, etc.)
 - EToolBase config helpers (ReadConfig, ReadCfg, IsToolEnabled) are protected instance methods
 - Constructor injection throughout
 - One type per file
@@ -367,7 +366,7 @@ EWebFetch was reworked to produce LLM-parseable output. The old tool returned a 
 - PrefixCachedExtractor uses HTTP KV-cache control (`prefill`/`rewind` via `IKvCacheController`) for long-lived extraction
 - Token counting via `RemoteTokenizer` (HTTP `/eca/tokenize`) with char-based fallback
 - **`ServerLauncher`** spawns ECAssistantLLM with `--port {Port}` (+ optional `ServerConfigPath`); resolves the connect target via `LlmProviderConfig.ResolvedEndpoint`
-- MockEngine uses a no-op HTTP transport constructor (model-independent tests, no static flags)
+- MockEngine (in TestSupport) uses a no-op HTTP transport constructor (model-independent tests, no static flags)
 - v11.4: Orchestrator gates decomposition — verb heuristic first (instant), then LLM 1-token classification (~0.15s)
 - v11.4: System prompt teaches LLM to learn from failed <thinking> blocks in conversation history
 - v12.1: EWebFetch uses IReadableContentExtractor + IHtmlTextConverter pipeline (fetch→extract→convert→page); HttpClientAdapter sends browser User-Agent + Accept headers; offset arg for paging long pages; default maxchars 12K; tool rules injected into system prompt with offset guidance

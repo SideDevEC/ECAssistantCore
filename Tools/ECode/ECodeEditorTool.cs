@@ -189,7 +189,7 @@ public class ECodeEditorTool : EToolBase
                 }
                 if (totalMatches >= 30) break;
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[ECodeEditorTool] Non-critical error ignored: {ex.Message}"); }
         }
 
         if (totalMatches == 0)
@@ -228,7 +228,7 @@ public class ECodeEditorTool : EToolBase
                 modifiedFiles.Add(Path.GetRelativePath(_workingDir, filePath));
                 totalReplacements += count;
             }
-            catch { }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[ECodeEditorTool] Non-critical error ignored: {ex.Message}"); }
         }
 
         if (modifiedFiles.Count == 0)

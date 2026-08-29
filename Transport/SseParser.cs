@@ -25,8 +25,9 @@ public static class SseParser
             {
                 line = await reader.ReadLineAsync(ct);
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[SseParser] Stream read aborted: {ex.Message}");
                 break;
             }
 

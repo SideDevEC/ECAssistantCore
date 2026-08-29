@@ -158,7 +158,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         _orchestrator = new AgentOrchestrator(_engine, sessionOutput: this, maxTurns: 5, maxFailures: 3, toolPolicy: _toolPolicy, logger: _logger, config: config);
 
         // Wire engine output through this session
-        _engine.SessionOutput = this;
+        _engine.SetSessionOutput(this);
 
         // Initialize self-correction, project context, task planner
         _engine.InitializeSelfCorrection(workingDir);
@@ -296,7 +296,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
 
         lock (_uiLock)
         {
-            foreach (var l in _listeners) { try { l.OnStreamStart(); } catch { } }
+            foreach (var l in _listeners) { try { l.OnStreamStart(); } catch (Exception ex) { _logger?.Debug("Session", $"Non-critical error ignored: {ex.Message}"); } }
         }
     }
 
@@ -324,7 +324,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
 
         lock (_uiLock)
         {
-            foreach (var l in _listeners) { try { l.OnStreamStop(); } catch { } }
+            foreach (var l in _listeners) { try { l.OnStreamStop(); } catch (Exception ex) { _logger?.Debug("Session", $"Non-critical error ignored: {ex.Message}"); } }
         }
     }
 
@@ -512,7 +512,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
             foreach (var listener in _listeners)
             {
                 try { listener.OnOutput(text, _currentState); }
-                catch { }
+                catch (Exception ex) { _logger?.Debug("Session", $"Non-critical error ignored: {ex.Message}"); }
             }
         }
     }
@@ -883,10 +883,10 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
 
         if (_runnerTask != null)
         {
-            try { await _runnerTask; } catch { }
+            try { await _runnerTask; } catch (Exception ex) { _logger?.Debug("Session", $"Non-critical error ignored: {ex.Message}"); }
         }
 
-        try { SaveTranscript(); } catch { }
+        try { SaveTranscript(); } catch (Exception ex) { _logger?.Debug("Session", $"Non-critical error ignored: {ex.Message}"); }
 
         lock (_bufferLock)
         {
@@ -895,7 +895,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
             FlushStreamBuffer();
         }
 
-        lock (_fileLock) { try { _outputFile.Dispose(); } catch { } }
+        lock (_fileLock) { try { _outputFile.Dispose(); } catch (Exception ex) { _logger?.Debug("Session", $"Non-critical error ignored: {ex.Message}"); } }
 
         await _engine.DisposeAsync();
         await _orchestrator.DisposeAsync();

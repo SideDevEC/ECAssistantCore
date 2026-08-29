@@ -53,6 +53,7 @@ public class SessionManager : IAsyncDisposable
     // Multi-provider remote selection (null values = fall back to llm_provider section)
     private ILlmProviderRegistry? _registry;
     private SecureKeyStore? _keyStore;
+    private readonly Func<string, string?, string?, OpenAIClient> _newClient;
     private string? _effectiveEndpoint;
     private string? _effectiveApiKey;
     private string? _effectiveModelId;
@@ -88,7 +89,7 @@ public class SessionManager : IAsyncDisposable
 
         foreach (var candidate in candidates)
         {
-            using var probe = new OpenAIClient(candidate.Endpoint, apiKey: candidate.ApiKey);
+            using var probe = _newClient(candidate.Endpoint, candidate.ApiKey, null);
             if (await probe.PingAsync(ct))
             {
                 _logger.Info("SessionManager", $"Provider '{candidate.Name}' healthy — selected");
@@ -114,7 +115,17 @@ public class SessionManager : IAsyncDisposable
     /// Create session manager. In local mode, ensures LLM server is running and registers as client.
     /// In remote mode, just sets up the HTTP client with API key.
     /// </summary>
-    public SessionManager(EAgentConfig config, string resolvedModelPath, string workingDir, ILogger? logger = null)
+    public SessionManager(
+        EAgentConfig config,
+        string resolvedModelPath,
+        string workingDir,
+        ILogger? logger = null,
+        Func<string, string?, string?, OpenAIClient>? openAIClientFactory = null,
+        Func<LlmProviderConfig, string, ServerLauncher>? serverLauncherFactory = null,
+        LlmServerClient? serverClient = null,
+        SecureKeyStore? keyStore = null,
+        ILlmProviderRegistry? providerRegistry = null,
+        IModelParamValidator? modelParamValidator = null)
     {
         _logger = logger ?? new Logger();
         _config = config;
@@ -125,20 +136,25 @@ public class SessionManager : IAsyncDisposable
         var provider = config.LlmProvider;
         _inferenceParamsFactory = InferenceParamsFactory.Default;
 
+        // v12 DI: collaborators injectable for tests/composition; default to the production implementations.
+        _newClient = openAIClientFactory ?? ((endpoint, apiKey, clientId) => new OpenAIClient(endpoint, apiKey: apiKey, clientId: clientId));
+        var launcherFactory = serverLauncherFactory ?? ((providerConfig, appRoot) => new ServerLauncher(providerConfig, appRoot));
+        var validator = modelParamValidator ?? new ModelParamValidator(_logger);
+
         if (provider.IsLocal)
         {
             // ── Local mode: ECAssistantLLM server ──
-            _serverLauncher = new ServerLauncher(provider, _appRoot);
-            _serverClient = new LlmServerClient(provider.ResolvedEndpoint);
-            _httpClient = new OpenAIClient(provider.ResolvedEndpoint);
+            _serverLauncher = launcherFactory(provider, _appRoot);
+            _serverClient = serverClient ?? new LlmServerClient(provider.ResolvedEndpoint);
+            _httpClient = _newClient(provider.ResolvedEndpoint, null, null);
         }
         else
         {
             // ── Remote mode: multi-provider registry, else single llm_provider ──
             var keysDir = config.LlmProviders?.KeysDirectory ?? "keys";
             var keysPath = Path.IsPathRooted(keysDir) ? keysDir : Path.Combine(_appRoot, keysDir);
-            _keyStore = new SecureKeyStore(keysPath, _logger);
-            _registry = new LlmProviderRegistry(config.LlmProviders, _logger, _keyStore);
+            _keyStore = keyStore ?? new SecureKeyStore(keysPath, _logger);
+            _registry = providerRegistry ?? new LlmProviderRegistry(config.LlmProviders, _logger, _keyStore);
             foreach (var err in _registry.ValidationErrors)
                 _logger.Warn("SessionManager", $"llm_providers: {err}");
 
@@ -152,15 +168,16 @@ public class SessionManager : IAsyncDisposable
 
                 // Local embeddings + remote main AI → spawn the local LLM server solely
                 // for embedding workloads (vector memory). Main inference stays remote.
-                if (string.Equals(config.Embedding?.Mode, "local", StringComparison.OrdinalIgnoreCase))
+                var embedding = config.Embedding;
+                if (embedding != null && string.Equals(embedding.Mode, "local", StringComparison.OrdinalIgnoreCase))
                 {
                     var embeddingProvider = new LlmProviderConfig
                     {
                         Mode = "local",
-                        Endpoint = config.Embedding.Endpoint ?? $"http://localhost:{config.LlmProvider.Port}",
+                        Endpoint = embedding.Endpoint ?? $"http://localhost:{config.LlmProvider.Port}",
                         ServerRootPath = Path.Combine(_appRoot, "llm")
                     };
-                    _embeddingServerLauncher = new ServerLauncher(embeddingProvider, _appRoot);
+                    _embeddingServerLauncher = launcherFactory(embeddingProvider, _appRoot);
                     var embedOk = _embeddingServerLauncher.EnsureServerRunningAsync().GetAwaiter().GetResult();
                     if (embedOk)
                         _logger.Info("SessionManager", "Embedding server started locally (main AI stays remote)");
@@ -169,13 +186,12 @@ public class SessionManager : IAsyncDisposable
                 }
             }
 
-            _httpClient = new OpenAIClient(_effectiveEndpoint!, apiKey: _effectiveApiKey);
+            _httpClient = _newClient(_effectiveEndpoint!, _effectiveApiKey, null);
         }
 
         // Validate config (local mode needs model path; remote mode skips file validation)
         if (provider.IsLocal)
         {
-            var validator = new ModelParamValidator(_logger);
             var validationError = validator.Validate(config, resolvedModelPath);
             if (validationError != null)
             {
@@ -206,7 +222,7 @@ public class SessionManager : IAsyncDisposable
 
             // Recreate HTTP client with the registered client ID so X-Client-Id header is sent
             _httpClient.Dispose();
-            _httpClient = new OpenAIClient(_config.LlmProvider.ResolvedEndpoint, clientId: _serverClient.ClientId);
+            _httpClient = _newClient(_config.LlmProvider.ResolvedEndpoint, null, _serverClient.ClientId);
 
             // Setup tokenizer (local mode only — remote APIs don't expose /eca/tokenize)
             _remoteTokenizer = new RemoteTokenizer(_httpClient, _config.LlmProvider.ModelId);
@@ -518,7 +534,7 @@ public class SessionManager : IAsyncDisposable
 
         // Recreate HTTP client with new clientId
         _httpClient.Dispose();
-        _httpClient = new OpenAIClient(_config.LlmProvider.ResolvedEndpoint, clientId: _serverClient.ClientId);
+        _httpClient = _newClient(_config.LlmProvider.ResolvedEndpoint, null, _serverClient.ClientId);
         _remoteTokenizer = new RemoteTokenizer(_httpClient, _config.LlmProvider.ModelId);
 
         // Restart heartbeat
