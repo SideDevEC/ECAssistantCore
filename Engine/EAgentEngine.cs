@@ -575,11 +575,15 @@ User: " + userRequest + "\n<lm>\n";
 
         try
          {
-            var quickParams = BuildStatelessParams(2, new[] { "\n", "User:" }, 0.1f, 0.8f, 40, 1.0f);
+            // Thinking models (e.g. Qwen3.5) burn tokens inside <think> before answering —
+            // give the classifier enough budget, then strip think blocks before parsing.
+            var quickParams = BuildStatelessParams(64, new[] { "\n", "User:" }, 0.1f, 0.8f, 40, 1.0f);
             var raw = await _inferenceEngine.GenerateAsync(prompt, quickParams, CancellationToken.None);
-            var upper = raw.Trim().ToUpperInvariant();
-            _logger?.Info("Intent", $"Classification for '{userRequest.Substring(0, Math.Min(userRequest.Length, 40))}': {upper}");
-            return upper.StartsWith("CHAT");
+            var cleaned = StripThinkBlocks(raw).Trim().ToUpperInvariant();
+            _logger?.Info("Intent", $"Classification for '{userRequest.Substring(0, Math.Min(userRequest.Length, 40))}': {cleaned}");
+            if (cleaned.Contains("TASK")) return false;
+            if (cleaned.Contains("CHAT")) return true;
+            return false;
          }
         catch (OperationCanceledException)
          {
@@ -1309,9 +1313,23 @@ User: " + userRequest + "\n<lm>\n";
     }
 
      /// <summary>Extract clean LLM response by stripping hallucination noise.</summary>
+
+    /// <summary>Removes &lt;think&gt;…&lt;/think&gt; reasoning blocks (streaming models like Qwen3.5). Unclosed blocks removed entirely.</summary>
+    // Stateless utility — no mutable state.
+    internal static string StripThinkBlocks(string text)
+     {
+        if (string.IsNullOrEmpty(text)) return text;
+        var result = System.Text.RegularExpressions.Regex.Replace(
+            text, "<think>[\\s\\S]*?(?:</think>|$)", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        return result;
+     }
+
     private string ExtractCleanResponse(string raw)
      {
         if (string.IsNullOrEmpty(raw)) return "";
+
+        // Reasoning models: strip <think>…</think> blocks before tag parsing.
+        raw = StripThinkBlocks(raw);
 
         var llmStart = raw.IndexOf("<lm>", StringComparison.OrdinalIgnoreCase);
         var llmEnd = raw.IndexOf("</lm>", StringComparison.OrdinalIgnoreCase);
