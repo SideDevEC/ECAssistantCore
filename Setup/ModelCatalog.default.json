@@ -1,0 +1,240 @@
+{
+  "version": 1,
+  "models": [
+    {
+      "id": "qwen3-8b",
+      "name": "Qwen3 8B Instruct",
+      "category": "Chat",
+      "hf_repo": "bartowski/Qwen_Qwen3-8B-GGUF",
+      "files": [
+        {
+          "filename": "Qwen_Qwen3-8B-Q4_K_M.gguf",
+          "size_gb": 5
+        }
+      ],
+      "suggested_config": {
+        "gpu_layers": 99,
+        "context_size": 32768,
+        "batch_size": 0
+      },
+      "recommended": true,
+      "quant": "Q4_K_M",
+      "notes": "Great all-round chat model; runs fast on Apple Silicon."
+    },
+    {
+      "id": "qwen25-vl-7b",
+      "name": "Qwen2.5-VL 7B Instruct (Vision)",
+      "category": "Vision",
+      "hf_repo": "ggml-org/Qwen2.5-VL-7B-Instruct-GGUF",
+      "files": [
+        {
+          "filename": "Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf",
+          "size_gb": 5.8
+        },
+        {
+          "filename": "mmproj-Qwen2.5-VL-7B-Instruct-f16.gguf",
+          "size_gb": 0.8
+        }
+      ],
+      "mmproj_file": "mmproj-Qwen2.5-VL-7B-Instruct-f16.gguf",
+      "suggested_config": {
+        "gpu_layers": 99,
+        "context_size": 16384,
+        "batch_size": 0
+      },
+      "recommended": true,
+      "quant": "Q4_K_M",
+      "notes": "Best small vision model: OCR, screenshots, charts, documents."
+    },
+    {
+      "id": "smolvlm2-2b",
+      "name": "SmolVLM2 2.2B Instruct (Vision, tiny)",
+      "category": "Vision",
+      "hf_repo": "ggml-org/SmolVLM2-2.2B-Instruct-GGUF",
+      "files": [
+        {
+          "filename": "smolvlm2-2.2b-instruct-q4_k_m.gguf",
+          "size_gb": 1.5
+        },
+        {
+          "filename": "mmproj-smolvlm2-2.2b-instruct-f16.gguf",
+          "size_gb": 0.4
+        }
+      ],
+      "mmproj_file": "mmproj-smolvlm2-2.2b-instruct-f16.gguf",
+      "suggested_config": {
+        "gpu_layers": 99,
+        "context_size": 4096,
+        "batch_size": 0
+      },
+      "recommended": false,
+      "quant": "Q4_K_M",
+      "notes": "Tiny footprint; simple image description only."
+    },
+    {
+      "id": "all-minilm",
+      "name": "all-MiniLM-L6-v2 (Embeddings)",
+      "category": "Embedding",
+      "hf_repo": "ggml-org/all-MiniLM-L6-v2-GGUF",
+      "files": [
+        {
+          "filename": "all-MiniLM-L6-v2-Q5_K_M.gguf",
+          "size_gb": 0.05
+        }
+      ],
+      "suggested_config": {
+        "gpu_layers": 0,
+        "context_size": 2048,
+        "batch_size": 0
+      },
+      "recommended": true,
+      "quant": "Q5_K_M",
+      "notes": "Vector memory / KB embeddings. Required for vector memory features."
+    },
+    {
+      "id": "qwen3-vl-4b",
+      "name": "Qwen3-VL 4B Instruct (Vision)",
+      "category": "Vision",
+      "hf_repo": "unsloth/Qwen3-VL-4B-Instruct-GGUF",
+      "files": [
+        {
+          "filename": "Qwen3-VL-4B-Instruct-Q4_K_M.gguf",
+          "size_gb": 2.33
+        },
+        {
+          "filename": "mmproj-F16.gguf",
+          "size_gb": 0.78
+        }
+      ],
+      "mmproj_file": "mmproj-F16.gguf",
+      "suggested_config": {
+        "gpu_layers": 99,
+        "context_size": 32768,
+        "batch_size": 0
+      },
+      "recommended": true,
+      "quant": "Q4_K_M",
+      "notes": "NEW recommended vision model: latest Qwen3-VL gen, fast, strong OCR + charts + screenshots."
+    },
+    {
+      "id": "qwen35-35b-a3b",
+      "name": "Qwen3.5 35B-A3B (Vision + deep reasoning, MoE)",
+      "category": "Vision",
+      "hf_repo": "unsloth/Qwen3.5-35B-A3B-GGUF",
+      "files": [
+        {
+          "filename": "Qwen3.5-35B-A3B-UD-Q4_K_XL.gguf",
+          "size_gb": 20.71
+        },
+        {
+          "filename": "mmproj-F16.gguf",
+          "size_gb": 0.84
+        }
+      ],
+      "mmproj_file": "mmproj-F16.gguf",
+      "suggested_config": {
+        "gpu_layers": 99,
+        "context_size": 65536,
+        "batch_size": 0
+      },
+      "recommended": false,
+      "quant": "UD-Q4_K_XL",
+      "notes": "Top pick for heavy analytics: 35B-class reasoning, only ~3B active (fast). Native vision, 256K context, thinking mode. ~21 GB RAM."
+    },
+    {
+      "id": "qwen3-vl-8b",
+      "name": "Qwen3-VL 8B Instruct (Vision)",
+      "category": "Vision",
+      "hf_repo": "unsloth/Qwen3-VL-8B-Instruct-GGUF",
+      "files": [
+        {
+          "filename": "Qwen3-VL-8B-Instruct-Q4_K_M.gguf",
+          "size_gb": 4.68
+        },
+        {
+          "filename": "mmproj-F16.gguf",
+          "size_gb": 1.08
+        }
+      ],
+      "mmproj_file": "mmproj-F16.gguf",
+      "suggested_config": {
+        "gpu_layers": 99,
+        "context_size": 32768,
+        "batch_size": 0
+      },
+      "recommended": false,
+      "quant": "Q4_K_M",
+      "notes": "Bigger Qwen3-VL: noticeably better reasoning over complex images and documents."
+    },
+    {
+      "id": "qwen25-vl-3b",
+      "name": "Qwen2.5-VL 3B Instruct (Vision, light)",
+      "category": "Vision",
+      "hf_repo": "ggml-org/Qwen2.5-VL-3B-Instruct-GGUF",
+      "files": [
+        {
+          "filename": "Qwen2.5-VL-3B-Instruct-Q4_K_M.gguf",
+          "size_gb": 1.8
+        },
+        {
+          "filename": "mmproj-Qwen2.5-VL-3B-Instruct-f16.gguf",
+          "size_gb": 1.25
+        }
+      ],
+      "mmproj_file": "mmproj-Qwen2.5-VL-3B-Instruct-f16.gguf",
+      "suggested_config": {
+        "gpu_layers": 99,
+        "context_size": 16384,
+        "batch_size": 0
+      },
+      "recommended": false,
+      "quant": "Q4_K_M",
+      "notes": "Lightest capable vision model; snappy on Apple Silicon, good for quick screenshots."
+    },
+    {
+      "id": "qwen25-vl-32b",
+      "name": "Qwen2.5-VL 32B Instruct (Vision, max quality)",
+      "category": "Vision",
+      "hf_repo": "ggml-org/Qwen2.5-VL-32B-Instruct-GGUF",
+      "files": [
+        {
+          "filename": "Qwen2.5-VL-32B-Instruct-Q4_K_M.gguf",
+          "size_gb": 18.49
+        },
+        {
+          "filename": "mmproj-Qwen2.5-VL-32B-Instruct-f16.gguf",
+          "size_gb": 1.28
+        }
+      ],
+      "mmproj_file": "mmproj-Qwen2.5-VL-32B-Instruct-f16.gguf",
+      "suggested_config": {
+        "gpu_layers": 99,
+        "context_size": 32768,
+        "batch_size": 0
+      },
+      "recommended": false,
+      "quant": "Q4_K_M",
+      "notes": "Maximum vision quality (~20 GB download). Best OCR, charts, multi-image reasoning."
+    },
+    {
+      "id": "multilingual-e5-large",
+      "name": "Multilingual E5 Large (Embedding, MIT)",
+      "category": "Embedding",
+      "hf_repo": "soichisumi/multilingual-e5-large-Q8_0-GGUF",
+      "files": [
+        {
+          "filename": "multilingual-e5-large-q8_0.gguf",
+          "size_gb": 0.56
+        }
+      ],
+      "suggested_config": {
+        "gpu_layers": 99,
+        "context_size": 2048,
+        "batch_size": 0
+      },
+      "recommended": true,
+      "quant": "Q8_0",
+      "notes": "Multilingual embeddings (100+ languages), 1024-dim. Replaces English-only MiniLM. MIT license."
+    }
+  ]
+}
