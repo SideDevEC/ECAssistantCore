@@ -29,6 +29,13 @@ public class EmbeddingConfig
     [JsonPropertyName("model_id")]
     public string? ModelId { get; init; }
 
+    /// <summary>
+    /// API key for remote embedding mode. Supports "keyfile:&lt;name&gt;" references into
+    /// the SecureKeyStore keys directory. Null/empty = no auth (or inherited default key handling).
+    /// </summary>
+    [JsonPropertyName("api_key")]
+    public string? ApiKey { get; init; }
+
     [JsonPropertyName("model_path")]
     public string ModelPath { get; init; } = "models/all-MiniLM-L6-v2-Q5_K_M.gguf";
 

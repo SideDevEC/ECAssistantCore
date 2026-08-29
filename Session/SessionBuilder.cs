@@ -110,12 +110,15 @@ public class SessionBuilder : ISessionBuilder
         await BuildAsync(session, ExternalTools.Count > 0 ? ExternalTools : null);
     }
 
-    /// <summary>Embeddings endpoint: local embedding mode → local server (spawned independently); otherwise the main provider.</summary>
+    /// <summary>Embeddings endpoint: local embedding mode → dedicated local server; remote mode → configured endpoint; otherwise the main provider.</summary>
     internal string ResolveEmbeddingEndpoint()
     {
         var emb = _config.Embedding;
         if (emb != null && string.Equals(emb.Mode, "local", StringComparison.OrdinalIgnoreCase))
             return emb.Endpoint ?? $"http://localhost:{_config.LlmProvider.Port}";
+        if (emb != null && string.Equals(emb.Mode, "remote", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(emb.Endpoint))
+            return emb.Endpoint;
         return _config.LlmProvider.ResolvedEndpoint;
     }
 
@@ -124,7 +127,28 @@ public class SessionBuilder : ISessionBuilder
         var emb = _config.Embedding;
         if (emb != null && string.Equals(emb.Mode, "local", StringComparison.OrdinalIgnoreCase))
             return emb.ModelId ?? "embeddings";
+        if (emb != null && string.Equals(emb.Mode, "remote", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(emb.ModelId))
+            return emb.ModelId;
         return _config.LlmProvider.EmbeddingModelId ?? "embeddings";
+    }
+
+    /// <summary>API key for the embedding endpoint; resolves "keyfile:&lt;name&gt;" refs via the default keys directory.</summary>
+    internal string? ResolveEmbeddingApiKey()
+    {
+        var emb = _config.Embedding;
+        var raw = emb?.ApiKey;
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+
+        const string keyfilePrefix = "keyfile:";
+        if (raw.StartsWith(keyfilePrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            var keysDir = Path.Combine(_workingDir, "keys");
+            if (!Directory.Exists(keysDir))
+                throw new InvalidOperationException("'keyfile:' requires a configured keys directory (SecureKeyStore)");
+            return new SecureKeyStore(keysDir).GetKey(raw[keyfilePrefix.Length..].Trim());
+        }
+        return raw;
     }
 
     /// <summary>
@@ -144,7 +168,7 @@ public class SessionBuilder : ISessionBuilder
             IVectorEmbedder? embedder = null;
             if (_config.Embedding != null && _config.Embedding.Enabled)
             {
-                var embedderClient = new OpenAIClient(ResolveEmbeddingEndpoint());
+                var embedderClient = new OpenAIClient(ResolveEmbeddingEndpoint(), apiKey: ResolveEmbeddingApiKey());
                 embedder = new HttpEmbedder(embedderClient, ResolveEmbeddingModelId());
             }
             

@@ -19,7 +19,7 @@ public sealed class EmbeddingSetupWriter
         _appsettingsPath = appsettingsPath;
     }
 
-    public void SetMode(string mode, string? modelId = null, string? endpoint = null)
+    public void SetMode(string mode, string? modelId = null, string? endpoint = null, string? apiKey = null)
     {
         JsonObject root;
         if (File.Exists(_appsettingsPath) &&
@@ -39,6 +39,28 @@ public sealed class EmbeddingSetupWriter
         emb["mode"] = mode;
         if (modelId != null) emb["model_id"] = modelId;
         if (endpoint != null) emb["endpoint"] = endpoint;
+        if (apiKey != null) emb["api_key"] = apiKey;
+
+        File.WriteAllText(_appsettingsPath, root.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    /// <summary>Marks embeddings as disabled (embedding.enabled = false) without touching other sections.</summary>
+    public void Disable()
+    {
+        JsonObject root;
+        if (File.Exists(_appsettingsPath) &&
+            JsonNode.Parse(File.ReadAllText(_appsettingsPath)) is JsonObject parsed)
+        {
+            root = parsed;
+        }
+        else
+        {
+            root = new JsonObject();
+        }
+
+        if (root["embedding"] is not JsonObject emb)
+            root["embedding"] = emb = new JsonObject();
+        emb["enabled"] = false;
 
         File.WriteAllText(_appsettingsPath, root.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
     }
