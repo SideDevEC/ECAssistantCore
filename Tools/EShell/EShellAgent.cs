@@ -20,13 +20,20 @@ public class EShellAgent : EToolBase
     public override string Name => "EShellAgent";
 
     public override string Description =>
-        "Full filesystem and shell command execution. " +
+        "Full filesystem and shell command execution on the host OS. " +
         "Can read/write/copy/move/delete files and folders, run any shell command, " +
         "compile code, search files, manage projects. " +
-        "Working directory is set automatically — use relative paths.";
+        "Working directory is set automatically — use relative paths.\n" +
+        "The shell is selected automatically for the host OS (bash/zsh on macOS and Linux, PowerShell on Windows) — " +
+        "your commands must be valid for the host shell.\n" +
+        "Rules:\n" +
+        "1. ALWAYS quote paths that contain spaces. An unquoted path is split into multiple arguments and fails.\n" +
+        "2. When the user asks about file types, folders vs files, sizes or permissions, use a listing form that SHOWS entry types — a plain name-only listing cannot answer that.\n" +
+        "3. If a command fails with an unknown-option or syntax error, the syntax is wrong for this shell — adapt the syntax for the next attempt (do not repeat it).\n" +
+        "4. Prefer one well-formed command that answers the whole question over several narrow ones.";
 
     public override string UsageExample =>
-        "<toolcall>EShellAgent<command>Get-ChildItem</command></toolcall>";
+        "<toolcall>EShellAgent<command>ls</command></toolcall>";
 
     public override bool IsEnabled { get; protected set; } = true;
     public override bool IsSystemCritical => true;
