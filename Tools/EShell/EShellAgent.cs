@@ -53,6 +53,7 @@ public class EShellAgent : EToolBase
                    "- '>' redirection in Windows PowerShell writes UTF-16 — downstream tools may see garbled bytes\n" +
                    "- Reserved filenames cannot be created: CON, PRN, AUX, NUL, COM1…\n" +
                    "- OneDrive paths may hold placeholder files that are not on disk until opened\n" +
+                   "- Known folders are often REDIRECTED into OneDrive: if ~\\Desktop looks empty or missing, check ~\\OneDrive\\Desktop (same for Documents, Pictures)\n" +
                    "Examples (valid on this host):\n" +
                    "Get-ChildItem -Force ~\\Desktop          # list with types, incl. hidden\n" +
                    "Get-ChildItem \"~\\Desktop\\My Folder\"    # quoted path with spaces\n" +
