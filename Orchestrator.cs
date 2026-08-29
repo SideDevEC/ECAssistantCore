@@ -111,27 +111,20 @@ public sealed class AgentOrchestrator : IAsyncDisposable
          // v10.6: Decompose the request into sub-tasks using TaskPlanner
          // v11.4: Gate — skip decomposition for conversational questions
          var planner = _engine.TaskPlanner;
+         // v12.0: classify ONCE — conversational goals get a direct chat reply (no tool-loop)
+         var isChatGoal = LooksConversational(goal) || await _engine.IsConversationalAsync(goal);
          if (planner != null)
          {
             List<SubTask>? decomposed = null;
 
             // v11.4: Fast gate — action verb check (instant, zero cost)
-            if (LooksConversational(goal))
+            if (isChatGoal)
             {
                 _out?.WriteDim("Conversational question — skipping decomposition.");
                 decomposed = new List<SubTask> { new SubTask { Description = goal, Status = SubTaskStatus.Pending } };
             }
             else
             {
-                // v11.4: LLM gate — ambiguous cases, 1-token classification
-                var isChat = await _engine.IsConversationalAsync(goal);
-                if (isChat)
-                {
-                    _out?.WriteDim("LLM classified as conversational — skipping decomposition.");
-                    decomposed = new List<SubTask> { new SubTask { Description = goal, Status = SubTaskStatus.Pending } };
-                }
-                else
-                {
              // v10.25: Try LLM-based decomposition via engine (HTTP streaming, stateless mode)
             _out?.WriteInfo("Attempting LLM task decomposition...");
             var steps = await _engine.DecomposeTaskAsync(goal);
@@ -155,7 +148,6 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                  // Populate planner with LLM-generated steps so GetProgressContext works
                 planner.Decompose(string.Join(" then ", decomposed.Select(s => s.Description)));
              }
-                }
             }
 
              _subTasks = decomposed;
@@ -222,8 +214,8 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                  }
             _logger?.Info("Orchestrator", $"Turn {_turnCount + 1}/{_maxTurns}");
 
-                  // Step 1: Ask the LLM to decide what to do (with full context of tools + history)
-              var llmResponse = await _engine.GenerateAsync(goal);
+                  // v12.0: chat-classified goals answer directly — no toolcall demanded
+              var llmResponse = await _engine.GenerateAsync(goal, isChatGoal);
 
               // v10.11.1: Check if generation was stopped by user (ESC) — bail out immediately,
               // don't attempt format retries on the "(Stopped by user)" string.

@@ -834,7 +834,7 @@ User: " + userRequest + "\n<lm>\n";
      // ── Incremental input building ─────────────────────────────
 
      /// <summary>Build only the new tokens to feed since the last turn.</summary>
-    private string BuildIncrementalInput(string userRequest)
+    private string BuildIncrementalInput(string userRequest, bool chatMode = false)
      {
         var sb = new StringBuilder();
 
@@ -872,7 +872,14 @@ User: " + userRequest + "\n<lm>\n";
             sb.AppendLine(userRequest);
             sb.AppendLine("</user>");
             sb.AppendLine();
-            sb.AppendLine("The user message above is your task. Follow the execution plan if provided. Start working. Output your first <toolcall> now.");
+            if (chatMode)
+             {
+                sb.AppendLine("The user message above is a conversational remark or question. Respond to it directly and naturally in <output>your reply</output>. Do not call tools. Do not start a task.");
+             }
+            else
+             {
+                sb.AppendLine("The user message above is your task. Follow the execution plan if provided. Start working. Output your first <toolcall> now.");
+             }
          }
         else
          {
@@ -1041,7 +1048,7 @@ User: " + userRequest + "\n<lm>\n";
      /// Generate text from the LLM using incremental KV cache feed.
      /// v10.30: streaming via IInferenceEngine.StreamAsync — no in-process executor.
      /// </summary>
-    public virtual async Task<string> GenerateAsync(string userPrompt)
+    public virtual async Task<string> GenerateAsync(string userPrompt, bool chatMode = false)
      {
         _lifecycle.IncrementTurn();
         _lifecycle.EscPressed = false;
@@ -1136,7 +1143,7 @@ User: " + userRequest + "\n<lm>\n";
              }
          }
 
-        var incrementalInput = BuildIncrementalInput(effectivePrompt);
+        var incrementalInput = BuildIncrementalInput(effectivePrompt, chatMode);
 
         try
          {

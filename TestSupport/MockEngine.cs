@@ -97,7 +97,7 @@ public class MockEngine : EAgentEngine
         return Task.CompletedTask;
     }
 
-    public override async Task<string> GenerateAsync(string userPrompt)
+    public override async Task<string> GenerateAsync(string userPrompt, bool chatMode = false)
     {
         _lifecycle.TurnCount = 0;
         GenerateCallCount++;
