@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using ECAssistant.Core.Config;
 using ECAssistant.Core.Transport;
 
+using System.Linq;
 namespace ECAssistant.Core.Services.Http;
 
 /// <summary>
@@ -166,32 +167,37 @@ public sealed class ServerLauncher
 
     private string? ResolveExecutablePath()
     {
-        // Try absolute path
+        // Absolute path wins
         if (Path.IsPathRooted(_config.ServerExecutablePath) && File.Exists(_config.ServerExecutablePath))
             return _config.ServerExecutablePath;
 
-        // Try relative to working directory
-        var dirs = new[]
-        {
-            Directory.GetCurrentDirectory(),
-            AppContext.BaseDirectory,
-            Path.Combine(Directory.GetCurrentDirectory(), "..", "ECAssistantLLM"),
-            Path.Combine(AppContext.BaseDirectory, "..", "ECAssistantLLM"),
-        };
+        var candidates = new List<string>();
 
-        foreach (var dir in dirs)
-        {
-            var candidate = Path.Combine(dir, _config.ServerExecutablePath);
-            if (File.Exists(candidate))
-                return Path.GetFullPath(candidate);
+        // As configured, relative to CWD and base dir
+        foreach (var dir in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
+            candidates.Add(Path.GetFullPath(Path.Combine(dir, _config.ServerExecutablePath)));
 
-            // Try with .dll extension (dotnet run)
-            candidate = Path.ChangeExtension(candidate, ".dll");
-            if (File.Exists(candidate))
-                return Path.GetFullPath(candidate);
+        // Dev layout: walk up from CWD/base looking for the ECAssistantLLM sibling project,
+        // preferring Debug (freshest during development) over Release.
+        foreach (var startDir in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
+        {
+            var dir = startDir;
+            for (var level = 0; level < 6 && dir != null; level++)
+            {
+                var llmBin = Path.Combine(dir, "ECAssistantLLM", "bin");
+                if (Directory.Exists(llmBin))
+                {
+                    foreach (var cfg in new[] { "Debug", "Release" })
+                        candidates.Add(Path.Combine(llmBin, cfg, "net8.0", "ECAssistant.LLM"));
+                    break;
+                }
+                var parent = Path.GetDirectoryName(dir.TrimEnd(Path.DirectorySeparatorChar));
+                dir = parent ?? string.Empty;
+                if (string.IsNullOrEmpty(dir)) break;
+            }
         }
 
-        return null;
+        return candidates.FirstOrDefault(File.Exists);
     }
 
     public void Dispose()
