@@ -68,7 +68,10 @@ Services/Http/  (HTTP transport layer — talks to ECAssistantLLM / OpenAI-compa
 ├── RemoteTokenizer.cs         # HTTP /eca/tokenize (char-based fallback if server down)
 ├── HttpEmbedder.cs            # IVectorEmbedder — embeddings via /v1/embeddings
 ├── LlmServerClient.cs         # ILlmServerClient — register/heartbeat/disconnect/reconnect (/eca/clients)
-└── ServerLauncher.cs          # Detect/launch ECAssistantLLM server, send /eca/shutdown on stop
+├── ServerLauncher.cs          # Detect/launch ECAssistantLLM server, send /eca/shutdown on stop
+│                               # v12.10: copies the newest server build into root/server/ once
+│                               # (EnsureServerBinaryCopied + ResolveServerSourceDirectory), then
+│                               # ONLY executes from within the root — no dev trees at runtime
 
 ECAssistantLLM/             # Separate server process — owns the model, GPU, KV cache (NOT part of Core)
 

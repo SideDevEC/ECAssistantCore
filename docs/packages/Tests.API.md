@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 85  |  LOC: 11264  |  ~3078 tokens
+Types: 85  |  LOC: 11299  |  ~3077 tokens
 
 ---
 
@@ -222,7 +222,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
 
 ### Class: ServerLauncherResolveTests
-> v12.9 runtime path contract: the LLM server executable resolves against the app ROOT
+> v12.10 runtime contract tests: the integrating app gives Core a root folder; Core
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Services.Http, Xunit
 

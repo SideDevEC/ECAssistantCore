@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 291  |  LOC: 25380  |  ~13523 tokens
+Types: 291  |  LOC: 25457  |  ~13523 tokens
 
 ---
 
@@ -1058,7 +1058,7 @@ Constructor:
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Transport
 
 ### Class: ServerLauncherResolveTests
-> v12.9 runtime path contract: the LLM server executable resolves against the app ROOT
+> v12.10 runtime contract tests: the integrating app gives Core a root folder; Core
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Services.Http, Xunit
 

@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-29T20:58:18.859182+00:00
+Generated: 2026-08-29T22:01:49.781377+00:00
 Packages: 3  |  Types: 384
 
 ---
 
-## ECAssistantCore (291 types, ~25380 LOC)
+## ECAssistantCore (291 types, ~25457 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -310,7 +310,7 @@ Packages: 3  |  Types: 384
 - 🟡 TestScenario  (TestSupport)
 - 🟡 TestSessionOutput : ISessionOutput  (TestSupport)  deps: [EGuiTestHarness]
 
-## Tests (85 types, ~11264 LOC)
+## Tests (85 types, ~11299 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
