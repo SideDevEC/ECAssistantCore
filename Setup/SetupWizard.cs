@@ -15,6 +15,9 @@ public sealed class WizardContext
 
     /// <summary>gpu_layers applied to every installed model (v12.7: always 0 — users tune it in config afterwards).</summary>
     public int GpuLayers { get; init; } = 0;
+
+    /// <summary>Model files directory — used to detect entries whose files already exist (re-register instead of re-download).</summary>
+    public required string ModelsDir { get; init; }
 }
 
 /// <summary>
@@ -75,13 +78,12 @@ public sealed class SetupWizard
 
         var category = visionEnabled ? CatalogModelCategory.Vision : CatalogModelCategory.Chat;
         var selectable = ctx.Catalog.Models
-            .Where(m => m.Category == category &&
-                        !ctx.InstalledEntryIds.Contains(m.Id, StringComparer.OrdinalIgnoreCase))
+            .Where(m => m.Category == category)
             .ToList();
 
         if (selectable.Count == 0)
         {
-            _ui.WriteLine($"No downloadable {category} models left in the catalog — skipping download.");
+            _ui.WriteLine($"No {category} models in the catalog — skipping.");
             return;
         }
 
@@ -90,7 +92,8 @@ public sealed class SetupWizard
         for (var i = 0; i < selectable.Count; i++)
         {
             var m = selectable[i];
-            _ui.WriteLine($"  [{i + 1}] {m.DisplayName}{(m.Recommended ? " ★" : "")}  ({m.TotalSizeGb:0.##} GB) — {m.Notes}");
+            var installedMark = IsEntryOnDisk(ctx, m) ? "  ✓ already on disk" : "";
+            _ui.WriteLine($"  [{i + 1}] {m.DisplayName}{(m.Recommended ? " ★" : "")}  ({m.TotalSizeGb:0.##} GB){installedMark} — {m.Notes}");
         }
 
         _ui.Write("Numbers to install (e.g. 1,3 / 'a' = all ★ / Enter = skip): ");
@@ -179,13 +182,12 @@ public sealed class SetupWizard
     private async Task SetupLocalEmbeddingsAsync(WizardContext ctx)
     {
         var selectable = ctx.Catalog.Models
-            .Where(m => m.Category == CatalogModelCategory.Embedding &&
-                        !ctx.InstalledEntryIds.Contains(m.Id, StringComparer.OrdinalIgnoreCase))
+            .Where(m => m.Category == CatalogModelCategory.Embedding)
             .ToList();
 
         if (selectable.Count == 0)
         {
-            _ui.WriteLine("  No downloadable embedding models in the catalog — embeddings stay on defaults.");
+            _ui.WriteLine("  No embedding models in the catalog — embeddings stay on defaults.");
             return;
         }
 
@@ -193,7 +195,8 @@ public sealed class SetupWizard
         for (var i = 0; i < selectable.Count; i++)
         {
             var m = selectable[i];
-            _ui.WriteLine($"    [{i + 1}] {m.DisplayName}{(m.Recommended ? " ★" : "")}  ({m.TotalSizeGb:0.##} GB) — {m.Notes}");
+            var installedMark = IsEntryOnDisk(ctx, m) ? "  ✓ already on disk" : "";
+            _ui.WriteLine($"    [{i + 1}] {m.DisplayName}{(m.Recommended ? " ★" : "")}  ({m.TotalSizeGb:0.##} GB){installedMark} — {m.Notes}");
         }
 
         _ui.Write("  Numbers to install (e.g. 1 / 'a' = all ★ / Enter = skip): ");
@@ -287,6 +290,11 @@ public sealed class SetupWizard
         return (_ui.ReadLine()?.Trim() ?? "").ToLowerInvariant() is "y" or "yes";
     }
 
+    /// <summary>True when every catalog file for the entry already exists in the models directory.</summary>
+    // Stateless utility — no mutable state.
+    private static bool IsEntryOnDisk(WizardContext ctx, ModelCatalogEntry entry) =>
+        entry.Files.All(f => File.Exists(Path.Combine(ctx.ModelsDir, f.Filename)));
+
     private async Task<IReadOnlyList<ModelCatalogEntry>> DownloadPicksAsync(
         WizardContext ctx, IReadOnlyList<ModelCatalogEntry> picks)
     {
@@ -294,6 +302,16 @@ public sealed class SetupWizard
         foreach (var entry in picks)
         {
             entry.SuggestedConfig.GpuLayers = ctx.GpuLayers; // v12.7: GPU off by default — users tune config later
+
+            // v12.8: files already on disk (reinstall keeps models) — skip download, re-register config.
+            if (IsEntryOnDisk(ctx, entry))
+            {
+                ctx.Installer.ApplyToServerConfig(entry);
+                _ui.WriteLine($"✓ {entry.DisplayName} — files already on disk, registered in llm-server.json");
+                installed.Add(entry);
+                continue;
+            }
+
             _ui.WriteLine($"▼ Downloading {entry.DisplayName} ({entry.TotalSizeGb:0.##} GB)");
             var result = await ctx.Installer.InstallAsync(entry, p =>
             {
