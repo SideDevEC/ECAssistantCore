@@ -93,7 +93,7 @@ public sealed class LlmProviderConfig
 
     /// <summary>Max seconds to wait for server startup.</summary>
     [JsonPropertyName("startup_timeout_sec")]
-    public int StartupTimeoutSec { get; set; } = 60;
+    public int StartupTimeoutSec { get; set; } = 240;
 
     /// <summary>Heartbeat interval in seconds (local mode only).</summary>
     [JsonPropertyName("heartbeat_interval_sec")]
