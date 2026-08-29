@@ -30,6 +30,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
      // v10.6: TaskPlanner for chained multi-step tasks
     private List<SubTask>? _subTasks = null;
+    private readonly HashSet<string> _failedCallSignatures = new(StringComparer.Ordinal);
     private int _currentSubTask = 0;
      // v10.17: Execution plan from StepMapper
     private ExecutionPlan? _executionPlan = null;
@@ -390,9 +391,25 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                                 Status = OrchestratorStatus.GoalAchieved
                              };
                          }
+                        // v12.4: never re-execute a call that already failed with identical arguments —
+                        // force the model to change approach instead of looping on the same error.
+                        var callSignature = decision.ToolName + "|" + string.Join("&",
+                            argsDict.OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => $"{kv.Key}={kv.Value}"));
+                        if (_failedCallSignatures.Contains(callSignature))
+                         {
+                            _out?.WriteWarning("Identical tool call already failed — blocked. Forcing a different approach.");
+                            _logger?.Warn("Orchestrator", $"Blocked repeat of failed call: {callSignature}");
+                            _engine.InjectFormatRetry(
+                                "That exact tool call already failed (see the error above). Repeating it gives the same error.\n" +
+                                "Change your approach: use DIFFERENT arguments or a different tool, or if the task cannot proceed, respond with <lm><thinking>reasoning</thinking><output>what you found and what blocked you</output></lm>.");
+                            _turnCount++;
+                            continue;
+                         }
                         var result = await ExecuteTool(decision.ToolName!, argsDict);
                         var elapsedMs = (long)((DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - startMs);
 
+                            if (!result.Succeeded)
+                                 _failedCallSignatures.Add(callSignature);
                             if (result.Succeeded)
                                  _out?.WriteSuccess($"[Tool] {decision.ToolName}: OK ({elapsedMs}ms)");
                             else
