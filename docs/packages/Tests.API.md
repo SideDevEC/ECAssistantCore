@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 81  |  LOC: 11030  |  ~2886 tokens
+Types: 85  |  LOC: 11264  |  ~3078 tokens
 
 ---
 
@@ -13,6 +13,10 @@ Cross-package deps: ECAssistant.Core.Analysis
 ### Class: BackgroundProcessManagerTests
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Services
+
+### Class: BuildCallSignatureTests
+> v12.4/v12.5 regression: tool-call signatures must be deterministic and
+Cross-package deps: ECAssistant.Core.Orchestration, Xunit
 
 ### Class: ConfigIntegrationTests
 > Integration tests for the config loading pipeline — uses real FileSystemAdapter
@@ -217,6 +221,11 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services
 ### Class: SelfCorrectionManagerTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
 
+### Class: ServerLauncherResolveTests
+> v12.9 runtime path contract: the LLM server executable resolves against the app ROOT
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Services.Http, Xunit
+
 ### Class: SessionDiscoveryTests
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Session
@@ -229,6 +238,10 @@ Cross-package deps: ECAssistant.Core.Session
 ### Class: SessionQueueTests
 > Tests for session prompt queue logic and run state transitions.
 Cross-package deps: ECAssistant.Core.Session
+
+### Class: StartupTimeoutDefaultsTests
+> v12.8 regression: the installer must detect models already on disk so
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup, Xunit
 
 ### Class: StepMapperTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools
@@ -295,3 +308,8 @@ Cross-package deps: ECAssistant.Core.Setup
 ### Class: VectorMemoryStoreTests
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Memory, ECAssistant.Core.Services
+
+### Class: WizardOnDiskDetectionTests
+> v12.8 regression: the installer must detect models already on disk so
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup, Xunit

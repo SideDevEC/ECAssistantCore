@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 287  |  LOC: 25114  |  ~13331 tokens
+Types: 291  |  LOC: 25380  |  ~13523 tokens
 
 ---
 
@@ -357,6 +357,10 @@ Cross-package deps: ECAssistant.Core.Services
 Cross-package deps: ECAssistant.Core.Tools
 
 ### Class: BgProcessInfo
+
+### Class: BuildCallSignatureTests
+> v12.4/v12.5 regression: tool-call signatures must be deterministic and
+Cross-package deps: ECAssistant.Core.Orchestration, Xunit
 
 ### Class: BuildErrorParser
 > Parser for .NET build output — extracts errors and warnings.
@@ -1053,6 +1057,11 @@ Constructor:
   - ServerLauncher(LlmProviderConfig config, string appRoot)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Transport
 
+### Class: ServerLauncherResolveTests
+> v12.9 runtime path contract: the LLM server executable resolves against the app ROOT
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Services.Http, Xunit
+
 ### Class: SessionBuilder
 > Builder for creating and initializing AgentSessions with standard tools.
 Implements: ISessionBuilder
@@ -1095,6 +1104,10 @@ Cross-package deps: ECAssistant.Core.Tools
 
 ### Class: SseParser
 > Parses SSE (Server-Sent Events) stream from OpenAI-compatible chat completions.
+
+### Class: StartupTimeoutDefaultsTests
+> v12.8 regression: the installer must detect models already on disk so
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup, Xunit
 
 ### Class: StepMapper
 > Step Mapper — takes decomposed sub-tasks and maps them to concrete tool calls.
@@ -1298,6 +1311,11 @@ Cross-package deps: ECAssistant.Core.Memory, ECAssistant.Core.Services
 ### Class: WizardContext
 > Paths and services the wizard needs; assembled by the host.
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup
+
+### Class: WizardOnDiskDetectionTests
+> v12.8 regression: the installer must detect models already on disk so
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup, Xunit
 
 ### Class: WorkspaceConfig
 

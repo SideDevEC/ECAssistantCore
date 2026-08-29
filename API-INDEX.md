@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-29T18:40:33.324840+00:00
-Packages: 3  |  Types: 376
+Generated: 2026-08-29T20:58:18.859182+00:00
+Packages: 3  |  Types: 384
 
 ---
 
-## ECAssistantCore (287 types, ~25114 LOC)
+## ECAssistantCore (291 types, ~25380 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -55,6 +55,7 @@ Packages: 3  |  Types: 376
 - 🟡 BackgroundTasksConfig  (ECAssistantCore)
 - 🟡 BatchToolResult  (ECAssistantCore)
 - 🟡 BgProcessInfo  (ECAssistantCore)
+- 🟡 BuildCallSignatureTests  (ECAssistantCore)
 - 🟣 BuildError  (ECAssistantCore)  deps: [string, int, string, string]
 - 🟡 BuildErrorParser  (ECAssistantCore)
 - 🟡 CatalogModelFile  (ECAssistantCore)
@@ -228,6 +229,7 @@ Packages: 3  |  Types: 376
 - 🟡 SelfCorrectionManager : IDisposable  (ECAssistantCore)  deps: [string, ILogger? logger =]
 - 🟡 SelfCorrectionManagerTests  (ECAssistantCore)
 - 🟡 ServerLauncher  (ECAssistantCore)  deps: [LlmProviderConfig, string]
+- 🟡 ServerLauncherResolveTests : IDisposable  (ECAssistantCore)
 - 🟡 SessionBuilder : ISessionBuilder  (ECAssistantCore)  deps: [EAgentConfig, string, string, ILogger? logger =, BackgroundProcessManager? bgManager =]
 - 🟡 SessionDiscovery  (ECAssistantCore)
 - 🟡 SessionDiscoveryTests : IDisposable  (ECAssistantCore)
@@ -237,6 +239,7 @@ Packages: 3  |  Types: 376
 - 🟡 SetupWizard  (ECAssistantCore)  deps: [ISetupUi]
 - 🟡 SingleToolResult  (ECAssistantCore)
 - 🟡 SseParser  (ECAssistantCore)
+- 🟡 StartupTimeoutDefaultsTests  (ECAssistantCore)
 - 🟡 StepMapper : IStepMapper  (ECAssistantCore)  deps: [IEngineToolContext, ILogger? logger =]
 - 🟡 StepMapperTests  (ECAssistantCore)
 - 🟡 StringUtil  (ECAssistantCore)
@@ -293,6 +296,7 @@ Packages: 3  |  Types: 376
 - 🟣 VectorResult  (ECAssistantCore)  deps: [string, string, float]
 - 🟡 VectorSearchResult  (ECAssistantCore)
 - 🟡 WizardContext  (ECAssistantCore)
+- 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
 ## TestSupport (8 types, ~1441 LOC)
@@ -306,11 +310,12 @@ Packages: 3  |  Types: 376
 - 🟡 TestScenario  (TestSupport)
 - 🟡 TestSessionOutput : ISessionOutput  (TestSupport)  deps: [EGuiTestHarness]
 
-## Tests (81 types, ~11030 LOC)
+## Tests (85 types, ~11264 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (Tests)
+- 🟡 BuildCallSignatureTests  (Tests)
 - 🟡 ConfigIntegrationTests : IDisposable  (Tests)
 - 🟡 ConfigLoaderTests  (Tests)
 - 🟡 ConfigProviderTests  (Tests)
@@ -367,9 +372,11 @@ Packages: 3  |  Types: 376
 - 🟡 RemoteProviderSetupWriterTests  (Tests)
 - 🟡 SecureKeyStoreTests  (Tests)
 - 🟡 SelfCorrectionManagerTests  (Tests)
+- 🟡 ServerLauncherResolveTests : IDisposable  (Tests)
 - 🟡 SessionDiscoveryTests : IDisposable  (Tests)
 - 🟡 SessionManagementIntegrationTests : IDisposable  (Tests)
 - 🟡 SessionQueueTests  (Tests)
+- 🟡 StartupTimeoutDefaultsTests  (Tests)
 - 🟡 StepMapperTests  (Tests)
 - 🟡 SubAgentErrorTests  (Tests)
 - 🟡 SubAgentIntegrationTests : IDisposable  (Tests)
@@ -389,3 +396,4 @@ Packages: 3  |  Types: 376
 - 🟡 TranscriptIntegrationTests : IDisposable  (Tests)
 - 🟡 VectorMemorySetupWriterTests : IDisposable  (Tests)
 - 🟡 VectorMemoryStoreTests : IDisposable  (Tests)
+- 🟡 WizardOnDiskDetectionTests : IDisposable  (Tests)
