@@ -571,7 +571,19 @@ User: " + userRequest + "\n<lm>\n";
         if (_inferenceEngine == null)
             return false;
 
-        var prompt = $"Is this a task needing tools, or a conversational question? Reply only TASK or CHAT.\n\nUser: hello\nCHAT\n\nUser: create a file\nTASK\n\nUser: what can you do?\nCHAT\n\nUser: fix the bug\nTASK\n\nUser: how are you?\nCHAT\n\nUser: read Program.cs and fix line 42\nTASK\n\nUser: {userRequest}\n";
+        var prompt = "Is this a task needing tools, or a conversational question? Reply only TASK or CHAT. The user's message may be in any language — classify by meaning, not language.\n\n" +
+            "User: hello\nCHAT\n" +
+            "User: create a file\nTASK\n" +
+            "User: what can you do?\nCHAT\n" +
+            "User: fix the bug in Program.cs\nTASK\n" +
+            "User: how are you?\nCHAT\n" +
+            "User: read the log file and find errors\nTASK\n" +
+            "User: erstelle eine neue Datei\nTASK\n" +
+            "User: wie geht's dir?\nCHAT\n" +
+            "User: analiza estos datos y genera un informe\nTASK\n" +
+            "User: dosyayı düzelt\nTASK\n" +
+            "User: nasılsın?\nCHAT\n" +
+            $"User: {userRequest}\n";
 
         try
          {

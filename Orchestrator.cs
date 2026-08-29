@@ -564,6 +564,11 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
     private static bool LooksConversational(string request)
     {
+        // v12.1: the verb/step lists are English-only — for non-English input the check
+        // can never match reliably. Defer to the multilingual LLM classifier instead.
+        if (request.Any(c => c > 127))
+            return false;
+
         var hasActions = ActionVerbs.Any(v => request.Contains(v, StringComparison.OrdinalIgnoreCase));
         var hasSteps = StepIndicators.Any(s => request.Contains(s, StringComparison.OrdinalIgnoreCase));
         return !hasActions && !hasSteps;
