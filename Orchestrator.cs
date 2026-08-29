@@ -394,8 +394,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                          }
                         // v12.4: never re-execute a call that already failed with identical arguments —
                         // force the model to change approach instead of looping on the same error.
-                        var callSignature = decision.ToolName + "|" + string.Join("&",
-                            argsDict.OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => $"{kv.Key}={kv.Value}"));
+                        var callSignature = BuildCallSignature(decision.ToolName!, argsDict);
                         if (_failedCallSignatures.Contains(callSignature))
                          {
                             _out?.WriteWarning("Identical tool call already failed — blocked. Forcing a different approach.");
@@ -616,6 +615,12 @@ public sealed class AgentOrchestrator : IAsyncDisposable
      /// Priority: if <toolcall> blocks exist, they take precedence over <output>.
      /// A response with both <toolcall> and <output> is treated as tool calls (output is ignored).
      /// </summary>
+    /// <summary>Canonical signature for a tool call (tool + ordered args) — used by the repeat/failure guards. Pure.</summary>
+    // Stateless utility — no mutable state.
+    internal static string BuildCallSignature(string toolName, Dictionary<string, string?> args) =>
+        toolName + "|" + string.Join("&",
+            (args ?? new Dictionary<string, string?>()).OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => $"{kv.Key}={kv.Value}"));
+
     private LLMDecision ParseLLMDecision(string response)
                  {
             var trimmed = response.Trim();

@@ -292,7 +292,7 @@ public sealed class SetupWizard
 
     /// <summary>True when every catalog file for the entry already exists in the models directory.</summary>
     // Stateless utility — no mutable state.
-    private static bool IsEntryOnDisk(WizardContext ctx, ModelCatalogEntry entry) =>
+    internal static bool IsEntryOnDisk(WizardContext ctx, ModelCatalogEntry entry) =>
         entry.Files.All(f => File.Exists(Path.Combine(ctx.ModelsDir, f.Filename)));
 
     private async Task<IReadOnlyList<ModelCatalogEntry>> DownloadPicksAsync(

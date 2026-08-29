@@ -165,51 +165,65 @@ public sealed class ServerLauncher
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[ServerLauncher] Non-critical error ignored: {ex.Message}"); }
     }
 
-    private string? ResolveExecutablePath()
+    private string? ResolveExecutablePath() =>
+        ResolveExecutablePath(_config.ServerExecutablePath, _appRoot, AppContext.BaseDirectory, Directory.GetCurrentDirectory());
+
+    /// <summary>Resolves the LLM server executable. v12.9 runtime contract: candidates derive from the
+    /// app root (root-relative, root scan, publish layout) and the CWD (dev), never from dev trees like
+    /// bin/Debug siblings of the repo. Pure apart from File.Exists — fully unit-testable.</summary>
+    internal static string? ResolveExecutablePath(
+        string serverExecutablePath, string appRoot, string baseDirectory, string currentDirectory)
     {
         // Absolute path wins
-        if (Path.IsPathRooted(_config.ServerExecutablePath) && File.Exists(_config.ServerExecutablePath))
-            return _config.ServerExecutablePath;
+        if (Path.IsPathRooted(serverExecutablePath) && File.Exists(serverExecutablePath))
+            return serverExecutablePath;
 
-        // v12.9: runtime deployment contract — the integrating app only guarantees the ROOT
-        // directory. All candidates derive from the root; no dev trees (bin/Debug siblings,
-        // CWD walks) are consulted. For development runs, a Debug build next to the configured
-        // Release path is accepted only if it is NEWER (so stale builds never serve).
+        // All candidates are normalized up-front so ".." segments resolve BEFORE existence
+        // checks and the returned path is canonical.
         var candidates = new List<string>();
-
-        // 1. Root-relative (deployment layout: root/<server_executable_path>)
-        candidates.Add(Path.GetFullPath(Path.Combine(_appRoot, _config.ServerExecutablePath)));
-
-        // 2. Any ECAssistant.LLM within the root (2 levels deep)
-        var exeName = Path.GetFileName(_config.ServerExecutablePath);
-        foreach (var sub in new[] { "", "ECAssistantLLM", "server", "bin", "ECAssistantLLM\\bin", "server\\bin" })
+        void Add(string c)
         {
-            var c = Path.Combine(_appRoot, sub, exeName);
-            if (!candidates.Contains(c)) candidates.Add(c);
+            try { candidates.Add(Path.GetFullPath(c)); } catch { /* malformed — skip */ }
+        }
+
+        var exeName = Path.GetFileName(serverExecutablePath);
+
+        // 1. Root-relative (as configured — deployment: root/<server_executable_path>)
+        Add(Path.Combine(appRoot, serverExecutablePath));
+
+        // 2. Inside the root: ECAssistantLLM/bin/{Debug,Release}/net8.0 and shallow variants
+        foreach (var sub in new[] { "", "ECAssistantLLM", "server" })
+        {
+            Add(Path.Combine(appRoot, sub, exeName));
+            Add(Path.Combine(appRoot, sub, "bin", "Debug", "net8.0", exeName));
+            Add(Path.Combine(appRoot, sub, "bin", "Release", "net8.0", exeName));
         }
 
         // 3. Publish layout: server binary next to the app binary
-        candidates.Add(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, _config.ServerExecutablePath)));
-        candidates.Add(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, Path.GetFileName(_config.ServerExecutablePath))));
+        Add(Path.Combine(baseDirectory, exeName));
+        Add(Path.Combine(baseDirectory, serverExecutablePath));
 
-        // 4. Development fallback: relative to CWD — but if it points at Release, also consider
-        //    the sibling Debug build and prefer whichever is newer (never serve a stale build).
-        var devPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), _config.ServerExecutablePath));
-        candidates.Add(devPath);
+        // 4. Development fallback: relative to CWD; if it points at Release, also consider the
+        //    sibling Debug build and prefer the NEWER one (never serve a stale build).
+        var devPath = Path.GetFullPath(Path.Combine(currentDirectory, serverExecutablePath));
+        Add(devPath);
         if (devPath.Contains("Release", StringComparison.OrdinalIgnoreCase))
         {
             var debugPath = devPath.Replace("Release", "Debug", StringComparison.OrdinalIgnoreCase);
-            candidates.Add(debugPath);
             if (File.Exists(devPath) && File.Exists(debugPath) &&
                 File.GetLastWriteTimeUtc(debugPath) > File.GetLastWriteTimeUtc(devPath))
             {
-                // Debug is fresher — serve it first
-                candidates.Remove(debugPath);
+                candidates.Remove(devPath);
                 candidates.Insert(0, debugPath);
+            }
+            else
+            {
+                Add(debugPath);
             }
         }
 
-        return candidates.FirstOrDefault(File.Exists);
+        var found = candidates.FirstOrDefault(File.Exists);
+        return found;
     }
 
     public void Dispose()
