@@ -4,32 +4,26 @@ using Xunit;
 namespace ECAssistant.Core.Tests;
 
 /// <summary>
-/// v12.9 runtime path contract: the LLM server executable resolves against the app ROOT
-/// only — never against dev trees (bin/Debug siblings, repo layout). Regression tests for
-/// the stale-Release and CWD-dependent launch failures found on 2026-08-29.
-///
-/// Layout per test (single disposable root, matching a realistic deployment):
-///   root/
-///     ecassistant/            ← app root passed to the resolver
-///     console/                ← dev CWD (dotnet run from a project folder)
-///     ECAssistantLLM/bin/…    ← server binary location (root-relative or dev sibling)
+/// v12.10 runtime contract tests: the integrating app gives Core a root folder; Core
+/// copies the LLM server runtime INTO the root (root/server/) and only ever executes
+/// from there. No runtime dependency on dev trees (bin/Debug siblings, repo layout).
 /// </summary>
 public class ServerLauncherResolveTests : IDisposable
 {
-    private readonly string _root;      // the integrating app's root
-    private readonly string _appRoot;   // ECAssistant root (may be a subfolder of the host root)
-    private readonly string _baseDir;   // publish layout (app binary folder)
-    private readonly string _cwd;       // dev CWD (dotnet run)
+    private readonly string _root;      // the root folder given to the application
+    private readonly string _baseDir;   // the app binary's own folder (publish layout)
+    private readonly string _devDebug;  // dev build (ECAssistantLLM/bin/Debug/net8.0)
+    private readonly string _devRelease;// dev build (ECAssistantLLM/bin/Release/net8.0)
 
     public ServerLauncherResolveTests()
     {
         _root = CreateDir();
-        _appRoot = Path.Combine(_root, "ecassistant");
-        Directory.CreateDirectory(_appRoot);
-        _baseDir = Path.Combine(_root, "console", "bin");
+        _baseDir = Path.Combine(_root, "publish");
         Directory.CreateDirectory(_baseDir);
-        _cwd = Path.Combine(_root, "console");
-        Directory.CreateDirectory(_cwd);
+        _devDebug = Path.Combine(_root, "ECAssistantLLM", "bin", "Debug", "net8.0");
+        _devRelease = Path.Combine(_root, "ECAssistantLLM", "bin", "Release", "net8.0");
+        Directory.CreateDirectory(_devDebug);
+        Directory.CreateDirectory(_devRelease);
     }
 
     public void Dispose()
@@ -44,6 +38,14 @@ public class ServerLauncherResolveTests : IDisposable
         return d;
     }
 
+    private static string WriteMarker(string dir)
+    {
+        Directory.CreateDirectory(dir);
+        var p = Path.Combine(dir, "ECAssistant.LLM.dll");
+        File.WriteAllText(p, "stub");
+        return p;
+    }
+
     private static string WriteExe(string dir)
     {
         Directory.CreateDirectory(dir);
@@ -52,90 +54,131 @@ public class ServerLauncherResolveTests : IDisposable
         return p;
     }
 
-    private const string ConfiguredRel = "../ECAssistantLLM/bin/Release/net8.0/ECAssistant.LLM";
+    // ── ResolveServerSourceDirectory ──
 
     [Fact]
-    public void AbsolutePath_Wins()
+    public void SourceDir_PublishLayout_Preferred()
     {
-        var exe = WriteExe(Path.Combine(_root, "anywhere"));
-        var got = ServerLauncher.ResolveExecutablePath(exe, _appRoot, _baseDir, _cwd);
-        Assert.Equal(exe, got);
+        WriteMarker(_baseDir);
+        WriteMarker(_devDebug);
+        File.SetLastWriteTimeUtc(Path.Combine(_devDebug, "ECAssistant.LLM.dll"), DateTime.UtcNow.AddHours(1));
+
+        var got = ServerLauncher.ResolveServerSourceDirectory(_baseDir, _root);
+        Assert.Equal(_baseDir, got);
     }
 
     [Fact]
-    public void RootRelative_Found()
+    public void SourceDir_DevBuild_NewestWins()
     {
-        // configured "../ECAssistantLLM/…" resolves against the app root → root/ECAssistantLLM/…
-        var exe = WriteExe(Path.Combine(_appRoot, "ECAssistantLLM", "bin", "Release", "net8.0"));
-        var got = ServerLauncher.ResolveExecutablePath(ConfiguredRel, _appRoot, _baseDir, _cwd);
-        Assert.Equal(exe, got);
-    }
-
-    [Fact]
-    public void RootScan_FindsExecutable_TwoLevelsDeep()
-    {
-        var exe = WriteExe(Path.Combine(_appRoot, "server", "bin", "Release", "net8.0"));
-        Assert.True(File.Exists(exe), $"exe missing on disk: {exe}");
-        var got = ServerLauncher.ResolveExecutablePath("some/missing/dir/ECAssistant.LLM", _appRoot, _baseDir, _cwd);
-        Assert.True(got != null, $"resolver returned null; exe={exe}; appRoot={_appRoot}; exists={File.Exists(exe)}");
-        Assert.Equal(exe, got);
-    }
-
-    [Fact]
-    public void PublishLayout_BaseDirectory_Found()
-    {
-        var exe = WriteExe(_baseDir);
-        var got = ServerLauncher.ResolveExecutablePath("ECAssistant.LLM", _appRoot, _baseDir, _cwd);
-        Assert.Equal(exe, got);
-    }
-
-    [Fact]
-    public void DevCwd_Found_WhenNothingInRoot()
-    {
-        // dev run: dotnet run from console/, configured Release path relative to CWD
-        var exe = WriteExe(Path.Combine(_root, "ECAssistantLLM", "bin", "Release", "net8.0"));
-        var got = ServerLauncher.ResolveExecutablePath(ConfiguredRel, _appRoot, _baseDir, _cwd);
-        Assert.Equal(exe, got);
-    }
-
-    [Fact]
-    public void FresherDebug_Build_Preferred_Over_StaleRelease()
-    {
-        var release = WriteExe(Path.Combine(_root, "ECAssistantLLM", "bin", "Release", "net8.0"));
-        Thread.Sleep(50); // ensure distinct timestamps
-        var debug = WriteExe(Path.Combine(_root, "ECAssistantLLM", "bin", "Debug", "net8.0"));
+        var release = WriteMarker(_devRelease);
+        var debug = WriteMarker(_devDebug);
         File.SetLastWriteTimeUtc(release, DateTime.UtcNow.AddHours(-2));
         File.SetLastWriteTimeUtc(debug, DateTime.UtcNow);
 
-        var got = ServerLauncher.ResolveExecutablePath(ConfiguredRel, _appRoot, _baseDir, _cwd);
-        Assert.Equal(debug, got);
+        // dev walk requires the CWD to sit in a tree whose ancestor contains ECAssistantLLM/bin
+        var cwd = Path.Combine(_root, "console");
+        Directory.CreateDirectory(cwd);
+
+        var got = ServerLauncher.ResolveServerSourceDirectory(_baseDir, cwd);
+        Assert.Equal(_devDebug, got);
     }
 
     [Fact]
-    public void StaleDebug_DoesNotBeat_FreshRelease()
+    public void SourceDir_None_ReturnsNull()
     {
-        var release = WriteExe(Path.Combine(_root, "ECAssistantLLM", "bin", "Release", "net8.0"));
-        var debug = WriteExe(Path.Combine(_root, "ECAssistantLLM", "bin", "Debug", "net8.0"));
-        File.SetLastWriteTimeUtc(release, DateTime.UtcNow);
-        File.SetLastWriteTimeUtc(debug, DateTime.UtcNow.AddHours(-2));
+        Assert.Null(ServerLauncher.ResolveServerSourceDirectory(_baseDir, _root));
+    }
 
-        var got = ServerLauncher.ResolveExecutablePath(ConfiguredRel, _appRoot, _baseDir, _cwd);
-        Assert.Equal(release, got);
+    // ── EnsureServerBinaryCopied ──
+
+    [Fact]
+    public void Copy_CreatesRootServer_WithFilesAndSubdirs()
+    {
+        var source = Path.Combine(_root, "source");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "ECAssistant.LLM.dll"), "stub");
+        File.WriteAllText(Path.Combine(source, "ECAssistant.LLM"), "exe");
+        File.WriteAllText(Path.Combine(source, "runtimes.log"), "skip me");
+        Directory.CreateDirectory(Path.Combine(source, "runtimes", "osx"));
+        File.WriteAllText(Path.Combine(source, "runtimes", "osx", "libllama.dylib"), "native");
+
+        ServerLauncher.EnsureServerBinaryCopied(source, _root);
+
+        var target = Path.Combine(_root, "server");
+        Assert.True(File.Exists(Path.Combine(target, "ECAssistant.LLM.dll")));
+        Assert.True(File.Exists(Path.Combine(target, "ECAssistant.LLM")));
+        Assert.True(File.Exists(Path.Combine(target, "runtimes", "osx", "libllama.dylib")));
+        Assert.False(File.Exists(Path.Combine(target, "runtimes.log"))); // logs skipped
     }
 
     [Fact]
-    public void MissingEverywhere_ReturnsNull()
+    public void Copy_Skips_WhenUpToDate()
     {
-        var got = ServerLauncher.ResolveExecutablePath("does/not/exist/ECAssistant.LLM", _appRoot, _baseDir, _cwd);
-        Assert.Null(got);
+        var source = Path.Combine(_root, "source");
+        Directory.CreateDirectory(source);
+        WriteMarker(source);
+
+        ServerLauncher.EnsureServerBinaryCopied(source, _root);
+        var target = Path.Combine(_root, "server", "ECAssistant.LLM.dll");
+        Assert.Equal("stub", File.ReadAllText(target));
+
+        // unchanged source (mtime not newer than the copy stamp) → no re-copy work
+        ServerLauncher.EnsureServerBinaryCopied(source, _root);
+        Assert.Equal("stub", File.ReadAllText(target));
+
+        // newer source build → re-copied
+        Thread.Sleep(50);
+        File.WriteAllText(Path.Combine(source, "ECAssistant.LLM.dll"), "NEW BUILD");
+        File.SetLastWriteTimeUtc(Path.Combine(source, "ECAssistant.LLM.dll"), DateTime.UtcNow.AddMinutes(1));
+        ServerLauncher.EnsureServerBinaryCopied(source, _root);
+        Assert.Equal("NEW BUILD", File.ReadAllText(target));
     }
 
     [Fact]
-    public void RootScan_DoesNotEscape_Root()
+    public void Copy_NullOrInvalidSource_IsNoOp()
     {
-        // an executable OUTSIDE the root must not be found via root-relative candidates
-        var outside = WriteExe(Path.Combine(_cwd, "ECAssistantLLM", "bin"));
-        var got = ServerLauncher.ResolveExecutablePath("nope/ECAssistant.LLM", _appRoot, _baseDir, _cwd);
-        Assert.NotEqual(outside, got);
+        ServerLauncher.EnsureServerBinaryCopied(null, _root);
+        ServerLauncher.EnsureServerBinaryCopied(Path.Combine(_root, "nope"), _root);
+        Assert.False(Directory.Exists(Path.Combine(_root, "server")));
+    }
+
+    // ── ResolveExecutablePath ──
+
+    [Fact]
+    public void Resolve_AbsolutePath_Wins()
+    {
+        var exe = WriteExe(Path.Combine(_root, "anywhere"));
+        var got = ServerLauncher.ResolveExecutablePath(exe, _root, _baseDir, _root);
+        Assert.Equal(exe, got);
+    }
+
+    [Fact]
+    public void Resolve_PrimaryLocation_IsRootServer()
+    {
+        var exe = WriteExe(Path.Combine(_root, "server"));
+        var got = ServerLauncher.ResolveExecutablePath("../ECAssistantLLM/bin/Release/net8.0/ECAssistant.LLM", _root, _baseDir, _root);
+        Assert.Equal(exe, got);
+    }
+
+    [Fact]
+    public void Resolve_RootScan_FindsTwoLevelsDeep()
+    {
+        var exe = WriteExe(Path.Combine(_root, "server", "bin", "Release", "net8.0"));
+        var got = ServerLauncher.ResolveExecutablePath("missing/dir/ECAssistant.LLM", _root, _baseDir, _root);
+        Assert.Equal(exe, got);
+    }
+
+    [Fact]
+    public void Resolve_PublishLayout_Found()
+    {
+        var exe = WriteExe(_baseDir);
+        var got = ServerLauncher.ResolveExecutablePath("ECAssistant.LLM", _root, _baseDir, _root);
+        Assert.Equal(exe, got);
+    }
+
+    [Fact]
+    public void Resolve_Missing_ReturnsNull()
+    {
+        Assert.Null(ServerLauncher.ResolveExecutablePath("nope/ECAssistant.LLM", _root, _baseDir, _root));
     }
 }

@@ -54,6 +54,11 @@ public sealed class ServerLauncher
             return false;
         }
 
+        // v12.10: the server runtime lives INSIDE the root (root/server/). If it is not there
+        // yet (or older than the build), copy it from the app's own directory — afterwards the
+        // runtime never references anything outside the root.
+        EnsureServerBinaryCopied(ResolveServerSourceDirectory(AppContext.BaseDirectory, Directory.GetCurrentDirectory()), _appRoot);
+
         // Launch server process
         var exePath = ResolveExecutablePath();
         if (exePath == null)
@@ -165,12 +170,92 @@ public sealed class ServerLauncher
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[ServerLauncher] Non-critical error ignored: {ex.Message}"); }
     }
 
-    private string? ResolveExecutablePath() =>
-        ResolveExecutablePath(_config.ServerExecutablePath, _appRoot, AppContext.BaseDirectory, Directory.GetCurrentDirectory());
+    private string? ResolveExecutablePath()
+    {
+        EnsureServerBinaryCopied(ResolveServerSourceDirectory(AppContext.BaseDirectory, Directory.GetCurrentDirectory()), _appRoot);
+        return ResolveExecutablePath(_config.ServerExecutablePath, _appRoot, AppContext.BaseDirectory, Directory.GetCurrentDirectory());
+    }
 
     /// <summary>Resolves the LLM server executable. v12.9 runtime contract: candidates derive from the
     /// app root (root-relative, root scan, publish layout) and the CWD (dev), never from dev trees like
     /// bin/Debug siblings of the repo. Pure apart from File.Exists — fully unit-testable.</summary>
+    /// <summary>Locates the newest server build output directory (publish layout first, then dev).</summary>
+    internal static string? ResolveServerSourceDirectory(string baseDirectory, string currentDirectory)
+    {
+        // Publish layout: server built into the same folder as the app
+        if (File.Exists(Path.Combine(baseDirectory, "ECAssistant.LLM.dll")))
+            return baseDirectory;
+
+        // Dev layout: newest of Debug/Release under the ECAssistantLLM project
+        string? best = null;
+        var bestTime = DateTime.MinValue;
+        foreach (var startDir in new[] { currentDirectory, baseDirectory })
+        {
+            var dir = startDir;
+            for (var level = 0; level < 6 && !string.IsNullOrEmpty(dir); level++)
+            {
+                var llmBin = Path.Combine(dir, "ECAssistantLLM", "bin");
+                if (Directory.Exists(llmBin))
+                {
+                    foreach (var cfg in new[] { "Debug", "Release" })
+                    {
+                        var candidate = Path.Combine(llmBin, cfg, "net8.0");
+                        var marker = Path.Combine(candidate, "ECAssistant.LLM.dll");
+                        if (File.Exists(marker))
+                        {
+                            var t = File.GetLastWriteTimeUtc(marker);
+                            if (t > bestTime) { bestTime = t; best = candidate; }
+                        }
+                    }
+                    break;
+                }
+                dir = Path.GetDirectoryName(dir.TrimEnd(Path.DirectorySeparatorChar)) ?? string.Empty;
+            }
+        }
+        return best;
+    }
+
+    /// <summary>
+    /// v12.10: guarantees root/server/ contains a runnable LLM server. Copies the server
+    /// runtime from the newest available build (publish folder or dev output) when missing
+    /// or stale. After this, the runtime only ever executes from within the root.
+    /// </summary>
+    internal static void EnsureServerBinaryCopied(string? sourceDir, string appRoot)
+    {
+        if (string.IsNullOrEmpty(sourceDir) || !Directory.Exists(sourceDir)) return;
+        if (string.Equals(Path.GetFullPath(sourceDir), Path.GetFullPath(appRoot), StringComparison.OrdinalIgnoreCase)) return;
+
+        var target = Path.Combine(appRoot, "server");
+        var sourceMarker = Path.Combine(sourceDir, "ECAssistant.LLM.dll");
+        var targetMarker = Path.Combine(target, "ECAssistant.LLM.dll");
+        if (!File.Exists(sourceMarker)) return;
+        if (File.Exists(targetMarker) &&
+            File.GetLastWriteTimeUtc(targetMarker) >= File.GetLastWriteTimeUtc(sourceMarker))
+            return; // up to date
+
+        CopyDirectory(sourceDir, target);
+        // File.Copy preserves the source mtime — stamp the target marker so the
+        // staleness comparison compares against copy time, not build time.
+        File.SetLastWriteTimeUtc(targetMarker, DateTime.UtcNow);
+    }
+
+    // Stateless utility — no mutable state.
+    internal static void CopyDirectory(string sourceDir, string targetDir)
+    {
+        Directory.CreateDirectory(targetDir);
+        foreach (var file in Directory.GetFiles(sourceDir))
+        {
+            var name = Path.GetFileName(file);
+            if (name.EndsWith(".log", StringComparison.OrdinalIgnoreCase)) continue;
+            File.Copy(file, Path.Combine(targetDir, name), overwrite: true);
+        }
+        foreach (var dir in Directory.GetDirectories(sourceDir))
+        {
+            if (Path.GetFileName(dir).Equals("logs", StringComparison.OrdinalIgnoreCase)) continue;
+            CopyDirectory(dir, Path.Combine(targetDir, Path.GetFileName(dir)));
+        }
+    }
+
     internal static string? ResolveExecutablePath(
         string serverExecutablePath, string appRoot, string baseDirectory, string currentDirectory)
     {
@@ -178,52 +263,24 @@ public sealed class ServerLauncher
         if (Path.IsPathRooted(serverExecutablePath) && File.Exists(serverExecutablePath))
             return serverExecutablePath;
 
-        // All candidates are normalized up-front so ".." segments resolve BEFORE existence
-        // checks and the returned path is canonical.
         var candidates = new List<string>();
-        void Add(string c)
-        {
-            try { candidates.Add(Path.GetFullPath(c)); } catch { /* malformed — skip */ }
-        }
-
         var exeName = Path.GetFileName(serverExecutablePath);
 
-        // 1. Root-relative (as configured — deployment: root/<server_executable_path>)
-        Add(Path.Combine(appRoot, serverExecutablePath));
+        // 1. The managed copy inside the root (v12.10 primary location)
+        candidates.Add(Path.Combine(appRoot, "server", exeName));
 
-        // 2. Inside the root: ECAssistantLLM/bin/{Debug,Release}/net8.0 and shallow variants
+        // 2. Root scan: the executable anywhere within the root (2 levels deep)
         foreach (var sub in new[] { "", "ECAssistantLLM", "server" })
         {
-            Add(Path.Combine(appRoot, sub, exeName));
-            Add(Path.Combine(appRoot, sub, "bin", "Debug", "net8.0", exeName));
-            Add(Path.Combine(appRoot, sub, "bin", "Release", "net8.0", exeName));
+            candidates.Add(Path.Combine(appRoot, sub, exeName));
+            candidates.Add(Path.Combine(appRoot, sub, "bin", "Debug", "net8.0", exeName));
+            candidates.Add(Path.Combine(appRoot, sub, "bin", "Release", "net8.0", exeName));
         }
 
         // 3. Publish layout: server binary next to the app binary
-        Add(Path.Combine(baseDirectory, exeName));
-        Add(Path.Combine(baseDirectory, serverExecutablePath));
+        candidates.Add(Path.Combine(baseDirectory, exeName));
 
-        // 4. Development fallback: relative to CWD; if it points at Release, also consider the
-        //    sibling Debug build and prefer the NEWER one (never serve a stale build).
-        var devPath = Path.GetFullPath(Path.Combine(currentDirectory, serverExecutablePath));
-        Add(devPath);
-        if (devPath.Contains("Release", StringComparison.OrdinalIgnoreCase))
-        {
-            var debugPath = devPath.Replace("Release", "Debug", StringComparison.OrdinalIgnoreCase);
-            if (File.Exists(devPath) && File.Exists(debugPath) &&
-                File.GetLastWriteTimeUtc(debugPath) > File.GetLastWriteTimeUtc(devPath))
-            {
-                candidates.Remove(devPath);
-                candidates.Insert(0, debugPath);
-            }
-            else
-            {
-                Add(debugPath);
-            }
-        }
-
-        var found = candidates.FirstOrDefault(File.Exists);
-        return found;
+        return candidates.FirstOrDefault(File.Exists);
     }
 
     public void Dispose()
