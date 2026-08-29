@@ -24,16 +24,55 @@ public class EShellAgent : EToolBase
         "Can read/write/copy/move/delete files and folders, run any shell command, " +
         "compile code, search files, manage projects. " +
         "Working directory is set automatically — use relative paths.\n" +
-        "The shell is selected automatically for the host OS (bash/zsh on macOS and Linux, PowerShell on Windows) — " +
-        "your commands must be valid for the host shell.\n" +
-        "Rules:\n" +
-        "1. ALWAYS quote paths that contain spaces. An unquoted path is split into multiple arguments and fails.\n" +
-        "2. When the user asks about file types, folders vs files, sizes or permissions, use a listing form that SHOWS entry types — a plain name-only listing cannot answer that.\n" +
-        "3. If a command fails with an unknown-option or syntax error, the syntax is wrong for this shell — adapt the syntax for the next attempt (do not repeat it).\n" +
-        "4. Prefer one well-formed command that answers the whole question over several narrow ones.";
+        HostShellPrompt();
 
-    public override string UsageExample =>
-        "<toolcall>EShellAgent<command>ls</command></toolcall>";
+    public override string UsageExample => OperatingSystem.IsWindows()
+        ? "<toolcall>EShellAgent<command>Get-ChildItem -Force</command></toolcall>"
+        : "<toolcall>EShellAgent<command>ls -la</command></toolcall>";
+
+    /// <summary>OS-aware shell guidance: exact shell name + worked examples that are valid on THIS host.</summary>
+    // Stateless utility — no mutable state; depends only on the host OS.
+    private static string HostShellPrompt()
+    {
+        var rules =
+            "Rules:\n" +
+            "1. ALWAYS quote paths that contain spaces. An unquoted path is split into multiple arguments and fails.\n" +
+            "2. When the user asks about file types, folders vs files, sizes or permissions, use a listing form that SHOWS entry types — a plain name-only listing cannot answer that.\n" +
+            "3. If a command fails with an unknown-option or syntax error, the syntax is wrong for this shell — adapt the syntax for the next attempt (do not repeat it).\n" +
+            "4. Prefer one well-formed command that answers the whole question over several narrow ones.\n";
+
+        if (OperatingSystem.IsWindows())
+        {
+            return "This host runs PowerShell (pwsh/Windows PowerShell) — use PowerShell syntax.\n" + rules +
+                   "Examples (valid on this host):\n" +
+                   "Get-ChildItem -Force ~\\Desktop          # list with types, incl. hidden\n" +
+                   "Get-ChildItem \"~\\Desktop\\My Folder\"    # quoted path with spaces\n" +
+                   "Get-ChildItem ~\\Desktop | Where-Object { $_.PSIsContainer }   # only folders\n" +
+                   "Get-Content \"~\\Desktop\\notes.txt\" -TotalCount 20             # read a file\n" +
+                   "Copy-Item \"~\\Desktop\\a.txt\" ~\\Documents\\b.txt               # copy\n";
+        }
+
+        if (OperatingSystem.IsMacOS())
+        {
+            return "This host runs macOS — the shell is zsh (BSD userland: some GNU options differ, e.g. date has no -d).\n" + rules +
+                   "Examples (valid on this host):\n" +
+                   "ls -la ~/Desktop                         # list with types, sizes, permissions\n" +
+                   "ls -la ~/Desktop/\"My Folder\"            # quoted path with spaces\n" +
+                   "find ~/Desktop -maxdepth 1 -type d       # only folders\n" +
+                   "head -n 20 ~/Desktop/notes.txt           # read a file\n" +
+                   "cp ~/Desktop/a.txt ~/Documents/b.txt     # copy\n" +
+                   "date '+%A %B %e, %Y'                     # formatted date (BSD syntax)\n";
+        }
+
+        return "This host runs Linux — the shell is bash (GNU userland).\n" + rules +
+               "Examples (valid on this host):\n" +
+               "ls -la ~/Desktop                         # list with types, sizes, permissions\n" +
+               "ls -la ~/\"My Folder\"                    # quoted path with spaces\n" +
+               "find ~/Desktop -maxdepth 1 -type d       # only folders\n" +
+               "head -n 20 ~/Desktop/notes.txt           # read a file\n" +
+               "cp ~/Desktop/a.txt ~/Documents/b.txt     # copy\n" +
+               "date -d tomorrow '+%A %B %e, %Y'         # GNU date\n";
+    }
 
     public override bool IsEnabled { get; protected set; } = true;
     public override bool IsSystemCritical => true;
