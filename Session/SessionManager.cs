@@ -440,16 +440,24 @@ public class SessionManager : IAsyncDisposable
     /// </summary>
     public void MarkUserActivity()
     {
+        // Fire-and-forget form. The message-submit path must use MarkUserActivityAsync
+        // so input waits for the connection to be restored (v12.6 race fix).
+        _ = MarkUserActivityAsync();
+    }
+
+    /// <summary>
+    /// Marks user activity; if idle-disconnected, reconnects and COMPLETES only after the
+    /// client and KV sessions are fully restored. Await this before processing a message —
+    /// v12.6: messages processed during a background reconnect raced the disposed client and were lost.
+    /// </summary>
+    public Task MarkUserActivityAsync()
+    {
         _lastUserActivity = DateTime.UtcNow;
 
         if (_isIdleDisconnected && IsLocalMode)
-        {
-            _ = Task.Run(async () =>
-            {
-                try { await ReconnectAfterIdleAsync(); }
-                catch (Exception ex) { _logger.Error("SessionManager", $"Reconnect after idle failed: {ex.Message}"); }
-            });
-        }
+            return ReconnectAfterIdleAsync();
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
