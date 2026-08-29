@@ -571,13 +571,20 @@ User: " + userRequest + "\n<lm>\n";
         if (_inferenceEngine == null)
             return false;
 
-        var prompt = "Is this a task needing tools, or a conversational question? Reply only TASK or CHAT. The user's message may be in any language — classify by meaning, not language.\n\n" +
+        var prompt = "Is this a task needing tools (files, shell, web, system access), or a conversational question? " +
+            "A request to actually DO something is TASK even when phrased as a question ('can you …?'). " +
+            "Only greetings, small-talk and questions about your capabilities are CHAT. " +
+            "The user's message may be in any language — classify by meaning, not language. Reply only TASK or CHAT.\n\n" +
             "User: hello\nCHAT\n" +
             "User: create a file\nTASK\n" +
             "User: what can you do?\nCHAT\n" +
             "User: fix the bug in Program.cs\nTASK\n" +
             "User: how are you?\nCHAT\n" +
             "User: read the log file and find errors\nTASK\n" +
+            "User: can you help me?\nCHAT\n" +
+            "User: list all the files on my desktop\nTASK\n" +
+            "User: can you list the files on my desktop?\nTASK\n" +
+            "User: can you search the web for news?\nTASK\n" +
             "User: erstelle eine neue Datei\nTASK\n" +
             "User: wie geht's dir?\nCHAT\n" +
             "User: analiza estos datos y genera un informe\nTASK\n" +
@@ -590,11 +597,15 @@ User: " + userRequest + "\n<lm>\n";
             // Thinking models (e.g. Qwen3.5) burn tokens inside <think> before answering —
             // give the classifier enough budget, then strip think blocks before parsing.
             var quickParams = BuildStatelessParams(512, new[] { "\n", "User:" }, 0.1f, 0.8f, 40, 1.0f);
-            var raw = await _inferenceEngine.GenerateAsync(prompt, quickParams, CancellationToken.None);
-            var cleaned = StripThinkBlocks(raw).Trim().ToUpperInvariant();
-            _logger?.Info("Intent", $"Classification for '{userRequest.Substring(0, Math.Min(userRequest.Length, 40))}': {cleaned}");
-            if (cleaned.Contains("TASK")) return false;
-            if (cleaned.Contains("CHAT")) return true;
+            for (var attempt = 1; attempt <= 2; attempt++)
+             {
+                var raw = await _inferenceEngine.GenerateAsync(prompt, quickParams, CancellationToken.None);
+                var cleaned = StripThinkBlocks(raw).Trim().ToUpperInvariant();
+                _logger?.Info("Intent", $"Classification (try {attempt}) for '{userRequest.Substring(0, Math.Min(userRequest.Length, 40))}': {cleaned}");
+                if (cleaned.Contains("TASK")) return false;
+                if (cleaned.Contains("CHAT")) return true;
+                // Empty/ambiguous (thinking models sometimes emit nothing) — retry once, then default to TASK.
+             }
             return false;
          }
         catch (OperationCanceledException)
