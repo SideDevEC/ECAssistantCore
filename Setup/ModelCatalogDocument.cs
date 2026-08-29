@@ -85,19 +85,6 @@ public sealed class ModelCatalogDocument
             },
             new()
             {
-                Id = "gemma3-4b", DisplayName = "Gemma 3 4B IT (Vision)", Category = CatalogModelCategory.Vision,
-                HfRepo = "ggml-org/gemma-3-4b-it-GGUF", Recommended = false, Quant = "Q4_K_M",
-                Files =
-                {
-                    new CatalogModelFile { Filename = "gemma-3-4b-it-Q4_K_M.gguf", SizeGb = 2.5 },
-                    new CatalogModelFile { Filename = "mmproj-model-f16.gguf", SizeGb = 0.6 }
-                },
-                MmprojFile = "mmproj-model-f16.gguf",
-                SuggestedConfig = new CatalogSuggestedConfig { GpuLayers = 99, ContextSize = 8192 },
-                Notes = "Compact + fast; strong text quality, decent vision, lighter OCR."
-            },
-            new()
-            {
                 Id = "smolvlm2-2b", DisplayName = "SmolVLM2 2.2B Instruct (Vision, tiny)", Category = CatalogModelCategory.Vision,
                 HfRepo = "ggml-org/SmolVLM2-2.2B-Instruct-GGUF", Recommended = false, Quant = "Q4_K_M" ,
                 Files =
@@ -116,6 +103,79 @@ public sealed class ModelCatalogDocument
                 Files = { new CatalogModelFile { Filename = "all-MiniLM-L6-v2-Q5_K_M.gguf", SizeGb = 0.05 } },
                 SuggestedConfig = new CatalogSuggestedConfig { GpuLayers = 0, ContextSize = 2048 },
                 Notes = "Vector memory / KB embeddings. Required for vector memory features."
+            },
+            new()
+            {
+                Id = "qwen3-vl-4b", DisplayName = "Qwen3-VL 4B Instruct (Vision)", Category = CatalogModelCategory.Vision,
+                HfRepo = "unsloth/Qwen3-VL-4B-Instruct-GGUF", Recommended = true, Quant = "Q4_K_M",
+                Files =
+                {
+                    new CatalogModelFile { Filename = "Qwen3-VL-4B-Instruct-Q4_K_M.gguf", SizeGb = 2.33 },
+                    new CatalogModelFile { Filename = "mmproj-F16.gguf", SizeGb = 0.78 }
+                },
+                MmprojFile = "mmproj-F16.gguf",
+                SuggestedConfig = new CatalogSuggestedConfig { GpuLayers = 99, ContextSize = 32768 },
+                Notes = "NEW recommended vision model: latest Qwen3-VL gen, fast, strong OCR + charts + screenshots."
+            },
+            new()
+            {
+                Id = "qwen3-vl-8b", DisplayName = "Qwen3-VL 8B Instruct (Vision)", Category = CatalogModelCategory.Vision,
+                HfRepo = "unsloth/Qwen3-VL-8B-Instruct-GGUF", Recommended = false, Quant = "Q4_K_M",
+                Files =
+                {
+                    new CatalogModelFile { Filename = "Qwen3-VL-8B-Instruct-Q4_K_M.gguf", SizeGb = 4.68 },
+                    new CatalogModelFile { Filename = "mmproj-F16.gguf", SizeGb = 1.08 }
+                },
+                MmprojFile = "mmproj-F16.gguf",
+                SuggestedConfig = new CatalogSuggestedConfig { GpuLayers = 99, ContextSize = 32768 },
+                Notes = "Bigger Qwen3-VL: noticeably better reasoning over complex images and documents."
+            },
+            new()
+            {
+                Id = "qwen25-vl-3b", DisplayName = "Qwen2.5-VL 3B Instruct (Vision, light)", Category = CatalogModelCategory.Vision,
+                HfRepo = "ggml-org/Qwen2.5-VL-3B-Instruct-GGUF", Recommended = false, Quant = "Q4_K_M",
+                Files =
+                {
+                    new CatalogModelFile { Filename = "Qwen2.5-VL-3B-Instruct-Q4_K_M.gguf", SizeGb = 1.8 },
+                    new CatalogModelFile { Filename = "mmproj-Qwen2.5-VL-3B-Instruct-f16.gguf", SizeGb = 1.25 }
+                },
+                MmprojFile = "mmproj-Qwen2.5-VL-3B-Instruct-f16.gguf",
+                SuggestedConfig = new CatalogSuggestedConfig { GpuLayers = 99, ContextSize = 16384 },
+                Notes = "Lightest capable vision model; snappy on Apple Silicon, good for quick screenshots."
+            },
+            new()
+            {
+                Id = "qwen25-vl-32b", DisplayName = "Qwen2.5-VL 32B Instruct (Vision, max quality)", Category = CatalogModelCategory.Vision,
+                HfRepo = "ggml-org/Qwen2.5-VL-32B-Instruct-GGUF", Recommended = false, Quant = "Q4_K_M",
+                Files =
+                {
+                    new CatalogModelFile { Filename = "Qwen2.5-VL-32B-Instruct-Q4_K_M.gguf", SizeGb = 18.49 },
+                    new CatalogModelFile { Filename = "mmproj-Qwen2.5-VL-32B-Instruct-f16.gguf", SizeGb = 1.28 }
+                },
+                MmprojFile = "mmproj-Qwen2.5-VL-32B-Instruct-f16.gguf",
+                SuggestedConfig = new CatalogSuggestedConfig { GpuLayers = 99, ContextSize = 32768 },
+                Notes = "Maximum vision quality (~20 GB download). Best OCR, charts, multi-image reasoning."
+            },
+            new()
+            {
+                Id = "qwen35-35b-a3b", DisplayName = "Qwen3.5 35B-A3B (Vision + deep reasoning, MoE)", Category = CatalogModelCategory.Vision,
+                HfRepo = "unsloth/Qwen3.5-35B-A3B-GGUF", Recommended = false, Quant = "UD-Q4_K_XL",
+                Files =
+                {
+                    new CatalogModelFile { Filename = "Qwen3.5-35B-A3B-UD-Q4_K_XL.gguf", SizeGb = 20.71 },
+                    new CatalogModelFile { Filename = "mmproj-F16.gguf", SizeGb = 0.84 }
+                },
+                MmprojFile = "mmproj-F16.gguf",
+                SuggestedConfig = new CatalogSuggestedConfig { GpuLayers = 99, ContextSize = 65536 },
+                Notes = "Top pick for heavy analytics: 35B-class reasoning, only ~3B active (fast). Native vision, 256K context, thinking mode. ~21 GB RAM."
+            },
+            new()
+            {
+                Id = "multilingual-e5-large", DisplayName = "Multilingual E5 Large (Embedding, MIT)", Category = CatalogModelCategory.Embedding,
+                HfRepo = "soichisumi/multilingual-e5-large-Q8_0-GGUF", Recommended = true, Quant = "Q8_0",
+                Files = { new CatalogModelFile { Filename = "multilingual-e5-large-q8_0.gguf", SizeGb = 0.56 } },
+                SuggestedConfig = new CatalogSuggestedConfig { GpuLayers = 99, ContextSize = 2048 },
+                Notes = "Multilingual embeddings (100+ languages), 1024-dim. Replaces English-only MiniLM. MIT license."
             }
         }
     };
