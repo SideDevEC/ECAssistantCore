@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-29T18:15:22.030815+00:00
-Packages: 3  |  Types: 368
+Generated: 2026-08-29T18:32:09.044990+00:00
+Packages: 3  |  Types: 376
 
 ---
 
-## ECAssistantCore (279 types, ~24724 LOC)
+## ECAssistantCore (287 types, ~25093 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -29,10 +29,12 @@ Packages: 3  |  Types: 368
 - 🔵 IParallelToolExecutor  (ECAssistantCore)
 - 🔵 IProcessRunner  (ECAssistantCore)
 - 🔵 IReadableContentExtractor  (ECAssistantCore)
+- 🔵 IRemoteModelProbe  (ECAssistantCore)
 - 🔵 ISecureKeyStore  (ECAssistantCore)
 - 🔵 ISessionBuilder  (ECAssistantCore)
 - 🔵 ISessionContext  (ECAssistantCore)
 - 🔵 ISessionOutput  (ECAssistantCore)
+- 🔵 ISetupUi  (ECAssistantCore)
 - 🔵 IStepMapper  (ECAssistantCore)
 - 🔵 ISubAgentEngineHost  (ECAssistantCore)
 - 🔵 ITaskPlanner  (ECAssistantCore)
@@ -62,6 +64,7 @@ Packages: 3  |  Types: 368
 - 🟡 ConfigLoaderTests  (ECAssistantCore)
 - 🟡 ConfigProvider : IConfigProvider  (ECAssistantCore)  deps: [IFileSystem, string, IFileSystem, EAgentConfig]
 - 🟡 ConfigProviderTests  (ECAssistantCore)
+- 🟡 ConsoleSetupUi : ISetupUi  (ECAssistantCore)
 - 🟡 ContextManagementConfig  (ECAssistantCore)
 - 🟡 ContextManager : IContextManager  (ECAssistantCore)  deps: [IInferenceEngine, IConfigProvider]
 - 🟡 ContextManagerTests  (ECAssistantCore)
@@ -207,9 +210,12 @@ Packages: 3  |  Types: 368
 - 🟡 ReadableContentExtractor : IReadableContentExtractor  (ECAssistantCore)
 - 🟡 ReadableContentExtractorTests  (ECAssistantCore)
 - 🟡 RemoteKvCacheController : IKvCacheController  (ECAssistantCore)  deps: [OpenAIClient]
+- 🟣 RemoteModelInfo  (ECAssistantCore)  deps: [string, bool]
 - 🟡 RemoteModelInfo  (ECAssistantCore)
 - 🟡 RemoteModelLoadOptions  (ECAssistantCore)
 - 🟡 RemoteModelLoader : IModelLoader  (ECAssistantCore)  deps: [OpenAIClient]
+- 🟡 RemoteModelProbe : IRemoteModelProbe  (ECAssistantCore)  deps: [HttpClient? httpClient =]
+- 🟣 RemoteProbeResult  (ECAssistantCore)  deps: [bool, IReadOnlyList, string? Error =]
 - 🟣 RemoteProvider  (ECAssistantCore)  deps: [string, string, string, string, string]
 - 🟡 RemoteProviderConfig  (ECAssistantCore)
 - 🟡 RemoteProviderSetupWriter  (ECAssistantCore)  deps: [string, string? keysDirectory =]
@@ -228,6 +234,7 @@ Packages: 3  |  Types: 368
 - 🟡 SessionManagementIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 SessionManager : IAsyncDisposable  (ECAssistantCore)  deps: [EAgentConfig, string, string, ILogger? logger =, Func, Func, LlmServerClient? serverClient =, SecureKeyStore? keyStore =, ILlmProviderRegistry? providerRegistry =, IModelParamValidator? modelParamValidator =]
 - 🟡 SessionQueueTests  (ECAssistantCore)
+- 🟡 SetupWizard  (ECAssistantCore)  deps: [ISetupUi]
 - 🟡 SingleToolResult  (ECAssistantCore)
 - 🟡 SseParser  (ECAssistantCore)
 - 🟡 StepMapper : IStepMapper  (ECAssistantCore)  deps: [IEngineToolContext, ILogger? logger =]
@@ -285,6 +292,7 @@ Packages: 3  |  Types: 368
 - 🟡 VectorMemoryStoreTests : IDisposable  (ECAssistantCore)
 - 🟣 VectorResult  (ECAssistantCore)  deps: [string, string, float]
 - 🟡 VectorSearchResult  (ECAssistantCore)
+- 🟡 WizardContext  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
 ## TestSupport (8 types, ~1441 LOC)

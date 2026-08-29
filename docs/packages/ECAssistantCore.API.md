@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 279  |  LOC: 24724  |  ~12967 tokens
+Types: 287  |  LOC: 25093  |  ~13331 tokens
 
 ---
 
@@ -190,6 +190,11 @@ Methods:
 Methods:
   - string Extract(string html)
 
+### Interface: IRemoteModelProbe
+> A model advertised by a remote OpenAI-compatible /models endpoint.
+Methods:
+  - Task<RemoteProbeResult> ProbeAsync(string endpoint, string? apiKey, CancellationToken ct = default)
+
 ### Interface: ISecureKeyStore
 > Cross-platform self-encrypting API key store.
 Properties:
@@ -243,6 +248,13 @@ Methods:
   - string GetStreamBuffer()
   - OutputState GetStreamState()
   - bool RequestApproval(string message)
+
+### Interface: ISetupUi
+> Console I/O abstraction for the setup wizard — enables unit testing of flow logic.
+Methods:
+  - void WriteLine(string text = "")
+  - void Write(string text)
+  - string? ReadLine()
 
 ### Interface: IStepMapper
 > Interface for mapping sub-tasks to concrete tool calls.
@@ -379,6 +391,10 @@ Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Config
 
 ### Class: ConfigProviderTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, Moq
+
+### Class: ConsoleSetupUi
+> Default <see cref="ISetupUi"/> backed by System.Console.
+Implements: ISetupUi
 
 ### Class: ContextManagementConfig
 
@@ -982,6 +998,12 @@ Constructor:
   - RemoteModelLoader(OpenAIClient client)
 Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Transport
 
+### Class: RemoteModelProbe
+> Default <see cref="IRemoteModelProbe"/>: GET {endpoint}/models with optional bearer
+Implements: IRemoteModelProbe
+Constructor:
+  - RemoteModelProbe(HttpClient? httpClient = null)
+
 ### Class: RemoteProviderConfig
 > A single remote OpenAI-compatible provider entry.
 
@@ -1060,6 +1082,12 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistan
 ### Class: SessionQueueTests
 > Tests for session prompt queue logic and run state transitions.
 Cross-package deps: ECAssistant.Core.Session
+
+### Class: SetupWizard
+> Paths and services the wizard needs; assembled by the host.
+Constructor:
+  - SetupWizard(ISetupUi ui)
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup
 
 ### Class: SingleToolResult
 > Result of a single tool execution within a batch.
@@ -1267,6 +1295,10 @@ Cross-package deps: ECAssistant.Core.Memory, ECAssistant.Core.Services
 
 ### Class: VectorSearchResult
 
+### Class: WizardContext
+> Paths and services the wizard needs; assembled by the host.
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup
+
 ### Class: WorkspaceConfig
 
 ### Record: BuildError
@@ -1306,6 +1338,16 @@ Constructor:
 ### Record: ProcessResult
 Constructor:
   - ProcessResult(int ExitCode, string StdOut, string StdErr, bool TimedOut)
+
+### Record: RemoteModelInfo
+> A model advertised by a remote OpenAI-compatible /models endpoint.
+Constructor:
+  - RemoteModelInfo(string Id, bool SupportsVision)
+
+### Record: RemoteProbeResult
+> A model advertised by a remote OpenAI-compatible /models endpoint.
+Constructor:
+  - RemoteProbeResult(bool Reachable, IReadOnlyList<RemoteModelInfo> Models, string? Error = null)
 
 ### Record: RemoteProvider
 > A fully-resolved remote provider ready for engine construction.

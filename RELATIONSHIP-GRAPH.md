@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-08-29T18:15:22.031330+00:00
-Edges: 81  |  Packages: 3
+Generated: 2026-08-29T18:32:09.045553+00:00
+Edges: 84  |  Packages: 3
 
 ---
 
@@ -15,6 +15,7 @@ Edges: 81  |  Packages: 3
 - ConfigProvider ──implements──► IConfigProvider (ECAssistantCore)
 - ConfigProvider ──uses──► IFileSystem (ECAssistantCore)
 - ConfigProvider ──uses──► IFileSystem (ECAssistantCore)
+- ConsoleSetupUi ──implements──► ISetupUi (ECAssistantCore)
 - ContextManager ──implements──► IContextManager (ECAssistantCore)
 - ContextManager ──uses──► IConfigProvider (ECAssistantCore)
 - ContextManager ──uses──► IInferenceEngine (ECAssistantCore)
@@ -75,8 +76,10 @@ Edges: 81  |  Packages: 3
 - ReadableContentExtractor ──implements──► IReadableContentExtractor (ECAssistantCore)
 - RemoteKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
 - RemoteModelLoader ──implements──► IModelLoader (ECAssistantCore)
+- RemoteModelProbe ──implements──► IRemoteModelProbe (ECAssistantCore)
 - SecureKeyStore ──implements──► ISecureKeyStore (ECAssistantCore)
 - SessionBuilder ──implements──► ISessionBuilder (ECAssistantCore)
+- SetupWizard ──uses──► ISetupUi (ECAssistantCore)
 - StepMapper ──implements──► IStepMapper (ECAssistantCore)
 - StepMapper ──uses──► IEngineToolContext (ECAssistantCore)
 - SubAgentManager ──uses──► ISubAgentEngineHost (ECAssistantCore)
