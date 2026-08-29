@@ -40,6 +40,8 @@ public class EWebSearchTool : EToolBase
         "The results are INPUT for your reasoning, NOT the answer: read the titles and snippets, " +
         "fetch 1-2 promising pages with EWebFetch if needed, then answer in your own words. " +
         "NEVER reply to the user with a list of links. " +
+        "If the results are irrelevant, do NOT keep re-searching reworded queries — " +
+        "at most try ONE different query, then conclude with <output> describing what you found and that it did not answer the question. " +
         "max_results is optional (default 5, max 10).";
 
     public override bool IsEnabled { get; protected set; } = true;

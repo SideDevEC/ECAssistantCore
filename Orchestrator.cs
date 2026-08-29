@@ -401,8 +401,9 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                             _out?.WriteWarning("Identical tool call already failed — blocked. Forcing a different approach.");
                             _logger?.Warn("Orchestrator", $"Blocked repeat of failed call: {callSignature}");
                             _engine.InjectFormatRetry(
+                                $"The user's original request was: \"{goal}\"\n" +
                                 "That exact tool call already failed (see the error above). Repeating it gives the same error.\n" +
-                                "Change your approach: use DIFFERENT arguments or a different tool, or if the task cannot proceed, respond with <lm><thinking>reasoning</thinking><output>what you found and what blocked you</output></lm>.");
+                                "Do NOT start a new or unrelated task. Change your approach: use DIFFERENT arguments or a different tool, or if the task cannot proceed, respond with <lm><thinking>reasoning</thinking><output>what you found and what blocked you</output></lm>.");
                             _turnCount++;
                             continue;
                          }
@@ -413,9 +414,10 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                             _out?.WriteWarning("Identical call just succeeded — results are above. Blocking repeat.");
                             _logger?.Warn("Orchestrator", $"Blocked repeat of just-successful call: {callSignature}");
                             _engine.InjectFormatRetry(
+                                $"The user's original request was: \"{goal}\"\n" +
                                 "You already executed exactly this call and its results are ABOVE in the conversation.\n" +
-                                "Do NOT repeat it. Use those results: continue the task or answer with <lm><thinking>reasoning</thinking><output>your answer</output></lm>. " +
-                                "Only call a tool again with CHANGED arguments if you genuinely need different data.");
+                                "Do NOT repeat it, do NOT start a new or unrelated task. Use those results and answer the ORIGINAL request with <lm><thinking>reasoning</thinking><output>your answer</output></lm>. " +
+                                "Only call a tool again with CHANGED arguments if you genuinely need different data for it.");
                             _turnCount++;
                             continue;
                          }
