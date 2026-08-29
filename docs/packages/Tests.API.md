@@ -1,8 +1,11 @@
 # Tests.API.md
 
-Types: 80  |  LOC: 10957  |  ~2861 tokens
+Types: 81  |  LOC: 11030  |  ~2886 tokens
 
 ---
+
+### Class: AiSetupResetterTests
+Cross-package deps: ECAssistant.Core.Setup, ECAssistant.Core.Config
 
 ### Class: ApiUserController
 Cross-package deps: ECAssistant.Core.Analysis

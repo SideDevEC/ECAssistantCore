@@ -124,6 +124,7 @@ ECAssistantConsole ←── [Core DLL, TUI DLL]
 | IToolPolicyEvaluator | ToolPolicy | Tool permission evaluation |
 | ISessionContext | AgentSession | Read-only session context exposed to tools |
 | IConfigLoader | ConfigLoader | JSON config file loading with embedded fallback |
+| IAiSetupResetter | AiSetupResetter | First-run setup reset (config/keys/server config) |
 | IModelParamValidator | ModelParamValidator | Pre-flight model parameter validation |
 | IStepMapper | StepMapper | Maps decomposed sub-tasks to concrete tool calls via LLM |
 | IParallelToolExecutor | ParallelToolExecutor | Dependency-ordered parallel tool execution with policy gates |

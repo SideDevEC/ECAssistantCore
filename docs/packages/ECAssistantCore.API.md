@@ -1,8 +1,14 @@
 # ECAssistantCore.API.md
 
-Types: 276  |  LOC: 24527  |  ~12841 tokens
+Types: 279  |  LOC: 24641  |  ~12967 tokens
 
 ---
+
+### Interface: IAiSetupResetter
+> Resets all AI setup state back to first-run defaults: clears configured
+Methods:
+  - void Reset(string userConfigDir)
+Cross-package deps: ECAssistant.Core.Setup
 
 ### Interface: IConfigLoader
 > Interface for loading EAgentConfig from JSON files.
@@ -311,6 +317,14 @@ Implements: ISessionOutput, ISessionContext, IAsyncDisposable
 Constructor:
   - AgentSession(string key, string sessionId, string endpoint, string? clientId, InferenceRequestParams inferenceParams, string workingDir, SemaphoreSlim inferenceLock, SubAgentConfig? subAgentConfig = null, string? label = null, ILogger? logger = null, EAgentConfig? config = null, OpenAIClient? httpClient = null, RemoteTokenizer? remoteTokenizer = null, string? apiKey = null, bool isLocalMode = true)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Memory, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Transport, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools
+
+### Class: AiSetupResetter
+> Default <see cref="IAiSetupResetter"/>: rewrites appsettings.json back to the
+Implements: IAiSetupResetter
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
+
+### Class: AiSetupResetterTests
+Cross-package deps: ECAssistant.Core.Setup, ECAssistant.Core.Config
 
 ### Class: ApiUserController
 Cross-package deps: ECAssistant.Core.Analysis

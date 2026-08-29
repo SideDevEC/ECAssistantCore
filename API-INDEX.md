@@ -1,12 +1,13 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-29T08:19:28.802860+00:00
-Packages: 3  |  Types: 364
+Generated: 2026-08-29T09:32:28.594942+00:00
+Packages: 3  |  Types: 368
 
 ---
 
-## ECAssistantCore (276 types, ~24527 LOC)
+## ECAssistantCore (279 types, ~24641 LOC)
 
+- 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
 - 🔵 IConfigProvider  (ECAssistantCore)
 - 🔵 IContextManager  (ECAssistantCore)
@@ -44,6 +45,8 @@ Packages: 3  |  Types: 364
 - 🟡 AgentConfigBuilder  (ECAssistantCore)
 - 🟡 AgentOrchestrator : IAsyncDisposable  (ECAssistantCore)  deps: [EAgentEngine, ISessionOutput? sessionOutput =, int maxTurns =, int maxFailures =, ToolPolicy? toolPolicy =, ILogger? logger =, EAgentConfig? config =]
 - 🟡 AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable  (ECAssistantCore)  deps: [string, string, string, string, InferenceRequestParams, string, SemaphoreSlim, SubAgentConfig? subAgentConfig =, string? label =, ILogger? logger =, EAgentConfig? config =, OpenAIClient? httpClient =, RemoteTokenizer? remoteTokenizer =, string? apiKey =, bool isLocalMode =]
+- 🟡 AiSetupResetter : IAiSetupResetter  (ECAssistantCore)
+- 🟡 AiSetupResetterTests  (ECAssistantCore)
 - 🟡 ApiUserController  (ECAssistantCore)
 - 🟡 BackgroundProcessManager : IDisposable  (ECAssistantCore)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (ECAssistantCore)
@@ -295,8 +298,9 @@ Packages: 3  |  Types: 364
 - 🟡 TestScenario  (TestSupport)
 - 🟡 TestSessionOutput : ISessionOutput  (TestSupport)  deps: [EGuiTestHarness]
 
-## Tests (80 types, ~10957 LOC)
+## Tests (81 types, ~11030 LOC)
 
+- 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (Tests)
 - 🟡 ConfigIntegrationTests : IDisposable  (Tests)

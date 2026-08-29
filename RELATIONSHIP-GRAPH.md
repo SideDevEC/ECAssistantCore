@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-08-29T08:19:28.803545+00:00
-Edges: 80  |  Packages: 3
+Generated: 2026-08-29T09:32:28.595557+00:00
+Edges: 81  |  Packages: 3
 
 ---
 
@@ -9,6 +9,7 @@ Edges: 80  |  Packages: 3
 
 - AgentSession ──implements──► ISessionContext (ECAssistantCore)
 - AgentSession ──implements──► ISessionOutput (ECAssistantCore)
+- AiSetupResetter ──implements──► IAiSetupResetter (ECAssistantCore)
 - ConfigLoader ──implements──► IConfigLoader (ECAssistantCore)
 - ConfigLoader ──uses──► IFileSystem (ECAssistantCore)
 - ConfigProvider ──implements──► IConfigProvider (ECAssistantCore)
