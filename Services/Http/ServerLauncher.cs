@@ -171,29 +171,41 @@ public sealed class ServerLauncher
         if (Path.IsPathRooted(_config.ServerExecutablePath) && File.Exists(_config.ServerExecutablePath))
             return _config.ServerExecutablePath;
 
+        // v12.9: runtime deployment contract — the integrating app only guarantees the ROOT
+        // directory. All candidates derive from the root; no dev trees (bin/Debug siblings,
+        // CWD walks) are consulted. For development runs, a Debug build next to the configured
+        // Release path is accepted only if it is NEWER (so stale builds never serve).
         var candidates = new List<string>();
 
-        // As configured, relative to CWD and base dir
-        foreach (var dir in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
-            candidates.Add(Path.GetFullPath(Path.Combine(dir, _config.ServerExecutablePath)));
+        // 1. Root-relative (deployment layout: root/<server_executable_path>)
+        candidates.Add(Path.GetFullPath(Path.Combine(_appRoot, _config.ServerExecutablePath)));
 
-        // Dev layout: walk up from CWD/base looking for the ECAssistantLLM sibling project,
-        // preferring Debug (freshest during development) over Release.
-        foreach (var startDir in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
+        // 2. Any ECAssistant.LLM within the root (2 levels deep)
+        var exeName = Path.GetFileName(_config.ServerExecutablePath);
+        foreach (var sub in new[] { "", "ECAssistantLLM", "server", "bin", "ECAssistantLLM\\bin", "server\\bin" })
         {
-            var dir = startDir;
-            for (var level = 0; level < 6 && dir != null; level++)
+            var c = Path.Combine(_appRoot, sub, exeName);
+            if (!candidates.Contains(c)) candidates.Add(c);
+        }
+
+        // 3. Publish layout: server binary next to the app binary
+        candidates.Add(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, _config.ServerExecutablePath)));
+        candidates.Add(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, Path.GetFileName(_config.ServerExecutablePath))));
+
+        // 4. Development fallback: relative to CWD — but if it points at Release, also consider
+        //    the sibling Debug build and prefer whichever is newer (never serve a stale build).
+        var devPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), _config.ServerExecutablePath));
+        candidates.Add(devPath);
+        if (devPath.Contains("Release", StringComparison.OrdinalIgnoreCase))
+        {
+            var debugPath = devPath.Replace("Release", "Debug", StringComparison.OrdinalIgnoreCase);
+            candidates.Add(debugPath);
+            if (File.Exists(devPath) && File.Exists(debugPath) &&
+                File.GetLastWriteTimeUtc(debugPath) > File.GetLastWriteTimeUtc(devPath))
             {
-                var llmBin = Path.Combine(dir, "ECAssistantLLM", "bin");
-                if (Directory.Exists(llmBin))
-                {
-                    foreach (var cfg in new[] { "Debug", "Release" })
-                        candidates.Add(Path.Combine(llmBin, cfg, "net8.0", "ECAssistant.LLM"));
-                    break;
-                }
-                var parent = Path.GetDirectoryName(dir.TrimEnd(Path.DirectorySeparatorChar));
-                dir = parent ?? string.Empty;
-                if (string.IsNullOrEmpty(dir)) break;
+                // Debug is fresher — serve it first
+                candidates.Remove(debugPath);
+                candidates.Insert(0, debugPath);
             }
         }
 
