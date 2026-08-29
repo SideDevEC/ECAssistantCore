@@ -890,7 +890,12 @@ User: " + userRequest + "\n<lm>\n";
             sb.AppendLine();
             if (chatMode)
              {
-                sb.AppendLine("The user message above is a conversational remark or question. Respond to it directly and naturally in <output>your reply</output>. Do not call tools. Do not start a task.");
+                sb.AppendLine("The user message above is a conversational remark or question. Respond to it directly and naturally. Do not call tools. Do not start a task.");
+                sb.AppendLine("You MUST wrap your reply in these EXACT tags — here is a worked example:");
+                sb.AppendLine("");
+                sb.AppendLine("<lm><output>Hey! Not much — how can I help you today?</output></lm>");
+                sb.AppendLine("");
+                sb.AppendLine("Now reply to the user's message using exactly this <lm><output>…</output></lm> format. Never write text outside the tags.");
              }
             else
              {

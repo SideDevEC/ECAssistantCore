@@ -511,7 +511,9 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                          "Your last response was REJECTED — you did not use the required XML tags.\n" +
                          "You MUST respond using this EXACT format:\n" +
                          "<lm><thinking>brief reasoning</thinking><output>your answer</output></lm>\n" +
-                         "Do NOT write any text outside the <lm> container. Do NOT skip the tags.\n" +
+                         "Here is a full worked example for the question 'hey whats up':\n" +
+                         "<lm><thinking>Just a greeting, no task.</thinking><output>Hey! Not much — how can I help you today?</output></lm>\n" +
+                         "Do NOT write any text outside the <lm> container. Do NOT skip the tags. Note: <thinking> may be omitted, but <output> is always required.\n" +
                          "Now answer the previous question using the correct format.");
                      _turnCount++;
                     continue;
