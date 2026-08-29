@@ -31,6 +31,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
      // v10.6: TaskPlanner for chained multi-step tasks
     private List<SubTask>? _subTasks = null;
     private readonly HashSet<string> _failedCallSignatures = new(StringComparer.Ordinal);
+    private string? _lastSuccessfulCallSignature;
     private int _currentSubTask = 0;
      // v10.17: Execution plan from StepMapper
     private ExecutionPlan? _executionPlan = null;
@@ -405,11 +406,26 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                             _turnCount++;
                             continue;
                          }
+                        // v12.5: an identical call that JUST succeeded adds nothing — the results are
+                        // already in context. Force the model to use them instead of looping.
+                        if (callSignature == _lastSuccessfulCallSignature)
+                         {
+                            _out?.WriteWarning("Identical call just succeeded — results are above. Blocking repeat.");
+                            _logger?.Warn("Orchestrator", $"Blocked repeat of just-successful call: {callSignature}");
+                            _engine.InjectFormatRetry(
+                                "You already executed exactly this call and its results are ABOVE in the conversation.\n" +
+                                "Do NOT repeat it. Use those results: continue the task or answer with <lm><thinking>reasoning</thinking><output>your answer</output></lm>. " +
+                                "Only call a tool again with CHANGED arguments if you genuinely need different data.");
+                            _turnCount++;
+                            continue;
+                         }
                         var result = await ExecuteTool(decision.ToolName!, argsDict);
                         var elapsedMs = (long)((DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - startMs);
 
                             if (!result.Succeeded)
                                  _failedCallSignatures.Add(callSignature);
+                            else
+                                 _lastSuccessfulCallSignature = callSignature;
                             if (result.Succeeded)
                                  _out?.WriteSuccess($"[Tool] {decision.ToolName}: OK ({elapsedMs}ms)");
                             else

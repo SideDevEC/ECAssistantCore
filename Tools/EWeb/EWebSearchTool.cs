@@ -25,16 +25,21 @@ public class EWebSearchTool : EToolBase
 
     public override string Description =>
         "Search the web using Bing. Returns search results with titles, URLs, and snippets. " +
-        "Use for: finding documentation, looking up APIs, getting code examples, researching topics, " +
-        "checking prices, news, or current events. No authentication needed.";
+        "Use ONLY when the answer genuinely requires up-to-date internet information — " +
+        "documentation, API lookups, releases, prices, news. No authentication needed.\n" +
+        "Do NOT use: for the current date or time (use EShellAgent), for facts answerable from local files " +
+        "or earlier tool results, for questions your own knowledge already covers, or when you are unsure " +
+        "what to search. Never call without a specific, meaningful query.";
 
     public override string UsageExample =>
         "<toolcall>EWebSearch<query>dotnet 8 async streams</query></toolcall>\n" +
         "<toolcall>EWebSearch<query>bitcoin price today</query><max_results>3</max_results></toolcall>";
 
     public override string GetToolRules() =>
-        "Provide a concise search query. Results include title, URL, and a short snippet. " +
-        "Use EWebFetch to get full page content from any result URL. " +
+        "Provide a specific search query — never an empty or vague one. " +
+        "The results are INPUT for your reasoning, NOT the answer: read the titles and snippets, " +
+        "fetch 1-2 promising pages with EWebFetch if needed, then answer in your own words. " +
+        "NEVER reply to the user with a list of links. " +
         "max_results is optional (default 5, max 10).";
 
     public override bool IsEnabled { get; protected set; } = true;

@@ -25,7 +25,8 @@ public class EWebFetchTool : EToolBase
     public override string Description =>
         "Fetch a web page URL and return its main readable content as structured plain text. " +
         "Strips navigation, sidebars, footers, and scripts. Preserves paragraph and heading structure. " +
-        "Use for: documentation, articles, API reference pages, blog posts. " +
+        "Typical chain: EWebSearch → EWebFetch on a promising result URL → answer in your own words. " +
+        "Use for reading documentation, articles, API reference pages, blog posts. " +
         "Supports offset to page through long content.";
 
     public override string UsageExample =>
