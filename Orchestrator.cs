@@ -243,7 +243,20 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
              _out?.WriteDim($"[Orchestrator] Response ({llmResponse.Length} chars): {StringUtil.Default.Truncate(llmResponse, 200)}");
 
-                  // Step 2: Parse the clean LLM output — detect which block type was returned
+                  // v12.2: chat replies bypass the toolcall/output tag protocol — the raw response IS the answer.
+              // Format-retrying a greeting into XML tags is what produced "Invalid response after 2 retries".
+              if (isChatGoal)
+              {
+                 _out?.WriteDim("[Orchestrator] Chat reply — returning directly (no tag parsing).");
+                 return new OrchestratorResult
+                  {
+                     FinalOutput = llmResponse.Trim(),
+                     ToolCallsMade = _turnCount,
+                     Status = OrchestratorStatus.GoalAchieved
+                  };
+              }
+
+              // Step 2: Parse the clean LLM output — detect which block type was returned
               var decision = ParseLLMDecision(llmResponse);
               _out?.WriteDim($"[Orchestrator] Parse result: WantsToolCall={decision.WantsToolCall}, WantsDirectAnswer={decision.WantsDirectAnswer}, ToolCalls={decision.ToolCallCount}, ToolName={decision.ToolName}");
 
@@ -518,12 +531,13 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                  }
                 else
                  {
-                    _logger?.Error("Orchestrator", $"No tags after {MaxFormatRetries} retries. Stopping.");
+                    _logger?.Error("Orchestrator", $"No tags after {MaxFormatRetries} retries — returning raw response (graceful fallback).");
+                    _out?.WriteWarning("Model did not use the expected tags — returning its raw response.");
                     return new OrchestratorResult
                              {
-                            FinalOutput = $"Invalid response after {MaxFormatRetries} retries. The model did not use required tags.\nLast response:\n{llmResponse}",
+                            FinalOutput = llmResponse.Trim(),
                             ToolCallsMade = _turnCount + 1,
-                            Status = OrchestratorStatus.TurnsExhausted
+                            Status = OrchestratorStatus.GoalAchieved
                              };
                  }
                        }
