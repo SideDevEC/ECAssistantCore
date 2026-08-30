@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 298  |  LOC: 26170  |  ~13851 tokens
+Types: 299  |  LOC: 26256  |  ~13874 tokens
 
 ---
 
@@ -1071,6 +1071,9 @@ Cross-package deps: ECAssistant.Core.Config
 > Core owns the LLM server config: before launch, {llmRoot}/llm-server.json must exist
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services.Http, Xunit
+
+### Class: ServerConnection
+> Capabilities an LLM backend advertises at connect time. v13c.
 
 ### Class: ServerLauncher
 > Detects if ECAssistantLLM server is running. If not, launches it as a child process.

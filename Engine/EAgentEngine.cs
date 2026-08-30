@@ -1215,7 +1215,9 @@ User: " + userRequest + "\n<lm>\n";
              }
             catch { /* if save fails, rewind won't work but generation continues */ }
 
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+            // v13: structured (non-streamed) generation writes the full envelope —
+            // give it more headroom than streamed tokens need.
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_useStructuredDecoding ? 240 : 90));
             bool timedOut = false;
             try
              {
@@ -1623,6 +1625,9 @@ User: " + userRequest + "\n<lm>\n";
      {
         try
          {
+            // The envelope is a single JSON document — a truncated generation is an
+            // invalid decision. Floor the token budget so thinking+answer/toolcalls fit.
+            parameters.MaxTokens = Math.Max(parameters.MaxTokens ?? 0, 768);
             var envelope = await _inferenceEngine!.GenerateStructuredAsync(prompt, parameters, ct);
             if (envelope == null)
              {
@@ -1632,10 +1637,17 @@ User: " + userRequest + "\n<lm>\n";
              }
             return StructuredDecisionAdapter.Convert(envelope);
          }
+        catch (HttpRequestException hre) when (hre.StatusCode is System.Net.HttpStatusCode.NotFound or System.Net.HttpStatusCode.MethodNotAllowed or System.Net.HttpStatusCode.NotImplemented)
+         {
+            // Endpoint doesn't know the structured request shape — legacy server.
+            _logger?.Warn("Engine", "Structured decoding not supported by server — falling back to text streaming permanently.");
+            _useStructuredDecoding = false;
+            return null;
+         }
         catch (Exception ex) when (ex is not OperationCanceledException)
          {
-            _logger?.Warn("Engine", $"Structured decoding unavailable ({ex.Message}) — falling back to text streaming.");
-            _useStructuredDecoding = false;
+            // Transport hiccup — text fallback for this turn; next turn tries again.
+            _logger?.Warn("Engine", $"Structured decoding failed ({ex.Message}) — text fallback for this turn.");
             return null;
          }
      }

@@ -44,6 +44,7 @@ public class SessionManager : IAsyncDisposable
     private readonly string _appRoot;
 
     // HTTP infrastructure (shared across all sessions)
+    private ServerConnection? _connection;                  // v13c: unified connection state
     private readonly ServerLauncher? _serverLauncher;       // local mode only
     private ServerLauncher? _embeddingServerLauncher;       // remote main + local embeddings
     private readonly LlmServerClient? _serverClient;        // local mode only
@@ -61,6 +62,9 @@ public class SessionManager : IAsyncDisposable
 
     /// <summary>True if running in local mode (ECAssistantLLM with KV cache).</summary>
     public bool IsLocalMode => _config.LlmProvider.IsLocal;
+
+    /// <summary>v13c: runtime ECA-extension gating — capability-based once connected, config-based before.</summary>
+    private bool HasEcaExtensions => _connection?.HasEcaExtensions ?? IsLocalMode;
 
     /// <summary>True if running in remote mode (cloud API, no KV cache).</summary>
     public bool IsRemoteMode => _config.LlmProvider.IsRemote;
@@ -212,14 +216,23 @@ public class SessionManager : IAsyncDisposable
     /// </summary>
     public async Task InitializeAsync(CancellationToken ct = default)
     {
+        // v13c unified connection model: local ECAssistantLLM and remote providers go
+        // through the SAME connect path. The server's capability set decides which
+        // extensions run — not the config mode.
         if (IsLocalMode)
         {
             _logger.Info("SessionManager", "Ensuring LLM server is running...");
             var ok = await _serverLauncher!.EnsureServerRunningAsync(ct);
             if (!ok)
                 throw new InvalidOperationException("Failed to start LLM server");
+        }
 
-            _logger.Info("SessionManager", "Registering client with LLM server...");
+        var endpoint = IsLocalMode ? _config.LlmProvider.ResolvedEndpoint : EffectiveEndpoint;
+        _connection = await new ServerConnection().ConnectAsync(endpoint, ct);
+
+        if (_connection.HasEcaExtensions)
+        {
+            _logger.Info("SessionManager", "ECA server detected — registering client...");
             var connected = await _serverClient!.ConnectAsync("ECAssistant", "1.0.0", ct);
             if (!connected)
                 throw new InvalidOperationException("Failed to register with LLM server");
@@ -228,17 +241,17 @@ public class SessionManager : IAsyncDisposable
             _httpClient.Dispose();
             _httpClient = _newClient(_config.LlmProvider.ResolvedEndpoint, null, _serverClient.ClientId);
 
-            // Setup tokenizer (local mode only — remote APIs don't expose /eca/tokenize)
+            // Setup tokenizer (ECA extension — remote APIs don't expose /eca/tokenize)
             _remoteTokenizer = new RemoteTokenizer(_httpClient, _config.LlmProvider.ModelId);
 
             // Start heartbeat
             _serverClient.StartHeartbeat(_config.LlmProvider.HeartbeatIntervalSec, () => _sessions.Count);
 
-            _logger.Info("SessionManager", $"Connected to LLM server at {_config.LlmProvider.ResolvedEndpoint}");
+            _logger.Info("SessionManager", $"Connected to LLM server at {_config.LlmProvider.ResolvedEndpoint} [{_connection.Capabilities}]");
         }
         else
         {
-            _logger.Info("SessionManager", $"Remote mode: {EffectiveEndpoint} (model: {EffectiveModelId})");
+            _logger.Info("SessionManager", $"OpenAI-compatible backend: {endpoint} (model: {EffectiveModelId}) [{_connection.Capabilities}]");
         }
     }
 
@@ -271,8 +284,11 @@ public class SessionManager : IAsyncDisposable
     /// <summary>Agent config.</summary>
     public EAgentConfig Config => _config;
 
-    /// <summary>Server client (local mode only, null in remote mode).</summary>
+    /// <summary>Server client (ECA-extension servers only, null for plain OpenAI backends).</summary>
     public LlmServerClient? ServerClient => _serverClient;
+
+    /// <summary>v13c: capabilities discovered at connect (null before InitializeAsync).</summary>
+    public ServerConnection? Connection => _connection;
 
     /// <summary>Client ID for server session namespacing (local mode only).</summary>
     public string? ClientId => _serverClient?.ClientId;
@@ -370,7 +386,7 @@ public class SessionManager : IAsyncDisposable
         // connection-refused error (server went down outside the idle watchdog),
         // the engine calls back here to restore the server and retry once instead
         // of surfacing the error as model output.
-        if (IsLocalMode)
+        if (HasEcaExtensions)
             session.Engine.ConnectionRecovery = RecoverConnectionAsync;
 
         return session;
@@ -466,7 +482,7 @@ public class SessionManager : IAsyncDisposable
      {
         _lastUserActivity = DateTime.UtcNow;
 
-        if (!IsLocalMode)
+        if (!HasEcaExtensions)
             return;
 
         if (_isIdleDisconnected)
@@ -503,7 +519,7 @@ public class SessionManager : IAsyncDisposable
 
     private async void CheckIdle(object? state)
     {
-        if (_isIdleDisconnected || !IsLocalMode || _idleTimeoutMin <= 0) return;
+        if (_isIdleDisconnected || !HasEcaExtensions || _idleTimeoutMin <= 0) return;
 
         var idleFor = DateTime.UtcNow - _lastUserActivity;
         if (idleFor.TotalMinutes < _idleTimeoutMin) return;
