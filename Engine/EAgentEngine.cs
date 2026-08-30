@@ -1626,8 +1626,10 @@ User: " + userRequest + "\n<lm>\n";
         try
          {
             // The envelope is a single JSON document — a truncated generation is an
-            // invalid decision. Floor the token budget so thinking+answer/toolcalls fit.
-            parameters.MaxTokens = Math.Max(parameters.MaxTokens ?? 0, 768);
+            // invalid decision, so think+answer/toolcalls must fit. Floor AND cap:
+            // config MaxTokens is a context budget (8192) that would take ~15 min
+            // of CPU decode; the envelope needs far less.
+            parameters.MaxTokens = Math.Min(Math.Max(parameters.MaxTokens ?? 0, 768), 1024);
             var envelope = await _inferenceEngine!.GenerateStructuredAsync(prompt, parameters, ct);
             if (envelope == null)
              {
