@@ -91,39 +91,12 @@ public class SystemPromptBuilder
         sb.AppendLine($"You work on {platform}. {shellGuidance}");
         sb.AppendLine();
 
-        // ── REQUIRED: <lm> tag format rules (engine parser depends on these) ──
-        sb.AppendLine("## RESPONSE FORMAT — STRICT");
+        // ── Decision semantics (v13: output FORMAT is enforced by the server's
+        // decision grammar for local models — the model never needs tag instructions.
+        // Remote/legacy fallback re-injects format rules via format-retry on demand.) ──
+        sb.AppendLine("## HOW YOU WORK");
         sb.AppendLine();
-        sb.AppendLine("Every response MUST be wrapped in an `<lm>` container. No exceptions.");
-        sb.AppendLine();
-        sb.AppendLine("**When you need to run a tool:**");
-        sb.AppendLine("```");
-        sb.AppendLine("<lm><thinking>Brief reasoning about what to do</thinking><toolcall>ToolName<argname>value</argname></toolcall></lm>");
-        sb.AppendLine("```");
-        sb.AppendLine();
-        sb.AppendLine("**When you have the answer for the user:**");
-        sb.AppendLine("```");
-        sb.AppendLine("<lm><thinking>Brief reasoning</thinking><output>Your answer to the user</output></lm>");
-        sb.AppendLine("```");
-        sb.AppendLine();
-        sb.AppendLine("### CRITICAL RULES — NO EXCEPTIONS");
-        sb.AppendLine("1. Your FIRST token is always `<lm>`. Your LAST token is always `</lm>`. Nothing comes before or after.");
-        sb.AppendLine("2. Inside `<lm>`: ONE `<thinking>`, then ONE `<toolcall>` OR ONE `<output>`. Then `</lm>`. Then STOP.");
-        sb.AppendLine("3. Never write text outside `<lm>...</lm>`.");
-        sb.AppendLine("4. Never write `<user>`, `<tooloutput>`, `<result>` tags — host only.");
-        sb.AppendLine("5. After a tool result in history, respond with `<output>` (if done) or another `<toolcall>` (if you need more data). Do NOT repeat the same tool call.");
-        sb.AppendLine("6. Keep `<thinking>` SHORT — 1-2 sentences max.");
-        sb.AppendLine("7. For simple questions, still use the full format.");
-        sb.AppendLine("8. After the `<assistant>` tag, start with `<lm>` immediately. Do NOT echo `<assistant>` back.");
-        sb.AppendLine("9. You can include MULTIPLE `<toolcall>` tags in one `<lm>` response for independent operations.");
-        sb.AppendLine();
-        sb.AppendLine("### EXAMPLE: Simple question after tool result");
-        sb.AppendLine("Tool returned: \"Wednesday\"");
-        sb.AppendLine("Your response MUST be:");
-        sb.AppendLine("```");
-        sb.AppendLine("<lm><thinking>The tool returned Wednesday. I'll give this to the user.</thinking><output>Today is Wednesday.</output></lm>");
-        sb.AppendLine("```");
-        sb.AppendLine("NEVER just write \"Today is Wednesday\" without tags. The host will reject it.");
+        sb.AppendLine("Each turn you make ONE decision: either finish and give the user your answer, or invoke a tool to gather data. Brief reasoning first, then the decision. Never repeat a tool call that already succeeded with the same arguments.");
         sb.AppendLine();
 
         // ── Custom domain rules ──
