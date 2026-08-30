@@ -88,12 +88,95 @@ public sealed class HttpStreamingEngine : IInferenceEngine
         InferenceRequestParams parameters,
         CancellationToken ct = default)
     {
+        // v13b remote path: native OpenAI function calling — provider-enforced
+        // tool_calls, no tags. Synthesizes the same decision envelope the local
+        // grammar path produces so downstream handling is identical.
+        if (parameters.Tools is { Count: > 0 })
+            return await GenerateNativeToolsDecisionAsync(prompt, parameters, ct);
+
+        // v13 local path: server-side grammar-constrained envelope.
         var body = BuildStructuredRequestBody(prompt, parameters);
         var json = await _client.PostJsonAsync("/v1/chat/completions", body, ct);
         using var doc = JsonDocument.Parse(json);
         if (!doc.RootElement.TryGetProperty("decision", out var decision))
             return null;
         return decision.GetRawText();
+    }
+
+    /// <summary>v13b: native function-calling decision via the OpenAI `tools` parameter.</summary>
+    private async Task<string?> GenerateNativeToolsDecisionAsync(
+        string prompt,
+        InferenceRequestParams parameters,
+        CancellationToken ct)
+    {
+        var tools = parameters.Tools!.Select(t => new
+        {
+            type = "function",
+            function = new
+            {
+                name = t.Name,
+                description = t.Description,
+                parameters = new
+                {
+                    type = "object",
+                    properties = new { },
+                    additionalProperties = new { type = "string" }
+                }
+            }
+        }).ToList();
+
+        var body = JsonSerializer.Serialize(new
+        {
+            model = parameters.ModelId ?? _defaultModelId,
+            messages = new[] { new { role = "user", content = prompt } },
+            stream = false,
+            tools,
+            tool_choice = "auto",
+            temperature = parameters.Temperature,
+            top_p = parameters.TopP,
+            max_tokens = parameters.MaxTokens,
+        }, JsonOptions);
+
+        var json = await _client.PostJsonAsync("/v1/chat/completions", body, ct);
+        using var doc = JsonDocument.Parse(json);
+        if (!doc.RootElement.TryGetProperty("choices", out var choices) || choices.GetArrayLength() == 0)
+            return null;
+
+        var message = choices[0].GetProperty("message");
+        var thinking = message.TryGetProperty("reasoning_content", out var rc) && rc.ValueKind == JsonValueKind.String
+            ? rc.GetString() ?? ""
+            : message.TryGetProperty("content", out var c) && c.ValueKind == JsonValueKind.String ? c.GetString() ?? "" : "";
+
+        if (message.TryGetProperty("tool_calls", out var toolCalls) && toolCalls.ValueKind == JsonValueKind.Array && toolCalls.GetArrayLength() > 0)
+        {
+            var calls = toolCalls.EnumerateArray()
+                .Select(tc =>
+                {
+                    var fn = tc.GetProperty("function");
+                    var args = new Dictionary<string, string>();
+                    if (fn.TryGetProperty("arguments", out var raw))
+                    {
+                        if (raw.ValueKind == JsonValueKind.String)
+                        {
+                            using var argsDoc = JsonDocument.Parse(raw.GetString() ?? "{}");
+                            foreach (var p in argsDoc.RootElement.EnumerateObject())
+                                args[p.Name] = p.Value.ValueKind == JsonValueKind.String ? p.Value.GetString() ?? "" : p.Value.GetRawText();
+                        }
+                        else if (raw.ValueKind == JsonValueKind.Object)
+                        {
+                            foreach (var p in raw.EnumerateObject())
+                                args[p.Name] = p.Value.ValueKind == JsonValueKind.String ? p.Value.GetString() ?? "" : p.Value.GetRawText();
+                        }
+                    }
+                    return new { name = fn.GetProperty("name").GetString() ?? "", args };
+                })
+                .ToList();
+
+            return JsonSerializer.Serialize(new { thinking, toolcalls = calls });
+        }
+
+        // No tool calls — the content (or reasoning) is the answer.
+        return JsonSerializer.Serialize(new { thinking, answer = thinking });
     }
 
     private string BuildStructuredRequestBody(string prompt, InferenceRequestParams parameters)

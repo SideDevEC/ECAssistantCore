@@ -257,7 +257,9 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         _contextSize = contextSize;
         _kvState.ContextSize = contextSize;
         _config = config ?? new EAgentConfig();
-        _useStructuredDecoding = _config.LlmProvider?.IsLocal ?? false;
+        // v13b: structured decisions on BOTH paths — local via grammar envelope,
+        // remote via native OpenAI function calling. Neither needs tag instructions.
+        _useStructuredDecoding = true;
         _backgroundTasks = _config.BackgroundTasks;
         _workingDir = string.IsNullOrEmpty(workingDir) ? AppContext.BaseDirectory : workingDir;
 
@@ -1243,6 +1245,10 @@ User: " + userRequest + "\n<lm>\n";
                     // v13 structured decoding: local servers get grammar-constrained
                     // decision envelopes — convert to internal decision text instead of
                     // free-form streaming. Falls back to text streaming when unsupported.
+                    // v13b: remote requests carry tool specs for native function calling.
+                    if (_useStructuredDecoding && !(_config.LlmProvider?.IsLocal ?? false))
+                        requestParams.Tools = BuildToolSpecs();
+
                     var structured = _useStructuredDecoding && _inferenceEngine != null
                         ? await TryGenerateStructuredAsync(incrementalInput, requestParams, cts.Token)
                         : null;
@@ -1319,10 +1325,16 @@ User: " + userRequest + "\n<lm>\n";
                     // Skipped while a recovery retry is pending (images must survive); the
                     // post-block clear below handles that path.
                     if (_requestParams != null && !retryingStream)
+                    {
                         _requestParams.ImageDataUris = new List<string>();
+                        _requestParams.Tools = null;
+                    }
                  }
                 if (retryingStream && _requestParams != null)
+                {
                     _requestParams.ImageDataUris = new List<string>();
+                    _requestParams.Tools = null;
+                }
              }
             catch (OperationCanceledException)
              {
@@ -1595,6 +1607,16 @@ User: " + userRequest + "\n<lm>\n";
          _logger?.Debug("Extract", $"Output: {finalResult.Length} chars, starts with: {StringUtil.Default.Truncate(finalResult, 80)}");
         return finalResult;
     }
+
+    /// <summary>v13b: tool specs for remote native function calling (open string-arg schema).</summary>
+    private List<ToolSpec> BuildToolSpecs() =>
+        _tools.Select(t => new ToolSpec
+         {
+            Name = t.Name,
+            Description = string.IsNullOrEmpty(t.UsageExample)
+                ? t.Description
+                : t.Description + "\n\nExample: " + t.UsageExample,
+         }).ToList();
 
     /// <summary>Converts a grammar-forced envelope to internal decision text; null when unsupported/unavailable.</summary>
     private async Task<string?> TryGenerateStructuredAsync(string prompt, InferenceRequestParams parameters, CancellationToken ct)

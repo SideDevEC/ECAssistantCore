@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 296  |  LOC: 26009  |  ~13781 tokens
+Types: 298  |  LOC: 26170  |  ~13851 tokens
 
 ---
 
@@ -908,6 +908,10 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
 ### Class: MyTests
 Cross-package deps: ECAssistant.Core.Analysis
 
+### Class: NativeToolCallsAdapterTests
+> v13b: remote native tool_calls (OpenAI function calling) → decision envelope → internal decision text.
+Cross-package deps: ECAssistant.Core.Engine, Xunit
+
 ### Class: NopKvCacheController
 > No-op KV cache controller for remote mode (cloud API).
 Implements: IKvCacheController
@@ -1297,6 +1301,9 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.
 
 ### Class: ToolPolicyTests
 Cross-package deps: ECAssistant.Core.Tools
+
+### Class: ToolSpec
+> Abstracts LLM inference via HTTP (OpenAI-compatible endpoint).
 
 ### Class: TranscriptIntegrationTests
 > Integration tests for ConversationTranscript persistence —

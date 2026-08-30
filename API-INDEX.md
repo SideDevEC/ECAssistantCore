@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-30T20:03:58.997375+00:00
-Packages: 3  |  Types: 392
+Generated: 2026-08-30T20:16:17.423297+00:00
+Packages: 3  |  Types: 395
 
 ---
 
-## ECAssistantCore (296 types, ~26009 LOC)
+## ECAssistantCore (298 types, ~26170 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -190,6 +190,7 @@ Packages: 3  |  Types: 392
 - 🟡 ModelParamValidator : IModelParamValidator  (ECAssistantCore)  deps: [ILogger? logger =]
 - 🟡 MultiLlmProvidersConfig  (ECAssistantCore)
 - 🟡 MyTests  (ECAssistantCore)
+- 🟡 NativeToolCallsAdapterTests  (ECAssistantCore)
 - 🟡 NopKvCacheController : IKvCacheController  (ECAssistantCore)
 - 🟡 OpenAIClient : IDisposable  (ECAssistantCore)  deps: [string, string? clientId =, string? apiKey =, TimeSpan? timeout =]
 - 🟡 OrchestratorIntegrationTests : IDisposable  (ECAssistantCore)
@@ -289,6 +290,7 @@ Packages: 3  |  Types: 392
 - 🟡 ToolPolicy  (ECAssistantCore)
 - 🟡 ToolPolicyDecision  (ECAssistantCore)
 - 🟡 ToolPolicyTests  (ECAssistantCore)
+- 🟡 ToolSpec  (ECAssistantCore)
 - 🟡 TranscriptIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 TranscriptMessage  (ECAssistantCore)
 - 🟣 TranscriptMessage  (ECAssistantCore)  deps: [string, string, string? ToolCallId =]
@@ -315,7 +317,7 @@ Packages: 3  |  Types: 392
 - 🟡 TestScenario  (TestSupport)
 - 🟡 TestSessionOutput : ISessionOutput  (TestSupport)  deps: [EGuiTestHarness]
 
-## Tests (88 types, ~11529 LOC)
+## Tests (89 types, ~11599 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -368,6 +370,7 @@ Packages: 3  |  Types: 392
 - 🟡 ModelCatalogTests : IDisposable  (Tests)
 - 🟡 ModelInstallerConfigTests : IDisposable  (Tests)
 - 🟡 MyTests  (Tests)
+- 🟡 NativeToolCallsAdapterTests  (Tests)
 - 🟡 OrchestratorIntegrationTests : IDisposable  (Tests)
 - 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (Tests)
 - 🟡 ParallelToolExecutorTests  (Tests)

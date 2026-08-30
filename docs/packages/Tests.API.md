@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 88  |  LOC: 11529  |  ~3215 tokens
+Types: 89  |  LOC: 11599  |  ~3264 tokens
 
 ---
 
@@ -190,6 +190,10 @@ Cross-package deps: ECAssistant.Core.Setup, Xunit
 
 ### Class: MyTests
 Cross-package deps: ECAssistant.Core.Analysis
+
+### Class: NativeToolCallsAdapterTests
+> v13b: remote native tool_calls (OpenAI function calling) → decision envelope → internal decision text.
+Cross-package deps: ECAssistant.Core.Engine, Xunit
 
 ### Class: OrchestratorIntegrationTests
 > Integration tests for the full Orchestrator → Engine → Tools → Output pipeline.

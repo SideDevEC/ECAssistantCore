@@ -57,4 +57,17 @@ public sealed class InferenceRequestParams
     /// Sent as OpenAI multimodal content parts on the user message.
     /// </summary>
     public List<string> ImageDataUris { get; set; } = new();
+
+    /// <summary>
+    /// v13b: tool specs for remote native function calling (OpenAI `tools` parameter).
+    /// Null/empty on local mode — the local server enforces the decision grammar instead.
+    /// </summary>
+    public List<ToolSpec>? Tools { get; set; }
+}
+
+/// <summary>v13b: tool definition for remote native function calling.</summary>
+public sealed class ToolSpec
+{
+    public string Name { get; init; } = "";
+    public string Description { get; init; } = "";
 }
