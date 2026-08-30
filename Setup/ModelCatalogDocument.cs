@@ -22,7 +22,9 @@ public sealed class ModelCatalogDocument
         Converters = { new JsonStringEnumConverter() }
     };
 
-    /// <summary>Load the catalog; writes the built-in default first when the file is missing.</summary>
+    /// <summary>Load the catalog; writes the built-in default first when the file is missing.
+    /// Older deployed catalogs may lack newer display fields (e.g. license) — missing
+    /// metadata is backfilled from the built-in default so selection lists stay current.</summary>
     // Stateless factory on immutable-ish data class.
     public static ModelCatalogDocument Load(string path)
     {
@@ -30,9 +32,23 @@ public sealed class ModelCatalogDocument
         {
             var defaultDoc = CreateDefault();
             File.WriteAllText(path, JsonSerializer.Serialize(defaultDoc, Options));
+            return defaultDoc;
         }
-        return JsonSerializer.Deserialize<ModelCatalogDocument>(File.ReadAllText(path), Options)
+
+        var doc = JsonSerializer.Deserialize<ModelCatalogDocument>(File.ReadAllText(path), Options)
                ?? throw new InvalidOperationException($"Model catalog is empty or invalid: {path}");
+
+        // Backfill display metadata missing from older catalog files (user-editable —
+        // only fills EMPTY fields, never overwrites user customizations).
+        var defaults = CreateDefault().Models.Where(d => !string.IsNullOrWhiteSpace(d.License))
+                             .ToDictionary(d => d.Id, d => d.License, StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in doc.Models)
+        {
+            if (string.IsNullOrWhiteSpace(entry.License) &&
+                defaults.TryGetValue(entry.Id, out var license))
+                entry.License = license;
+        }
+        return doc;
     }
 
     /// <summary>Validate catalog invariants; returns error message or null.</summary>
