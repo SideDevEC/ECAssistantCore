@@ -78,6 +78,42 @@ public sealed class HttpStreamingEngine : IInferenceEngine
         return "";
     }
 
+    /// <summary>
+    /// v13 structured decision generation: requests grammar-constrained decoding
+    /// from the server (DecisionGrammar) and returns the raw decision envelope
+    /// JSON. Null when the server doesn't support it (caller falls back to text).
+    /// </summary>
+    public async Task<string?> GenerateStructuredAsync(
+        string prompt,
+        InferenceRequestParams parameters,
+        CancellationToken ct = default)
+    {
+        var body = BuildStructuredRequestBody(prompt, parameters);
+        var json = await _client.PostJsonAsync("/v1/chat/completions", body, ct);
+        using var doc = JsonDocument.Parse(json);
+        if (!doc.RootElement.TryGetProperty("decision", out var decision))
+            return null;
+        return decision.GetRawText();
+    }
+
+    private string BuildStructuredRequestBody(string prompt, InferenceRequestParams parameters)
+    {
+        var req = new
+        {
+            model = parameters.ModelId ?? _defaultModelId,
+            messages = new[] { new { role = "user", content = prompt } },
+            stream = false,
+            structured = true,
+            temperature = parameters.Temperature,
+            top_p = parameters.TopP,
+            top_k = parameters.TopK,
+            max_tokens = parameters.MaxTokens,
+            repeat_penalty = parameters.RepeatPenalty,
+            session_id = parameters.SessionId ?? _defaultSessionId,
+        };
+        return JsonSerializer.Serialize(req, JsonOptions);
+    }
+
     private string BuildRequestBody(string prompt, InferenceRequestParams parameters, bool stream)
     {
         // Multimodal: when images are attached, send OpenAI content-parts array

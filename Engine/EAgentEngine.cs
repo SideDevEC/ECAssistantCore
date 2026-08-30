@@ -22,6 +22,11 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
     protected readonly string _modelPath;
     protected readonly uint _contextSize;
     protected readonly EAgentConfig _config;
+
+    /// <summary>v13: grammar-structured decision decoding enabled — local mode only
+    /// (remote providers can't be grammar-constrained). Disabled permanently after
+    /// the first unsupported/failure response (older server → text streaming).</summary>
+    private bool _useStructuredDecoding;
     protected readonly string _workingDir;
     protected readonly ILogger _logger = new Logger();
     protected readonly ISessionOutput? _out;
@@ -252,6 +257,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         _contextSize = contextSize;
         _kvState.ContextSize = contextSize;
         _config = config ?? new EAgentConfig();
+        _useStructuredDecoding = _config.LlmProvider?.IsLocal ?? false;
         _backgroundTasks = _config.BackgroundTasks;
         _workingDir = string.IsNullOrEmpty(workingDir) ? AppContext.BaseDirectory : workingDir;
 
@@ -1254,6 +1260,22 @@ User: " + userRequest + "\n<lm>\n";
                 retryStream:
                 try
                  {
+                    // v13 structured decoding: local servers get grammar-constrained
+                    // decision envelopes — convert to internal decision text instead of
+                    // free-form streaming. Falls back to text streaming when unsupported.
+                    var structured = _useStructuredDecoding && _inferenceEngine != null
+                        ? await TryGenerateStructuredAsync(incrementalInput, requestParams, cts.Token)
+                        : null;
+
+                    if (structured != null)
+                     {
+                        if (showTokenStream)
+                            _out?.Write(structured);
+                        sb.Append(structured);
+                        tokenCount++;
+                        goto inferenceDone;
+                     }
+
                     await foreach (var token in _inferenceEngine!.StreamAsync(
                         incrementalInput,
                         requestParams,
@@ -1593,6 +1615,28 @@ User: " + userRequest + "\n<lm>\n";
          _logger?.Debug("Extract", $"Output: {finalResult.Length} chars, starts with: {StringUtil.Default.Truncate(finalResult, 80)}");
         return finalResult;
     }
+
+    /// <summary>Converts a grammar-forced envelope to internal decision text; null when unsupported/unavailable.</summary>
+    private async Task<string?> TryGenerateStructuredAsync(string prompt, InferenceRequestParams parameters, CancellationToken ct)
+     {
+        try
+         {
+            var envelope = await _inferenceEngine!.GenerateStructuredAsync(prompt, parameters, ct);
+            if (envelope == null)
+             {
+                // Older server without the structured endpoint — fall back permanently.
+                _useStructuredDecoding = false;
+                return null;
+             }
+            return StructuredDecisionAdapter.Convert(envelope);
+         }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+         {
+            _logger?.Warn("Engine", $"Structured decoding unavailable ({ex.Message}) — falling back to text streaming.");
+            _useStructuredDecoding = false;
+            return null;
+         }
+     }
 
      // ── Execution lifecycle ────────────────────────────────────
 

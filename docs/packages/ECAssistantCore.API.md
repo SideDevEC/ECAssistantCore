@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 294  |  LOC: 25903  |  ~13675 tokens
+Types: 296  |  LOC: 26051  |  ~13781 tokens
 
 ---
 
@@ -81,6 +81,9 @@ Methods:
         InferenceRequestParams parameters,
         CancellationToken ct = default)
   - Task<string> GenerateAsync(string prompt,
+        InferenceRequestParams parameters,
+        CancellationToken ct = default)
+  - Task<string?> GenerateStructuredAsync(string prompt,
         InferenceRequestParams parameters,
         CancellationToken ct = default)
 
@@ -1135,6 +1138,13 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools
 
 ### Class: StringUtil
 > String utility — truncation and text helpers.
+
+### Class: StructuredDecisionAdapter
+> v13 Converts a grammar-forced decision envelope ({"thinking", "answer"|"toolcalls"})
+
+### Class: StructuredDecisionAdapterTests
+> v13: grammar-forced decision envelope → internal decision text.
+Cross-package deps: ECAssistant.Core.Engine, Xunit
 
 ### Class: SubAgentConfig
 > Sub-agent configuration. GPU/thread params are server-side concerns

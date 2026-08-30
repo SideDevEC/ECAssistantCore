@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 87  |  LOC: 11487  |  ~3175 tokens
+Types: 88  |  LOC: 11529  |  ~3215 tokens
 
 ---
 
@@ -254,6 +254,10 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup, Xunit
 
 ### Class: StepMapperTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools
+
+### Class: StructuredDecisionAdapterTests
+> v13: grammar-forced decision envelope → internal decision text.
+Cross-package deps: ECAssistant.Core.Engine, Xunit
 
 ### Class: SubAgentErrorTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Orchestration

@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-30T19:16:06.696021+00:00
-Packages: 3  |  Types: 389
+Generated: 2026-08-30T19:57:25.966454+00:00
+Packages: 3  |  Types: 392
 
 ---
 
-## ECAssistantCore (294 types, ~25903 LOC)
+## ECAssistantCore (296 types, ~26051 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -246,6 +246,8 @@ Packages: 3  |  Types: 389
 - 🟡 StepMapper : IStepMapper  (ECAssistantCore)  deps: [IEngineToolContext, ILogger? logger =]
 - 🟡 StepMapperTests  (ECAssistantCore)
 - 🟡 StringUtil  (ECAssistantCore)
+- 🟡 StructuredDecisionAdapter  (ECAssistantCore)
+- 🟡 StructuredDecisionAdapterTests  (ECAssistantCore)
 - 🟡 SubAgentConfig  (ECAssistantCore)
 - 🟡 SubAgentError  (ECAssistantCore)
 - 🟡 SubAgentErrorTests  (ECAssistantCore)
@@ -313,7 +315,7 @@ Packages: 3  |  Types: 389
 - 🟡 TestScenario  (TestSupport)
 - 🟡 TestSessionOutput : ISessionOutput  (TestSupport)  deps: [EGuiTestHarness]
 
-## Tests (87 types, ~11487 LOC)
+## Tests (88 types, ~11529 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -383,6 +385,7 @@ Packages: 3  |  Types: 389
 - 🟡 SessionQueueTests  (Tests)
 - 🟡 StartupTimeoutDefaultsTests  (Tests)
 - 🟡 StepMapperTests  (Tests)
+- 🟡 StructuredDecisionAdapterTests  (Tests)
 - 🟡 SubAgentErrorTests  (Tests)
 - 🟡 SubAgentIntegrationTests : IDisposable  (Tests)
 - 🟡 SubAgentResultTests  (Tests)
