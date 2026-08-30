@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-30T18:16:57.026793+00:00
-Packages: 3  |  Types: 387
+Generated: 2026-08-30T19:11:31.740214+00:00
+Packages: 3  |  Types: 389
 
 ---
 
-## ECAssistantCore (293 types, ~25805 LOC)
+## ECAssistantCore (294 types, ~25890 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -75,6 +75,7 @@ Packages: 3  |  Types: 387
 - 🟡 ConversationTranscript  (ECAssistantCore)
 - 🟡 ConversationTranscriptTests  (ECAssistantCore)
 - 🟡 DebugProbeTests  (ECAssistantCore)
+- 🟡 DecisionParserTests  (ECAssistantCore)
 - 🟡 DecisionResult  (ECAssistantCore)
 - 🟡 DecomposeConfig  (ECAssistantCore)
 - 🟡 DependencyGroup  (ECAssistantCore)
@@ -312,7 +313,7 @@ Packages: 3  |  Types: 387
 - 🟡 TestScenario  (TestSupport)
 - 🟡 TestSessionOutput : ISessionOutput  (TestSupport)  deps: [EGuiTestHarness]
 
-## Tests (86 types, ~11426 LOC)
+## Tests (87 types, ~11487 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -326,6 +327,7 @@ Packages: 3  |  Types: 387
 - 🟡 ContextWindowTests  (Tests)
 - 🟡 ConversationTranscriptTests  (Tests)
 - 🟡 DebugProbeTests  (Tests)
+- 🟡 DecisionParserTests  (Tests)
 - 🟡 DependencyGroupTests  (Tests)
 - 🟡 EAgentConfigTests : IDisposable  (Tests)
 - 🟡 EBackgroundExecToolTests : IDisposable  (Tests)

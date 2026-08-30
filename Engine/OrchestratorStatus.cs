@@ -4,5 +4,7 @@ namespace ECAssistant.Core.Orchestration;
 public enum OrchestratorStatus
 {
     GoalAchieved,
-    TurnsExhausted
+    TurnsExhausted,
+    /// <summary>Engine/transport failure surfaced (not a model-format problem).</summary>
+    Failed
 }

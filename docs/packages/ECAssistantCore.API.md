@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 293  |  LOC: 25805  |  ~13634 tokens
+Types: 294  |  LOC: 25890  |  ~13675 tokens
 
 ---
 
@@ -434,6 +434,10 @@ Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: DebugProbeTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Web
+
+### Class: DecisionParserTests
+> v12.12 model-agnostic decision parsing — ANY model must produce a usable
+Cross-package deps: ECAssistant.Core.Orchestration, Xunit
 
 ### Class: DecisionResult
 

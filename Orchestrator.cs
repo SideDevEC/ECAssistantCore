@@ -243,6 +243,21 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
              _out?.WriteDim($"[Orchestrator] Response ({llmResponse.Length} chars): {StringUtil.Default.Truncate(llmResponse, 200)}");
 
+              // v12.12 model-agnostic: any model must be able to converse, even
+              // without following the <lm>/<output> tag protocol.
+              if (llmResponse.StartsWith("[Error]", StringComparison.OrdinalIgnoreCase))
+                       {
+                  // Transport-level failure surfaced by the engine — never treat as
+                  // model output, never format-retry. Fail the run with the error.
+                  _logger?.Error("Orchestrator", $"Engine error surfaced: {llmResponse}");
+                  return new OrchestratorResult
+                           {
+                          FinalOutput = llmResponse,
+                          ToolCallsMade = _turnCount,
+                          Status = OrchestratorStatus.Failed
+                           };
+                       }
+
                   // Step 2: Parse the clean LLM output — detect which block type was returned
               var decision = ParseLLMDecision(llmResponse);
               _out?.WriteDim($"[Orchestrator] Parse result: WantsToolCall={decision.WantsToolCall}, WantsDirectAnswer={decision.WantsDirectAnswer}, ToolCalls={decision.ToolCallCount}, ToolName={decision.ToolName}");
@@ -554,12 +569,15 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                  }
                 else
                  {
-                    _logger?.Error("Orchestrator", $"No tags after {MaxFormatRetries} retries. Stopping.");
+                    // v12.12 model-agnostic: after format retries, don't error out —
+                    // deliver the model's last response (best effort) so ANY model can
+                    // complete a conversation, even one that never learns the tags.
+                    _logger?.Warn("Orchestrator", $"No tags after {MaxFormatRetries} retries — delivering best-effort response.");
                     return new OrchestratorResult
                              {
-                            FinalOutput = $"Invalid response after {MaxFormatRetries} retries. The model did not use required tags.\nLast response:\n{llmResponse}",
+                            FinalOutput = llmResponse,
                             ToolCallsMade = _turnCount + 1,
-                            Status = OrchestratorStatus.TurnsExhausted
+                            Status = OrchestratorStatus.GoalAchieved
                              };
                  }
                        }
@@ -623,8 +641,8 @@ public sealed class AgentOrchestrator : IAsyncDisposable
         toolName + "|" + string.Join("&",
             (args ?? new Dictionary<string, string?>()).OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => $"{kv.Key}={kv.Value}"));
 
-    private LLMDecision ParseLLMDecision(string response)
-                 {
+    internal LLMDecision ParseLLMDecision(string response)
+         {
             var trimmed = response.Trim();
 
               // v10.13: Find ALL <toolcall>...</toolcall> blocks
@@ -641,12 +659,12 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                      // No close — take rest
                     blockContent = trimmed.Substring(tcStart + 10).Trim();
                     searchFrom = trimmed.Length;
-                 }
+         }
                 else
                  {
                     blockContent = trimmed.Substring(tcStart + 10, tcEnd - tcStart - 10).Trim();
                     searchFrom = tcEnd + 11;   // </toolcall> is 11 chars
-                 }
+         }
 
                 var tc = ParseToolCallBlock(blockContent, toolCalls.Count + 1);
                 if (tc.ToolName != null)
@@ -678,9 +696,29 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                 return new LLMDecision(false, null, new Dictionary<string, string?>(), answer);
                    }
 
+              // v12.12 model-agnostic fallback: some models answer inside
+              // <thinking>…</thinking> only (no <output>, no <toolcall>). Treat the
+              // unwrapped thinking text as a direct answer instead of rejecting —
+              // chat must work with ANY model. Tool-capable models that intend a
+              // tool call will have emitted a <toolcall> block, which is matched above.
+              var thinkOpen = trimmed.IndexOf("<thinking>", StringComparison.OrdinalIgnoreCase);
+              if (thinkOpen >= 0)
+                   {
+                  var thinkClose = trimmed.IndexOf("</thinking>", thinkOpen + "<thinking>".Length, StringComparison.OrdinalIgnoreCase);
+                  var inner = thinkClose >= 0
+                      ? trimmed.Substring(thinkOpen + "<thinking>".Length, thinkClose - thinkOpen - "<thinking>".Length).Trim()
+                      : trimmed.Substring(thinkOpen + "<thinking>".Length).Trim();
+                  if (inner.Length > 0)
+                       {
+                      _logger?.Info("Orchestrator", "No <output>/<toolcall> tags — using <thinking> content as direct answer (model-agnostic fallback).");
+                      return new LLMDecision(false, null, new Dictionary<string, string?>(), inner);
+                       }
+                   }
+
               // Neither block found — invalid response
             return new LLMDecision(false, null, new Dictionary<string, string?>(), null);
-                 }
+         }
+
 
 /// <summary>Parses a single <toolcall> block content to extract tool name and arguments.</summary>
     private ToolCallRequest ParseToolCallBlock(string toolcallContent, int index)
