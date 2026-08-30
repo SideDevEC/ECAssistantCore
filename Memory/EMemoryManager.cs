@@ -140,8 +140,10 @@ public class EMemoryManager : IDisposable
                 if (keyLower.Contains(term)) score += 3.0;
                 if (contentLower.Contains(term)) score += 1.0;
                 if (keyLower.Split(' ', '_', '-').Any(w => w == term)) score += 2.0;
-                score *= e.Confidence;
             }
+
+            // Confidence applies once per entry, not once per term.
+            score *= e.Confidence;
 
             if (!string.IsNullOrEmpty(categoryFilter))
             {

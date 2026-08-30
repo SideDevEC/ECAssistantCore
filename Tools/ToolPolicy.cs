@@ -148,8 +148,7 @@ public class ToolPolicy
             "add-content", "add-member", "clear-content", "clear-item",
             "copy-item", "move-item", "remove-item", "rename-item",
             "new-item", "new-file", "new-directory", "mkdir", "md",
-            "out-file", "out-null >",
-            "write-output >", "echo >",
+            "out-file",
             "set-variable", "remove-variable",
             "start-process", "stop-process", "stop-job",
             "invoke-webrequest", "iwr", "curl", "wget",
@@ -159,7 +158,6 @@ public class ToolPolicy
             "cp ", "copy ", "mv ", "move ",
             "touch ", "tee ",
             "format-volume", "clear-disk",
-            ">", ">>", "1>", "2>", "1>>", "2>>",
         };
 
         // ── POSIX write commands ──
@@ -167,7 +165,6 @@ public class ToolPolicy
             "rm ", "rmdir ", "rm -", "mkdir ", "mkdir -",
             "mv ", "cp ", "touch ", "tee ",
             "chmod ", "chown ", "chgrp ",
-            ">", ">>", "1>", "2>", "1>>", "2>>",
             "dd ", "mkfs", "mount ", "umount",
             "kill ", "killall ", "pkill ",
             "apt ", "apt-get ", "brew ", "pip install", "npm install", "dotnet ",

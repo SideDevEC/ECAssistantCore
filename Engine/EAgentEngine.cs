@@ -121,6 +121,15 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
 
     /// <summary>Attach or replace the session output renderer.</summary>
     public void SetSessionOutput(ISessionOutput? output) => SessionOutput = output;
+
+    /// <summary>
+    /// Mid-request connection recovery hook (local mode only). When a chat request
+    /// fails with a connection-level error, the engine invokes this to restore the
+    /// local LLM server (restart + re-register + restore KV sessions) and retries
+    /// the request once. Wired by SessionManager; null in remote/mock mode.
+    /// </summary>
+    public Func<Task<bool>>? ConnectionRecovery { get; set; }
+
     public IInferenceEngine? InferenceEngine => _inferenceEngine;
     public IKvCacheController? KvCacheController => _kvCacheController;
     public RemoteTokenizer? Tokenizer => _tokenizer;
@@ -990,7 +999,11 @@ User: " + userRequest + "\n<lm>\n";
 
         if (_toolOutputStore.Count > MaxStoredOutputs)
          {
-            var oldestKey = _toolOutputStore.Keys.OrderBy(k => k).FirstOrDefault();
+            // Evict oldest by insertion order (keys are output_<n>; lexicographic sort
+            // would evict output_10 before output_2). Prefer the in-memory counter.
+            var oldestKey = _toolOutputStore.Keys
+                .OrderBy(k => int.TryParse(k.AsSpan("output_".Length), out var n) ? n : int.MaxValue)
+                .FirstOrDefault();
             if (oldestKey != null) _toolOutputStore.Remove(oldestKey);
          }
 
@@ -1141,7 +1154,8 @@ User: " + userRequest + "\n<lm>\n";
 
             if (_lifecycle.TurnCount == 1)
              {
-                _transcript.AddUser(userPrompt);
+                // Note: the user prompt is already in the transcript (added at the top of
+                // GenerateAsync when TurnCount == 1). Only re-add it to the cleared context.
                 _contextWindow.AddUserMessage(effectivePrompt, imageDataUris);
              }
          }
@@ -1200,6 +1214,9 @@ User: " + userRequest + "\n<lm>\n";
                 else
                     requestParams = InferenceParamsFactory.Default.Create(_config);
 
+                bool retriedAfterRecovery = false;
+                bool retryingStream = false;
+                retryStream:
                 try
                  {
                     await foreach (var token in _inferenceEngine!.StreamAsync(
@@ -1241,12 +1258,30 @@ User: " + userRequest + "\n<lm>\n";
                     _out?.BlankLine();
                 }
                  }
+                catch (Exception connEx) when (tokenCount == 0 && IsConnectionFailure(connEx) && !retriedAfterRecovery)
+                 {
+                    // Connection-level failure (e.g. local server went down after
+                    // shutdown-on-last-client). Recover the connection and retry once —
+                    // never surface a connection error as model output.
+                    _out?.StopStream();
+                    if (!await TryRecoverConnectionAsync())
+                        throw;
+                    retriedAfterRecovery = true;
+                    // The finally below skips clearing when retrying, so image
+                    // attachments survive into the retry attempt.
+                    retryingStream = true;
+                    goto retryStream;
+                 }
                 finally
                  {
                     // Clear per-call image attachments — params object is shared across turns.
-                    if (_requestParams != null)
+                    // Skipped while a recovery retry is pending (images must survive); the
+                    // post-block clear below handles that path.
+                    if (_requestParams != null && !retryingStream)
                         _requestParams.ImageDataUris = new List<string>();
                  }
+                if (retryingStream && _requestParams != null)
+                    _requestParams.ImageDataUris = new List<string>();
              }
             catch (OperationCanceledException)
              {
@@ -1312,6 +1347,51 @@ User: " + userRequest + "\n<lm>\n";
     }
 
      /// <summary>Extract clean LLM response by stripping hallucination noise.</summary>
+
+    /// <summary>
+    /// True when the exception is a connection-level transport failure (server
+    /// unreachable / connection refused) rather than an HTTP error response or a
+    /// mid-generation abort. Request-level HTTP failures carry a StatusCode and
+    /// are not retried.
+    /// </summary>
+    private static bool IsConnectionFailure(Exception ex)
+     {
+        for (var e = (Exception?)ex; e != null; e = e.InnerException)
+         {
+            if (e is HttpRequestException hre && hre.StatusCode == null)
+                return true;
+            if (e is System.Net.Sockets.SocketException)
+                return true;
+            if (e.Message.Contains("Connection refused", StringComparison.OrdinalIgnoreCase) ||
+                e.Message.Contains("No connection could be made", StringComparison.OrdinalIgnoreCase) ||
+                e.Message.Contains("actively refused", StringComparison.OrdinalIgnoreCase) ||
+                e.Message.Contains("Connection reset", StringComparison.OrdinalIgnoreCase))
+                return true;
+         }
+        return false;
+     }
+
+    /// <summary>
+    /// Attempt to restore the local LLM server connection via the recovery hook
+    /// wired by SessionManager. Returns true when the server answers again and the
+    /// failed request should be retried once.
+    /// </summary>
+    private async Task<bool> TryRecoverConnectionAsync()
+     {
+        if (!_config.LlmProvider.IsLocal || ConnectionRecovery == null)
+            return false;
+        _out?.WriteInfo("[Engine] LLM server unreachable — attempting recovery...");
+        try
+         {
+            return await ConnectionRecovery();
+         }
+        catch (Exception ex)
+         {
+            _logger?.Warn("Engine", $"Connection recovery failed: {ex.Message}");
+            return false;
+         }
+     }
+
 
     /// <summary>Removes &lt;think&gt;…&lt;/think&gt; reasoning blocks (streaming models like Qwen3.5). Unclosed blocks removed entirely.</summary>
     // Stateless utility — no mutable state.

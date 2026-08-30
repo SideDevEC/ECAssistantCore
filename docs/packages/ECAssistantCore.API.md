@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 291  |  LOC: 25457  |  ~13523 tokens
+Types: 293  |  LOC: 25758  |  ~13620 tokens
 
 ---
 
@@ -1050,6 +1050,15 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 
 ### Class: SelfCorrectionManagerTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
+
+### Class: ServerConfigWriter
+> Core owns the LLM server config. Before the server process is launched, this writer
+Cross-package deps: ECAssistant.Core.Config
+
+### Class: ServerConfigWriterTests
+> Core owns the LLM server config: before launch, {llmRoot}/llm-server.json must exist
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services.Http, Xunit
 
 ### Class: ServerLauncher
 > Detects if ECAssistantLLM server is running. If not, launches it as a child process.

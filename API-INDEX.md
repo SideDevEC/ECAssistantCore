@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-08-29T22:01:49.781377+00:00
-Packages: 3  |  Types: 384
+Generated: 2026-08-30T15:41:32.210578+00:00
+Packages: 3  |  Types: 387
 
 ---
 
-## ECAssistantCore (291 types, ~25457 LOC)
+## ECAssistantCore (293 types, ~25758 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -228,6 +228,8 @@ Packages: 3  |  Types: 384
 - 🟡 SecureKeyStoreTests  (ECAssistantCore)
 - 🟡 SelfCorrectionManager : IDisposable  (ECAssistantCore)  deps: [string, ILogger? logger =]
 - 🟡 SelfCorrectionManagerTests  (ECAssistantCore)
+- 🟡 ServerConfigWriter  (ECAssistantCore)
+- 🟡 ServerConfigWriterTests : IDisposable  (ECAssistantCore)
 - 🟡 ServerLauncher  (ECAssistantCore)  deps: [LlmProviderConfig, string]
 - 🟡 ServerLauncherResolveTests : IDisposable  (ECAssistantCore)
 - 🟡 SessionBuilder : ISessionBuilder  (ECAssistantCore)  deps: [EAgentConfig, string, string, ILogger? logger =, BackgroundProcessManager? bgManager =]
@@ -310,7 +312,7 @@ Packages: 3  |  Types: 384
 - 🟡 TestScenario  (TestSupport)
 - 🟡 TestSessionOutput : ISessionOutput  (TestSupport)  deps: [EGuiTestHarness]
 
-## Tests (85 types, ~11299 LOC)
+## Tests (86 types, ~11426 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -372,6 +374,7 @@ Packages: 3  |  Types: 384
 - 🟡 RemoteProviderSetupWriterTests  (Tests)
 - 🟡 SecureKeyStoreTests  (Tests)
 - 🟡 SelfCorrectionManagerTests  (Tests)
+- 🟡 ServerConfigWriterTests : IDisposable  (Tests)
 - 🟡 ServerLauncherResolveTests : IDisposable  (Tests)
 - 🟡 SessionDiscoveryTests : IDisposable  (Tests)
 - 🟡 SessionManagementIntegrationTests : IDisposable  (Tests)

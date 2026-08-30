@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 85  |  LOC: 11299  |  ~3077 tokens
+Types: 86  |  LOC: 11426  |  ~3134 tokens
 
 ---
 
@@ -220,6 +220,11 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services
 
 ### Class: SelfCorrectionManagerTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
+
+### Class: ServerConfigWriterTests
+> Core owns the LLM server config: before launch, {llmRoot}/llm-server.json must exist
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services.Http, Xunit
 
 ### Class: ServerLauncherResolveTests
 > v12.10 runtime contract tests: the integrating app gives Core a root folder; Core

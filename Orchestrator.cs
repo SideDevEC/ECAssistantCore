@@ -510,6 +510,8 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                              {
                             _out?.WriteLine($"[Orchestrator] Tool exception: {ex.Message}");
                                      _toolCallLog.Add($"Tool:{decision.ToolName} \u2192 EXCEPTION: {ex.Message}");
+                            // Count the turn — otherwise a persistently throwing tool loops forever.
+                            _turnCount++;
                             continue;
                              }
 
@@ -663,13 +665,13 @@ public sealed class AgentOrchestrator : IAsyncDisposable
             if (outputOpenIdx >= 0)
                {
                 var closePos = trimmed.IndexOf("</output>", outputOpenIdx + "<output>".Length, StringComparison.OrdinalIgnoreCase);
-                if (closePos > outputOpenIdx + "<output>".Length)
+                if (closePos >= outputOpenIdx + "<output>".Length)
                     outputCloseIdx = closePos;
                }
 
             if (outputOpenIdx >= 0 && outputCloseIdx.HasValue)
                    {
-                  // Found an <output> block — extract the answer text
+                  // Found an <output> block (possibly empty) — extract the answer text
                 var answer = trimmed.Substring(
                     outputOpenIdx + "<output>".Length,
                     outputCloseIdx.Value - outputOpenIdx - "<output>".Length).Trim();

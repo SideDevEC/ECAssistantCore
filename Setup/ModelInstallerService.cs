@@ -361,9 +361,23 @@ public sealed class ModelInstallerService
             if (appRoot["llm"] is not JsonObject llm) appRoot["llm"] = llm = new JsonObject();
             llm["model_path"] = serverEntry["path"]?.GetValue<string>() ?? "";
 
+            var isEmbeddingEntry = serverEntry["is_embedding"]?.GetValue<bool>() == true;
+            var entryId = serverEntry["id"]?.GetValue<string>();
+            if (!string.IsNullOrWhiteSpace(entryId))
+            {
+                // Keep llm_provider model ids aligned with llm-server.json so local startup
+                // loads exactly the models the wizard installed.
+                if (appRoot["llm_provider"] is not JsonObject provider2) appRoot["llm_provider"] = provider2 = new JsonObject();
+                if (isEmbeddingEntry)
+                    provider2["embedding_model_id"] = entryId;
+                else
+                    provider2["model_id"] = entryId;
+            }
+
             // Vision capability flag lives on the provider (llm_provider) — read by integrating apps
             if (appRoot["llm_provider"] is not JsonObject provider) appRoot["llm_provider"] = provider = new JsonObject();
-            provider["vision_enabled"] = hasVision;
+            if (serverEntry["is_embedding"]?.GetValue<bool>() != true)
+                provider["vision_enabled"] = hasVision;
             File.WriteAllText(_appsettingsPath, appRoot.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
         }
         catch { /* config sync is best-effort — llm-server.json remains authoritative for the server */ }

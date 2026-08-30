@@ -98,16 +98,19 @@ public class EcaCompositionRoot
 
     private string ResolveModelPath(EAgentConfig config, string userConfigDir)
     {
+        // ROOT-ONLY contract: relative model paths resolve only inside the app root.
+        // No fallback to the binary directory (AppContext.BaseDirectory) — that would
+        // embed dev-tree/build-tree paths into the runtime configuration.
         var modelPath = config.Llm.ModelPath;
         if (Path.IsPathRooted(modelPath))
             return modelPath;
 
         var inWorkDir = Path.Combine(userConfigDir, modelPath);
-        var inBuildDir = Path.Combine(AppContext.BaseDirectory, modelPath);
+        var inLlmModels = Path.Combine(userConfigDir, "llm", "models", Path.GetFileName(modelPath));
         if (File.Exists(inWorkDir))
             return inWorkDir;
-        if (File.Exists(inBuildDir))
-            return inBuildDir;
+        if (File.Exists(inLlmModels))
+            return inLlmModels;
         return inWorkDir;
     }
 

@@ -89,7 +89,7 @@ public sealed class LlmProviderConfig
 
     /// <summary>Path to the ECAssistant.LLM executable (relative or absolute).</summary>
     [JsonPropertyName("server_executable_path")]
-    public string ServerExecutablePath { get; set; } = "../ECAssistantLLM/bin/Release/net8.0/ECAssistant.LLM";
+    public string ServerExecutablePath { get; set; } = "server/ECAssistant.LLM";
 
     /// <summary>Max seconds to wait for server startup.</summary>
     [JsonPropertyName("startup_timeout_sec")]

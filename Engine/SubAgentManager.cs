@@ -288,8 +288,6 @@ public sealed class SubAgentManager : IDisposable
             childEngine.RegisterTool(new Tools.Git.EGitTool(_processRunner, _fileSystem, _config));
             childEngine.RegisterTool(new Tools.Code.ECodeEditorTool(_fileSystem, _config));
 
-            var researchExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-                { ".cs", ".md", ".json", ".txt", ".xml", ".sql", ".html", ".css", ".js", ".sh" };
             childEngine.RegisterTool(new Tools.Research.EFileResearchTool(_fileSystem, _config));
 
             await childEngine.PrefillStaticPrefix();

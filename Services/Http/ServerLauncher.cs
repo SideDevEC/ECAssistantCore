@@ -54,10 +54,10 @@ public sealed class ServerLauncher
             return false;
         }
 
-        // v12.10: the server runtime lives INSIDE the root (root/server/). If it is not there
-        // yet (or older than the build), copy it from the app's own directory — afterwards the
-        // runtime never references anything outside the root.
-        EnsureServerBinaryCopied(ResolveServerSourceDirectory(AppContext.BaseDirectory, Directory.GetCurrentDirectory()), _appRoot);
+        // v12.11 ROOT-ONLY CONTRACT: the server runtime lives INSIDE the root (root/server/).
+        // If missing/stale it is copied from the app binary's own directory (BaseDirectory/server,
+        // staged there at build time). No CWD fallback, no dev-environment fallback — ever.
+        EnsureServerBinaryCopied(ResolveServerSourceDirectory(AppContext.BaseDirectory), _appRoot);
 
         // Launch server process
         var exePath = ResolveExecutablePath();
@@ -67,10 +67,16 @@ public sealed class ServerLauncher
         // Ensure LLM root directory exists
         Directory.CreateDirectory(LlmRoot);
 
-        var args = $"--root \"{LlmRoot}\"";
-        // Pass port override so Core controls which port the LLM server listens on
-        if (_config.IsLocal)
-            args += $" --port {_config.Port}";
+        // Core owns the server config: write/update {llmRoot}/llm-server.json from the
+        // appsettings model selections BEFORE launching, so the server never invents defaults.
+        var configPath = ServerConfigWriter.GetConfigPath(LlmRoot);
+        if (!ServerConfigWriter.EnsureServerConfig(_appRoot, LlmRoot, _config) && !File.Exists(configPath))
+        {
+            System.Diagnostics.Debug.WriteLine($"[ServerLauncher] Could not prepare server config at {configPath}");
+            return false;
+        }
+
+        var args = BuildServerArguments(LlmRoot, configPath, _config.IsLocal ? _config.Port : null);
 
         var psi = new ProcessStartInfo
         {
@@ -170,49 +176,38 @@ public sealed class ServerLauncher
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[ServerLauncher] Non-critical error ignored: {ex.Message}"); }
     }
 
-    private string? ResolveExecutablePath()
+    /// <summary>Server process arguments: root, the explicit config path (the server must
+    /// read exactly this config, never generate defaults), and optional port override.</summary>
+    internal static string BuildServerArguments(string llmRoot, string configPath, int? portOverride)
     {
-        EnsureServerBinaryCopied(ResolveServerSourceDirectory(AppContext.BaseDirectory, Directory.GetCurrentDirectory()), _appRoot);
-        return ResolveExecutablePath(_config.ServerExecutablePath, _appRoot, AppContext.BaseDirectory, Directory.GetCurrentDirectory());
+        var args = $"--root \"{llmRoot}\" \"{configPath}\"";
+        if (portOverride.HasValue)
+            args += $" --port {portOverride.Value}";
+        return args;
     }
 
-    /// <summary>Resolves the LLM server executable. v12.9 runtime contract: candidates derive from the
-    /// app root (root-relative, root scan, publish layout) and the CWD (dev), never from dev trees like
-    /// bin/Debug siblings of the repo. Pure apart from File.Exists — fully unit-testable.</summary>
-    /// <summary>Locates the newest server build output directory (publish layout first, then dev).</summary>
-    internal static string? ResolveServerSourceDirectory(string baseDirectory, string currentDirectory)
+    private string? ResolveExecutablePath()
     {
+        EnsureServerBinaryCopied(ResolveServerSourceDirectory(AppContext.BaseDirectory), _appRoot);
+        return ResolveExecutablePath(_config.ServerExecutablePath, _appRoot);
+    }
+
+    /// <summary>Resolves the LLM server runtime source directory. ROOT-ONLY contract (v12.11):
+    /// the source is the app's own output — {baseDirectory}/server (staged at build time) first,
+    /// then the publish layout (server files next to the app binary). Never scans dev trees
+    /// (ECAssistantLLM/bin siblings) or the CWD. Pure apart from File.Exists.</summary>
+    internal static string? ResolveServerSourceDirectory(string baseDirectory)
+    {
+        // Staged layout: server runtime staged under the app output's server/ folder
+        var staged = Path.Combine(baseDirectory, "server");
+        if (File.Exists(Path.Combine(staged, "ECAssistant.LLM.dll")))
+            return staged;
+
         // Publish layout: server built into the same folder as the app
         if (File.Exists(Path.Combine(baseDirectory, "ECAssistant.LLM.dll")))
             return baseDirectory;
 
-        // Dev layout: newest of Debug/Release under the ECAssistantLLM project
-        string? best = null;
-        var bestTime = DateTime.MinValue;
-        foreach (var startDir in new[] { currentDirectory, baseDirectory })
-        {
-            var dir = startDir;
-            for (var level = 0; level < 6 && !string.IsNullOrEmpty(dir); level++)
-            {
-                var llmBin = Path.Combine(dir, "ECAssistantLLM", "bin");
-                if (Directory.Exists(llmBin))
-                {
-                    foreach (var cfg in new[] { "Debug", "Release" })
-                    {
-                        var candidate = Path.Combine(llmBin, cfg, "net8.0");
-                        var marker = Path.Combine(candidate, "ECAssistant.LLM.dll");
-                        if (File.Exists(marker))
-                        {
-                            var t = File.GetLastWriteTimeUtc(marker);
-                            if (t > bestTime) { bestTime = t; best = candidate; }
-                        }
-                    }
-                    break;
-                }
-                dir = Path.GetDirectoryName(dir.TrimEnd(Path.DirectorySeparatorChar)) ?? string.Empty;
-            }
-        }
-        return best;
+        return null;
     }
 
     /// <summary>
@@ -257,29 +252,20 @@ public sealed class ServerLauncher
     }
 
     internal static string? ResolveExecutablePath(
-        string serverExecutablePath, string appRoot, string baseDirectory, string currentDirectory)
+        string serverExecutablePath, string appRoot)
     {
-        // Absolute path wins
-        if (Path.IsPathRooted(serverExecutablePath) && File.Exists(serverExecutablePath))
-            return serverExecutablePath;
-
-        var candidates = new List<string>();
         var exeName = Path.GetFileName(serverExecutablePath);
+        var candidates = new List<string>();
 
-        // 1. The managed copy inside the root (v12.10 primary location)
+        // 1. The managed copy inside the root (primary location)
         candidates.Add(Path.Combine(appRoot, "server", exeName));
 
-        // 2. Root scan: the executable anywhere within the root (2 levels deep)
-        foreach (var sub in new[] { "", "ECAssistantLLM", "server" })
-        {
+        // 2. Root scan: the executable directly under the root (legacy installs)
+        foreach (var sub in new[] { "", "ECAssistantLLM" })
             candidates.Add(Path.Combine(appRoot, sub, exeName));
-            candidates.Add(Path.Combine(appRoot, sub, "bin", "Debug", "net8.0", exeName));
-            candidates.Add(Path.Combine(appRoot, sub, "bin", "Release", "net8.0", exeName));
-        }
 
-        // 3. Publish layout: server binary next to the app binary
-        candidates.Add(Path.Combine(baseDirectory, exeName));
-
+        // ROOT-ONLY contract: no CWD, no dev-tree, no app-binary-directory fallback.
+        // If the executable is not inside the root, the copy step above must have run first.
         return candidates.FirstOrDefault(File.Exists);
     }
 

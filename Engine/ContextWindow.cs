@@ -165,9 +165,12 @@ public class ContextWindow
     /// </summary>
     private void SummarizeOldest(int currentTotal)
     {
-        if (currentTotal <= _maxTokens) return;
+        // Trigger when the estimate crosses the auto-summarize threshold
+        // (not just when it exceeds the hard max-token budget).
+        if (currentTotal <= (int)_autoSummarizeThreshold) return;
         if (Interlocked.Exchange(ref _summarizeInProgress, 1) == 1) return;
 
+        bool backgroundScheduled = false;
         try
         {
             int count;
@@ -178,7 +181,7 @@ public class ContextWindow
 
             lock (_messagesLock)
             {
-                while (_messages.Count > keepCount && currentTotal > _maxTokens)
+                while (_messages.Count > keepCount && currentTotal > (int)_autoSummarizeThreshold)
                 {
                     var removed = _messages[0];
                     oldMessages.Add(removed);
@@ -188,6 +191,10 @@ public class ContextWindow
             }
 
             if (_summaryService == null || oldMessages.Count <= 3) return;
+
+            // Keep the guard held until the background insert completes so a
+            // concurrent GetWindowMessages cannot start a second trim race.
+            backgroundScheduled = true;
 
             // Fire-and-forget but NOT async void: exceptions are contained here.
             _ = Task.Run(async () =>
@@ -208,22 +215,14 @@ public class ContextWindow
                     }
                 }
                 catch { /* summarization is best-effort — old messages are already trimmed */ }
+                finally { Interlocked.Exchange(ref _summarizeInProgress, 0); }
             });
         }
         finally
         {
-            Interlocked.Exchange(ref _summarizeInProgress, 0);
+            if (!backgroundScheduled)
+                Interlocked.Exchange(ref _summarizeInProgress, 0);
         }
     }
 
-    private string BuildBlockString(List<TranscriptMessage> msgs)
-    {
-        var sb = new StringBuilder();
-        foreach (var msg in msgs)
-        {
-            sb.Append($"[{msg.Role}] ");
-            sb.AppendLine(msg.Content);
-        }
-        return sb.ToString();
-    }
 }

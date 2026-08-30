@@ -27,6 +27,7 @@ public class SessionManager : IAsyncDisposable
     private Timer? _idleTimer;
     private DateTime _lastUserActivity = DateTime.UtcNow;
     private bool _isIdleDisconnected;
+    private DateTime _lastConnectivityCheck = DateTime.MinValue;
     private int _idleTimeoutMin;
     private readonly int _idleCheckIntervalSec = 60;
     private int _reconnectInProgress;
@@ -186,7 +187,10 @@ public class SessionManager : IAsyncDisposable
                 }
             }
 
-            _httpClient = _newClient(_effectiveEndpoint!, _effectiveApiKey, null);
+            _httpClient = _newClient(
+                _effectiveEndpoint ?? _config.LlmProvider.ResolvedEndpoint,
+                _effectiveApiKey ?? _config.LlmProvider.ApiKey,
+                null);
         }
 
         // Validate config (local mode needs model path; remote mode skips file validation)
@@ -361,6 +365,14 @@ public class SessionManager : IAsyncDisposable
         lock (_sessionsLock)
             _sessions.Add(key, session);
         Interlocked.Increment(ref _sessionCounter);
+
+        // Wire mid-request connection recovery: when a chat request hits a
+        // connection-refused error (server went down outside the idle watchdog),
+        // the engine calls back here to restore the server and retry once instead
+        // of surfacing the error as model output.
+        if (IsLocalMode)
+            session.Engine.ConnectionRecovery = RecoverConnectionAsync;
+
         return session;
     }
 
@@ -450,15 +462,31 @@ public class SessionManager : IAsyncDisposable
     /// client and KV sessions are fully restored. Await this before processing a message —
     /// v12.6: messages processed during a background reconnect raced the disposed client and were lost.
     /// </summary>
-    public Task MarkUserActivityAsync()
-    {
+    public async Task MarkUserActivityAsync()
+     {
         _lastUserActivity = DateTime.UtcNow;
 
-        if (_isIdleDisconnected && IsLocalMode)
-            return ReconnectAfterIdleAsync();
+        if (!IsLocalMode)
+            return;
 
-        return Task.CompletedTask;
-    }
+        if (_isIdleDisconnected)
+         {
+            await ReconnectAfterIdleAsync();
+            return;
+         }
+
+        // The server can also go down outside our idle watchdog — its own
+        // shutdown-on-last-client, a crash, or a fresh install that never started
+        // it. Proactively restore the connection so requests don't fail with
+        // "Connection refused" being fed into the LLM response/parse pipeline.
+        if ((DateTime.UtcNow - _lastConnectivityCheck).TotalSeconds < 30) return;
+        _lastConnectivityCheck = DateTime.UtcNow;
+        if (!await _httpClient.PingAsync())
+         {
+            _logger.Warn("SessionManager", "LLM server unreachable at user activity — recovering connection");
+            await RecoverConnectionAsync();
+         }
+     }
 
     /// <summary>
     /// Start the idle watchdog timer. Call after initialization.
@@ -517,6 +545,29 @@ public class SessionManager : IAsyncDisposable
             Interlocked.Exchange(ref _reconnectInProgress, 0);
         }
     }
+
+    /// <summary>
+    /// Mid-request recovery hook (ConnectionRecovery for engines): the local server
+    /// went down outside the idle watchdog — its own shutdown-on-last-client, a
+    /// crash, or a first-run install that never started it. Reuses the idle-reconnect
+    /// flow (ensure server running, re-register, restore KV sessions). Returns true
+    /// when the server answers again and the request should be retried.
+    /// </summary>
+    public async Task<bool> RecoverConnectionAsync()
+     {
+        if (!IsLocalMode || _serverLauncher == null) return false;
+
+        // Fast path — server already answering (blip was elsewhere).
+        if (await _httpClient.PingAsync())
+            return true;
+
+        // Reuse the idle-reconnect flow: EnsureServerRunningAsync + re-register +
+        // recreate KV sessions. ReconnectAfterIdleCoreAsync only runs while
+        // _isIdleDisconnected is set, so flag it (force mode).
+        _isIdleDisconnected = true;
+        await ReconnectAfterIdleAsync();
+        return !_isIdleDisconnected;
+     }
 
     private async Task ReconnectAfterIdleCoreAsync()
     {

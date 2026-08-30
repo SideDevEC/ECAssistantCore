@@ -85,16 +85,7 @@ public class EShellAgent : EToolBase
                "- GNU tools: find -printf, timeout, readlink -f and grep -P all exist here (unlike macOS)\n" +
                "Examples (valid on this host):\n" +
                "ls -la ~/Desktop                         # list with types, sizes, permissions\n" +
-               "ls -la ~/Desktop/\"My Folder\"            # tilde outside the quotes!\n" +
-               "find ~/Desktop -maxdepth 1 -type d       # only folders\n" +
-               "head -n 20 ~/Desktop/notes.txt           # read a file\n" +
-               "cp ~/Desktop/a.txt ~/Documents/b.txt     # copy\n" +
-               "date -d tomorrow '+%A %B %e, %Y'         # GNU date\n";
-
-        return "This host runs Linux — the shell is bash (GNU userland).\n" + rules +
-               "Examples (valid on this host):\n" +
-               "ls -la ~/Desktop                         # list with types, sizes, permissions\n" +
-               "ls -la ~/\"My Folder\"                    # quoted path with spaces\n" +
+               "ls -la ~/\"My Folder\"                   # quoted path with spaces\n" +
                "find ~/Desktop -maxdepth 1 -type d       # only folders\n" +
                "head -n 20 ~/Desktop/notes.txt           # read a file\n" +
                "cp ~/Desktop/a.txt ~/Documents/b.txt     # copy\n" +
@@ -168,12 +159,6 @@ public class EShellAgent : EToolBase
     {
         var result = await _processRunner.ExecuteAsync(command, workingDir, cancellationToken);
         return new ShellProcessResult(result.StdOut, result.StdErr, result.ExitCode);
-    }
-
-    private string EscapeXml(string text)
-    {
-        if (string.IsNullOrEmpty(text)) return text;
-        return text.Replace("<", "&lt;").Replace(">", "&gt;");
     }
 }
 

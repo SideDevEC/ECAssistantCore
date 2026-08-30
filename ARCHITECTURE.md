@@ -69,9 +69,14 @@ Services/Http/  (HTTP transport layer — talks to ECAssistantLLM / OpenAI-compa
 ├── HttpEmbedder.cs            # IVectorEmbedder — embeddings via /v1/embeddings
 ├── LlmServerClient.cs         # ILlmServerClient — register/heartbeat/disconnect/reconnect (/eca/clients)
 ├── ServerLauncher.cs          # Detect/launch ECAssistantLLM server, send /eca/shutdown on stop
-│                               # v12.10: copies the newest server build into root/server/ once
-│                               # (EnsureServerBinaryCopied + ResolveServerSourceDirectory), then
-│                               # ONLY executes from within the root — no dev trees at runtime
+│                               # Root-only contract: server runtime lives ONLY in {appRoot}/server
+│                               # (copied from Core's own bundled server/ when missing/stale).
+│                               # Launches with --root {appRoot}/llm + explicit config path
+│                               # ({llmRoot}/llm-server.json). No dev-tree/CWD fallbacks —
+│                               # dev-tree locations are explicitly ignored.
+├── ServerConfigWriter.cs      # Core-owned server config: EnsureServerConfig guarantees
+│                               # {llmRoot}/llm-server.json matches appsettings wizard selections
+│                               # (chat/vision/embedding model entries, root-contained paths only)
 
 ECAssistantLLM/             # Separate server process — owns the model, GPU, KV cache (NOT part of Core)
 
@@ -155,6 +160,7 @@ SessionManager wires HTTP infra (shared across all sessions): `ServerLauncher`, 
 - `AgentSession` no longer takes `LLamaWeights`/`ModelParams` — it takes `IInferenceEngine` + `IKvCacheController` (+ session id).
 - **Idle watchdog:** `StartIdleWatchdog(15)` checks every 60s; after 15 min inactivity → stops heartbeat, sends `/eca/shutdown`, frees VRAM. `MarkUserActivity()` on input resets timer.
 - **Reconnection:** `MarkUserActivity()` when idle-disconnected → `ReconnectAfterIdleAsync()` → ensures server running → re-registers → recreates HTTP client → restarts heartbeat → recreates KV cache sessions → re-prefills static prefix.
+- **Server-down recovery (v12.11):** connection-refused / HttpRequestException in local mode never reaches the LLM parse pipeline. `EAgentEngine` runs `ConnectionRecovery` (wired by SessionManager): restarts server via `EnsureServerRunningAsync`, re-registers, retries the request once. `MarkUserActivityAsync` (throttled 30s) proactively pings the server at user activity and recovers even when not idle-flagged.
 - **Heartbeat auto-reconnect:** `LlmServerClient` tracks consecutive failures; after 3 failures → `TryReconnectAsync()` re-registers. `OnReconnected` event fires for session restoration.
 - **Shutdown wiring:** `AppController` calls `SessionManager.DisposeAsync()` on quit → `DisconnectAsync()` + `ServerLauncher.StopServerAsync()` → POST `/eca/shutdown` → server winds down if last client.
 - **Session restore:** `AgentSession.UpdateClientId()` + `RecreateKvCacheSessionAsync()` rewire engine to new server connection and rebuild KV cache via `PrefillStaticPrefix()`. `EAgentEngine.UpdateHttpClient()` recreates `RemoteKvCacheController` + `HttpStreamingEngine`.

@@ -57,36 +57,41 @@ public class ServerLauncherResolveTests : IDisposable
     // ── ResolveServerSourceDirectory ──
 
     [Fact]
-    public void SourceDir_PublishLayout_Preferred()
+    public void SourceDir_StagedServerLayout_Preferred()
+    {
+        var staged = Path.Combine(_baseDir, "server");
+        Directory.CreateDirectory(staged);
+        WriteMarker(staged);
+        WriteMarker(_baseDir);
+
+        var got = ServerLauncher.ResolveServerSourceDirectory(_baseDir);
+        Assert.Equal(staged, got);
+    }
+
+    [Fact]
+    public void SourceDir_PublishLayout_Fallback()
     {
         WriteMarker(_baseDir);
-        WriteMarker(_devDebug);
-        File.SetLastWriteTimeUtc(Path.Combine(_devDebug, "ECAssistant.LLM.dll"), DateTime.UtcNow.AddHours(1));
-
-        var got = ServerLauncher.ResolveServerSourceDirectory(_baseDir, _root);
+        var got = ServerLauncher.ResolveServerSourceDirectory(_baseDir);
         Assert.Equal(_baseDir, got);
     }
 
     [Fact]
-    public void SourceDir_DevBuild_NewestWins()
+    public void SourceDir_DevTree_Ignored()
     {
-        var release = WriteMarker(_devRelease);
-        var debug = WriteMarker(_devDebug);
-        File.SetLastWriteTimeUtc(release, DateTime.UtcNow.AddHours(-2));
-        File.SetLastWriteTimeUtc(debug, DateTime.UtcNow);
+        // Dev-tree builds (ECAssistantLLM/bin/...) must never be picked up.
+        WriteMarker(_devDebug);
+        WriteMarker(_devRelease);
+        File.SetLastWriteTimeUtc(Path.Combine(_devDebug, "ECAssistant.LLM.dll"), DateTime.UtcNow.AddHours(1));
 
-        // dev walk requires the CWD to sit in a tree whose ancestor contains ECAssistantLLM/bin
-        var cwd = Path.Combine(_root, "console");
-        Directory.CreateDirectory(cwd);
-
-        var got = ServerLauncher.ResolveServerSourceDirectory(_baseDir, cwd);
-        Assert.Equal(_devDebug, got);
+        var got = ServerLauncher.ResolveServerSourceDirectory(_baseDir);
+        Assert.Null(got);
     }
 
     [Fact]
     public void SourceDir_None_ReturnsNull()
     {
-        Assert.Null(ServerLauncher.ResolveServerSourceDirectory(_baseDir, _root));
+        Assert.Null(ServerLauncher.ResolveServerSourceDirectory(_baseDir));
     }
 
     // ── EnsureServerBinaryCopied ──
@@ -145,40 +150,42 @@ public class ServerLauncherResolveTests : IDisposable
     // ── ResolveExecutablePath ──
 
     [Fact]
-    public void Resolve_AbsolutePath_Wins()
-    {
-        var exe = WriteExe(Path.Combine(_root, "anywhere"));
-        var got = ServerLauncher.ResolveExecutablePath(exe, _root, _baseDir, _root);
-        Assert.Equal(exe, got);
-    }
-
-    [Fact]
     public void Resolve_PrimaryLocation_IsRootServer()
     {
         var exe = WriteExe(Path.Combine(_root, "server"));
-        var got = ServerLauncher.ResolveExecutablePath("../ECAssistantLLM/bin/Release/net8.0/ECAssistant.LLM", _root, _baseDir, _root);
+        var got = ServerLauncher.ResolveExecutablePath("../ECAssistantLLM/bin/Release/net8.0/ECAssistant.LLM", _root);
         Assert.Equal(exe, got);
     }
 
     [Fact]
-    public void Resolve_RootScan_FindsTwoLevelsDeep()
+    public void Resolve_OutsideRoot_Ignored()
     {
-        var exe = WriteExe(Path.Combine(_root, "server", "bin", "Release", "net8.0"));
-        var got = ServerLauncher.ResolveExecutablePath("missing/dir/ECAssistant.LLM", _root, _baseDir, _root);
+        // An absolute path outside the root must never be used (ROOT-ONLY contract).
+        var exe = WriteExe(Path.Combine(_root, "anywhere"));
+        var got = ServerLauncher.ResolveExecutablePath(exe, _root);
+        Assert.Null(got);
+    }
+
+    [Fact]
+    public void Resolve_RootScan_FindsLegacyCopy()
+    {
+        var exe = WriteExe(Path.Combine(_root, "ECAssistantLLM"));
+        var got = ServerLauncher.ResolveExecutablePath("missing/dir/ECAssistant.LLM", _root);
         Assert.Equal(exe, got);
     }
 
     [Fact]
-    public void Resolve_PublishLayout_Found()
+    public void Resolve_AppBinaryDir_NeverUsed()
     {
+        // Publish-layout copy next to the app binary is not executed — only root/server.
         var exe = WriteExe(_baseDir);
-        var got = ServerLauncher.ResolveExecutablePath("ECAssistant.LLM", _root, _baseDir, _root);
-        Assert.Equal(exe, got);
+        var got = ServerLauncher.ResolveExecutablePath("ECAssistant.LLM", _root);
+        Assert.Null(got);
     }
 
     [Fact]
     public void Resolve_Missing_ReturnsNull()
     {
-        Assert.Null(ServerLauncher.ResolveExecutablePath("nope/ECAssistant.LLM", _root, _baseDir, _root));
+        Assert.Null(ServerLauncher.ResolveExecutablePath("nope/ECAssistant.LLM", _root));
     }
 }
