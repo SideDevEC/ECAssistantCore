@@ -151,9 +151,24 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         // Recreate inference engine with new client
         var modelId = _requestParams?.ModelId ?? "main";
         _inferenceEngine = new HttpStreamingEngine(newClient, modelId, _sessionId);
-        // Reset KV session state so PrefillStaticPrefix recreates it
+        // Reset KV session state so PrefillStaticPrefix recreates it.
+        // BOTH flags must clear: SessionActive gates CreateSession, IsPrefilled
+        // gates the whole prefill — leaving it set made reconnect a silent no-op
+        // and every later generate 404 against the restarted server.
         _kvState.SessionActive = false;
+        _kvState.IsPrefilled = false;
     }
+
+    /// <summary>
+    /// Invalidate client-side KV session state (call when the server may have
+    /// restarted and dropped sessions). The next PrefillStaticPrefix recreates
+    /// the session and re-prefills the static prefix.
+    /// </summary>
+    public void InvalidateKvSessionState()
+     {
+        _kvState.SessionActive = false;
+        _kvState.IsPrefilled = false;
+     }
     public InferenceRequestParams? InferenceParams => _requestParams;
     public CancellationToken ExecutionToken => _lifecycle.Token;
     public bool IsExecutionStopped => ExecutionToken.IsCancellationRequested;
@@ -1258,11 +1273,15 @@ User: " + userRequest + "\n<lm>\n";
                     _out?.BlankLine();
                 }
                  }
-                catch (Exception connEx) when (tokenCount == 0 && IsConnectionFailure(connEx) && !retriedAfterRecovery)
+                catch (Exception connEx) when (tokenCount == 0 &&
+                                               (IsConnectionFailure(connEx) || IsStaleSessionFailure(connEx)) &&
+                                               !retriedAfterRecovery)
                  {
                     // Connection-level failure (e.g. local server went down after
-                    // shutdown-on-last-client). Recover the connection and retry once —
-                    // never surface a connection error as model output.
+                    // shutdown-on-last-client) or a 404 from a KV session the
+                    // restarted server no longer knows. Recover the connection
+                    // (which also recreates sessions) and retry once — never
+                    // surface these as model output.
                     _out?.StopStream();
                     if (!await TryRecoverConnectionAsync())
                         throw;
@@ -1366,6 +1385,22 @@ User: " + userRequest + "\n<lm>\n";
                 e.Message.Contains("No connection could be made", StringComparison.OrdinalIgnoreCase) ||
                 e.Message.Contains("actively refused", StringComparison.OrdinalIgnoreCase) ||
                 e.Message.Contains("Connection reset", StringComparison.OrdinalIgnoreCase))
+                return true;
+         }
+        return false;
+     }
+
+    /// <summary>
+    /// True when the failure is an HTTP 404 from the local server — the KV
+    /// session no longer exists there (server restarted under us). Recoverable:
+    /// recovery recreates sessions; a genuine config error is not a 404 on a
+    /// previously-working session route.
+    /// </summary>
+    private static bool IsStaleSessionFailure(Exception ex)
+     {
+        for (var e = (Exception?)ex; e != null; e = e.InnerException)
+         {
+            if (e is HttpRequestException hre && hre.StatusCode == System.Net.HttpStatusCode.NotFound)
                 return true;
          }
         return false;

@@ -186,6 +186,9 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         if (!_isLocalMode) return;
         try
         {
+            // The server may have restarted under us — force a full session
+            // recreate + re-prefill instead of trusting stale KV state.
+            _engine.InvalidateKvSessionState();
             await _engine.PrefillStaticPrefix();
         }
         catch (Exception ex)

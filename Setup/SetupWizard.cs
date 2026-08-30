@@ -48,6 +48,8 @@ public sealed class SetupWizard
 
         _ui.WriteLine();
         _ui.WriteLine("✔ Installation complete — starting ECAssistant…");
+        _ui.WriteLine("  (First start loads the model into memory — this can take a minute or more.");
+        _ui.WriteLine("   When the chat prompt appears, just start typing. No further setup needed.)");
     }
 
     // ── Stage 1: LLM ────────────────────────────────────────────────

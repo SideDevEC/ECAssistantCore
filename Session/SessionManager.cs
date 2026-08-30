@@ -557,9 +557,14 @@ public class SessionManager : IAsyncDisposable
      {
         if (!IsLocalMode || _serverLauncher == null) return false;
 
-        // Fast path — server already answering (blip was elsewhere).
+        // Fast path — server already answering (blip was elsewhere). Even so,
+        // it may have RESTARTED under us and dropped all KV sessions; restore
+        // them before the caller retries, or the retry 404s on a stale session.
         if (await _httpClient.PingAsync())
+         {
+            await RestoreSessionsAsync();
             return true;
+         }
 
         // Reuse the idle-reconnect flow: EnsureServerRunningAsync + re-register +
         // recreate KV sessions. ReconnectAfterIdleCoreAsync only runs while
@@ -567,6 +572,26 @@ public class SessionManager : IAsyncDisposable
         _isIdleDisconnected = true;
         await ReconnectAfterIdleAsync();
         return !_isIdleDisconnected;
+     }
+
+    /// <summary>Recreate server-side KV sessions for all live sessions (after server restart).</summary>
+    private async Task RestoreSessionsAsync()
+     {
+        List<AgentSession> sessions;
+        lock (_sessionsLock)
+            sessions = _sessions.Values.ToList();
+        foreach (var session in sessions)
+        {
+            try
+            {
+                session.UpdateClientId(_serverClient!.ClientId, _httpClient);
+                await session.RecreateKvCacheSessionAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.Warn("SessionManager", $"Failed to restore session {session.Key}: {ex.Message}");
+            }
+        }
      }
 
     private async Task ReconnectAfterIdleCoreAsync()
@@ -600,21 +625,7 @@ public class SessionManager : IAsyncDisposable
         _serverClient.StartHeartbeat(_config.LlmProvider.HeartbeatIntervalSec, () => _sessions.Count);
 
         // Recreate KV cache sessions on the server and re-prefill
-        List<AgentSession> sessions;
-        lock (_sessionsLock)
-            sessions = _sessions.Values.ToList();
-        foreach (var session in sessions)
-        {
-            try
-            {
-                session.UpdateClientId(_serverClient.ClientId, _httpClient);
-                await session.RecreateKvCacheSessionAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.Warn("SessionManager", $"Failed to restore session {session.Key}: {ex.Message}");
-            }
-        }
+        await RestoreSessionsAsync();
 
         _isIdleDisconnected = false;
         _lastUserActivity = DateTime.UtcNow;
