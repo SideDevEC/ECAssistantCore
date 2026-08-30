@@ -19,7 +19,8 @@
       },
       "recommended": true,
       "quant": "Q4_K_M",
-      "notes": "Great all-round chat model; runs fast on Apple Silicon."
+      "notes": "Great all-round chat model; runs fast on Apple Silicon.",
+      "license": "Apache-2.0"
     },
     {
       "id": "qwen25-vl-7b",
@@ -44,7 +45,8 @@
       },
       "recommended": true,
       "quant": "Q4_K_M",
-      "notes": "Best small vision model: OCR, screenshots, charts, documents."
+      "notes": "Best small vision model: OCR, screenshots, charts, documents.",
+      "license": "Apache-2.0"
     },
     {
       "id": "smolvlm2-2b",
@@ -69,7 +71,8 @@
       },
       "recommended": false,
       "quant": "Q4_K_M",
-      "notes": "Tiny footprint; simple image description only."
+      "notes": "Tiny footprint; simple image description only.",
+      "license": "Apache-2.0"
     },
     {
       "id": "all-minilm",
@@ -89,7 +92,8 @@
       },
       "recommended": true,
       "quant": "Q5_K_M",
-      "notes": "Vector memory / KB embeddings. Required for vector memory features."
+      "notes": "Vector memory / KB embeddings. Required for vector memory features.",
+      "license": "Apache-2.0"
     },
     {
       "id": "qwen3-vl-4b",
@@ -114,7 +118,8 @@
       },
       "recommended": true,
       "quant": "Q4_K_M",
-      "notes": "NEW recommended vision model: latest Qwen3-VL gen, fast, strong OCR + charts + screenshots."
+      "notes": "NEW recommended vision model: latest Qwen3-VL gen, fast, strong OCR + charts + screenshots.",
+      "license": "Apache-2.0"
     },
     {
       "id": "qwen35-35b-a3b",
@@ -139,7 +144,8 @@
       },
       "recommended": false,
       "quant": "UD-Q4_K_XL",
-      "notes": "Top pick for heavy analytics: 35B-class reasoning, only ~3B active (fast). Native vision, 256K context, thinking mode. ~21 GB RAM."
+      "notes": "Top pick for heavy analytics: 35B-class reasoning, only ~3B active (fast). Native vision, 256K context, thinking mode. ~21 GB RAM.",
+      "license": "Apache-2.0"
     },
     {
       "id": "qwen3-vl-8b",
@@ -164,7 +170,8 @@
       },
       "recommended": false,
       "quant": "Q4_K_M",
-      "notes": "Bigger Qwen3-VL: noticeably better reasoning over complex images and documents."
+      "notes": "Bigger Qwen3-VL: noticeably better reasoning over complex images and documents.",
+      "license": "Apache-2.0"
     },
     {
       "id": "qwen25-vl-3b",
@@ -189,7 +196,8 @@
       },
       "recommended": false,
       "quant": "Q4_K_M",
-      "notes": "Lightest capable vision model; snappy on Apple Silicon, good for quick screenshots."
+      "notes": "Lightest capable vision model; snappy on Apple Silicon, good for quick screenshots.",
+      "license": "Apache-2.0"
     },
     {
       "id": "qwen25-vl-32b",
@@ -214,7 +222,8 @@
       },
       "recommended": false,
       "quant": "Q4_K_M",
-      "notes": "Maximum vision quality (~20 GB download). Best OCR, charts, multi-image reasoning."
+      "notes": "Maximum vision quality (~20 GB download). Best OCR, charts, multi-image reasoning.",
+      "license": "Apache-2.0"
     },
     {
       "id": "multilingual-e5-large",
@@ -234,7 +243,8 @@
       },
       "recommended": true,
       "quant": "Q8_0",
-      "notes": "Multilingual embeddings (100+ languages), 1024-dim. Replaces English-only MiniLM. MIT license."
+      "notes": "Multilingual embeddings (100+ languages), 1024-dim. Replaces English-only MiniLM. MIT license.",
+      "license": "MIT"
     }
   ]
 }

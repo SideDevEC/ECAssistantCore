@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 293  |  LOC: 25758  |  ~13620 tokens
+Types: 293  |  LOC: 25768  |  ~13634 tokens
 
 ---
 
@@ -255,6 +255,7 @@ Methods:
   - void WriteLine(string text = "")
   - void Write(string text)
   - string? ReadLine()
+  - void WriteLineGreen(string text)
 
 ### Interface: IStepMapper
 > Interface for mapping sub-tasks to concrete tool calls.
@@ -482,7 +483,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Code
 
 ### Class: EColor
-> ANSI color codes. Used ONLY by ConsoleUiRenderer (the UI bridge).
+> ANSI color codes. Used by ConsoleUiRenderer (the UI bridge) and the setup wizard UIs.
 
 ### Class: EContextAnalyzer
 > Cross-File Context Analyzer — scans the project directory, builds file relationships,

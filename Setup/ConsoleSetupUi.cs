@@ -3,6 +3,8 @@ namespace ECAssistant.Core.Setup;
 /// <summary>Default <see cref="ISetupUi"/> backed by System.Console.</summary>
 public sealed class ConsoleSetupUi : ISetupUi
 {
+    private static readonly EColor Color = new();
+
     /// <inheritdoc />
     public void WriteLine(string text = "") => Console.WriteLine(text);
 
@@ -11,4 +13,7 @@ public sealed class ConsoleSetupUi : ISetupUi
 
     /// <inheritdoc />
     public string? ReadLine() => Console.ReadLine();
+
+    /// <inheritdoc />
+    public void WriteLineGreen(string text) => Console.WriteLine($"{Color.Green}{text}{Color.Reset}");
 }

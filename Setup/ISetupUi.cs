@@ -11,4 +11,7 @@ public interface ISetupUi
 
     /// <summary>Reads a line of input (may be null on EOF).</summary>
     string? ReadLine();
+
+    /// <summary>Writes a line highlighted in green (installed models). Falls back to plain output.</summary>
+    void WriteLineGreen(string text) => WriteLine(text);
 }

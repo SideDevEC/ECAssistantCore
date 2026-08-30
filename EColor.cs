@@ -1,8 +1,7 @@
 namespace ECAssistant.Core;
 
 /// <summary>
-/// ANSI color codes. Used ONLY by ConsoleUiRenderer (the UI bridge).
-/// Nothing else in the codebase should touch this class.
+/// ANSI color codes. Used by ConsoleUiRenderer (the UI bridge) and the setup wizard UIs.
 /// </summary>
 public class EColor
 {

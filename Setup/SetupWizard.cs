@@ -93,7 +93,9 @@ public sealed class SetupWizard
         {
             var m = selectable[i];
             var installedMark = IsEntryOnDisk(ctx, m) ? "  ✓ already on disk" : "";
-            _ui.WriteLine($"  [{i + 1}] {m.DisplayName}{(m.Recommended ? " ★" : "")}  ({m.TotalSizeGb:0.##} GB){installedMark} — {m.Notes}");
+            var line = $"  [{i + 1}] {m.DisplayName}{(m.Recommended ? " ★" : "")}  ({m.TotalSizeGb:0.##} GB{(LicenseLabel(m).Length > 0 ? ", " + LicenseLabel(m) : "")}){installedMark}";
+            if (installedMark.Length > 0) _ui.WriteLineGreen(line);
+            else _ui.WriteLine(line);
         }
 
         _ui.Write("Numbers to install (e.g. 1,3 / 'a' = all ★ / Enter = skip): ");
@@ -196,7 +198,9 @@ public sealed class SetupWizard
         {
             var m = selectable[i];
             var installedMark = IsEntryOnDisk(ctx, m) ? "  ✓ already on disk" : "";
-            _ui.WriteLine($"    [{i + 1}] {m.DisplayName}{(m.Recommended ? " ★" : "")}  ({m.TotalSizeGb:0.##} GB){installedMark} — {m.Notes}");
+            var line = $"    [{i + 1}] {m.DisplayName}{(m.Recommended ? " ★" : "")}  ({m.TotalSizeGb:0.##} GB{(LicenseLabel(m).Length > 0 ? ", " + LicenseLabel(m) : "")}){installedMark}";
+            if (installedMark.Length > 0) _ui.WriteLineGreen(line);
+            else _ui.WriteLine(line);
         }
 
         _ui.Write("  Numbers to install (e.g. 1 / 'a' = all ★ / Enter = skip): ");
@@ -289,6 +293,10 @@ public sealed class SetupWizard
         _ui.Write("  Could not detect vision capability — does this model support vision? [y/N]: ");
         return (_ui.ReadLine()?.Trim() ?? "").ToLowerInvariant() is "y" or "yes";
     }
+
+    /// <summary>License label for selection lines; empty when unset.</summary>
+    // Stateless utility — no mutable state.
+    internal static string LicenseLabel(ModelCatalogEntry entry) => entry.License.Trim();
 
     /// <summary>True when every catalog file for the entry already exists in the models directory.</summary>
     // Stateless utility — no mutable state.

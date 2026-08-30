@@ -82,6 +82,10 @@ public sealed class ModelCatalogEntry
     [JsonPropertyName("quant")]
     public string Quant { get; set; } = "Q4_K_M";
 
+    /// <summary>License type shown in selection lists (e.g. Apache-2.0). Empty = not shown.</summary>
+    [JsonPropertyName("license")]
+    public string License { get; set; } = "";
+
     [JsonPropertyName("notes")]
     public string Notes { get; set; } = "";
 
