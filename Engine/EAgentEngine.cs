@@ -905,6 +905,7 @@ User: " + userRequest + "\n<lm>\n";
             sb.AppendLine("The user message above is the user's request. Decide yourself:");
             sb.AppendLine("- If it needs tools (files, shell, web, system), start working and output your first <toolcall> now.");
             sb.AppendLine("- If it can be answered directly (greetings, questions, conversation), respond with <output>your answer</output>.");
+         AppendFormatReminder(sb);
          }
         else
          {
@@ -919,9 +920,28 @@ User: " + userRequest + "\n<lm>\n";
             sb.AppendLine("Continue the task. First check: if the tool results above already fully answer the user's request, you MUST finish NOW with <output>the final answer</output>.");
             sb.AppendLine("Do NOT repeat a tool call that already succeeded with the same arguments — repeating it adds nothing. Only call a tool again if you need DIFFERENT data.");
             sb.AppendLine("If you truly need more data, output the next <toolcall>. Otherwise output <output>the final answer</output>.");
+            AppendFormatReminder(sb);
          }
 
         return sb.ToString();
+     }
+
+    /// <summary>
+    /// End-of-context format reminder, appended EVERY turn. Large system prompts
+    /// thousands of tokens back get ignored by smaller models (Qwen2.5-VL answered
+    /// inside <thinking> only); recency at the end of the context is what every
+    /// model actually attends to.
+    /// </summary>
+    private static void AppendFormatReminder(StringBuilder sb)
+     {
+        sb.AppendLine();
+        sb.AppendLine("── RESPONSE FORMAT (mandatory, applies to THIS response) ──");
+        sb.AppendLine("Reply with EXACTLY ONE of these two shapes — nothing outside the <lm> tags:");
+        sb.AppendLine("  Answer:   <lm><thinking>brief reasoning</thinking><output>your answer to the user</output></lm>");
+        sb.AppendLine("  Tool use: <lm><thinking>brief reasoning</thinking><toolcall>ToolName<argname>value</argname></toolcall></lm>");
+        sb.AppendLine("Example — user says 'hello':");
+        sb.AppendLine("  <lm><thinking>Simple greeting, no task.</thinking><output>Hey! What can I do for you today?</output></lm>");
+        sb.AppendLine("A bare <thinking> block alone is NOT a valid response — always close with <output> or <toolcall>.");
      }
 
     private string? GetMemoryInjection(string userRequest)
