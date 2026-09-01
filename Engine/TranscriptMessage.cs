@@ -31,8 +31,10 @@ public class TranscriptMessage
      // ─── Factories ──────────────────────────────
 
     // Stateless factory — immutable data class
+    // System messages get a real token estimate (~4 chars/token) — a hardcoded 0
+    // under-counts the budget and delays auto-summarization.
     public static TranscriptMessage System(string content)
-          => new() { Role = "system", Content = content, EstimatedTokens = 0 };
+          => new() { Role = "system", Content = content, EstimatedTokens = content.Length / 4 };
 
     // Stateless factory — immutable data class
     public static TranscriptMessage User(string content, string source = "user")

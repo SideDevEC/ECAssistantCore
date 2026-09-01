@@ -7,6 +7,8 @@ namespace ECAssistant.Core.Engine;
 /// present options, and wait for user input before proceeding.
 ///
 /// All output goes through ISessionOutput — no direct UI calls.
+/// DEAD CODE: not wired into any production execution path (only tests reference it).
+/// Kept as an experimental interactive-loop prototype.
 /// </summary>
 public class EDecisionLoop : IDisposable
 {
@@ -27,6 +29,8 @@ public class EDecisionLoop : IDisposable
 
         _running = true;
         var maxRounds = 5;
+        // Preserve the original instruction — the approval notice must not overwrite it.
+        var originalTask = taskDescription;
 
         for (int round = 1; round <= maxRounds && _running; round++)
         {
@@ -69,7 +73,7 @@ public class EDecisionLoop : IDisposable
                     };
                 }
 
-                taskDescription = "User approved. Continue with the original task.";
+                taskDescription = $"User approved continuing. Original task:\n\n{originalTask}";
             }
         }
 

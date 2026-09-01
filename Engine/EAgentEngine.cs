@@ -283,8 +283,24 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         _contextWindow = new ContextWindow(contextSize, summarySvc);
         _transcript = new ConversationTranscript();
 
-        // Load any existing transcript from disk for session resumption
-        var transcriptPath = Path.Combine(_workingDir, "transcript.json");
+        // Load per-session transcript for session resumption (v13 fix: was loading shared root transcript)
+        var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
+        var transcriptPath = Path.Combine(sessionDir, "transcript.json");
+        if (!File.Exists(transcriptPath))
+        {
+            // Legacy fallback: migrate shared transcript to per-session (move, not copy)
+            var legacyPath = Path.Combine(_workingDir, "transcript.json");
+            if (File.Exists(legacyPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(sessionDir);
+                    File.Move(legacyPath, transcriptPath);
+                }
+                catch { /* if move fails, fall back to reading legacy in place */ }
+                transcriptPath = File.Exists(transcriptPath) ? transcriptPath : legacyPath;
+            }
+        }
         if (File.Exists(transcriptPath))
          {
             try
@@ -981,7 +997,9 @@ User: " + userRequest + "\n<lm>\n";
 
         try
          {
-            var transcriptPath = Path.Combine(_workingDir, "transcript.json");
+var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
+            Directory.CreateDirectory(sessionDir);
+            var transcriptPath = Path.Combine(sessionDir, "transcript.json");
             _transcript.SaveToDisk(transcriptPath);
          }
         catch { /* don't crash on save failure */ }
@@ -1076,7 +1094,9 @@ User: " + userRequest + "\n<lm>\n";
 
     public void SaveTranscript(string? path = null)
      {
-        var p = path ?? Path.Combine(_workingDir, "transcript.json");
+        var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
+        Directory.CreateDirectory(sessionDir);
+        var p = path ?? Path.Combine(sessionDir, "transcript.json");
         _transcript.SaveToDisk(p);
         _out?.WriteInfo($"[Context] Transcript saved ({_transcript.MessageCount} messages, {_contextWindow.GetTotalTokens()} tokens).");
     }
@@ -1362,7 +1382,7 @@ User: " + userRequest + "\n<lm>\n";
             if (string.IsNullOrEmpty(cleanResponse))
                 cleanResponse = timedOut ? "(Response truncated — model timed out)" : "(Empty response from model)";
 
-            if (!string.IsNullOrEmpty(cleanResponse) && cleanResponse.Contains("<"))
+            if (!string.IsNullOrEmpty(cleanResponse))
              {
                  _transcript.AddAssistant(cleanResponse);
                  _contextWindow.AddAssistantMessage(cleanResponse);

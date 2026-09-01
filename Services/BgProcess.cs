@@ -13,6 +13,10 @@ internal class BgProcess
     public bool IsFinished { get; set; }
     public bool TimedOut { get; set; }
     public string TempScriptPath { get; set; } = "";
-    public Task<string>? OutputTask { get; set; }
-    public Task<string>? ErrorTask { get; set; }
+    public Task? OutputTask { get; set; }
+    public Task? ErrorTask { get; set; }
+    // Progressive output capture — readable while the process is still running.
+    public object OutputLock { get; } = new();
+    public System.Text.StringBuilder StdoutBuffer { get; } = new();
+    public System.Text.StringBuilder StderrBuffer { get; } = new();
 }

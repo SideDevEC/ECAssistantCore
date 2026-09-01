@@ -18,6 +18,9 @@ public sealed class LlmServerClient : ILlmServerClient
     private int _activeSessions;
     private bool _disposed;
     private int _consecutiveHeartbeatFailures;
+    // In-flight HTTP guard: when the client is swapped/disposed, wait for in-flight
+    // calls to drain instead of pulling the HttpClient out from under them.
+    private int _inFlightCalls;
     private readonly int _maxHeartbeatFailures;
     private DateTime _lastReconnectAttemptUtc = DateTime.MinValue;
     private static readonly TimeSpan ReconnectCooldown = TimeSpan.FromSeconds(30);
@@ -49,6 +52,25 @@ public sealed class LlmServerClient : ILlmServerClient
         _logger = logger;
     }
 
+    /// <summary>Swap the underlying client. The old instance is only disposed once no in-flight call still holds a reference to it.</summary>
+    private void ReplaceClient(OpenAIClient next)
+    {
+        var old = Interlocked.Exchange(ref _client, next);
+        if (old == null) return;
+        if (Interlocked.CompareExchange(ref _inFlightCalls, 0, 0) == 0)
+        {
+            old.Dispose();
+            return;
+        }
+        // Drain in background — do not block the reconnect path.
+        _ = Task.Run(async () =>
+        {
+            while (Interlocked.CompareExchange(ref _inFlightCalls, 0, 0) > 0)
+                await Task.Delay(50);
+            old.Dispose();
+        });
+    }
+
     /// <summary>
     /// Register with the server. Stores client name for reconnection.
     /// </summary>
@@ -63,20 +85,35 @@ public sealed class LlmServerClient : ILlmServerClient
             version = version ?? "1.0.0"
         });
 
-        var json = await _client.PostJsonAsync("/eca/clients", body, ct);
+        var json = await CallAsync(client => client.PostJsonAsync("/eca/clients", body, ct), ct);
         var resp = JsonSerializer.Deserialize<RegisterResponse>(json, JsonOptions);
 
         if (resp?.ClientId != null)
         {
             ClientId = resp.ClientId;
-            _client.Dispose();
-            _client = new OpenAIClient(_endpoint, ClientId);
+            ReplaceClient(new OpenAIClient(_endpoint, ClientId));
             _consecutiveHeartbeatFailures = 0;
             _lastHeartbeatSuccess = DateTime.UtcNow;
             return true;
         }
 
         return false;
+    }
+
+    /// <summary>Run an HTTP call against a stable client reference, tracking in-flight usage so Dispose cannot race it.</summary>
+    private async Task<T> CallAsync<T>(Func<OpenAIClient, Task<T>> op, CancellationToken ct)
+    {
+        var client = Volatile.Read(ref _client);
+        Interlocked.Increment(ref _inFlightCalls);
+        try
+        {
+            if (_disposed) throw new ObjectDisposedException(nameof(LlmServerClient));
+            return await op(client);
+        }
+        finally
+        {
+            Interlocked.Decrement(ref _inFlightCalls);
+        }
     }
 
     /// <summary>
@@ -90,7 +127,7 @@ public sealed class LlmServerClient : ILlmServerClient
         try
         {
             var body = JsonSerializer.Serialize(new { active_sessions = activeSessions });
-            var json = await _client.PostJsonAsync($"/eca/clients/{ClientId}/heartbeat", body, ct);
+            var json = await CallAsync(client => client.PostJsonAsync($"/eca/clients/{ClientId}/heartbeat", body, ct), ct);
             var ok = json.Contains("\"ok\":true") || json.Contains("\"ok\": true");
             if (ok)
             {
@@ -132,22 +169,20 @@ public sealed class LlmServerClient : ILlmServerClient
         {
             _logger?.Info("LlmServerClient", $"Reconnecting to LLM server as {_clientName}...");
 
-            _client.Dispose();
-            _client = new OpenAIClient(_endpoint);
+            ReplaceClient(new OpenAIClient(_endpoint));
 
             var body = JsonSerializer.Serialize(new
             {
                 client_name = _clientName,
                 version = _clientVersion ?? "1.0.0"
             });
-            var json = await _client.PostJsonAsync("/eca/clients", body, ct);
+            var json = await CallAsync(client => client.PostJsonAsync("/eca/clients", body, ct), ct);
             var resp = JsonSerializer.Deserialize<RegisterResponse>(json, JsonOptions);
 
             if (resp?.ClientId != null)
             {
                 ClientId = resp.ClientId;
-                _client.Dispose();
-                _client = new OpenAIClient(_endpoint, ClientId);
+                ReplaceClient(new OpenAIClient(_endpoint, ClientId));
                 _consecutiveHeartbeatFailures = 0;
                 _lastHeartbeatSuccess = DateTime.UtcNow;
                 _logger?.Info("LlmServerClient", $"Reconnected as client {ClientId}");
@@ -174,7 +209,7 @@ public sealed class LlmServerClient : ILlmServerClient
         _heartbeatTimer?.Dispose();
         try
         {
-            var json = await _client.DeleteJsonAsync($"/eca/clients/{ClientId}", ct);
+            var json = await CallAsync(client => client.DeleteJsonAsync($"/eca/clients/{ClientId}", ct), ct);
             ClientId = "";
             return json.Contains("\"ok\":true") || json.Contains("\"ok\": true");
         }
@@ -187,15 +222,26 @@ public sealed class LlmServerClient : ILlmServerClient
 
     /// <summary>
     /// Start automatic heartbeat timer with failure tracking and auto-reconnection.
+    /// The timer callback must not be async void: exceptions are contained in an
+    /// async Task wrapper and logged instead of crashing the process.
     /// </summary>
     public void StartHeartbeat(int intervalSec, Func<int> getActiveSessions)
     {
         _heartbeatTimer?.Dispose();
-        _heartbeatTimer = new Timer(async _ =>
+        _heartbeatTimer = new Timer(_ => _ = HeartbeatTimerTickAsync(getActiveSessions), null,
+            TimeSpan.FromSeconds(intervalSec), TimeSpan.FromSeconds(intervalSec));
+    }
+
+    private async Task HeartbeatTimerTickAsync(Func<int> getActiveSessions)
+    {
+        try
         {
-            try { await HeartbeatAsync(getActiveSessions()); }
-            catch { /* best effort — HeartbeatAsync handles failures internally */ }
-        }, null, TimeSpan.FromSeconds(intervalSec), TimeSpan.FromSeconds(intervalSec));
+            await HeartbeatAsync(getActiveSessions());
+        }
+        catch (Exception ex)
+        {
+            _logger?.Warn("LlmServerClient", $"Heartbeat tick failed: {ex.Message}");
+        }
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -231,6 +277,19 @@ public sealed class LlmServerClient : ILlmServerClient
 
         _disposed = true;
         _heartbeatTimer?.Dispose();
-        _client.Dispose();
+        // Guard against in-flight calls holding the client — drain before disposing.
+        var client = Interlocked.Exchange(ref _client, null!);
+        if (client != null)
+        {
+            if (Interlocked.CompareExchange(ref _inFlightCalls, 0, 0) == 0)
+                client.Dispose();
+            else
+                _ = Task.Run(async () =>
+                {
+                    while (Interlocked.CompareExchange(ref _inFlightCalls, 0, 0) > 0)
+                        await Task.Delay(50);
+                    client.Dispose();
+                });
+        }
     }
 }

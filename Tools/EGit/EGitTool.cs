@@ -77,12 +77,18 @@ public class EGitTool : EToolBase
             {
                 var files = args.GetValueOrDefault("files") ?? ".";
                 if (files == "all") files = "-A";
-                return $"add {files}";
+                // Reject shell metacharacters in file paths
+                if (files.Any(c => c == '`' || c == '$' || c == ';' || c == '&' || c == '|' || c == '\n'))
+                    return "status --porcelain";
+                return $"add -- {files}";
             }
             case "commit":
             {
                 var msg = args.GetValueOrDefault("message") ?? "";
                 if (string.IsNullOrEmpty(msg)) return "";
+                // Reject messages with shell metacharacters to prevent injection
+                if (msg.Any(c => c == '`' || c == '$' || c == ';' || c == '&' || c == '|' || c == '\n' || c == '\r'))
+                    return "commit --allow-empty -m \"Rejected: invalid characters in commit message\"";
                 return $"commit -m \"{msg.Replace("\"", "\\\"")}\"";
             }
             case "push": return "push";
@@ -90,6 +96,7 @@ public class EGitTool : EToolBase
             case "log":
             {
                 var max = args.GetValueOrDefault("max_entries") ?? "10";
+                if (!int.TryParse(max, out var maxInt) || maxInt < 1 || maxInt > 1000) max = "10";
                 return $"log --oneline -{max}";
             }
             case "branch": return "branch -a";
@@ -97,6 +104,9 @@ public class EGitTool : EToolBase
             {
                 var branch = args.GetValueOrDefault("branch") ?? "";
                 if (string.IsNullOrEmpty(branch)) return "";
+                // Validate branch name: only allow alphanumeric, dot, dash, slash, underscore
+                if (!branch.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '/' || c == '_'))
+                    return "checkout -- ; echo \"Rejected: invalid branch name\"";
                 return $"checkout {branch}";
             }
             case "current-branch": return "rev-parse --abbrev-ref HEAD";

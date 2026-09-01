@@ -83,9 +83,24 @@ public class SummaryService
         var summary = await generator.Invoke(prompt);
         if (string.IsNullOrWhiteSpace(summary))
             return null;
+        summary = StripLmTags(summary);
         // v10.7.4: Escape angle brackets to prevent fake XML tags in context
         summary = summary.Trim().Replace("<", "&lt;").Replace(">", "&gt;");
         return $"[Summary of {messages.Count} messages]\n{summary}";
+    }
+
+    /// <summary>
+    /// The prompt asks the model to wrap its output in &lt;lm&gt;…&lt;/lm&gt; — the tag markers
+    /// (and malformed leftovers) must not survive into the summary text. Strip the tags
+    /// themselves while KEEPING the content between them, then trim.
+    /// </summary>
+    internal static string StripLmTags(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        // Remove <lm>, </lm>, <lm/>, <lm …attr> and any stray unmatched variants.
+        text = System.Text.RegularExpressions.Regex.Replace(
+            text, "</?lm(?:\\s[^>]*)?/?>", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        return text.Trim();
     }
 
     /// <summary>Build the shared summarization prompt from messages.</summary>
@@ -99,7 +114,7 @@ public class SummaryService
     private string BuildExtractiveSummary(List<TranscriptMessage> messages)
     {
         var sb = new StringBuilder();
-        // Take first 2 and last 1 for context
+        // Take the first 3 messages for context (capped when fewer exist)
         var toTake = Math.Min(3, messages.Count);
         foreach (var msg in messages.Take(toTake))
         {

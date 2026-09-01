@@ -65,10 +65,21 @@ public class EContextAnalyzer : IDisposable
         var excludeDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         { "bin", "obj", ".vs", ".git", "node_modules", "packages", ".idea" };
 
-        var allFiles = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories)
-            .Where(f => !excludeDirs.Any(ex => f.Contains(Path.DirectorySeparatorChar + ex + Path.DirectorySeparatorChar)))
-            .Where(f => extensions.Contains(Path.GetExtension(f)))
-            .ToList();
+        // EnumerationOptions with IgnoreInaccessible: UnauthorizedAccessException on any
+        // protected subdirectory no longer aborts the whole scan — unreadable dirs are
+        // skipped and enumeration continues. Run off the hot path (actually async).
+        var options = new EnumerationOptions
+        {
+            RecurseSubdirectories = true,
+            IgnoreInaccessible = true,
+            AttributesToSkip = FileAttributes.ReparsePoint
+        };
+
+        var allFiles = await Task.Run(() =>
+            Directory.EnumerateFiles(directory, "*.*", options)
+                .Where(f => !excludeDirs.Any(ex => f.Contains(Path.DirectorySeparatorChar + ex + Path.DirectorySeparatorChar)))
+                .Where(f => extensions.Contains(Path.GetExtension(f)))
+                .ToList());
 
         foreach (var file in allFiles)
         {
@@ -84,8 +95,10 @@ public class EContextAnalyzer : IDisposable
                     LastModified = info.LastWriteTime
                 });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                // Unreadable individual file — log and keep scanning.
+                System.Diagnostics.Debug.WriteLine($"[EContextAnalyzer] Skipped unreadable file '{file}': {ex.Message}");
             }
         }
     }

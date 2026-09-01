@@ -18,19 +18,20 @@ public class ToolPolicy
     private void SetDefaultPermissions()
     {
         // ── Read-only tools: no approval needed ──
+        // IMPORTANT: names must match the tool's `Name` property exactly.
         SetPermission("EFileResearchTool", approvalRequired: false, "Read-only research");
         SetPermission("EFileAnalyzer", approvalRequired: false, "Read-only analysis");
-        SetPermission("EFileReaderTool", approvalRequired: false, "Read-only file access");
-        SetPermission("EWebSearchTool", approvalRequired: false, "Read-only web search");
-        SetPermission("EWebFetchTool", approvalRequired: false, "Read-only web fetch");
-        SetPermission("EDotnetBuildTool", approvalRequired: false, "Build only — no side effects");
-        SetPermission("ESubAgentTool", approvalRequired: false, "Sub-agent orchestration");
+        SetPermission("EFileReader", approvalRequired: false, "Read-only file access");
+        SetPermission("EWebSearch", approvalRequired: false, "Read-only web search");
+        SetPermission("EWebFetch", approvalRequired: false, "Read-only web fetch");
+        SetPermission("DotnetBuild", approvalRequired: false, "Build only — no side effects");
+        SetPermission("ESubAgent", approvalRequired: false, "Sub-agent orchestration");
 
         // ── Dangerous tools: require approval ──
         SetPermission("EShellAgent", approvalRequired: true, "Shell command execution");
         SetPermission("EGitTool", approvalRequired: true, "Git operations can push/commit");
-        SetPermission("ECodeEditorTool", approvalRequired: true, "File modification");
-        SetPermission("EBackgroundExecTool", approvalRequired: true, "Background process execution");
+        SetPermission("ECodeEditor", approvalRequired: true, "File modification");
+        SetPermission("EBackgroundExec", approvalRequired: true, "Background process execution");
     }
 
     public void SetPermission(string toolName, bool approvalRequired, string? reason = null)
@@ -128,8 +129,14 @@ public class ToolPolicy
             var ch = command[i];
             if (ch == '"' && !inSingle) inDouble = !inDouble;
             else if (ch == '\'' && !inDouble) inSingle = !inSingle;
-            else if (!inDouble && !inSingle && ch == '>' ) return true;   // > and >>
-            else if (!inDouble && !inSingle && ch == '<' ) return true;   // < and <<
+            else if (!inDouble && !inSingle)
+            {
+                // 2>&1 / 1>&2 only re-route an existing stream — they do not write files.
+                if (ch == '2' && i + 3 < command.Length && command[i + 1] == '>' && command[i + 2] == '&' && command[i + 3] == '1') { i += 3; continue; }
+                if (ch == '1' && i + 3 < command.Length && command[i + 1] == '>' && command[i + 2] == '&' && command[i + 3] == '2') { i += 3; continue; }
+                if (ch == '>') return true;   // > and >>
+                if (ch == '<') return true;   // < and <<
+            }
         }
         return false;
     }
@@ -178,8 +185,44 @@ public class ToolPolicy
             "crontab ",
         };
 
-        // Check redirects (>, >>) anywhere in the command
-        if (c.Contains(">") || c.Contains(">>"))
+        // Check file-writing redirects (>, >>) anywhere in the command.
+        // HasRedirection ignores 2>&1/1>&2 — those alone must NOT force approval.
+        if (HasRedirection(c))
+            return true;
+
+        // ── Command/process substitution can execute arbitrary code ──
+        if (c.Contains("$(") || c.Contains("`"))   // $(…) and backticks
+            return true;
+        if (c.Contains("<("))                       // process substitution (bash/zsh)
+            return true;
+
+        // ── Environment-variable prefixes: FOO=bar cmd — the real command hides after the assignment ──
+        var firstToken = c.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
+        if (firstToken.Length > 1 && firstToken.IndexOf('=') > 0 &&
+            char.IsLetter(firstToken[0]) && firstToken.Take(firstToken.IndexOf('=')).All(ch => char.IsLetterOrDigit(ch) || ch == '_'))
+            return true;
+
+        // ── Nested interpreters / shells that can execute arbitrary code ──
+        // These must require approval because the inner command is not inspected.
+        string[] nestedExec = {
+            "bash ", "bash -", "sh ", "sh -", "zsh ", "zsh -",
+            "sudo ", "su ",
+            "python ", "python3 ", "python -", "python3 -",
+            "perl ", "perl -", "ruby ", "ruby -",
+            "node ", "node -",
+            "eval ", "exec ",
+            "xargs ",
+            "invoke-expression", "iex ",
+        };
+
+        foreach (var w in nestedExec)
+        {
+            if (c.StartsWith(w) || c == w.Trim())
+                return true;
+        }
+
+        // ── find with -delete or -exec is destructive ──
+        if (c.StartsWith("find ") && (c.Contains("-delete") || c.Contains("-exec") || c.Contains("-ok")))
             return true;
 
         // Check against write command prefixes

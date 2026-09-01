@@ -1,7 +1,7 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-08-26 (v12.1 — EWebFetch v2: structured HTML conversion + content extraction + offset paging)
-**Status:** ✅ 850 Core tests + 64 LLM integration tests, 0 errors
+**Updated:** 2026-09-01 (v13 — full code audit: 54 bugs fixed across security, threading, data integrity)
+**Status:** ✅ 0 errors, 0 warnings | LDC enforcement PASSED
 
 ## Overview
 

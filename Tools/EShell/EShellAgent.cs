@@ -144,7 +144,17 @@ public class EShellAgent : EToolBase
             }
             else
             {
-                return EToolResult.Failure(Name, $"Shell Error (Exit {result.ExitCode})\nSTDERR: {result.StandardError}\nCommand: {command}");
+                // Failures must include stdout too — many tools print the real cause
+                // to stdout and only exit non-zero.
+                var failOutput = string.IsNullOrWhiteSpace(result.StandardOutput)
+                    ? ""
+                    : result.StandardOutput.TrimEnd();
+                var failMsg = $"Shell Error (Exit {result.ExitCode})\nSTDERR: {result.StandardError}\n" +
+                              (failOutput.Length > 0 ? $"STDOUT: {failOutput}\n" : "") +
+                              $"Command: {command}";
+                if (failMsg.Length > _maxOutputChars)
+                    failMsg = failMsg.Substring(0, _maxOutputChars) + "\n... [truncated]";
+                return EToolResult.Failure(Name, failMsg);
             }
         }
         catch (Exception ex)

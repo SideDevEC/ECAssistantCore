@@ -16,6 +16,10 @@ public class ConfigProvider : IConfigProvider
     private readonly EAgentConfig? _preloadedConfig;
     private readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
+    // Parsed JSON root — parsing per-lookup was wasteful and re-read the file.
+    private JsonDocument? _cachedRoot;
+    private readonly object _cacheLock = new();
+
     /// <summary>Load config from a JSON file on disk.</summary>
     public ConfigProvider(IFileSystem fileSystem, string configPath)
     {
@@ -31,47 +35,55 @@ public class ConfigProvider : IConfigProvider
         _configPath = "";
     }
 
-    private string LoadRawConfig()
+    /// <summary>Parse the config once and cache the document root for all subsequent lookups.</summary>
+    private JsonDocument GetRoot()
     {
-        // v10.23: If preloaded config exists, serialize it to JSON for section lookups
-        if (_preloadedConfig != null)
-            return JsonSerializer.Serialize(_preloadedConfig, _jsonOptions);
-        return _fileSystem.ReadFile(_configPath);
+        lock (_cacheLock)
+        {
+            if (_cachedRoot != null) return _cachedRoot;
+            var raw = _preloadedConfig != null
+                ? JsonSerializer.Serialize(_preloadedConfig, _jsonOptions)
+                : _fileSystem.ReadFile(_configPath);
+            _cachedRoot = JsonDocument.Parse(raw);
+            return _cachedRoot;
+        }
     }
 
     public T GetSection<T>(string section) where T : class, new()
     {
-        var raw = LoadRawConfig();
-        var root = JsonDocument.Parse(raw);
-        var sectionElement = root.RootElement.GetProperty(section);
-        return JsonSerializer.Deserialize<T>(sectionElement.GetRawText(), _jsonOptions) ?? new T();
+        var root = GetRoot();
+        // Missing section must not throw — return a fresh default instead.
+        return root.RootElement.ValueKind == JsonValueKind.Object
+               && root.RootElement.TryGetProperty(section, out var sectionElement)
+            ? JsonSerializer.Deserialize<T>(sectionElement.GetRawText(), _jsonOptions) ?? new T()
+            : new T();
     }
 
     public string GetValue(string key, string defaultValue = "")
     {
-        var raw = LoadRawConfig();
-        var root = JsonDocument.Parse(raw);
-        return root.RootElement.TryGetProperty(key, out var prop) ? prop.GetString() ?? defaultValue : defaultValue;
+        var root = GetRoot();
+        return root.RootElement.ValueKind == JsonValueKind.Object
+               && root.RootElement.TryGetProperty(key, out var prop) ? prop.GetString() ?? defaultValue : defaultValue;
     }
 
     public int GetInt(string key, int defaultValue = 0)
     {
-        var raw = LoadRawConfig();
-        var root = JsonDocument.Parse(raw);
-        return root.RootElement.TryGetProperty(key, out var prop) ? prop.GetInt32() : defaultValue;
+        var root = GetRoot();
+        return root.RootElement.ValueKind == JsonValueKind.Object
+               && root.RootElement.TryGetProperty(key, out var prop) ? prop.GetInt32() : defaultValue;
     }
 
     public float GetFloat(string key, float defaultValue = 0f)
     {
-        var raw = LoadRawConfig();
-        var root = JsonDocument.Parse(raw);
-        return root.RootElement.TryGetProperty(key, out var prop) ? prop.GetSingle() : defaultValue;
+        var root = GetRoot();
+        return root.RootElement.ValueKind == JsonValueKind.Object
+               && root.RootElement.TryGetProperty(key, out var prop) ? prop.GetSingle() : defaultValue;
     }
 
     public bool GetBool(string key, bool defaultValue = false)
     {
-        var raw = LoadRawConfig();
-        var root = JsonDocument.Parse(raw);
-        return root.RootElement.TryGetProperty(key, out var prop) ? prop.GetBoolean() : defaultValue;
+        var root = GetRoot();
+        return root.RootElement.ValueKind == JsonValueKind.Object
+               && root.RootElement.TryGetProperty(key, out var prop) ? prop.GetBoolean() : defaultValue;
     }
 }

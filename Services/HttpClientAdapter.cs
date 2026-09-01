@@ -64,7 +64,9 @@ public class HttpClientAdapter : IHttpClient, IDisposable
     /// <inheritdoc />
     public async Task<string> PostAsync(string url, string content, CancellationToken ct = default)
     {
-        var response = await _client.PostAsync(url, new StringContent(content), ct);
+        using var response = await _client.PostAsync(url, new StringContent(content), ct);
+        // Surface HTTP errors (4xx/5xx) as exceptions instead of returning error bodies as if they were valid responses.
+        response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsStringAsync(ct);
     }
 

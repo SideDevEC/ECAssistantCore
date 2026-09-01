@@ -66,12 +66,52 @@ public class EFileResearchTool : EToolBase
             var allFiles = ListFilesRecursive(_searchRoot);
             var filtered = allFiles.Where(f =>
                 extensionsList.Any(ext => Path.GetExtension(f).Equals(ext, StringComparison.OrdinalIgnoreCase)))
-                .Take(maxFiles).ToList();
+                .ToList();
+
+            // Use the query: match files by FILENAME first (cheap), then by CONTENT.
+            // Previously the query was ignored entirely — the first N files were returned
+            // regardless of what was asked for.
+            var queryWords = query.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(w => w.TrimEnd(',', '.', ';', ':', '?', '!'))
+                .Where(w => w.Length > 1)
+                .Select(w => w.ToLowerInvariant())
+                .ToHashSet();
+
+            List<string> selected;
+            if (queryWords.Count == 0)
+            {
+                selected = filtered.Take(maxFiles).ToList();
+            }
+            else
+            {
+                var nameMatches = filtered.Where(f =>
+                    queryWords.Any(w => Path.GetFileName(f).ToLowerInvariant().Contains(w)))
+                    .Take(maxFiles).ToList();
+
+                if (nameMatches.Count < maxFiles)
+                {
+                    var nameSet = new HashSet<string>(nameMatches, StringComparer.OrdinalIgnoreCase);
+                    var contentMatches = new List<string>();
+                    foreach (var f in filtered)
+                    {
+                        if (nameSet.Contains(f) || contentMatches.Count >= maxFiles) continue;
+                        try
+                        {
+                            var content = _fileSystem.ReadFile(f);
+                            if (queryWords.Any(w => content.Contains(w, StringComparison.OrdinalIgnoreCase)))
+                                contentMatches.Add(f);
+                        }
+                        catch { /* unreadable file — skip from content matching */ }
+                    }
+                    nameMatches.AddRange(contentMatches);
+                }
+                selected = nameMatches.Take(maxFiles).ToList();
+            }
 
             var sb = new StringBuilder();
-            sb.AppendLine($"Found {filtered.Count} files matching query: {query}\n");
+            sb.AppendLine($"Found {selected.Count} files matching query: {query}\n");
 
-            foreach (var filePath in filtered)
+            foreach (var filePath in selected)
             {
                 try
                 {
@@ -84,7 +124,7 @@ public class EFileResearchTool : EToolBase
                     var content = _fileSystem.ReadFile(filePath);
                     if (content.Length > _maxCharsPerFile)
                         content = content.Substring(0, _maxCharsPerFile) + "\n... [truncated]";
-                    content = content.Replace("<", "<").Replace(">", ">");
+                    content = content.Replace("<", "&lt;").Replace(">", "&gt;");
 
                     sb.AppendLine($"## {relativePath} ({content.Length} chars)");
                     sb.AppendLine(content);
@@ -96,7 +136,7 @@ public class EFileResearchTool : EToolBase
                 }
             }
 
-            return EToolResult.Success(Name, $"Research results for: {query}\n{sb}\nFiles scanned: {filtered.Count}");
+            return EToolResult.Success(Name, $"Research results for: {query}\n{sb}\nFiles scanned: {selected.Count}");
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -114,7 +154,12 @@ public class EFileResearchTool : EToolBase
         var files = _fileSystem.ListFiles(directory, "*");
         result.AddRange(files);
 
-        var subDirs = Directory.GetDirectories(directory);
+        // Skip build outputs / dependency trees — they flood the scan and bury real results.
+        var excludeDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            { "bin", "obj", "node_modules", ".git", ".vs", ".idea", "packages" };
+
+        var subDirs = Directory.GetDirectories(directory)
+            .Where(d => !excludeDirs.Contains(Path.GetFileName(d)));
         foreach (var subDir in subDirs)
             result.AddRange(ListFilesRecursive(subDir));
 

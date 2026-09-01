@@ -80,7 +80,7 @@ public class EMemoryManager : IDisposable
 
         foreach (var entry in _loadedMemories)
         {
-            var fileName = $"entry_{_entryCounter:D4}_{SanitizeFilename(entry.Key)}.json";
+            var fileName = $"entry_{entry.Id:D4}_{SanitizeFilename(entry.Key)}.json";
             var filePath = Path.Combine(_memoryDir, fileName);
             
             try
@@ -105,7 +105,7 @@ public class EMemoryManager : IDisposable
     {
         var entry = new MemoryEntry
         {
-            Id = _loadedMemories.Count + 1,
+            Id = ++_entryCounter,
             Key = key,
             Content = content,
             Category = category,

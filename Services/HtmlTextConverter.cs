@@ -20,7 +20,7 @@ public class HtmlTextConverter : IHtmlTextConverter
     {
         "p", "div", "section", "article", "header", "footer", "main",
         "h1", "h2", "h3", "h4", "h5", "h6",
-        "li", "tr", "blockquote", "pre", "hr",
+        "li", "tr", "td", "th", "blockquote", "pre", "hr",
         "ul", "ol", "table", "thead", "tbody", "tfoot",
         "figure", "figcaption", "address", "dd", "dt", "dl"
     };

@@ -29,8 +29,14 @@ public class ProcessRunner : IProcessRunner
         if (_isWindows)
         {
             // PowerShell Core (pwsh) if available, otherwise Windows PowerShell
+            // Use ArgumentList to avoid quoting corruption when the command contains embedded quotes.
             startInfo.FileName = "pwsh";
-            startInfo.Arguments = $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"{command}\"";
+            startInfo.ArgumentList.Add("-NoProfile");
+            startInfo.ArgumentList.Add("-NonInteractive");
+            startInfo.ArgumentList.Add("-ExecutionPolicy");
+            startInfo.ArgumentList.Add("Bypass");
+            startInfo.ArgumentList.Add("-Command");
+            startInfo.ArgumentList.Add(command);
 
             // Fallback to powershell.exe if pwsh not found
             if (!CommandExists("pwsh"))
@@ -40,14 +46,17 @@ public class ProcessRunner : IProcessRunner
         }
         else if (_isMacOS)
         {
+            // Pass command as a separate argument to avoid quoting corruption.
             startInfo.FileName = "/bin/zsh";
-            startInfo.Arguments = $"-c \"{command}\"";
+            startInfo.ArgumentList.Add("-c");
+            startInfo.ArgumentList.Add(command);
         }
         else
         {
             // Linux
             startInfo.FileName = "/bin/bash";
-            startInfo.Arguments = $"-c \"{command}\"";
+            startInfo.ArgumentList.Add("-c");
+            startInfo.ArgumentList.Add(command);
         }
 
         using var process = new Process { StartInfo = startInfo };

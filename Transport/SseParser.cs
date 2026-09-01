@@ -39,14 +39,14 @@ public static class SseParser
                 continue;
 
             // Check for end of stream
-            if (line == "data: [DONE]")
+            if (line == "data: [DONE]" || line == "data:[DONE]")
                 break;
 
-            // Parse "data: {json}" lines
-            if (!line.StartsWith("data: ", StringComparison.Ordinal))
+            // Parse "data: {json}" lines — accept with OR without the space after the colon
+            if (!line.StartsWith("data:", StringComparison.Ordinal))
                 continue;
 
-            var json = line["data: ".Length..];
+            var json = line["data:".Length..].Trim();
 
             string? contentText = null;
             try

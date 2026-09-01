@@ -159,9 +159,9 @@ public class ContextWindow
 
     /// <summary>
     /// Trims old messages when over budget and replaces them with a summary.
-    /// The trim is synchronous (memory control must be immediate); the LLM summary
-    /// completes in the background and is then inserted after the leading system
-    /// message(s). A guard prevents overlapping summarize runs.
+    /// Messages are snapshotted first and only deleted AFTER the summary succeeds
+    /// (memory control lags one summarize call — correctness beats immediacy).
+    /// A guard prevents overlapping summarize runs.
     /// </summary>
     private void SummarizeOldest(int currentTotal)
     {
@@ -177,17 +177,12 @@ public class ContextWindow
             lock (_messagesLock)
                 count = _messages.Count;
             var keepCount = Math.Max(5, (int)(count * 0.3f));
-            var oldMessages = new List<TranscriptMessage>();
+            List<TranscriptMessage> oldMessages;
 
+            // Snapshot the messages to summarize — do NOT remove them yet.
             lock (_messagesLock)
             {
-                while (_messages.Count > keepCount && currentTotal > (int)_autoSummarizeThreshold)
-                {
-                    var removed = _messages[0];
-                    oldMessages.Add(removed);
-                    currentTotal -= removed.EstimatedTokens;
-                    _messages.RemoveAt(0);
-                }
+                oldMessages = _messages.Take(Math.Max(0, count - keepCount)).ToList();
             }
 
             if (_summaryService == null || oldMessages.Count <= 3) return;
@@ -196,25 +191,33 @@ public class ContextWindow
             // concurrent GetWindowMessages cannot start a second trim race.
             backgroundScheduled = true;
 
-            // Fire-and-forget but NOT async void: exceptions are contained here.
+            // Summarize FIRST, then delete. Deleting before the summary succeeds meant
+            // a failed LLM call permanently lost the old messages.
             _ = Task.Run(async () =>
             {
                 try
                 {
                     var summary = await _summaryService.SummarizeAsync(oldMessages, preferWarmSession: true);
                     var summaryMsg = TranscriptMessage.System(summary);
+                    summaryMsg.EstimatedTokens = _tokenCounter.Count(summary);
                     lock (_messagesLock)
                     {
+                        // Summary succeeded — only NOW remove the summarized messages.
+                        // Identity-based removal: safe even if new messages were prepended.
+                        foreach (var old in oldMessages)
+                        {
+                            var idx = _messages.IndexOf(old);
+                            if (idx >= 0) _messages.RemoveAt(idx);
+                        }
+
                         // Insert after any leading system message(s) so the real system prompt stays first
                         var insertAt = 0;
-                        while (insertAt < _messages.Count && _messages[insertAt].Role == "system" && insertAt < oldMessages.Count && oldMessages[insertAt].Role == "system")
-                            insertAt++;
                         while (insertAt < _messages.Count && _messages[insertAt].Role == "system")
                             insertAt++;
                         _messages.Insert(insertAt, summaryMsg);
                     }
                 }
-                catch { /* summarization is best-effort — old messages are already trimmed */ }
+                catch { /* summarization is best-effort — messages stay in place on failure */ }
                 finally { Interlocked.Exchange(ref _summarizeInProgress, 0); }
             });
         }

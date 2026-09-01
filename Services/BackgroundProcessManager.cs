@@ -20,10 +20,11 @@ public class BackgroundProcessManager : IDisposable
     private readonly ConcurrentDictionary<string, BgProcess> _processes = new();
     private int _counter = 0;
 
-    /// <summary>Start a background process (non-blocking).</summary>
-    public async Task<string> StartAsync(string command, string workingDirectory, int timeoutSeconds = 300)
+    /// <summary>Start a background process (non-blocking). The cancellation token is honored for script writing and process start.</summary>
+    public async Task<string> StartAsync(string command, string workingDirectory, int timeoutSeconds = 300, CancellationToken cancellationToken = default)
     {
-        var id = $"bg-{++_counter}";
+        cancellationToken.ThrowIfCancellationRequested();
+        var id = $"bg-{Interlocked.Increment(ref _counter)}";
         // v10.19.2: Temp scripts inside working dir, not OS temp. OS-aware.
         var tempDir = Path.Combine(workingDirectory, ".tmp");
         Directory.CreateDirectory(tempDir);
@@ -31,7 +32,10 @@ public class BackgroundProcessManager : IDisposable
         var isMacOS = OperatingSystem.IsMacOS();
         var ext = isWindows ? ".ps1" : ".sh";
         var tempScript = Path.Combine(tempDir, $"ecagent_bg_{id}{ext}");
-        await File.WriteAllTextAsync(tempScript, command);
+        // UTF-8 with BOM for .ps1 — PowerShell 5.1 misreads UTF-8 without BOM as ANSI.
+        await File.WriteAllTextAsync(tempScript, command,
+            isWindows ? new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: true) : new System.Text.UTF8Encoding(false),
+            cancellationToken);
 
         var psi = new ProcessStartInfo
         {
@@ -61,9 +65,29 @@ public class BackgroundProcessManager : IDisposable
             TempScriptPath = tempScript,
         };
 
-        // Capture output asynchronously
-        bgProc.OutputTask = Task.Run(() => proc.StandardOutput.ReadToEndAsync());
-        bgProc.ErrorTask = Task.Run(() => proc.StandardError.ReadToEndAsync());
+        // Capture output PROGRESSIVELY — ReadToEndAsync only surfaces output after
+        // the process exits, so GetOutput on a running process returned nothing.
+        var stdoutBuffer = new StringBuilder();
+        var stderrBuffer = new StringBuilder();
+        var outputLock = new object();
+        bgProc.OutputTask = Task.Run(async () =>
+        {
+            var line = await proc.StandardOutput.ReadLineAsync();
+            while (line != null)
+            {
+                lock (outputLock) stdoutBuffer.AppendLine(line);
+                line = await proc.StandardOutput.ReadLineAsync();
+            }
+        });
+        bgProc.ErrorTask = Task.Run(async () =>
+        {
+            var line = await proc.StandardError.ReadLineAsync();
+            while (line != null)
+            {
+                lock (outputLock) stderrBuffer.AppendLine(line);
+                line = await proc.StandardError.ReadLineAsync();
+            }
+        });
 
         // Set up completion + timeout
         _ = Task.Run(async () =>
@@ -83,7 +107,10 @@ public class BackgroundProcessManager : IDisposable
                 bgProc.CompletedAt = DateTime.UtcNow;
                 bgProc.ExitCode = proc.HasExited ? proc.ExitCode : -1;
                 bgProc.IsFinished = true;
+                try { await Task.WhenAll(bgProc.OutputTask ?? Task.CompletedTask, bgProc.ErrorTask ?? Task.CompletedTask); } catch { /* readers end with the process */ }
                 try { File.Delete(tempScript); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[BackgroundProcessManager] Non-critical error ignored: {ex.Message}"); }
+                // Release the OS handles — long-running managers leak otherwise.
+                try { proc.Dispose(); } catch { } // buffers already captured the output
             }
         });
 
@@ -103,18 +130,18 @@ public class BackgroundProcessManager : IDisposable
         return BgStatus.Running;
     }
 
-    /// <summary>Get output (stdout + stderr) from a background process.</summary>
+    /// <summary>Get output (stdout + stderr) from a background process — including output produced while still running.</summary>
     public string GetOutput(string id)
     {
         if (!_processes.TryGetValue(id, out var bg))
             return $"Process '{id}' not found.";
 
-        var stdout = bg.OutputTask?.IsCompleted == true ? bg.OutputTask.Result : "";
-        var stderr = bg.ErrorTask?.IsCompleted == true ? bg.ErrorTask.Result : "";
-
         var sb = new StringBuilder();
-        if (!string.IsNullOrEmpty(stdout)) sb.AppendLine(stdout);
-        if (!string.IsNullOrEmpty(stderr)) sb.AppendLine($"[STDERR] {stderr}");
+        lock (bg.OutputLock)
+        {
+            if (bg.StdoutBuffer.Length > 0) sb.AppendLine(bg.StdoutBuffer.ToString());
+            if (bg.StderrBuffer.Length > 0) sb.AppendLine($"[STDERR] {bg.StderrBuffer}");
+        }
         return sb.ToString();
     }
 
@@ -182,6 +209,7 @@ public class BackgroundProcessManager : IDisposable
         foreach (var bg in _processes.Values)
         {
             try { if (!bg.Process.HasExited) bg.Process.Kill(entireProcessTree: true); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[BackgroundProcessManager] Non-critical error ignored: {ex.Message}"); }
+            try { bg.Process.Dispose(); } catch { }
         }
         _processes.Clear();
     }

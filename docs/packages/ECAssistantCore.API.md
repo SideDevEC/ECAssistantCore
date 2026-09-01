@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 299  |  LOC: 26256  |  ~13874 tokens
+Types: 299  |  LOC: 26616  |  ~13894 tokens
 
 ---
 
@@ -315,6 +315,7 @@ Methods:
 ### Class: ActiveSubAgent
 
 ### Class: AgentConfig
+> Hard cap for a single agent execution run (StartRunner). Default 10 minutes.
 
 ### Class: AgentConfigBuilder
 > Fluent config builder for library consumers.

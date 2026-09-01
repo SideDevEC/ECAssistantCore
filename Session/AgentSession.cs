@@ -427,6 +427,13 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     /// If no listener is attached, waits until one attaches and responds.
     /// </summary>
     public bool RequestApproval(string message)
+        => RequestApprovalAsync(message).GetAwaiter().GetResult();
+
+    /// <summary>
+    /// Async approval polling: Task.Delay instead of Thread.Sleep keeps the waiting
+    /// thread-pool thread free while polling for a listener.
+    /// </summary>
+    public async Task<bool> RequestApprovalAsync(string message)
     {
         // Write the approval request as an output line first
         WriteLine(message, OutputState.Warning);
@@ -455,7 +462,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         var waited = 0;
         while (waited < maxWaitMs)
         {
-            Thread.Sleep(waitMs);
+            await Task.Delay(waitMs);
             waited += waitMs;
 
             lock (_uiLock)
@@ -640,7 +647,9 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     {
         SetRunState(SessionRunState.Running);
         RunStartedAt = DateTime.UtcNow;
-        _executionCts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
+        _executionCts = new CancellationTokenSource(
+            // Configurable per-run timeout (AgentSettings.execution_timeout_minutes, default 10).
+            TimeSpan.FromMinutes(Math.Max(1, _config?.AgentSettings.ExecutionTimeoutMinutes ?? 10)));
 
         _engine.StartExecution();
 

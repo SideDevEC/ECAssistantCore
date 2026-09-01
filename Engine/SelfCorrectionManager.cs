@@ -126,6 +126,17 @@ public class SelfCorrectionManager : IDisposable
                 Timestamp = DateTime.UtcNow
             };
             _snapshots.Add(snapshot);
+            // Persist to disk too — memory-only snapshots die with the process and
+            // are useless for rollback after a crash or restart.
+            try
+            {
+                var json = JsonSerializer.Serialize(snapshot);
+                await File.WriteAllTextAsync(snapshotPath, json);
+            }
+            catch (Exception ex)
+            {
+                _logger.Warn("SelfCorrect", $"Snapshot disk persistence failed (in-memory copy kept): {ex.Message}");
+            }
             _logger.Info("SelfCorrect", $"Snapshotted: {filePath} → {snapshotId}");
             return snapshotId;
         }
@@ -136,10 +147,11 @@ public class SelfCorrectionManager : IDisposable
         }
     }
 
-    /// <summary>Rollback a file to its last snapshot.</summary>
+    /// <summary>Rollback a file to its last snapshot (memory first, then disk).</summary>
     public async Task<bool> RollbackAsync(string filePath)
     {
-        var snapshot = _snapshots.LastOrDefault(s => s.OriginalPath == filePath);
+        var snapshot = _snapshots.LastOrDefault(s => s.OriginalPath == filePath)
+            ?? LoadLatestSnapshotFromDisk(filePath);
         if (snapshot == null)
         {
             _logger.Warn("SelfCorrect", $"No snapshot found for: {filePath}");
@@ -162,6 +174,12 @@ public class SelfCorrectionManager : IDisposable
     /// <summary>Clear failure history (on successful task completion).</summary>
     public void ClearHistory()
     {
+        // Drop the persisted snapshots along with the in-memory copies — they exist
+        // solely for rollback of failed work.
+        foreach (var snap in _snapshots)
+        {
+            try { File.Delete(Path.Combine(_snapshotDir, snap.SnapshotId)); } catch (Exception ex) { _logger?.Debug("SelfCorrect", $"Snapshot file delete skipped: {ex.Message}"); }
+        }
         _failures.Clear();
         _snapshots.Clear();
         _logger.Debug("SelfCorrect", "History cleared.");
@@ -183,15 +201,50 @@ public class SelfCorrectionManager : IDisposable
         return sb.ToString();
     }
 
+    /// <summary>Find the most recent persisted snapshot for a file (used when no in-memory snapshot exists).</summary>
+    private FileSnapshot? LoadLatestSnapshotFromDisk(string filePath)
+    {
+        try
+        {
+            if (!Directory.Exists(_snapshotDir)) return null;
+            FileSnapshot? best = null;
+            foreach (var file in Directory.GetFiles(_snapshotDir, "snap_*.json"))
+            {
+                try
+                {
+                    var snap = JsonSerializer.Deserialize<FileSnapshot>(File.ReadAllText(file));
+                    if (snap == null || !string.Equals(snap.OriginalPath, filePath, StringComparison.Ordinal)) continue;
+                    if (best == null || snap.Timestamp > best.Timestamp) best = snap;
+                }
+                catch (Exception ex) { _logger?.Debug("SelfCorrect", $"Skipping corrupt snapshot {file}: {ex.Message}"); }
+            }
+            return best;
+        }
+        catch (Exception ex)
+        {
+            _logger?.Debug("SelfCorrect", $"Snapshot disk scan failed: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Dispose: prune persisted snapshots older than 7 days. Rollback data is now
+    /// durable on disk, so Dispose must NOT wipe recent snapshots — the host owns
+    /// the .snapshots directory beyond this pruning.
+    /// </summary>
     public void Dispose()
     {
-        // Clean up old snapshots (keep last 10)
-        var oldSnapshots = _snapshots.SkipLast(10).ToList();
-        foreach (var snap in oldSnapshots)
+        try
         {
-            var path = Path.Combine(_snapshotDir, snap.SnapshotId);
-            try { if (File.Exists(path)) File.Delete(path); } catch (Exception ex) { _logger?.Debug("SelfCorrection", $"Non-critical error ignored: {ex.Message}"); }
+            if (!Directory.Exists(_snapshotDir)) return;
+            var cutoff = DateTime.UtcNow.AddDays(-7);
+            foreach (var file in Directory.GetFiles(_snapshotDir, "snap_*.json"))
+            {
+                try { if (File.GetLastWriteTimeUtc(file) < cutoff) File.Delete(file); }
+                catch (Exception ex) { _logger?.Debug("SelfCorrection", $"Non-critical error ignored: {ex.Message}"); }
+            }
         }
+        catch (Exception ex) { _logger?.Debug("SelfCorrection", $"Dispose prune failed: {ex.Message}"); }
     }
 }
 

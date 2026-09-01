@@ -70,14 +70,39 @@ public class ReadableContentExtractor : IReadableContentExtractor
 
     /// <summary>
     /// Extract content from element with role="main".
+    /// Uses a depth-aware scan: a non-greedy regex stops at the FIRST closing tag,
+    /// which truncates content as soon as a nested div closes.
     /// </summary>
     private static string ExtractRoleMain(string html)
     {
-        // Match <div ... role="main" ...> or <section ... role="main" ...>
-        var pattern = @"<(?:div|section|article)[^>]*\brole\s*=\s*[""']main[""'][^>]*>(.*?)</(?:div|section|article)>";
-        var match = Regex.Match(html, pattern,
-            RegexOptions.Singleline | RegexOptions.IgnoreCase);
-        return match.Success ? match.Groups[1].Value : string.Empty;
+        var openMatch = Regex.Match(html,
+            @"<(div|section|article)\b[^>]*\brole\s*=\s*[""']main[""'][^>]*>",
+            RegexOptions.IgnoreCase);
+        if (!openMatch.Success) return string.Empty;
+
+        var tagName = openMatch.Groups[1].Value;
+        var openTagEnd = openMatch.Index + openMatch.Length;
+
+        // Walk forward counting same-tag nesting to find the matching close.
+        var depth = 1;
+        var scan = Regex.Match(html[openTagEnd..], $@"<(/?){tagName}\b[^>]*>",
+            RegexOptions.IgnoreCase);
+        var pos = 0;
+        while (scan.Success)
+        {
+            depth += scan.Groups[1].Value == "/" ? -1 : 1;
+            pos += scan.Index + scan.Length;
+            if (depth == 0)
+            {
+                // Content between the open tag and this matching close.
+                var end = openTagEnd + scan.Index;
+                return html[openTagEnd..end];
+            }
+            scan = scan.NextMatch();
+        }
+
+        // No matching close — take everything after the open tag.
+        return html[openTagEnd..];
     }
 
     /// <summary>
@@ -99,8 +124,10 @@ public class ReadableContentExtractor : IReadableContentExtractor
             "", RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
         // Also handle non-div elements with boilerplate classes (p, ul, etc.)
+        // Backreference \1: the closing tag must match the OPENING tag name —
+        // a free </[a-z0-9]+> paired mismatched tags (e.g. <p class=…> … </ul>).
         html = Regex.Replace(html,
-            @"<(?!div)[a-z0-9]+[^>]*class\s*=\s*[""'](?:[^""']*\b(?:cookie|banner|advert|promo|social|subscribe|newsletter|popup|modal|skip-link)\b[^""']*)[""'][^>]*>.*?</[a-z0-9]+>",
+            @"<(?!div)([a-z0-9]+)[^>]*class\s*=\s*[""'](?:[^""']*\b(?:cookie|banner|advert|promo|social|subscribe|newsletter|popup|modal|skip-link)\b[^""']*)[""'][^>]*>.*?</\1>",
             "", RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
         return html;

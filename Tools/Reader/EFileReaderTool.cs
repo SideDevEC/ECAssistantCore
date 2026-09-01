@@ -62,7 +62,12 @@ public class EFileReaderTool : EToolBase
         try
         {
             var content = _fileSystem.ReadFile(fullPath);
-            var lines = content.Split('\n');
+            // Normalize CRLF/CR to LF so \r never leaks into line content, then split.
+            // Drop a single trailing empty entry — a file ending in a newline must not
+            // inflate TotalLines by one (off-by-one in the "lines remaining" count).
+            var lines = content.Replace("\r\n", "\n").Replace("\r", "\n").Split('\n');
+            if (lines.Length > 0 && lines[^1].Length == 0)
+                lines = lines[..^1];
             var totalLines = lines.Length;
 
             var startIndex = Math.Max(0, offset - 1);

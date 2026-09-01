@@ -41,6 +41,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
       // ─── Hard Limits ──────────────────────
     private int _maxTurns;   // v10.6: changed from readonly to allow dynamic adjustment
+    private readonly int _baseMaxTurns; // original maxTurns — _maxTurns is recomputed from this, never monotonically grown
     private readonly int _maxFailuresBeforeStop;
 
       // ─── Whitelist of valid tool names ─────
@@ -67,6 +68,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                   _engine = engine;
                   _out = sessionOutput;
                   _maxTurns = Math.Max(1, maxTurns);
+                  _baseMaxTurns = _maxTurns;
                   _maxFailuresBeforeStop = maxFailures;
                   _toolPolicy = toolPolicy ?? new ECAssistant.Core.Tools.ToolPolicy();
                   _logger = logger ?? new Logger();
@@ -157,7 +159,9 @@ public sealed class AgentOrchestrator : IAsyncDisposable
              {
                  _subTasks[0].Status = SubTaskStatus.InProgress;
                  // v10.6: Dynamic turn limit — allow 2 turns per sub-task + 2 buffer for output/retries
-                 _maxTurns = Math.Max(_maxTurns, _subTasks.Count * 2 + 2);
+                 // Recompute from the ORIGINAL maxTurns — Math.Max against the field made
+                 // the limit grow monotonically across orchestrator runs.
+                 _maxTurns = Math.Max(_baseMaxTurns, _subTasks.Count * 2 + 2);
                 _out?.WriteInfo($"Decomposed into {_subTasks.Count} steps — max turns adjusted to {_maxTurns}");
                 for (int i = 0; i < _subTasks.Count; i++)
                     _out?.WriteDim($"  Step {i+1}: {_subTasks[i].Description}");
@@ -525,6 +529,10 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                              {
                             _out?.WriteLine($"[Orchestrator] Tool exception: {ex.Message}");
                                      _toolCallLog.Add($"Tool:{decision.ToolName} \u2192 EXCEPTION: {ex.Message}");
+                            // Feed the exception back to the LLM — without this the model
+                            // never learns the tool call failed and repeats it blindly.
+                            if (!string.IsNullOrEmpty(decision.ToolName))
+                                _engine.AddToolResult(decision.ToolName, $"[EXCEPTION] Tool threw: {ex.GetType().Name}: {ex.Message}");
                             // Count the turn — otherwise a persistently throwing tool loops forever.
                             _turnCount++;
                             continue;
@@ -667,7 +675,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
          }
 
                 var tc = ParseToolCallBlock(blockContent, toolCalls.Count + 1);
-                if (tc.ToolName != null)
+                if (!string.IsNullOrEmpty(tc.ToolName))
                     toolCalls.Add(tc);
              }
 
@@ -812,6 +820,11 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                    _turnCount = 0;
                    _toolCallLog.Clear();
                    _formatRetries = 0;
+                   // Reset failure-loop detection — stale signatures would suppress retries
+                   // of legitimately-different calls on the next run.
+                   _failedCallSignatures.Clear();
+                   _lastSuccessfulCallSignature = null;
+                   _maxTurns = _baseMaxTurns; // recompute on next decomposition
                    // v10.6: Reset sub-task state
                    _subTasks = null;
                    _currentSubTask = 0;
