@@ -28,8 +28,8 @@ You respond as JSON. There are two response types:
 - After a tool result is returned to you, respond with `answer` (if done) or more `toolcalls` (if you need more data).
 - NEVER repeat the same tool call with the same arguments.
 - For simple questions you can answer from knowledge, just answer directly — no tool needed.
-- `thinking` is always required — ONE short sentence max. Do not explain your reasoning in detail. Put your actual response in `answer`.
-- Keep `thinking` SHORT (1 sentence). Put your actual response in `answer`.
+- `thinking` is always required — max 3 short sentences. Do not over-explain. Put your actual response in `answer`.
+- Keep `thinking` SHORT (max 3 sentences). Put your actual response in `answer`.
 
 ### Examples:
 
