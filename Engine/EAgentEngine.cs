@@ -1358,8 +1358,10 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                 if (structuredDecision.WantsToolCall)
                  {
                     _logger?.Info("Engine", $"Structured decision: {structuredDecision.ToolCallCount} tool call(s)");
-                    // Tool-call decision: nothing to store in the transcript — the
-                    // orchestrator executes the tools and injects the results.
+                    // v14.5: Store reasoning in transcript so the model can learn from it
+                    // on later turns (matches old tag system behavior).
+                    if (!string.IsNullOrEmpty(structuredDecision.Reasoning))
+                        _transcript.AddAssistant($"[reasoning] {structuredDecision.Reasoning.Trim()}");
                     await RefreshKvStatusAsync();
                     return structuredDecision;
                  }
@@ -1391,8 +1393,8 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
             if (string.IsNullOrEmpty(answerText))
                 answerText = timedOut ? "(Response truncated — model timed out)" : "(Empty response from model)";
 
-            _transcript.AddAssistant(answerText);
-            _contextWindow.AddAssistantMessage(answerText);
+            _transcript.AddAssistant(FormatHistoryEntry(structuredDecision?.Reasoning, answerText));
+            _contextWindow.AddAssistantMessage(FormatHistoryEntry(structuredDecision?.Reasoning, answerText));
 
              // Refresh local KV status snapshot from the server
             await RefreshKvStatusAsync();
@@ -1425,6 +1427,19 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
              _out?.WriteError("[Error] " + ex.Message);
             return new LLMDecision(false, null, new Dictionary<string, string?>(), "[Error] " + ex.Message);
          }
+    }
+
+    /// <summary>
+    /// v14.5: Format the history entry for transcript + context window.
+    /// Prefixes reasoning (if present) as [reasoning] ... on its own line,
+    /// then the answer text on the next line. Matches how the old tag system
+    /// kept thinking visible in history for the model to learn from.
+    /// </summary>
+    private static string FormatHistoryEntry(string? reasoning, string answerText)
+    {
+        if (string.IsNullOrEmpty(reasoning))
+            return answerText;
+        return $"[reasoning] {reasoning.Trim()}\n{answerText}";
     }
 
      /// <summary>

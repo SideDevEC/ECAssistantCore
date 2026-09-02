@@ -19,12 +19,17 @@ public class LLMDecision
     public bool WantsDirectAnswer { get; }
     public string? AnswerText { get; }
 
+            // v14.5: Reasoning from the model. Stored in transcript so the model can
+            // learn from prior reasoning on later turns (matches old tag system behavior).
+    public string? Reasoning { get; }
+
       /// <summary>Single tool call (backwards compat).</summary>
     public LLMDecision(
         bool wantsToolCall,
         string? toolName,
         Dictionary<string, string?> args,
-        string? answerText = null)
+        string? answerText = null,
+        string? reasoning = null)
                 {
         WantsToolCall = wantsToolCall;
         ToolCalls = wantsToolCall && toolName != null
@@ -32,15 +37,17 @@ public class LLMDecision
               : new List<ToolCallRequest>();
         WantsDirectAnswer = answerText != null;
             AnswerText = answerText;
+            Reasoning = reasoning;
                 }
 
       /// <summary>Multiple tool calls (v10.13).</summary>
-    public LLMDecision(List<ToolCallRequest> toolCalls)
+    public LLMDecision(List<ToolCallRequest> toolCalls, string? reasoning = null)
       {
         WantsToolCall = toolCalls.Count > 0;
         ToolCalls = toolCalls;
         WantsDirectAnswer = false;
         AnswerText = null;
+        Reasoning = reasoning;
       }
 
       /// <summary>Number of tool calls in this decision.</summary>
@@ -58,7 +65,7 @@ public class LLMDecision
         List<(string Name, Dictionary<string, string> Args)>? toolCalls)
      {
         if (!string.IsNullOrEmpty(answer))
-            return new LLMDecision(false, null, new Dictionary<string, string?>(), answer);
+            return new LLMDecision(false, null, new Dictionary<string, string?>(), answer, thinking);
 
         if (toolCalls is { Count: > 0 })
          {
@@ -68,11 +75,11 @@ public class LLMDecision
                 Args = tc.Args.ToDictionary(kv => kv.Key, kv => (string?)kv.Value),
                 Index = i + 1
              }).ToList();
-            return new LLMDecision(requests);
+            return new LLMDecision(requests, thinking);
          }
 
         // Neither answer nor toolcalls — fall back to thinking text as the answer.
-        return new LLMDecision(false, null, new Dictionary<string, string?>(), thinking);
+        return new LLMDecision(false, null, new Dictionary<string, string?>(), thinking, thinking);
      }
 
       /// <summary>Is this a multi-call (parallel) decision?</summary>
