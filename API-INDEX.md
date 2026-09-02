@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-01T13:49:28.017535+00:00
+Generated: 2026-09-02T09:11:58.471069+00:00
 Packages: 3  |  Types: 396
 
 ---
 
-## ECAssistantCore (299 types, ~26616 LOC)
+## ECAssistantCore (299 types, ~26449 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -163,7 +163,7 @@ Packages: 3  |  Types: 396
 - 🟡 InstallerVisionEmbeddingTests : IDisposable  (ECAssistantCore)
 - 🟡 InterfaceConfig  (ECAssistantCore)
 - 🟡 KvCacheStatus  (ECAssistantCore)
-- 🟡 LLMDecision  (ECAssistantCore)  deps: [bool, string, Dictionary, string? answerText =, List]
+- 🟡 LLMDecision  (ECAssistantCore)  deps: [bool, string, Dictionary, string? answerText =, string? reasoning =, List, string? reasoning =]
 - 🟡 LlmConfig  (ECAssistantCore)
 - 🟡 LlmProviderConfig  (ECAssistantCore)
 - 🟡 LlmProviderRegistry : ILlmProviderRegistry  (ECAssistantCore)  deps: [MultiLlmProvidersConfig, ILogger? logger =, ISecureKeyStore? keyStore =]
@@ -307,7 +307,7 @@ Packages: 3  |  Types: 396
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## TestSupport (8 types, ~1441 LOC)
+## TestSupport (8 types, ~1442 LOC)
 
 - 🟡 EGuiTestHarness : EGuiBase  (TestSupport)
 - 🟡 EcaTestSuite  (TestSupport)

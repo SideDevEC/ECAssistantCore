@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 299  |  LOC: 26616  |  ~13894 tokens
+Types: 299  |  LOC: 26449  |  ~13950 tokens
 
 ---
 
@@ -467,7 +467,7 @@ Cross-package deps: ECAssistant.Core.Config
 Implements: IEngine, IEngineToolContext, ISubAgentEngineHost
 Constructor:
   - EAgentEngine(string sessionId, IInferenceEngine inferenceEngine, IKvCacheController kvCacheController, RemoteTokenizer? tokenizer = null, InferenceRequestParams? inferenceParams = null, uint contextSize = 8192, string modelPath = "", EAgentConfig? config = null, string? workingDir = null, ILogger? logger = null, EMemoryManager? memoryManager = null, ECAssistant.Core.Engine.SelfCorrectionManager? selfCorrection = null, ECAssistant.Core.Engine.ProjectContextManager? projectContext = null, ITaskPlanner? taskPlanner = null)
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
 
 ### Class: EBackgroundExecTool
 > Background Exec Tool — lets the LLM start long-running processes
@@ -666,7 +666,7 @@ Constructor:
 
 ### Class: ExecutionState
 > v10.30: Core engine. All inference + KV cache control is HTTP-based via the
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
 
 ### Class: FailureAnalysis
 
@@ -793,7 +793,7 @@ Cross-package deps: ECAssistant.Core.Setup
 ### Class: LLMDecision
 > LLM's structured decision about what to do next.
 Constructor:
-  - LLMDecision(bool wantsToolCall, string? toolName, Dictionary<string, string?> args, string? answerText = null, List<ToolCallRequest> toolCalls)
+  - LLMDecision(bool wantsToolCall, string? toolName, Dictionary<string, string?> args, string? answerText = null, string? reasoning = null, List<ToolCallRequest> toolCalls, string? reasoning = null)
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools
 
 ### Class: LlmConfig
@@ -862,7 +862,7 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, Moq
 Implements: EAgentEngine
 Constructor:
   - MockEngine(Queue<string> responses, int maxIterations = 5, bool stopAfterFirstTool = false, string? workingDir = null, ISessionOutput? sessionOutput = null, string? workingDir = null, ISessionOutput? sessionOutput = null, bool cycleResponses = false)
-Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Session
+Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Session
 
 ### Class: MockSubAgentTool
 > Integration tests for sub-agent spawning through the orchestrator.
@@ -1148,7 +1148,8 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools
 > String utility — truncation and text helpers.
 
 ### Class: StructuredDecisionAdapter
-> v13 Converts a grammar-forced decision envelope ({"thinking", "answer"|"toolcalls"})
+> v14 Parses a grammar-forced decision envelope ({"thinking", "answer"|"toolcalls"})
+Cross-package deps: ECAssistant.Core.Orchestration, ECAssistant.Core.Tools
 
 ### Class: StructuredDecisionAdapterTests
 > v13: grammar-forced decision envelope → internal decision text.
@@ -1204,7 +1205,7 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Engine
 Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, Xunit
 
 ### Class: SystemPromptBuilder
-> Builds a system prompt for ECAssistant.Core that includes the required
+> Builds a system prompt for ECAssistant.Core that includes operating rules,
 
 ### Class: SystemToolConfigEntry
 > Config entry for system-critical tools.

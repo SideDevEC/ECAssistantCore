@@ -1,6 +1,6 @@
 # TestSupport.API.md
 
-Types: 8  |  LOC: 1441  |  ~475 tokens
+Types: 8  |  LOC: 1442  |  ~483 tokens
 
 ---
 
@@ -18,7 +18,7 @@ Cross-package deps: ECAssistant.Core.Orchestration
 Implements: EAgentEngine
 Constructor:
   - MockEngine(Queue<string> responses, int maxIterations = 5, bool stopAfterFirstTool = false, string? workingDir = null, ISessionOutput? sessionOutput = null, string? workingDir = null, ISessionOutput? sessionOutput = null, bool cycleResponses = false)
-Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Session
+Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Session
 
 ### Class: TestContext
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Orchestration
