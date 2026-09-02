@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-09-02 (v14 — tag system removed, native JSON decisions, grammar + KV cache fixed)
+**Updated:** 2026-09-02 (v14.6 — tag system removed, native JSON decisions, reasoning in history, grammar + KV cache fixed)
 **Status:** ✅ 0 errors, 0 warnings | LDC enforcement PASSED
 
 ## Overview
@@ -166,6 +166,7 @@ SessionManager wires HTTP infra (shared across all sessions): `ServerLauncher`, 
 - **Session restore:** `AgentSession.UpdateClientId()` + `RecreateKvCacheSessionAsync()` rewire engine to new server connection and rebuild KV cache via `PrefillStaticPrefix()`. `EAgentEngine.UpdateHttpClient()` recreates `RemoteKvCacheController` + `HttpStreamingEngine`.
 - **Stale-session recovery (v12.12):** a restarted server drops KV sessions while client-side `_kvState` claims they're prefilled. Fixes: (1) `UpdateHttpClient()` clears BOTH `SessionActive` and `IsPrefilled`; (2) `EAgentEngine.InvalidateKvSessionState()` is called by `RecreateKvCacheSessionAsync()` so re-prefill always forces a full session recreate; (3) `SessionManager.RestoreSessionsAsync()` (extracted helper) runs on BOTH the reconnect path AND the recovery fast path; (4) `EAgentEngine.IsStaleSessionFailure()` treats HTTP 404 on generate as a stale session — recover + retry once instead of feeding the error into the parse pipeline.
 - **Tag-free decisions (v14):** The `<lm>`/`<thinking>`/`<toolcall>`/`<output>` tag protocol has been completely removed. `EAgentEngine.GenerateAsync()` returns `Task<LLMDecision>` directly — the server produces `DecisionEnvelope` JSON (grammar-constrained for local, native OpenAI `tool_calls` for remote), which `StructuredDecisionAdapter.ParseDecision()` converts to `LLMDecision`. The orchestrator consumes `LLMDecision` objects directly. `ParseLLMDecision()`, `ParseToolCallBlock()`, `ExtractCleanResponse()` deleted. Any model works — local or remote — same as OpenClaw/Hermes.
+- **Reasoning in history (v14.5):** The model's `thinking` field is stored as `[reasoning] ...` in transcript + context window, prefixed to the answer text. The model can learn from prior reasoning on later turns (matches old tag system behavior). Constrained to max 1 sentence to prevent token waste and hallucination. `LLMDecision.Reasoning` property carries it through the pipeline.
 - **Catalog metadata self-heal (v12.12):** `ModelCatalogDocument.Load()` backfills empty `License` fields from the embedded default catalog (by model id). User-set values always win; on-disk file is never rewritten.
 
 ## Background Tasks (v11.2)

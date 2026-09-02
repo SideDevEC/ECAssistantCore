@@ -1,4 +1,5 @@
 using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Orchestration;
 using ECAssistant.Core.Session;
 
 namespace ECAssistant.Core.Engine;
