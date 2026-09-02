@@ -175,8 +175,11 @@ public sealed class HttpStreamingEngine : IInferenceEngine
             return JsonSerializer.Serialize(new { thinking, toolcalls = calls });
         }
 
-        // No tool calls — the content (or reasoning) is the answer.
-        return JsonSerializer.Serialize(new { thinking, answer = thinking });
+        // No tool calls — content is the answer, reasoning is the thinking.
+        var content = message.TryGetProperty("content", out var contentEl) && contentEl.ValueKind == JsonValueKind.String
+            ? contentEl.GetString() ?? ""
+            : thinking;
+        return JsonSerializer.Serialize(new { thinking, answer = content });
     }
 
     private string BuildStructuredRequestBody(string prompt, InferenceRequestParams parameters)
