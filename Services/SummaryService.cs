@@ -83,31 +83,16 @@ public class SummaryService
         var summary = await generator.Invoke(prompt);
         if (string.IsNullOrWhiteSpace(summary))
             return null;
-        summary = StripLmTags(summary);
         // v10.7.4: Escape angle brackets to prevent fake XML tags in context
         summary = summary.Trim().Replace("<", "&lt;").Replace(">", "&gt;");
         return $"[Summary of {messages.Count} messages]\n{summary}";
-    }
-
-    /// <summary>
-    /// The prompt asks the model to wrap its output in &lt;lm&gt;…&lt;/lm&gt; — the tag markers
-    /// (and malformed leftovers) must not survive into the summary text. Strip the tags
-    /// themselves while KEEPING the content between them, then trim.
-    /// </summary>
-    internal static string StripLmTags(string text)
-    {
-        if (string.IsNullOrEmpty(text)) return text;
-        // Remove <lm>, </lm>, <lm/>, <lm …attr> and any stray unmatched variants.
-        text = System.Text.RegularExpressions.Regex.Replace(
-            text, "</?lm(?:\\s[^>]*)?/?>", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        return text.Trim();
     }
 
     /// <summary>Build the shared summarization prompt from messages.</summary>
     private string BuildPrompt(List<TranscriptMessage> messages)
     {
         var oldContent = BuildBlockString(messages);
-        return $"You are a summarization assistant. Wrap your summary in <lm></lm> tags.\nSTRICT RULES:\n- Output ONLY a concise summary inside <lm></lm> tags\n- Keep facts, decisions, and tool results only\n- Do NOT add opinions, suggestions, or extra context\n- Do NOT add greetings, conclusions, or meta-commentary\n- Maximum 3 sentences\n- Plain text only, no formatting inside the tags\n\nConversation:\n{oldContent}\n\n<lm>";
+        return $"You are a summarization assistant. Provide a concise summary of the conversation.\nSTRICT RULES:\n- Keep facts, decisions, and tool results only\n- Do NOT add opinions, suggestions, or extra context\n- Do NOT add greetings, conclusions, or meta-commentary\n- Maximum 3 sentences\n- Plain text only, no formatting\n\nConversation:\n{oldContent}";
     }
 
     /// <summary>Build an extractive (non-LLM) summary from message content.</summary>

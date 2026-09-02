@@ -22,7 +22,7 @@ public class EFileReaderTool : EToolBase
         "Returns line-numbered content plus total line count so you know if there's more.";
 
     public override string UsageExample =>
-        "<toolcall>EFileReader<file>Program.cs</file><offset>1</offset><limit>50</limit></toolcall>";
+        "EFileReader(file:Program.cs, offset:1, limit:50)";
 
     public override bool IsEnabled { get; protected set; } = true;
 

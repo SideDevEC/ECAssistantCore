@@ -23,7 +23,7 @@ public class ECodeEditorTool : EToolBase
         "line insertion/deletion. Better than shell echo for code changes.";
 
     public override string UsageExample =>
-        "<toolcall>ECodeEditor<action>patch</action><file>Program.cs</file><old_text>bug</old_text><new_text>fix</new_text></toolcall>";
+        "ECodeEditor(action:patch, file:Program.cs, old_text:bug, new_text:fix)";
 
     public override bool IsEnabled { get; protected set; } = true;
 

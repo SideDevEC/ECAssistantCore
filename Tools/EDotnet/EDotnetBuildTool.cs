@@ -19,7 +19,7 @@ public class EDotnetBuildTool : EToolBase
 
     public override string Name => "DotnetBuild";
     public override string Description => "Run dotnet build, test, or restore commands.";
-    public override string UsageExample => "<toolcall>DotnetBuild<action>build</action></toolcall>";
+    public override string UsageExample => "DotnetBuild(action:build)";
 
     public override bool IsEnabled { get; protected set; } = true;
 

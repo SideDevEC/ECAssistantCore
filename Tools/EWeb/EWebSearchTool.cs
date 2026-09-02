@@ -32,8 +32,8 @@ public class EWebSearchTool : EToolBase
         "what to search. Never call without a specific, meaningful query.";
 
     public override string UsageExample =>
-        "<toolcall>EWebSearch<query>dotnet 8 async streams</query></toolcall>\n" +
-        "<toolcall>EWebSearch<query>bitcoin price today</query><max_results>3</max_results></toolcall>";
+        "EWebSearch(query:dotnet 8 async streams)\n" +
+        "EWebSearch(query:bitcoin price today, max_results:3)";
 
     public override string GetToolRules() =>
         "Provide a specific search query — never an empty or vague one. " +
@@ -41,7 +41,7 @@ public class EWebSearchTool : EToolBase
         "fetch 1-2 promising pages with EWebFetch if needed, then answer in your own words. " +
         "NEVER reply to the user with a list of links. " +
         "If the results are irrelevant, do NOT keep re-searching reworded queries — " +
-        "at most try ONE different query, then conclude with <output> describing what you found and that it did not answer the question. " +
+        "at most try ONE different query, then provide your final answer describing what you found and that it did not answer the question. " +
         "max_results is optional (default 5, max 10).";
 
     public override bool IsEnabled { get; protected set; } = true;

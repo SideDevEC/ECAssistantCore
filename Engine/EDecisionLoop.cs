@@ -36,13 +36,13 @@ public class EDecisionLoop : IDisposable
         {
             _out?.WriteTag("Round", $"{round}/{maxRounds}", OutputState.Info);
 
-            var llmResponse = await _engine.GenerateAsync(taskDescription);
+            var decision = await _engine.GenerateAsync(taskDescription);
 
             _out?.BlankLine();
 
-            if (llmResponse.Contains("<output>", StringComparison.OrdinalIgnoreCase))
+            if (decision.WantsDirectAnswer)
             {
-                var answer = ExtractOutputContent(llmResponse);
+                var answer = decision.AnswerText ?? string.Empty;
                 _out?.WriteTag("Decision", "Final answer received.", OutputState.Success);
                 _out?.WriteLine(answer, OutputState.Bold);
 
@@ -54,7 +54,7 @@ public class EDecisionLoop : IDisposable
                 };
             }
 
-            _out?.WriteLine($"[Decision] LLM says: {llmResponse}", OutputState.Info);
+            _out?.WriteLine($"[Decision] LLM says: {decision.AnswerText ?? "(tool call requested)"}", OutputState.Info);
             _out?.BlankLine();
 
             if (round < maxRounds)
@@ -84,16 +84,6 @@ public class EDecisionLoop : IDisposable
             OptionChosen = "max_rounds",
             Outcome = "Decision loop reached maximum rounds without a final answer."
         };
-    }
-
-    private string ExtractOutputContent(string response)
-    {
-        var startIdx = response.IndexOf("<output>", StringComparison.OrdinalIgnoreCase);
-        if (startIdx < 0) return response;
-        startIdx += "<output>".Length;
-        var endIdx = response.IndexOf("</output>", startIdx, StringComparison.OrdinalIgnoreCase);
-        if (endIdx < 0) endIdx = response.Length;
-        return response.Substring(startIdx, endIdx - startIdx).Trim();
     }
 
     public void ProcessFeedback(string userFeedback)

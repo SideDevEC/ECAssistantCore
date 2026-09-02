@@ -11,9 +11,9 @@ namespace ECAssistant.Core.Tools.SubAgent;
 /// v10.18.1: Structured error handling, retry, resource limits, cancellation.
 ///
 /// Usage:
-///   <toolcall>ESubAgent<task>Research the codebase structure and report file count</task></toolcall>
-///   <toolcall>ESubAgent<task>Fix the bug in line 42</task><working_dir>/path/to/project</working_dir><tools>EShellAgent,ECodeEditor,EDotnetBuild</tools></toolcall>
-///   <toolcall>ESubAgent<task>Write unit tests for the auth module</task><context_size>8192</context_size><max_turns>8</max_turns></toolcall>
+///   ESubAgent(task:Research the codebase structure and report file count)
+///   ESubAgent(task:Fix the bug in line 42, working_dir:/path/to/project, tools:EShellAgent,ECodeEditor,EDotnetBuild)
+///   ESubAgent(task:Write unit tests for the auth module, context_size:8192, max_turns:8)
 /// </summary>
 public class ESubAgentTool : EToolBase
 {
@@ -31,25 +31,25 @@ public class ESubAgentTool : EToolBase
     public override string Description =>
         "Spawn a sub-agent for a complex subtask. The sub-agent runs independently with its own " +
         "context window and tool set, then returns a result. Use for tasks that need deep focus " +
-        "or might fill up the main context. Supports parallel sub-agents via multiple toolcalls. " +
+        "or might fill up the main context. Supports parallel sub-agents via multiple tool calls. " +
         "Includes automatic retry, resource limits, and structured error reporting.";
 
     public override string UsageExample =>
         "ESubAgent(task=\"Research the codebase\")";
 
     public override string GetToolRules() =>
-        "<task>=description of what the sub-agent should do (required). " +
-        "<working_dir>=override working directory (optional). " +
-        "<tools>=comma-separated tool names to allow (optional, empty=all). " +
-        "<context_size>=context window size (optional, defaults to subagent config). " +
-        "<max_turns>=max turns for sub-agent (optional, defaults to subagent config). " +
-        "<timeout>=timeout in seconds (optional, defaults to subagent config). " +
-        "<max_retries>=auto-retry attempts on failure (optional, defaults to subagent config). " +
-        "Multiple ESubAgent toolcalls in one response run in PARALLEL.";
+        "task = description of what the sub-agent should do (required). " +
+        "working_dir = override working directory (optional). " +
+        "tools = comma-separated tool names to allow (optional, empty=all). " +
+        "context_size = context window size (optional, defaults to subagent config). " +
+        "max_turns = max turns for sub-agent (optional, defaults to subagent config). " +
+        "timeout = timeout in seconds (optional, defaults to subagent config). " +
+        "max_retries = auto-retry attempts on failure (optional, defaults to subagent config). " +
+        "Multiple ESubAgent calls in one response run in PARALLEL.";
 
     public override string GetToolExample() =>
-        "<toolcall>ESubAgent<task>Analyze the project structure and list all .cs files</task></toolcall>\n" +
-        "<toolcall>ESubAgent<task>Fix the bug</task><tools>EShellAgent,ECodeEditor</tools><context_size>8192</context_size></toolcall>";
+        "ESubAgent(task:Analyze the project structure and list all .cs files)\n" +
+        "ESubAgent(task:Fix the bug, tools:EShellAgent,ECodeEditor, context_size:8192)";
 
     public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {

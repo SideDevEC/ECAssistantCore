@@ -36,7 +36,7 @@ public class ExecutionPlan
                 sb.AppendLine($"  Covers steps: {string.Join(", ", call.CoversSubTasks.Select(s => s + 1))}");
             sb.AppendLine();
          }
-        sb.AppendLine("Execute each call in order using <toolcall> tags. You can batch multiple calls in one <lm> response.");
+        sb.AppendLine("Execute each call in order. You can batch multiple tool calls in one response.");
         return sb.ToString();
      }
 }

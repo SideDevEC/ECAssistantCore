@@ -31,7 +31,7 @@ New config:
         "top_p": 0.8,
         "top_k": 40,
         "repeat_penalty": 1.1,
-        "anti_prompts": ["User:", "Question:", "</lm>"]
+        "anti_prompts": ["User:", "Question:"]
     },
     "summarize": {
         "use_llm": true,
@@ -41,7 +41,7 @@ New config:
         "top_p": 0.8,
         "top_k": 40,
         "repeat_penalty": 1.1,
-        "anti_prompts": ["User:", "Question:", "</lm>"]
+        "anti_prompts": ["User:", "Question:"]
     }
 }
 ```

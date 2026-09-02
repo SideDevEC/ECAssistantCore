@@ -46,6 +46,35 @@ public class LLMDecision
       /// <summary>Number of tool calls in this decision.</summary>
     public int ToolCallCount => ToolCalls.Count;
 
+      /// <summary>
+    /// v14: Build a decision from parsed DecisionEnvelope fields (server JSON shape:
+    /// {"thinking", "answer"|"toolcalls":[{name,args}]}). Core cannot reference the
+    /// LLM project's DecisionToolCall type, so tool calls arrive as pre-parsed
+    /// (name, args) pairs.
+    /// </summary>
+    public static LLMDecision FromEnvelope(
+        string thinking,
+        string? answer,
+        List<(string Name, Dictionary<string, string> Args)>? toolCalls)
+     {
+        if (!string.IsNullOrEmpty(answer))
+            return new LLMDecision(false, null, new Dictionary<string, string?>(), answer);
+
+        if (toolCalls is { Count: > 0 })
+         {
+            var requests = toolCalls.Select((tc, i) => new ToolCallRequest
+             {
+                ToolName = tc.Name,
+                Args = tc.Args.ToDictionary(kv => kv.Key, kv => (string?)kv.Value),
+                Index = i + 1
+             }).ToList();
+            return new LLMDecision(requests);
+         }
+
+        // Neither answer nor toolcalls — fall back to thinking text as the answer.
+        return new LLMDecision(false, null, new Dictionary<string, string?>(), thinking);
+     }
+
       /// <summary>Is this a multi-call (parallel) decision?</summary>
     public bool IsMultiCall => ToolCalls.Count > 1;
 

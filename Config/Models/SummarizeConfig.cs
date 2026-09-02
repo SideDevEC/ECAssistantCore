@@ -23,5 +23,5 @@ public class SummarizeConfig
     [JsonPropertyName("repeat_penalty")]
     public float RepeatPenalty { get; init; } = 1.1f;
     [JsonPropertyName("anti_prompts")]
-    public string[] AntiPrompts { get; init; } = new[] { "User:", "Question:", "</lm>" };
+    public string[] AntiPrompts { get; init; } = new[] { "User:", "Question:" };
 }

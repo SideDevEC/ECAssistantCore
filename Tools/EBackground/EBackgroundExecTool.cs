@@ -26,7 +26,7 @@ public class EBackgroundExecTool : EToolBase
         "action=output to get results, action=kill to terminate.";
 
     public override string UsageExample =>
-        "<toolcall>EBackgroundExec<action>start</action><command>dotnet build</command></toolcall>";
+        "EBackgroundExec(action:start, command:dotnet build)";
 
     public override bool IsEnabled { get; protected set; } = true;
 

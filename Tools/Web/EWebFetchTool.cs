@@ -30,8 +30,8 @@ public class EWebFetchTool : EToolBase
         "Supports offset to page through long content.";
 
     public override string UsageExample =>
-        "<toolcall>EWebFetch<url>https://example.com</url></toolcall>\n" +
-        "<toolcall>EWebFetch<url>https://example.com/docs</url><offset>4000</offset></toolcall>";
+        "EWebFetch(url:https://example.com)\n" +
+        "EWebFetch(url:https://example.com/docs, offset:4000)";
 
     public override string GetToolRules() =>
         "Always provide url. Use offset (in chars) to get the next chunk of a long page. " +

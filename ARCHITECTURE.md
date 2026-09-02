@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-09-01 (v13 — full code audit: 54 bugs fixed across security, threading, data integrity)
+**Updated:** 2026-09-02 (v14 — tag system removed, native JSON decisions, grammar + KV cache fixed)
 **Status:** ✅ 0 errors, 0 warnings | LDC enforcement PASSED
 
 ## Overview
@@ -165,7 +165,7 @@ SessionManager wires HTTP infra (shared across all sessions): `ServerLauncher`, 
 - **Shutdown wiring:** `AppController` calls `SessionManager.DisposeAsync()` on quit → `DisconnectAsync()` + `ServerLauncher.StopServerAsync()` → POST `/eca/shutdown` → server winds down if last client.
 - **Session restore:** `AgentSession.UpdateClientId()` + `RecreateKvCacheSessionAsync()` rewire engine to new server connection and rebuild KV cache via `PrefillStaticPrefix()`. `EAgentEngine.UpdateHttpClient()` recreates `RemoteKvCacheController` + `HttpStreamingEngine`.
 - **Stale-session recovery (v12.12):** a restarted server drops KV sessions while client-side `_kvState` claims they're prefilled. Fixes: (1) `UpdateHttpClient()` clears BOTH `SessionActive` and `IsPrefilled`; (2) `EAgentEngine.InvalidateKvSessionState()` is called by `RecreateKvCacheSessionAsync()` so re-prefill always forces a full session recreate; (3) `SessionManager.RestoreSessionsAsync()` (extracted helper) runs on BOTH the reconnect path AND the recovery fast path; (4) `EAgentEngine.IsStaleSessionFailure()` treats HTTP 404 on generate as a stale session — recover + retry once instead of feeding the error into the parse pipeline.
-- **Model-agnostic decisions (v12.12):** `AgentOrchestrator.ParseLLMDecision` (internal) now falls back to unwrapped `<thinking>` content as a direct answer for models that ignore the `<lm>` tag protocol; after format retries are exhausted it delivers the last response best-effort instead of erroring; engine-level `[Error] …` responses surface as `OrchestratorStatus.Failed` (new enum value) instead of being parsed as "no tags". Qwen2.5-VL-7B (non-tag-following model) can now answer simple prompts.
+- **Tag-free decisions (v14):** The `<lm>`/`<thinking>`/`<toolcall>`/`<output>` tag protocol has been completely removed. `EAgentEngine.GenerateAsync()` returns `Task<LLMDecision>` directly — the server produces `DecisionEnvelope` JSON (grammar-constrained for local, native OpenAI `tool_calls` for remote), which `StructuredDecisionAdapter.ParseDecision()` converts to `LLMDecision`. The orchestrator consumes `LLMDecision` objects directly. `ParseLLMDecision()`, `ParseToolCallBlock()`, `ExtractCleanResponse()` deleted. Any model works — local or remote — same as OpenClaw/Hermes.
 - **Catalog metadata self-heal (v12.12):** `ModelCatalogDocument.Load()` backfills empty `License` fields from the embedded default catalog (by model id). User-set values always win; on-disk file is never rewritten.
 
 ## Background Tasks (v11.2)
@@ -381,7 +381,7 @@ EWebFetch was reworked to produce LLM-parseable output. The old tool returned a 
 - **`ServerLauncher`** spawns ECAssistantLLM with `--port {Port}` (+ optional `ServerConfigPath`); resolves the connect target via `LlmProviderConfig.ResolvedEndpoint`
 - MockEngine (in TestSupport) uses a no-op HTTP transport constructor (model-independent tests, no static flags)
 - v11.4: Orchestrator gates decomposition — verb heuristic first (instant), then LLM 1-token classification (~0.15s)
-- v11.4: System prompt teaches LLM to learn from failed <thinking> blocks in conversation history
+- v14: System prompt is tag-free; teaches tool selection via plain descriptions and examples
 - v12.1: EWebFetch uses IReadableContentExtractor + IHtmlTextConverter pipeline (fetch→extract→convert→page); HttpClientAdapter sends browser User-Agent + Accept headers; offset arg for paging long pages; default maxchars 12K; tool rules injected into system prompt with offset guidance
 
 ## Audit Fixes (2026-08-27)

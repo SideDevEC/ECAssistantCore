@@ -3,6 +3,7 @@ using ECAssistant.Core.Config;
 using ECAssistant.Core.Interfaces;
 using ECAssistant.Core.Memory;
 using ECAssistant.Core.Engine;
+using ECAssistant.Core.Orchestration;
 using ECAssistant.Core.Session;
 using ECAssistant.Core.Services;
 using ECAssistant.Core.Services.Http;
@@ -523,7 +524,7 @@ Execution plan:";
 
         try
          {
-            var planParams = BuildStatelessParams(300, new[] { "</lm>", "User:", "Question:" });
+            var planParams = BuildStatelessParams(300, new[] { "User:", "Question:" });
             var result = await _inferenceEngine.GenerateAsync(planPrompt, planParams, CancellationToken.None);
             _out?.WriteInfo($"[StepMapper] Plan generated ({result.Length} chars)");
             return result.Trim();
@@ -543,7 +544,7 @@ Execution plan:";
         if (_inferenceEngine == null)
             return null;
 
-        var prompt = @"You decompose tasks. Wrap your answer in <lm></lm> tags. Inside the tags, output ONLY numbered steps. Nothing else.
+        var prompt = @"You decompose tasks. Output ONLY numbered steps. Nothing else.
 
 Count the distinct actions the user asked for. Output exactly that many steps. Stop. Do not add any more.
 
@@ -552,19 +553,14 @@ FORBIDDEN:
 - Explanations, reasoning, or text outside numbered steps
 - Steps the user did not explicitly ask for
 
+Example:
 User: read Program.cs then fix line 42 then rebuild
-<lm>
 1. Read Program.cs
 2. Fix the bug at line 42
 3. Rebuild the project
-</lm>
 
-User: what day is today
-<lm>
-1. Get the current date
-</lm>
-
-User: " + userRequest + "\n<lm>\n";
+Now decompose this task:
+User: " + userRequest + "\n";
 
         try
          {
@@ -806,9 +802,9 @@ User: " + userRequest + "\n<lm>\n";
                             historySb.AppendLine("</user>");
                             break;
                         case "assistant":
-                            historySb.AppendLine("<assistant><lm>");
+                            historySb.AppendLine("<assistant>");
                             historySb.AppendLine(msg.Content);
-                            historySb.AppendLine("</lm></assistant>");
+                            historySb.AppendLine("</assistant>");
                             break;
                         case "tool_output":
                             historySb.AppendLine($"<tooloutput>{msg.Source}<result>");
@@ -1104,10 +1100,11 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
      // ── Generation (main loop) ─────────────────────────────────
 
      /// <summary>
-     /// Generate text from the LLM using incremental KV cache feed.
+     /// Generate a decision from the LLM using incremental KV cache feed.
      /// v10.30: streaming via IInferenceEngine.StreamAsync — no in-process executor.
+    /// v14: returns a parsed LLMDecision directly — no intermediate tag text.
      /// </summary>
-    public virtual async Task<string> GenerateAsync(string userPrompt)
+    public virtual async Task<LLMDecision> GenerateAsync(string userPrompt)
      {
         _lifecycle.IncrementTurn();
         _lifecycle.EscPressed = false;
@@ -1156,20 +1153,20 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                         if (warmParams != null)
                          {
                             warmParams.MaxTokens = Math.Max(100, summarizeConfig?.MaxTokens ?? 200);
-                            warmParams.Stop = summarizeConfig?.AntiPrompts ?? new[] { "User:", "Question:", "</lm>" };
+                            warmParams.Stop = summarizeConfig?.AntiPrompts ?? new[] { "User:", "Question:" };
                             warmParams.Temperature = summarizeConfig?.Temperature ?? 0.1f;
                             return warmParams;
                          }
                         return BuildStatelessParams(
                             Math.Max(100, summarizeConfig?.MaxTokens ?? 200),
-                            summarizeConfig?.AntiPrompts ?? new[] { "User:", "Question:", "</lm>" },
+                            summarizeConfig?.AntiPrompts ?? new[] { "User:", "Question:" },
                             summarizeConfig?.Temperature ?? 0.1f,
                             summarizeConfig?.TopP ?? 0.8f,
                             summarizeConfig?.TopK ?? 40,
                             summarizeConfig?.RepeatPenalty ?? 1.1f);
                     }
                     var result = await _inferenceEngine.GenerateAsync(
-                        $"You are a summarization assistant. Wrap your summary in <lm></lm> tags.\nSummarize this conversation concisely. Keep facts, decisions, and tool results only. Max 3 sentences. Plain text inside the tags.\n\n{convText}\n\n<lm>",
+                        $"Summarize this conversation concisely. Keep facts, decisions, and tool results only. Max 3 sentences. Plain text.\n\n{convText}",
                         ResolveParams(), CancellationToken.None);
                     summaryText = System.Text.RegularExpressions.Regex.Replace(result.Trim(), @"<[^>]+>", "");
                  }
@@ -1226,6 +1223,7 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
              }
 
             var sb = new StringBuilder();
+            LLMDecision? structuredDecision = null;
 
              // Save KV cache state before generation for format retry rewind.
             try
@@ -1241,7 +1239,6 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
             bool timedOut = false;
             try
              {
-                var stopTags = new[] { "</lm>" };
                 var showTokenStream = _verbose && !_silent;
                 if (showTokenStream)
                     _out?.WriteLine($"── Token Stream (Turn {_lifecycle.TurnCount}) ── [ESC to stop] ──", OutputState.Bold);
@@ -1277,9 +1274,9 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
 
                     if (structured != null)
                      {
+                        structuredDecision = structured;
                         if (showTokenStream)
-                            _out?.Write(structured);
-                        sb.Append(structured);
+                            _out?.Write(structured.AnswerText ?? "");
                         tokenCount++;
                         goto inferenceDone;
                      }
@@ -1301,19 +1298,6 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                         _out?.Write(token);
                     sb.Append(token);
                     tokenCount++;
-                    var soFar = sb.ToString();
-                    foreach (var stopTag in stopTags)
-                     {
-                        if (soFar.Contains(stopTag, StringComparison.OrdinalIgnoreCase))
-                         {
-                            if (showTokenStream)
-                            {
-                                _out?.BlankLine();
-                                _out?.WriteInfo($"[Stop] Manual anti-prompt hit: {stopTag} (after {tokenCount} tokens)");
-                            }
-                            goto inferenceDone;
-                         }
-                     }
                  }
                 inferenceDone:
                  _out?.StopStream();
@@ -1366,33 +1350,55 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                  _out?.WriteError("[Timeout] Inference timed out (90s). Truncating.");
              }
 
-            var rawResult = sb.ToString().Trim();
-            string cleanResponse;
+            string answerText;
 
-            if (rawResult.StartsWith("<assistant>", StringComparison.OrdinalIgnoreCase))
-                rawResult = rawResult.Substring("<assistant>".Length).Trim();
-            if (rawResult.EndsWith("</assistant>", StringComparison.OrdinalIgnoreCase))
-                rawResult = rawResult.Substring(0, rawResult.Length - "</assistant>".Length).Trim();
-             if (_verbose && !_silent)
-                _out?.WriteDim($"[Engine] Raw ({rawResult.Length} chars): {StringUtil.Default.Truncate(rawResult, 500)}");
-
-            cleanResponse = ExtractCleanResponse(rawResult);
-             _out?.WriteDim($"[Engine] Clean ({cleanResponse.Length} chars): {StringUtil.Default.Truncate(cleanResponse, 500)}");
-
-            if (string.IsNullOrEmpty(cleanResponse))
-                cleanResponse = timedOut ? "(Response truncated — model timed out)" : "(Empty response from model)";
-
-            if (!string.IsNullOrEmpty(cleanResponse))
+            if (structuredDecision != null)
              {
-                 _transcript.AddAssistant(cleanResponse);
-                 _contextWindow.AddAssistantMessage(cleanResponse);
+                // v14: envelope parsed directly into a decision — no tag text.
+                if (structuredDecision.WantsToolCall)
+                 {
+                    _logger?.Info("Engine", $"Structured decision: {structuredDecision.ToolCallCount} tool call(s)");
+                    // Tool-call decision: nothing to store in the transcript — the
+                    // orchestrator executes the tools and injects the results.
+                    await RefreshKvStatusAsync();
+                    return structuredDecision;
+                 }
+                answerText = structuredDecision.AnswerText ?? "";
              }
+            else
+             {
+                var rawResult = sb.ToString().Trim();
+
+                if (rawResult.StartsWith("<assistant>", StringComparison.OrdinalIgnoreCase))
+                    rawResult = rawResult.Substring("<assistant>".Length).Trim();
+                if (rawResult.EndsWith("</assistant>", StringComparison.OrdinalIgnoreCase))
+                    rawResult = rawResult.Substring(0, rawResult.Length - "</assistant>".Length).Trim();
+                 if (_verbose && !_silent)
+                    _out?.WriteDim($"[Engine] Raw ({rawResult.Length} chars): {StringUtil.Default.Truncate(rawResult, 500)}");
+
+                // v14 text fallback: best-effort decision parse — legacy <toolcall>
+                // blocks when present, otherwise the raw text IS the direct answer.
+                var fallbackDecision = ParseTextFallbackDecision(rawResult);
+                if (fallbackDecision.WantsToolCall)
+                 {
+                    await RefreshKvStatusAsync();
+                    return fallbackDecision;
+                 }
+                answerText = fallbackDecision.AnswerText ?? "";
+                _out?.WriteDim($"[Engine] Answer ({answerText.Length} chars): {StringUtil.Default.Truncate(answerText, 500)}");
+             }
+
+            if (string.IsNullOrEmpty(answerText))
+                answerText = timedOut ? "(Response truncated — model timed out)" : "(Empty response from model)";
+
+            _transcript.AddAssistant(answerText);
+            _contextWindow.AddAssistantMessage(answerText);
 
              // Refresh local KV status snapshot from the server
             await RefreshKvStatusAsync();
 
              _out?.BlankLine();
-             _logger?.Info("Engine", $"Response: {cleanResponse.Length} chars");
+             _logger?.Info("Engine", $"Response: {answerText.Length} chars");
 
             if (ExecutionToken.IsCancellationRequested || _lifecycle.EscPressed)
              {
@@ -1409,17 +1415,73 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                          _logger?.Warn("KVCache", $"Failed to rewind after stop: {ex.Message}");
                      }
                  }
-                return "(Stopped by user)";
+                return new LLMDecision(false, null, new Dictionary<string, string?>(), "(Stopped by user)");
              }
 
-            return cleanResponse;
+            return new LLMDecision(false, null, new Dictionary<string, string?>(), answerText);
          }
         catch (Exception ex)
          {
              _out?.WriteError("[Error] " + ex.Message);
-            return "[Error] " + ex.Message;
+            return new LLMDecision(false, null, new Dictionary<string, string?>(), "[Error] " + ex.Message);
          }
     }
+
+     /// <summary>
+    /// v14: Best-effort parse of free-form streamed text into a decision (text fallback
+    /// path only — the structured path parses the envelope JSON directly). Recognizes
+    /// legacy &lt;toolcall&gt; blocks when present; otherwise the raw text IS the answer.
+     /// </summary>
+    private LLMDecision ParseTextFallbackDecision(string raw)
+     {
+        if (string.IsNullOrWhiteSpace(raw))
+            return new LLMDecision(false, null, new Dictionary<string, string?>(), raw);
+
+        var toolCalls = new List<ToolCallRequest>();
+        var searchFrom = 0;
+        while (searchFrom < raw.Length)
+         {
+            var tcStart = raw.IndexOf("<toolcall>", searchFrom, StringComparison.OrdinalIgnoreCase);
+            if (tcStart < 0) break;
+            var tcEnd = raw.IndexOf("</toolcall>", tcStart + 10, StringComparison.OrdinalIgnoreCase);
+            var blockContent = tcEnd < 0
+                ? raw.Substring(tcStart + 10).Trim()
+                : raw.Substring(tcStart + 10, tcEnd - tcStart - 10).Trim();
+            searchFrom = tcEnd < 0 ? raw.Length : tcEnd + 11;
+
+            var tc = ParseToolCallBlockContent(blockContent, toolCalls.Count + 1);
+            if (!string.IsNullOrEmpty(tc.ToolName))
+                toolCalls.Add(tc);
+         }
+
+        if (toolCalls.Count > 0)
+            return new LLMDecision(toolCalls);
+
+        return new LLMDecision(false, null, new Dictionary<string, string?>(), raw);
+     }
+
+    /// <summary>Parses legacy &lt;toolcall&gt; block content (text fallback only): tool name + &lt;arg&gt;value&lt;/arg&gt; pairs.</summary>
+    private static ToolCallRequest ParseToolCallBlockContent(string toolcallContent, int index)
+     {
+        var ltIdx = toolcallContent.IndexOf('<');
+        var spIdx = toolcallContent.IndexOf(' ');
+        if (spIdx >= 0 && (ltIdx < 0 || spIdx < ltIdx))
+            ltIdx = spIdx;
+        var nameLen = ltIdx >= 0 ? ltIdx : toolcallContent.Length;
+        var toolName = toolcallContent.Substring(0, nameLen).Trim();
+
+        var args = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        var argMatches = System.Text.RegularExpressions.Regex.Matches(
+            toolcallContent, @"<([a-zA-Z_][\w]*)>(.*?)</\1>",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Singleline);
+        foreach (System.Text.RegularExpressions.Match m in argMatches)
+         {
+            var key = m.Groups[1].Value;
+            if (!string.IsNullOrEmpty(key)) args[key] = m.Groups[2].Value;
+         }
+
+        return new ToolCallRequest { ToolName = toolName, Args = args, Index = index };
+     }
 
      /// <summary>Extract clean LLM response by stripping hallucination noise.</summary>
 
@@ -1484,152 +1546,6 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
      }
 
 
-    /// <summary>Removes &lt;think&gt;…&lt;/think&gt; reasoning blocks (streaming models like Qwen3.5). Unclosed blocks removed entirely.</summary>
-    // Stateless utility — no mutable state.
-    internal static string StripThinkBlocks(string text)
-     {
-        if (string.IsNullOrEmpty(text)) return text;
-        var result = System.Text.RegularExpressions.Regex.Replace(
-            text, "<think>[\\s\\S]*?(?:</think>|$)", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        return result;
-     }
-
-    private string ExtractCleanResponse(string raw)
-     {
-        if (string.IsNullOrEmpty(raw)) return "";
-
-        // Reasoning models: strip <think>…</think> blocks before tag parsing.
-        raw = StripThinkBlocks(raw);
-
-        var llmStart = raw.IndexOf("<lm>", StringComparison.OrdinalIgnoreCase);
-        var llmEnd = raw.IndexOf("</lm>", StringComparison.OrdinalIgnoreCase);
-
-        string content;
-        if (llmStart >= 0 && llmEnd >= 0 && llmEnd > llmStart)
-         {
-            content = raw.Substring(llmStart + 4, llmEnd - llmStart - 4).Trim();
-             _logger?.Debug("Extract", $"Extracted from <lm> container: {content.Length} chars (noise stripped: {raw.Length - content.Length - 9} chars)");
-         }
-        else if (llmStart >= 0 && llmEnd < 0)
-         {
-            content = raw.Substring(llmStart + 4).Trim();
-             _logger?.Debug("Extract", $"<lm> opened but not closed — taking rest: {content.Length} chars");
-         }
-        else
-         {
-            var lmRegex = new System.Text.RegularExpressions.Regex(@"<l?m[^>]*>?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            var lmMatch = lmRegex.Match(raw);
-            if (lmMatch.Success)
-             {
-                content = raw.Substring(lmMatch.Index + lmMatch.Length).Trim();
-                var closeRegex = new System.Text.RegularExpressions.Regex(@"</?l?m[^>]*>?$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                content = closeRegex.Replace(content, "").Trim();
-                 _logger?.Debug("Extract", $"Fallback regex found malformed <lm> tag at {lmMatch.Index}: extracted {content.Length} chars");
-             }
-            else
-             {
-                content = raw.Trim();
-                 _logger?.Debug("Extract", $"No <lm> container found — using raw: {content.Length} chars");
-             }
-         }
-
-         _logger?.Debug("Extract", $"Content length: {content.Length}");
-
-        var thinkStart = content.IndexOf("<thinking>", StringComparison.OrdinalIgnoreCase);
-        var thinkEnd = thinkStart >= 0
-             ? content.IndexOf("</thinking>", thinkStart + 10, StringComparison.OrdinalIgnoreCase)
-             : -1;
-
-        var toolcallBlocks = new List<(int start, int end)>();
-        var searchFrom = thinkEnd >= 0 ? thinkEnd + 11 : 0;
-        while (searchFrom < content.Length)
-         {
-            var tcStart = content.IndexOf("<toolcall>", searchFrom, StringComparison.OrdinalIgnoreCase);
-            if (tcStart < 0) break;
-            var tcEnd = content.IndexOf("</toolcall>", tcStart + 10, StringComparison.OrdinalIgnoreCase);
-            if (tcEnd < 0)
-             {
-                toolcallBlocks.Add((tcStart, content.Length));
-                break;
-             }
-            toolcallBlocks.Add((tcStart, tcEnd + 11));
-            searchFrom = tcEnd + 11;
-         }
-
-        var outputSearchFrom = thinkEnd >= 0 ? thinkEnd + 11 : 0;
-        var outputStart = content.IndexOf("<output>", outputSearchFrom, StringComparison.OrdinalIgnoreCase);
-        int? outputEnd = null;
-        if (outputStart >= 0)
-         {
-            var oc = content.IndexOf("</output>", outputStart + 8, StringComparison.OrdinalIgnoreCase);
-            outputEnd = oc >= 0 ? oc + 9 : content.Length;
-
-            var firstToolcallStart = toolcallBlocks.Count > 0 ? toolcallBlocks[0].start : int.MaxValue;
-            bool hasOutputFirst = outputStart >= 0 && outputStart < firstToolcallStart;
-
-            var outSb = new StringBuilder();
-
-            if (thinkStart >= 0 && thinkEnd >= 0)
-             {
-                var thinkContent = content.Substring(thinkStart, thinkEnd + 11 - thinkStart).Trim();
-                outSb.AppendLine(thinkContent);
-             }
-
-            if (hasOutputFirst)
-             {
-                var outputLen = outputEnd!.Value - outputStart;
-                outSb.Append(content.Substring(outputStart, outputLen).Trim());
-             }
-            else if (toolcallBlocks.Count > 0)
-             {
-                foreach (var (tcS, tcE) in toolcallBlocks)
-                 {
-                    var blockContent = content.Substring(tcS, tcE - tcS).Trim();
-                    outSb.AppendLine(blockContent);
-                 }
-                 _logger?.Debug("Extract", $"Extracted {toolcallBlocks.Count} <toolcall> blocks");
-             }
-            else if (outputStart >= 0)
-             {
-                var outputLen = outputEnd!.Value - outputStart;
-                outSb.Append(content.Substring(outputStart, outputLen).Trim());
-             }
-            else
-             {
-                return content.Trim();
-             }
-
-            var result = outSb.ToString().Trim();
-             _logger?.Debug("Extract", $"Output: {result.Length} chars, starts with: {StringUtil.Default.Truncate(result, 80)}");
-            return result;
-         }
-
-        var sb = new StringBuilder();
-        if (thinkStart >= 0 && thinkEnd >= 0)
-         {
-            var thinkContent = content.Substring(thinkStart, thinkEnd + 11 - thinkStart).Trim();
-            sb.AppendLine(thinkContent);
-         }
-
-        if (toolcallBlocks.Count > 0)
-         {
-            foreach (var (tcS, tcE) in toolcallBlocks)
-             {
-                var blockContent = content.Substring(tcS, tcE - tcS).Trim();
-                sb.AppendLine(blockContent);
-             }
-             _logger?.Debug("Extract", $"Extracted {toolcallBlocks.Count} <toolcall> blocks");
-         }
-        else if (thinkStart < 0)
-         {
-            return content.Trim();
-         }
-
-        var finalResult = sb.ToString().Trim();
-         _logger?.Debug("Extract", $"Output: {finalResult.Length} chars, starts with: {StringUtil.Default.Truncate(finalResult, 80)}");
-        return finalResult;
-    }
-
     /// <summary>v13b: tool specs for remote native function calling (open string-arg schema).</summary>
     private List<ToolSpec> BuildToolSpecs() =>
         _tools.Select(t => new ToolSpec
@@ -1640,8 +1556,8 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                 : t.Description + "\n\nExample: " + t.UsageExample,
          }).ToList();
 
-    /// <summary>Converts a grammar-forced envelope to internal decision text; null when unsupported/unavailable.</summary>
-    private async Task<string?> TryGenerateStructuredAsync(string prompt, InferenceRequestParams parameters, CancellationToken ct)
+    /// <summary>v14: Parses the grammar-forced envelope JSON directly into an LLMDecision; null when unsupported/unavailable.</summary>
+    private async Task<LLMDecision?> TryGenerateStructuredAsync(string prompt, InferenceRequestParams parameters, CancellationToken ct)
      {
         try
          {
@@ -1657,7 +1573,7 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                 _useStructuredDecoding = false;
                 return null;
              }
-            return StructuredDecisionAdapter.Convert(envelope);
+            return StructuredDecisionAdapter.ParseDecision(envelope);
          }
         catch (HttpRequestException hre) when (hre.StatusCode is System.Net.HttpStatusCode.NotFound or System.Net.HttpStatusCode.MethodNotAllowed or System.Net.HttpStatusCode.NotImplemented)
          {

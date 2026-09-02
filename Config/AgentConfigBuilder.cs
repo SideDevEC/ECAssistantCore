@@ -230,7 +230,7 @@ public class AgentConfigBuilder
                     TopP = 0.8f,
                     TopK = 40,
                     RepeatPenalty = 1.1f,
-                    AntiPrompts = new[] { "User:", "Question:", "</lm>" },
+                    AntiPrompts = new[] { "User:", "Question:" },
                 },
                 Summarize = new SummarizeConfig
                 {
@@ -241,7 +241,7 @@ public class AgentConfigBuilder
                     TopP = 0.8f,
                     TopK = 40,
                     RepeatPenalty = 1.1f,
-                    AntiPrompts = new[] { "User:", "Question:", "</lm>" },
+                    AntiPrompts = new[] { "User:", "Question:" },
                 },
             },
         };

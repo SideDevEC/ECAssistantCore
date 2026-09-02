@@ -97,7 +97,7 @@ public class MockEngine : EAgentEngine
         return Task.CompletedTask;
     }
 
-    public override async Task<string> GenerateAsync(string userPrompt)
+    public override async Task<LLMDecision> GenerateAsync(string userPrompt)
     {
         _lifecycle.TurnCount = 0;
         GenerateCallCount++;
@@ -147,7 +147,8 @@ public class MockEngine : EAgentEngine
         }
 
         await Task.CompletedTask;
-        return response;
+        // v14: wrap the queued text response as a direct-answer LLMDecision.
+        return new LLMDecision(false, null, new Dictionary<string, string?>(), response);
     }
 
     protected override SubAgentManager CreateSubAgentManager()

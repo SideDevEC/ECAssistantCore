@@ -10,13 +10,13 @@ namespace ECAssistant.Core.Orchestration;
 
 /// <summary>
 /// Orchestrator — the decision-making brain for multi-step agent workflows.
-/// 
-/// v2.2: Clean response parsing only.
-/// The engine (EAgentEngine) already strips noise via ExtractCleanResponse().
-/// We simply detect what type of structured block was returned:
-///    1. <toolcall>...</toolcall> → extract tool name + args, execute, continue loop
-///    2. <output>...</output> → extract answer, return to user, stop loop
-///    3. Neither → error (invalid response), stop loop
+///
+/// v14: Tag-free. The engine returns a parsed LLMDecision directly — the legacy
+/// <lm>/<output>/<toolcall> tag IR has been removed.
+/// We simply act on the decision:
+///    1. WantsToolCall → execute the requested tool(s), continue loop
+///    2. WantsDirectAnswer → return the answer to the user, stop loop
+///    3. Neither → retry once (text fallback), then best-effort delivery
 /// </summary>
 public sealed class AgentOrchestrator : IAsyncDisposable
 {
@@ -26,7 +26,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
     private readonly List<string> _toolCallLog = new();
     private readonly List<string> _completedSteps = new();
     private int _formatRetries = 0;
-    private const int MaxFormatRetries = 2;
+    private const int MaxFormatRetries = 1; // v14: structured decoding rarely needs retries
 
      // v10.6: TaskPlanner for chained multi-step tasks
     private List<SubTask>? _subTasks = null;
@@ -219,11 +219,11 @@ public sealed class AgentOrchestrator : IAsyncDisposable
             _logger?.Info("Orchestrator", $"Turn {_turnCount + 1}/{_maxTurns}");
 
                   // v12.0: chat-classified goals answer directly — no toolcall demanded
-              var llmResponse = await _engine.GenerateAsync(goal);
+              var decision = await _engine.GenerateAsync(goal);
 
               // v10.11.1: Check if generation was stopped by user (ESC) — bail out immediately,
-              // don't attempt format retries on the "(Stopped by user)" string.
-             if (llmResponse == "(Stopped by user)" || _engine.IsExecutionStopped)
+              // don't attempt format retries on the stopped sentinel.
+             if (decision.AnswerText == "(Stopped by user)" || _engine.IsExecutionStopped)
              {
                 _out?.WriteWarning("Generation was stopped by user (ESC). Not retrying.");
 
@@ -245,25 +245,25 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                  };
              }
 
-             _out?.WriteDim($"[Orchestrator] Response ({llmResponse.Length} chars): {StringUtil.Default.Truncate(llmResponse, 200)}");
+             _out?.WriteDim($"[Orchestrator] Decision: WantsToolCall={decision.WantsToolCall}, WantsDirectAnswer={decision.WantsDirectAnswer}, ToolCalls={decision.ToolCallCount}, ToolName={decision.ToolName}");
 
-              // v12.12 model-agnostic: any model must be able to converse, even
-              // without following the <lm>/<output> tag protocol.
-              if (llmResponse.StartsWith("[Error]", StringComparison.OrdinalIgnoreCase))
+              // v12.12 model-agnostic: transport-level failures are surfaced by the
+              // engine as a "[Error] ..." sentinel answer — never treat as model
+              // output, never format-retry. Fail the run with the error.
+              if (decision.AnswerText?.StartsWith("[Error]", StringComparison.OrdinalIgnoreCase) == true)
                        {
                   // Transport-level failure surfaced by the engine — never treat as
                   // model output, never format-retry. Fail the run with the error.
-                  _logger?.Error("Orchestrator", $"Engine error surfaced: {llmResponse}");
+                  _logger?.Error("Orchestrator", $"Engine error surfaced: {decision.AnswerText}");
                   return new OrchestratorResult
                            {
-                          FinalOutput = llmResponse,
+                          FinalOutput = decision.AnswerText,
                           ToolCallsMade = _turnCount,
                           Status = OrchestratorStatus.Failed
                            };
                        }
 
-                  // Step 2: Parse the clean LLM output — detect which block type was returned
-              var decision = ParseLLMDecision(llmResponse);
+                  // Step 2: The decision is already parsed by the engine — no tag parsing here.
               _out?.WriteDim($"[Orchestrator] Parse result: WantsToolCall={decision.WantsToolCall}, WantsDirectAnswer={decision.WantsDirectAnswer}, ToolCalls={decision.ToolCallCount}, ToolName={decision.ToolName}");
 
               if (decision.WantsToolCall)
@@ -316,7 +316,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
                      // v10.16.2: Conservative batch sub-task advancement.
                      // Advance one sub-task per successful tool in the batch.
-                     // The LLM decides when ALL steps are done via <output>.
+                     // The LLM decides when ALL steps are done via a final answer.
                     if (_subTasks != null && _subTasks.Count > 1)
                      {
                         if (failCount == 0 && okCount > 0)
@@ -421,7 +421,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                             _engine.InjectFormatRetry(
                                 $"The user's original request was: \"{goal}\"\n" +
                                 "That exact tool call already failed (see the error above). Repeating it gives the same error.\n" +
-                                "Do NOT start a new or unrelated task. Change your approach: use DIFFERENT arguments or a different tool, or if the task cannot proceed, respond with <lm><thinking>reasoning</thinking><output>what you found and what blocked you</output></lm>.");
+                                "Do NOT start a new or unrelated task. Change your approach: use DIFFERENT arguments or a different tool, or if the task cannot proceed, provide your final answer with what you found and what blocked you.");
                             _turnCount++;
                             continue;
                          }
@@ -434,7 +434,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                             _engine.InjectFormatRetry(
                                 $"The user's original request was: \"{goal}\"\n" +
                                 "You already executed exactly this call and its results are ABOVE in the conversation.\n" +
-                                "Do NOT repeat it, do NOT start a new or unrelated task. Use those results and answer the ORIGINAL request with <lm><thinking>reasoning</thinking><output>your answer</output></lm>. " +
+                                "Do NOT repeat it, do NOT start a new or unrelated task. Use those results to answer the ORIGINAL request directly. " +
                                 "Only call a tool again with CHANGED arguments if you genuinely need different data for it.");
                             _turnCount++;
                             continue;
@@ -544,7 +544,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                       }
             else if (decision.WantsDirectAnswer)
                        {
-                _out?.WriteLine("[Orchestrator] LLM gave direct answer (<output>). Stopping.");
+                _out?.WriteLine("[Orchestrator] LLM gave direct answer. Stopping.");
                     return new OrchestratorResult
                              {
                             FinalOutput = decision.AnswerText!,
@@ -554,36 +554,33 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                        }
             else
                        {
-                  // v9.12: Format retry — model produced text without tags, retry with strong reminder
-                 _formatRetries++;
+                   // v14: text-fallback path only — the structured envelope always yields a
+                   // valid decision, so this branch is reached when free-form streaming
+                   // produced neither an answer nor a tool call. Retry once, then deliver best-effort.
+                  _formatRetries++;
                 if (_formatRetries <= MaxFormatRetries)
-                 {
-                    _logger?.Warn("Orchestrator", $"No tags (attempt {_formatRetries}/{MaxFormatRetries}). Removing bad response, retrying.");
+                  {
+                     _logger?.Warn("Orchestrator", $"No decision (attempt {_formatRetries}/{MaxFormatRetries}). Removing bad response, retrying.");
 
-                     // Remove the bad assistant response from history so model doesn't learn from it
+                      // Remove the bad assistant response from history so model doesn't learn from it
                     await _engine.RemoveLastAssistantResponseAsync();
 
-                     // Inject as a user-level message (not tool result) for stronger signal
-                     _engine.InjectFormatRetry(
-                         "Your last response was REJECTED — you did not use the required XML tags.\n" +
-                         "You MUST respond using this EXACT format:\n" +
-                         "<lm><thinking>brief reasoning</thinking><output>your answer</output></lm>\n" +
-                         "Here is a full worked example for the question 'hey whats up':\n" +
-                         "<lm><thinking>Just a greeting, no task.</thinking><output>Hey! Not much — how can I help you today?</output></lm>\n" +
-                         "Do NOT write any text outside the <lm> container. Do NOT skip any tags. <thinking> is REQUIRED — never omit it.\n" +
-                         "Now answer the previous question using the correct format.");
-                     _turnCount++;
+                      // Inject as a user-level message (not tool result) for stronger signal
+                      _engine.InjectFormatRetry(
+                           "Your last response did not produce an answer or a tool call.\n" +
+                           "If you have enough information, provide your final answer. If you need more data, call a tool.");
+                       _turnCount++;
                     continue;
-                 }
+                  }
                 else
-                 {
-                    // v12.12 model-agnostic: after format retries, don't error out —
-                    // deliver the model's last response (best effort) so ANY model can
-                    // complete a conversation, even one that never learns the tags.
-                    _logger?.Warn("Orchestrator", $"No tags after {MaxFormatRetries} retries — delivering best-effort response.");
+                  {
+                     // v12.12 model-agnostic: after format retries, don't error out —
+                     // deliver the model's last response (best effort) so ANY model can
+                     // complete a conversation.
+                     _logger?.Warn("Orchestrator", $"No decision after {MaxFormatRetries} retries — delivering best-effort response.");
                     return new OrchestratorResult
                              {
-                            FinalOutput = llmResponse,
+                            FinalOutput = decision.AnswerText ?? "(No response content)",
                             ToolCallsMade = _turnCount + 1,
                             Status = OrchestratorStatus.GoalAchieved
                              };
@@ -603,14 +600,11 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                      };
               }
 
-      // ─── Content Cleaning ──────────────────
 
 
       // ─── Multi-Tool Parsing (v10.13) ────────────
 
-     /// <summary>
-     /// Parse the LLM's clean response — detect one or more <toolcall> blocks or an <output> block.
-    // v11.4: Fast conversational gate — action verb + step indicator heuristic
+     // v11.4: Fast conversational gate — action verb + step indicator heuristic
     private static readonly string[] ActionVerbs = new[]
     {
         "build", "create", "add", "remove", "update", "fix", "replace", "refactor",
@@ -636,367 +630,237 @@ public sealed class AgentOrchestrator : IAsyncDisposable
         return !hasActions && !hasSteps;
     }
 
-     ///
-     /// The engine already strips noise via ExtractCleanResponse() and extracts ALL <toolcall> blocks.
-     /// We parse them into a list of ToolCallRequest objects for the ParallelToolExecutor.
-     ///
-     /// Priority: if <toolcall> blocks exist, they take precedence over <output>.
-     /// A response with both <toolcall> and <output> is treated as tool calls (output is ignored).
-     /// </summary>
     /// <summary>Canonical signature for a tool call (tool + ordered args) — used by the repeat/failure guards. Pure.</summary>
     // Stateless utility — no mutable state.
     internal static string BuildCallSignature(string toolName, Dictionary<string, string?> args) =>
         toolName + "|" + string.Join("&",
             (args ?? new Dictionary<string, string?>()).OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => $"{kv.Key}={kv.Value}"));
 
-    internal LLMDecision ParseLLMDecision(string response)
-         {
-            var trimmed = response.Trim();
+       // ─── Tool Execution ──────────────────────
 
-              // v10.13: Find ALL <toolcall>...</toolcall> blocks
-            var toolCalls = new List<ToolCallRequest>();
-            var searchFrom = 0;
-            while (searchFrom < trimmed.Length)
-             {
-                var tcStart = trimmed.IndexOf("<toolcall>", searchFrom, StringComparison.OrdinalIgnoreCase);
-                if (tcStart < 0) break;
-                var tcEnd = trimmed.IndexOf("</toolcall>", tcStart + 10, StringComparison.OrdinalIgnoreCase);
-                string blockContent;
-                if (tcEnd < 0)
-                 {
-                     // No close — take rest
-                    blockContent = trimmed.Substring(tcStart + 10).Trim();
-                    searchFrom = trimmed.Length;
-         }
-                else
-                 {
-                    blockContent = trimmed.Substring(tcStart + 10, tcEnd - tcStart - 10).Trim();
-                    searchFrom = tcEnd + 11;   // </toolcall> is 11 chars
-         }
-
-                var tc = ParseToolCallBlock(blockContent, toolCalls.Count + 1);
-                if (!string.IsNullOrEmpty(tc.ToolName))
-                    toolCalls.Add(tc);
-             }
-
-            if (toolCalls.Count > 0)
-             {
-                 // Found one or more <toolcall> blocks
-                return new LLMDecision(toolCalls);
-             }
-
-              // Check for <output>...</output> block
-            var outputOpenIdx = trimmed.IndexOf("<output>", StringComparison.OrdinalIgnoreCase);
-            int? outputCloseIdx = null;
-            if (outputOpenIdx >= 0)
-               {
-                var closePos = trimmed.IndexOf("</output>", outputOpenIdx + "<output>".Length, StringComparison.OrdinalIgnoreCase);
-                if (closePos >= outputOpenIdx + "<output>".Length)
-                    outputCloseIdx = closePos;
-               }
-
-            if (outputOpenIdx >= 0 && outputCloseIdx.HasValue)
-                   {
-                  // Found an <output> block (possibly empty) — extract the answer text
-                var answer = trimmed.Substring(
-                    outputOpenIdx + "<output>".Length,
-                    outputCloseIdx.Value - outputOpenIdx - "<output>".Length).Trim();
-                return new LLMDecision(false, null, new Dictionary<string, string?>(), answer);
-                   }
-
-              // v12.12 model-agnostic fallback: some models answer inside
-              // <thinking>…</thinking> only (no <output>, no <toolcall>). Treat the
-              // unwrapped thinking text as a direct answer instead of rejecting —
-              // chat must work with ANY model. Tool-capable models that intend a
-              // tool call will have emitted a <toolcall> block, which is matched above.
-              var thinkOpen = trimmed.IndexOf("<thinking>", StringComparison.OrdinalIgnoreCase);
-              if (thinkOpen >= 0)
-                   {
-                  var thinkClose = trimmed.IndexOf("</thinking>", thinkOpen + "<thinking>".Length, StringComparison.OrdinalIgnoreCase);
-                  var inner = thinkClose >= 0
-                      ? trimmed.Substring(thinkOpen + "<thinking>".Length, thinkClose - thinkOpen - "<thinking>".Length).Trim()
-                      : trimmed.Substring(thinkOpen + "<thinking>".Length).Trim();
-                  if (inner.Length > 0)
-                       {
-                      _logger?.Info("Orchestrator", "No <output>/<toolcall> tags — using <thinking> content as direct answer (model-agnostic fallback).");
-                      return new LLMDecision(false, null, new Dictionary<string, string?>(), inner);
-                       }
-                   }
-
-              // Neither block found — invalid response
-            return new LLMDecision(false, null, new Dictionary<string, string?>(), null);
-         }
-
-
-/// <summary>Parses a single <toolcall> block content to extract tool name and arguments.</summary>
-    private ToolCallRequest ParseToolCallBlock(string toolcallContent, int index)
-           {
-              // Extract tool name: first word before any '<', space, or end of string
-            var ltIdx = toolcallContent.IndexOf('<');
-            var spIdx = toolcallContent.IndexOf(' ');
-            if (spIdx >= 0 && (ltIdx < 0 || spIdx < ltIdx))
-                ltIdx = spIdx;
-            var nameLen = ltIdx >= 0 ? ltIdx : toolcallContent.Length;
-            var toolName = toolcallContent.Substring(0, nameLen).Trim();
-
-              // Extract all <argname>value</argname> tags from content
-             // Use Singleline so . matches newlines (for multi-line content args)
-            var args = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
-            var argMatches = Regex.Matches(toolcallContent, @"<([a-zA-Z_][\w]*)>(.*?)</\1>", RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
-            _logger?.Debug("Parse", $"Toolcall #{index} content: {toolcallContent}");
-            _logger?.Debug("Parse", $"Regex matches: {argMatches.Count}");
-            foreach (Match m in argMatches)
-                {
-                var key = m.Groups[1].Value;
-                var value = m.Groups[2].Value;
-                _logger?.Debug("Parse", $"Arg: {key} = {StringUtil.Default.Truncate(value, 100)}");
-                if (!string.IsNullOrEmpty(key)) args[key] = value;
-                }
-
-             // Fallback: if no args were found with closing tags, try the old regex
-             // (captures up to next </ which handles cases where LLM omits closing tag name)
-            if (args.Count == 0)
-             {
-                var fallbackMatches = Regex.Matches(toolcallContent, @"<([a-zA-Z_][\w]*)>(.*?)(?=</|$)", RegexOptions.IgnoreCase | RegexOptions.Singleline);
-                foreach (Match m in fallbackMatches)
-                 {
-                    var key = m.Groups[1].Value;
-                    var value = m.Groups[2].Value.Trim();
-                    if (!string.IsNullOrEmpty(key) && !args.ContainsKey(key))
-                        args[key] = value;
-                 }
-             }
-
-            return new ToolCallRequest { ToolName = toolName, Args = args, Index = index };
-           }
-
-      // ─── Tool Execution ──────────────────────
-
-      /// <summary>Check if recent tool calls have all failed.</summary>
+       /// <summary>Check if recent tool calls have all failed.</summary>
     private bool IsFailureStreak(int threshold)
-               {
+                {
         if (_toolCallLog.Count < threshold) return false;
         var lastN = _toolCallLog.TakeLast(threshold);
-             // v10.13.1: Match FAIL, ERR, EXCEPTION, BATCH FAIL, and DENIED
+              // v10.13.1: Match FAIL, ERR, EXCEPTION, BATCH FAIL, and DENIED
             return lastN.All(log => log.Contains("ERR") || log.Contains("EXCEPTION") || log.Contains("FAIL") || log.Contains("DENIED"));
-               }
+                }
 
-      /// <summary>Execute a tool call by name with args dictionary.</summary>
+       /// <summary>Execute a tool call by name with args dictionary.</summary>
     private async Task<EToolResult> ExecuteTool(string toolName, Dictionary<string, string?> args)
-              {
+               {
         var tool = _engine.Tools.FirstOrDefault(t => t.Name.Equals(toolName, StringComparison.OrdinalIgnoreCase));
         if (tool == null)
             throw new InvalidOperationException($"Unknown tool: {toolName}");
 
         if (!tool.IsEnabled)
-        {
+         {
             _logger?.Info("Orchestrator", $"Tool blocked (disabled): {tool.Name}");
             return EToolResult.Failure(toolName, "[BLOCKED] Tool is disabled by configuration.");
-        }
-        _logger?.Debug("Orchestrator", $"Executing: {tool.Name}");
-         // v10.9.3: Pass execution cancellation token to tool
+         }
+         _logger?.Debug("Orchestrator", $"Executing: {tool.Name}");
+          // v10.9.3: Pass execution cancellation token to tool
         return await tool.ExecuteAsync(args, _engine.ExecutionToken);
-              }
+               }
 
-      /// <summary>v10.18.1: Get tool call log for sub-agent partial results.</summary>
+       /// <summary>v10.18.1: Get tool call log for sub-agent partial results.</summary>
      public IReadOnlyList<string> GetToolCallLog() => _toolCallLog.AsReadOnly();
 
-      /// <summary>Format tool call log for final summary output.</summary>
+       /// <summary>Format tool call log for final summary output.</summary>
     private string FormatTurnLog()
-               {
+                {
         if (_toolCallLog.Count == 0) return "";
         var sb = new StringBuilder();
             sb.AppendLine("--- Tool Call History ---");
         foreach (var logEntry in _toolCallLog)
-            sb.AppendLine($"            - {logEntry}");
+            sb.AppendLine($"             - {logEntry}");
         sb.AppendLine("--- End ---");
             return sb.ToString();
-               }
+                }
 
-      /// <summary>Reset the orchestrator state.</summary>
+       /// <summary>Reset the orchestrator state.</summary>
     public void Reset()
-               {
-                   _turnCount = 0;
-                   _toolCallLog.Clear();
-                   _formatRetries = 0;
-                   // Reset failure-loop detection — stale signatures would suppress retries
-                   // of legitimately-different calls on the next run.
-                   _failedCallSignatures.Clear();
-                   _lastSuccessfulCallSignature = null;
-                   _maxTurns = _baseMaxTurns; // recompute on next decomposition
-                   // v10.6: Reset sub-task state
-                   _subTasks = null;
-                   _currentSubTask = 0;
-                   _executionPlan = null; // v10.17: Reset execution plan
-               }
+                {
+                    _turnCount = 0;
+                    _toolCallLog.Clear();
+                    _formatRetries = 0;
+                    // Reset failure-loop detection — stale signatures would suppress retries
+                    // of legitimately-different calls on the next run.
+                    _failedCallSignatures.Clear();
+                    _lastSuccessfulCallSignature = null;
+                    _maxTurns = _baseMaxTurns; // recompute on next decomposition
+                    // v10.6: Reset sub-task state
+                    _subTasks = null;
+                    _currentSubTask = 0;
+                    _executionPlan = null; // v10.17: Reset execution plan
+                }
 
-     // v10.6: Build step-aware directive that tells the LLM which sub-task to focus on.
-     // This is injected after each tool result to guide the LLM through chained tasks.
+      // v10.6: Build step-aware directive that tells the LLM which sub-task to focus on.
+      // This is injected after each tool result to guide the LLM through chained tasks.
     private string BuildStepDirective()
-     {
+      {
         var sb = new StringBuilder();
 
         sb.AppendLine("The tool has returned its result above. Now respond to the user.");
-        sb.AppendLine("Open <lm><thinking>brief reasoning</thinking> then either <output>your answer</output></lm> if done, or <lm><thinking>brief reasoning</thinking><toolcall>...</toolcall></lm> if you need more data.");
-        sb.AppendLine("Do NOT write plain text. Use the tags.");
-        sb.AppendLine("IMPORTANT: Check [TASK PROGRESS] below. If you completed multiple steps in a single tool call (e.g. batch shell command), the progress tracker may only show one as completed. Check the tool output above — if you covered all remaining steps, use <output> to finish. If steps genuinely remain, use <toolcall>.");
+        sb.AppendLine("If you have enough information, provide your final answer. If you need more data, call a tool.");
+        sb.AppendLine("IMPORTANT: Check [TASK PROGRESS] below. If you completed multiple steps in a single tool call (e.g. batch shell command), the progress tracker may only show one as completed. Check the tool output above — if you covered all remaining steps, finish with your final answer. If steps genuinely remain, call another tool.");
         sb.AppendLine("Do NOT retry steps that already succeeded — check the tool output above to see what was already done.");
 
-         // v10.6: If we have sub-tasks, inject step context
+          // v10.6: If we have sub-tasks, inject step context
         if (_subTasks != null && _subTasks.Count > 1)
-         {
+          {
             sb.AppendLine();
             sb.AppendLine($"[TASK PROGRESS] You are on step {_currentSubTask + 1} of {_subTasks.Count}:");
 
             for (int i = 0; i < _subTasks.Count; i++)
-             {
+              {
                 var status = _subTasks[i].Status switch
-                 {
+                  {
                     SubTaskStatus.Completed => "[OK]",
                     SubTaskStatus.Failed => "[FAIL]",
                     SubTaskStatus.InProgress => "[...]",
-                     _ => "[ ]"
-                 };
-                var marker = i == _currentSubTask ? " >> " : "     ";
-                 // v10.7.4: Escape angle brackets in step descriptions to prevent fake XML tags
+                      _ => "[ ]"
+                  };
+                var marker = i == _currentSubTask ? " >> " : "      ";
+                  // v10.7.4: Escape angle brackets in step descriptions to prevent fake XML tags
             var safeDesc = _subTasks[i].Description.Replace("<", "&lt;").Replace(">", "&gt;");
             sb.AppendLine($"{marker}{status} {safeDesc}");
-             }
+              }
 
-             // Give explicit instruction for the current step
+              // Give explicit instruction for the current step
             if (_currentSubTask < _subTasks.Count)
-             {
+              {
                 var current = _subTasks[_currentSubTask];
                 if (current.Status == SubTaskStatus.Pending || current.Status == SubTaskStatus.InProgress)
-                 {
+                  {
                     sb.AppendLine();
                     var safeCurrent = _subTasks[_currentSubTask].Description.Replace("<", "&lt;").Replace(">", "&gt;");
                     sb.AppendLine($"> CURRENT STEP: {safeCurrent}");
                     sb.AppendLine("Focus on completing THIS step. If the previous tool result gives you what you need, proceed to this step.");
-                 }
-             }
+                  }
+              }
 
-             // Check if all steps are done
+              // Check if all steps are done
             var allDone = _subTasks.All(s => s.Status == SubTaskStatus.Completed || s.Status == SubTaskStatus.Failed);
             var anyFailed = _subTasks.Any(s => s.Status == SubTaskStatus.Failed);
             if (allDone)
-             {
+              {
                 sb.AppendLine();
                 if (anyFailed)
-                 {
+                  {
                     sb.AppendLine("All steps have been attempted. Some FAILED. Check the tool results above.");
-                    sb.AppendLine("If you can fix the failed steps, use <toolcall>. If not, use <output> to report what happened.");
-                 }
+                    sb.AppendLine("If you can fix the failed steps, call a tool. If not, provide your final answer reporting what happened.");
+                  }
                 else
-                 {
-                    sb.AppendLine("All steps are complete! Give your final <output> summarizing what was done.");
-                 }
-             }
-         }
+                  {
+                    sb.AppendLine("All steps are complete! Provide your final answer summarizing what was done.");
+                  }
+              }
+          }
 
         return sb.ToString();
-     }
+      }
 
-     // v10.6: Advance sub-task tracking based on tool result
-    // v10.22: Post-hoc effect matching — check actual tool effects against remaining sub-tasks
+      // v10.6: Advance sub-task tracking based on tool result
+     // v10.22: Post-hoc effect matching — check actual tool effects against remaining sub-tasks
     private void AdvanceSubTask(bool success, string toolName, string description)
-     {
+      {
         if (_subTasks == null || _subTasks.Count <= 1) return;
         if (_currentSubTask >= _subTasks.Count) return;
 
         var current = _subTasks[_currentSubTask];
         if (success)
-         {
+          {
             current.Status = SubTaskStatus.Completed;
             current.CompletedAt = DateTime.UtcNow;
-            _out?.WriteSuccess($"Step {_currentSubTask + 1}/{_subTasks.Count} completed: {current.Description}");
-             _currentSubTask++;
+             _out?.WriteSuccess($"Step {_currentSubTask + 1}/{_subTasks.Count} completed: {current.Description}");
+              _currentSubTask++;
 
-             // v10.22: Post-hoc effect matching — check if subsequent sub-tasks were also completed
-             // by this single tool call (e.g., one shell command created 3 files covering 3 steps)
+              // v10.22: Post-hoc effect matching — check if subsequent sub-tasks were also completed
+              // by this single tool call (e.g., one shell command created 3 files covering 3 steps)
              MatchEffectsToSubTasks(toolName, description);
 
-             // Mark next sub-task as in-progress
+              // Mark next sub-task as in-progress
             if (_currentSubTask < _subTasks.Count)
-             {
-                 _subTasks[_currentSubTask].Status = SubTaskStatus.InProgress;
-                _out?.WriteInfo($"-> Next step: {_subTasks[_currentSubTask].Description}");
-             }
-         }
+              {
+                  _subTasks[_currentSubTask].Status = SubTaskStatus.InProgress;
+                 _out?.WriteInfo($"-> Next step: {_subTasks[_currentSubTask].Description}");
+              }
+          }
         else
-         {
+          {
             current.Status = SubTaskStatus.Failed;
             current.FailureReason = $"Tool {toolName} failed";
-            _out?.WriteError($"Step {_currentSubTask + 1}/{_subTasks.Count} failed: {current.Description}");
-             _currentSubTask++;
+             _out?.WriteError($"Step {_currentSubTask + 1}/{_subTasks.Count} failed: {current.Description}");
+              _currentSubTask++;
 
             if (_currentSubTask < _subTasks.Count)
-             {
-                 _subTasks[_currentSubTask].Status = SubTaskStatus.InProgress;
-                _out?.WriteWarning($"-> Skipping to next step: {_subTasks[_currentSubTask].Description}");
-             }
-         }
-     }
+              {
+                  _subTasks[_currentSubTask].Status = SubTaskStatus.InProgress;
+                 _out?.WriteWarning($"-> Skipping to next step: {_subTasks[_currentSubTask].Description}");
+              }
+          }
+      }
 
-    /// <summary>
-    /// v10.22: Post-hoc effect matching — check if a completed tool call's actual effects
-    /// also satisfy subsequent pending sub-tasks. For example, if one shell command creates
-    /// 3 files and the plan had 3 steps for creating each file, this detects that all 3 are done.
-    /// 
-    /// Uses keyword matching between the tool description/output and sub-task descriptions.
-    /// Conservative: only advances if there's a clear match (keyword overlap > 60%).
-    /// </summary>
+     /// <summary>
+     /// v10.22: Post-hoc effect matching — check if a completed tool call's actual effects
+     /// also satisfy subsequent pending sub-tasks. For example, if one shell command creates
+     /// 3 files and the plan had 3 steps for creating each file, this detects that all 3 are done.
+     ///
+     /// Uses keyword matching between the tool description/output and sub-task descriptions.
+     /// Conservative: only advances if there's a clear match (keyword overlap > 60%).
+     /// </summary>
     private void MatchEffectsToSubTasks(string toolName, string toolDescription)
-    {
+      {
         if (_subTasks == null || _currentSubTask >= _subTasks.Count) return;
 
         var descWords = toolDescription.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .Where(w => w.Length > 2)
-            .ToHashSet();
+             .Where(w => w.Length > 2)
+             .ToHashSet();
 
-        // Also get the last tool output from context for richer matching
+         // Also get the last tool output from context for richer matching
         var windowMsgs = _engine.ContextWindow.GetWindowMessages();
         var lastTool = windowMsgs.LastOrDefault(m => m.Role == "tool_output");
         if (lastTool != null)
-        {
+         {
             var outputWords = lastTool.Content.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                .Where(w => w.Length > 2);
+                 .Where(w => w.Length > 2);
             foreach (var w in outputWords) descWords.Add(w);
-        }
+         }
 
         int matched = 0;
         while (_currentSubTask < _subTasks.Count)
-        {
+          {
             var task = _subTasks[_currentSubTask];
             if (task.Status != SubTaskStatus.Pending && task.Status != SubTaskStatus.InProgress) break;
 
             var taskWords = task.Description.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                .Where(w => w.Length > 2)
-                .ToList();
+                 .Where(w => w.Length > 2)
+                 .ToList();
             if (taskWords.Count == 0) break;
 
             var overlap = taskWords.Count(w => descWords.Contains(w));
             var matchRatio = (double)overlap / taskWords.Count;
 
             if (matchRatio >= 0.6)
-            {
+             {
                 task.Status = SubTaskStatus.Completed;
                 task.CompletedAt = DateTime.UtcNow;
-                _out?.WriteSuccess($"Step {_currentSubTask + 1}/{_subTasks.Count} auto-detected as done: {task.Description} (effect match {matchRatio:P0})");
-                _currentSubTask++;
+                 _out?.WriteSuccess($"Step {_currentSubTask + 1}/{_subTasks.Count} auto-detected as done: {task.Description} (effect match {matchRatio:P0})");
+                 _currentSubTask++;
                 matched++;
-            }
+             }
             else break;
-        }
+          }
 
         if (matched > 0)
-            _out?.WriteInfo($"Post-hoc matching: {matched} additional sub-task(s) completed by effect overlap.");
-    }
+             _out?.WriteInfo($"Post-hoc matching: {matched} additional sub-task(s) completed by effect overlap.");
+      }
 
     public async ValueTask DisposeAsync()
-     {
+      {
         try { _subAgentManager?.Dispose(); } catch (Exception ex) { _logger?.Debug("Orchestrator", $"Non-critical error ignored: {ex.Message}"); }
         await Task.CompletedTask;
-     }
+      }
 }

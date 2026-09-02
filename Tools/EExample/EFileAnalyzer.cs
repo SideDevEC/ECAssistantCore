@@ -70,5 +70,5 @@ Content preview (first 500 chars):
     }
 
     public override string GetToolExample()
-        => "<toolcall>EFileAnalyzer<path>Program.cs</path></toolcall>";
+        => "EFileAnalyzer(path:Program.cs)";
 }

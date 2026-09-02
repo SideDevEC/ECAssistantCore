@@ -30,7 +30,7 @@ ECAssistant is a local-first AI agent framework. It runs LLM inference on-device
   - `IsConversationalAsync()` on EAgentEngine — StatelessExecutor with shared weights, 2-token output
   - `LooksConversational()` on Orchestrator — static heuristic, no LLM needed
 - **System prompt improvement:** Teach LLM to learn from failed thinking in conversation history
-  - Added guidance: review past `<thinking>` from failed tool calls, adjust approach, don't repeat failed reasoning
+  - Added guidance: review past failed tool calls, adjust approach, do not repeat failed reasoning
 - **CUDA backend fix:** `` condition corrected from `'WINDOWS'` to `'Windows_NT'` (was silently skipping CUDA on Windows)
 - **Vulkan backend:** Re-added as fallback for non-NVIDIA Windows GPUs
 

@@ -27,8 +27,8 @@ public class EShellAgent : EToolBase
         HostShellPrompt();
 
     public override string UsageExample => OperatingSystem.IsWindows()
-        ? "<toolcall>EShellAgent<command>Get-ChildItem -Force</command></toolcall>"
-        : "<toolcall>EShellAgent<command>ls -la</command></toolcall>";
+        ? "EShellAgent(command:Get-ChildItem -Force)"
+        : "EShellAgent(command:ls -la)";
 
     /// <summary>OS-aware shell guidance: exact shell name + worked examples that are valid on THIS host.</summary>
     // Stateless utility — no mutable state; depends only on the host OS.

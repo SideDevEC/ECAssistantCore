@@ -25,7 +25,7 @@ public class EFileResearchTool : EToolBase
         "checking file structure, reading source code, researching project dependencies.";
 
     public override string UsageExample =>
-        "<toolcall>EFileResearchTool<query>find all controllers</query><max_files>20</max_files></toolcall>";
+        "EFileResearchTool(query:find all controllers, max_files:20)";
 
     public override bool IsEnabled { get; protected set; } = true;
 

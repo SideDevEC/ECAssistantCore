@@ -1,11 +1,10 @@
 namespace ECAssistant.Core;
 
 /// <summary>
-/// Builds a system prompt for ECAssistant.Core that includes the required
-/// &lt;lm&gt; tag format rules, OS awareness, and custom domain context.
+/// Builds a system prompt for ECAssistant.Core that includes operating rules,
+/// OS awareness, and custom domain context.
 ///
 /// The OS is auto-detected if WithPlatform() is not called.
-/// The &lt;lm&gt; tag rules are always included — the engine parser depends on them.
 ///
 /// Usage:
 ///   var prompt = SystemPromptBuilder.Create()
@@ -119,9 +118,9 @@ public class SystemPromptBuilder
         sb.AppendLine("## CONVERSATION HISTORY");
         sb.AppendLine();
         sb.AppendLine("When you see history from previous turns:");
-        sb.AppendLine("- `<user>...text...</user>` = what the user asked");
-        sb.AppendLine("- `<tooloutput>ToolName<result>text</result></tooloutput>` = tool result from a previous turn");
-        sb.AppendLine("- Your past `<thinking>`/`<toolcall>`/`<output>` blocks are visible in history.");
+        sb.AppendLine("- Messages from you = what the user asked");
+        sb.AppendLine("- Tool results = output from a previous tool call");
+        sb.AppendLine("- Your past responses are visible in history as assistant messages.");
         sb.AppendLine();
 
         // ── Operating rules ──

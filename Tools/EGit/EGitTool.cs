@@ -22,7 +22,7 @@ public class EGitTool : EToolBase
         "add, branch, checkout. Better than raw shell for git — parses output into clean format.";
 
     public override string UsageExample =>
-        "<toolcall>EGitTool<action>status</action></toolcall>";
+        "EGitTool(action:status)";
 
     public override bool IsEnabled { get; protected set; } = true;
 
