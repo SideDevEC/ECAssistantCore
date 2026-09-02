@@ -90,7 +90,7 @@ User: "Build the project"
 
 - Messages from the user = what they asked
 - Tool results = output from a previous tool call
-- Your past responses are visible in history
+- Your past responses are visible in history. They may start with `[reasoning]` — a brief note about why you made that decision. Use it as context: if a previous approach failed, try a different one.
 - If a previous tool call failed, adjust your approach — don't repeat failed reasoning
 
 ---
