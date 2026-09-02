@@ -76,9 +76,9 @@ public class OrchestratorIntegrationTests : IDisposable
         var (engine, orchestrator, processRunner, _) = CreateEngineWithMockedTools();
 
         // Turn 1: LLM requests a shell command
-        engine.AddResponse("<lm><thinking>Need to run echo</thinking><toolcall>EShellAgent<command>echo hello</command></toolcall></lm>");
+        engine.EnqueueToolCall("EShellAgent", new() { ["command"] = "echo hello" });
         // Turn 2: LLM gives final answer
-        engine.AddResponse("<lm><thinking>Command succeeded</thinking><output>Done</output></lm>");
+        engine.EnqueueDirectAnswer("Done");
 
         processRunner
             .Setup(p => p.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -103,13 +103,11 @@ public class OrchestratorIntegrationTests : IDisposable
         var (engine, orchestrator, processRunner, _) = CreateEngineWithMockedTools();
 
         // Turn 1: LLM requests two shell commands in one response
-        engine.AddResponse(
-            "<lm><thinking>Need two commands</thinking>" +
-            "<toolcall>EShellAgent<command>echo first</command></toolcall>" +
-            "<toolcall>EShellAgent<command>echo second</command></toolcall>" +
-            "</lm>");
+        engine.EnqueueMultiToolCall(
+            ("EShellAgent", new Dictionary<string, string?> { ["command"] = "echo first" }),
+            ("EShellAgent", new Dictionary<string, string?> { ["command"] = "echo second" }));
         // Turn 2: Final answer
-        engine.AddResponse("<lm><thinking>Both done</thinking><output>Both commands executed</output></lm>");
+        engine.EnqueueDirectAnswer("Both commands executed");
 
         processRunner
             .Setup(p => p.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -130,8 +128,8 @@ public class OrchestratorIntegrationTests : IDisposable
     {
         var (engine, orchestrator, processRunner, _) = CreateEngineWithMockedTools();
 
-        engine.AddResponse("<lm><thinking>Step 1</thinking><toolcall>EShellAgent<command>ls</command></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>Got the listing</thinking><output>Directory listed successfully</output></lm>");
+        engine.EnqueueToolCall("EShellAgent", new() { ["command"] = "ls" });
+        engine.EnqueueDirectAnswer("Directory listed successfully");
 
         processRunner
             .Setup(p => p.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -152,7 +150,7 @@ public class OrchestratorIntegrationTests : IDisposable
         var (engine, orchestrator, processRunner, _) = CreateEngineWithMockedTools(maxTurns: 3);
 
         // Engine always returns a tool call, never a final answer
-        engine.SetDefaultResponse("<lm><thinking>Need more data</thinking><toolcall>EShellAgent<command>echo retry</command></toolcall></lm>");
+        engine.SetDefaultToolCall("EShellAgent", new() { ["command"] = "echo retry" });
 
         processRunner
             .Setup(p => p.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -171,8 +169,8 @@ public class OrchestratorIntegrationTests : IDisposable
     {
         var (engine, orchestrator, processRunner, _) = CreateEngineWithMockedTools();
 
-        engine.AddResponse("<lm><thinking>Run a failing command</thinking><toolcall>EShellAgent<command>bad-cmd</command></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>Command failed, reporting</thinking><output>The command failed with exit code 1</output></lm>");
+        engine.EnqueueToolCall("EShellAgent", new() { ["command"] = "bad-cmd" });
+        engine.EnqueueDirectAnswer("The command failed with exit code 1");
 
         processRunner
             .Setup(p => p.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -194,7 +192,7 @@ public class OrchestratorIntegrationTests : IDisposable
     {
         var (engine, orchestrator, processRunner, _) = CreateEngineWithMockedTools();
 
-        engine.AddResponse("<lm><thinking>Simple answer</thinking><output>42</output></lm>");
+        engine.EnqueueDirectAnswer("42");
 
         var result = await orchestrator.ExecuteMultiStep("What is 6*7?");
 
@@ -212,7 +210,7 @@ public class OrchestratorIntegrationTests : IDisposable
     {
         var (engine, orchestrator, _, _) = CreateEngineWithMockedTools(maxTurns: 5);
 
-        // Return empty string — no tags, will trigger format retries
+        // Return empty string — empty direct answer (orchestrator may accept or exhaust turns)
         engine.SetDefaultResponse("");
 
         var result = await orchestrator.ExecuteMultiStep("Test empty response");
@@ -222,19 +220,17 @@ public class OrchestratorIntegrationTests : IDisposable
     }
 
     [Fact]
-    public async Task NoTags_ResponseTriggersFormatRetry_ThenValidAnswer()
+    public async Task PlainTextResponse_TreatedAsDirectAnswer()
     {
         var (engine, orchestrator, _, _) = CreateEngineWithMockedTools(maxTurns: 5);
 
-        // First: no tags (invalid)
+        // v14: plain text is wrapped by MockEngine as a direct answer (no tags needed)
         engine.AddResponse("I think the answer is 42.");
-        // After retry: valid response
-        engine.AddResponse("<lm><thinking>correcting format</thinking><output>42</output></lm>");
 
         var result = await orchestrator.ExecuteMultiStep("What is the answer?");
 
         Assert.Equal(OrchestratorStatus.GoalAchieved, result.Status);
-        Assert.Equal("42", result.FinalOutput);
+        Assert.Equal("I think the answer is 42.", result.FinalOutput);
     }
 
     // ── Tool not registered: unknown tool name ──
@@ -244,8 +240,8 @@ public class OrchestratorIntegrationTests : IDisposable
     {
         var (engine, orchestrator, _, _) = CreateEngineWithMockedTools();
 
-        engine.AddResponse("<lm><thinking>Use unknown tool</thinking><toolcall>ENonExistentTool<arg>value</arg></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>Tool not found, answering</thinking><output>Tool was not available</output></lm>");
+        engine.EnqueueToolCall("ENonExistentTool", new() { ["arg"] = "value" });
+        engine.EnqueueDirectAnswer("Tool was not available");
 
         var result = await orchestrator.ExecuteMultiStep("Use unknown tool");
 

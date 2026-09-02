@@ -215,11 +215,10 @@ public class ParallelToolExecutorIntegrationTests : IDisposable
         _orchestrators.Add(orchestrator);
 
         // Two independent tool calls in one response
-        engine.AddResponse(
-            "<lm><thinking>Read file and run command in parallel</thinking>" +
-            "<toolcall>EFileReader<file>readme.md</file></toolcall>" +
-            "<toolcall>EShellAgent<command>echo parallel</command></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>Both done</thinking><output>Parallel execution complete</output></lm>");
+        engine.EnqueueMultiToolCall(
+            ("EFileReader", new Dictionary<string, string?> { ["file"] = "readme.md" }),
+            ("EShellAgent", new Dictionary<string, string?> { ["command"] = "echo parallel" }));
+        engine.EnqueueDirectAnswer("Parallel execution complete");
 
         // EFileReader won't find the file through ToolAdapter, but EShellAgent will execute
         // Use It.IsAny to match whatever the adapter produces
@@ -256,11 +255,10 @@ public class ParallelToolExecutorIntegrationTests : IDisposable
         _orchestrators.Add(orchestrator);
 
         // Two dependent tool calls (write then read same file)
-        engine.AddResponse(
-            "<lm><thinking>Create then read same file</thinking>" +
-            "<toolcall>ECodeEditor<action>create</action><file>dependent.txt</file><content>Created content</content></toolcall>" +
-            "<toolcall>EFileReader<file>dependent.txt</file></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>Both done sequentially</thinking><output>Sequential execution complete</output></lm>");
+        engine.EnqueueMultiToolCall(
+            ("ECodeEditor", new Dictionary<string, string?> { ["action"] = "create", ["file"] = "dependent.txt", ["content"] = "Created content" }),
+            ("EFileReader", new Dictionary<string, string?> { ["file"] = "dependent.txt" }));
+        engine.EnqueueDirectAnswer("Sequential execution complete");
 
         mockFileSystem.Setup(f => f.FileExists(It.IsAny<string>())).Returns(true);
         mockFileSystem.Setup(f => f.DirectoryExists(It.IsAny<string>())).Returns(true);
@@ -291,11 +289,10 @@ public class ParallelToolExecutorIntegrationTests : IDisposable
         var orchestrator = new AgentOrchestrator(engine, sessionOutput: new TestSessionOutput(_gui), maxTurns: 10, maxFailures: 3, toolPolicy: policy, logger: mockLogger.Object);
         _orchestrators.Add(orchestrator);
 
-        engine.AddResponse(
-            "<lm><thinking>Run two commands in parallel</thinking>" +
-            "<toolcall>EShellAgent<command>echo first</command></toolcall>" +
-            "<toolcall>EShellAgent<command>echo second</command></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>Batch complete</thinking><output>Batch done</output></lm>");
+        engine.EnqueueMultiToolCall(
+            ("EShellAgent", new Dictionary<string, string?> { ["command"] = "echo first" }),
+            ("EShellAgent", new Dictionary<string, string?> { ["command"] = "echo second" }));
+        engine.EnqueueDirectAnswer("Batch done");
 
         // Match any command since EShellAgent wraps the command through ToolAdapter
         mockProcessRunner
@@ -329,11 +326,10 @@ public class ParallelToolExecutorIntegrationTests : IDisposable
         var orchestrator = new AgentOrchestrator(engine, sessionOutput: new TestSessionOutput(_gui), maxTurns: 10, maxFailures: 3, toolPolicy: policy, logger: mockLogger.Object);
         _orchestrators.Add(orchestrator);
 
-        engine.AddResponse(
-            "<lm><thinking>One good one bad command</thinking>" +
-            "<toolcall>EShellAgent<command>echo good</command></toolcall>" +
-            "<toolcall>EShellAgent<command>bad-cmd</command></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>One succeeded one failed</thinking><output>Partial success</output></lm>");
+        engine.EnqueueMultiToolCall(
+            ("EShellAgent", new Dictionary<string, string?> { ["command"] = "echo good" }),
+            ("EShellAgent", new Dictionary<string, string?> { ["command"] = "bad-cmd" }));
+        engine.EnqueueDirectAnswer("Partial success");
 
         // First call succeeds, second fails — use a sequence setup
         var callIndex = 0;

@@ -61,15 +61,13 @@ public class EFileAnalyzerTests : IDisposable
     // ── GetToolExample ──
 
     [Fact]
-    public void GetToolExample_ReturnsXmlFormat()
+    public void GetToolExample_ReturnsPlainTextFormat()
     {
         var tool = CreateTool();
 
         var example = tool.GetToolExample();
 
-        Assert.Contains("<toolcall>", example);
         Assert.Contains("EFileAnalyzer", example);
-        Assert.Contains("</toolcall>", example);
     }
 
     // ── ExecuteAsync — missing filePath ──

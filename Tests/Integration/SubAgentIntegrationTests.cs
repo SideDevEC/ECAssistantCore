@@ -107,10 +107,8 @@ public class SubAgentIntegrationTests : IDisposable
         engine.RegisterTool(new MockSubAgentTool());
         orchestrator.Policy.SetPermission("ESubAgent", approvalRequired: false, "Test");
 
-        engine.AddResponse(
-            "<lm><thinking>Spawn a sub-agent</thinking>" +
-            "<toolcall>ESubAgent<task>Do something simple</task></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>Sub-agent completed</thinking><output>Sub-agent task handled</output></lm>");
+        engine.EnqueueToolCall("ESubAgent", new() { ["task"] = "Do something simple" });
+        engine.EnqueueDirectAnswer("Sub-agent task handled");
 
         var result = await orchestrator.ExecuteMultiStep("Run a sub-agent task");
 
@@ -132,8 +130,8 @@ public class SubAgentIntegrationTests : IDisposable
         orchestrator.Policy.SetPermission("ESubAgent", approvalRequired: false, "Test");
 
         // Call ESubAgent without task argument
-        engine.AddResponse("<lm><thinking>Spawn sub-agent without task</thinking><toolcall>ESubAgent</toolcall></lm>");
-        engine.AddResponse("<lm><thinking>Error received</thinking><output>Missing task argument</output></lm>");
+        engine.EnqueueToolCall("ESubAgent", new Dictionary<string, string?>());
+        engine.EnqueueDirectAnswer("Missing task argument");
 
         var result = await orchestrator.ExecuteMultiStep("Spawn sub-agent without task");
 
@@ -196,11 +194,10 @@ public class SubAgentIntegrationTests : IDisposable
         engine.RegisterTool(new MockSubAgentTool());
         orchestrator.Policy.SetPermission("ESubAgent", approvalRequired: false, "Test");
 
-        engine.AddResponse(
-            "<lm><thinking>Spawn two sub-agents</thinking>" +
-            "<toolcall>ESubAgent<task>Task A</task></toolcall>" +
-            "<toolcall>ESubAgent<task>Task B</task></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>Both sub-agents done</thinking><output>Both tasks completed</output></lm>");
+        engine.EnqueueMultiToolCall(
+            ("ESubAgent", new Dictionary<string, string?> { ["task"] = "Task A" }),
+            ("ESubAgent", new Dictionary<string, string?> { ["task"] = "Task B" }));
+        engine.EnqueueDirectAnswer("Both tasks completed");
 
         var result = await orchestrator.ExecuteMultiStep("Run two sub-agents");
 
@@ -235,7 +232,7 @@ public class MockSubAgentTool : ECAssistant.Core.Tools.EToolBase
     public override string Description => "Mock sub-agent tool for testing";
     public override string UsageExample => "ESubAgent(task=\"test\")";
     public override string GetToolRules() => "<task>=description (required)";
-    public override string GetToolExample() => "<toolcall>ESubAgent<task>test</task></toolcall>";
+    public override string GetToolExample() => "ESubAgent(task:test)";
 
     public override async Task<ECAssistant.Core.Tools.EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {

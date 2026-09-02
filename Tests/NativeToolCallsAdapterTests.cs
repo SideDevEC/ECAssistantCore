@@ -4,7 +4,7 @@ using Xunit;
 
 namespace ECAssistant.Core.Tests;
 
-/// <summary>v13b: remote native tool_calls (OpenAI function calling) → decision envelope → internal decision text.</summary>
+/// <summary>v14: remote native tool_calls (OpenAI function calling) → decision envelope → LLMDecision.</summary>
 public class NativeToolCallsAdapterTests
 {
     private static string Synthesize(string responseJson)
@@ -37,7 +37,7 @@ public class NativeToolCallsAdapterTests
         $$"""{"choices":[{"message":{{messageJson}}}]}""";
 
     [Fact]
-    public void NativeToolCall_ConvertsToToolcallTag()
+    public void NativeToolCall_ParsesToToolCallDecision()
     {
         var message = JsonSerializer.Serialize(new
         {
@@ -48,8 +48,12 @@ public class NativeToolCallsAdapterTests
                 new { type = "function", function = new { name = "read_file", arguments = """{"path":"x.txt"}""" } }
             }
         });
-        var decision = StructuredDecisionAdapter.Convert(Synthesize(Response(message)));
-        Assert.Equal("<lm><thinking></thinking><toolcall>read_file<path>x.txt</path></toolcall></lm>", decision);
+        var decision = StructuredDecisionAdapter.ParseDecision(Synthesize(Response(message)));
+        Assert.True(decision.WantsToolCall);
+        Assert.False(decision.WantsDirectAnswer);
+        Assert.Single(decision.ToolCalls);
+        Assert.Equal("read_file", decision.ToolCalls[0].ToolName);
+        Assert.Equal("x.txt", decision.ToolCalls[0].Args["path"]);
     }
 
     [Fact]
@@ -65,15 +69,18 @@ public class NativeToolCallsAdapterTests
                 new { type = "function", function = new { name = "list_dir", arguments = "{}" } }
             }
         });
-        var decision = StructuredDecisionAdapter.Convert(Synthesize(Response(message)));
-        Assert.StartsWith("<lm><thinking>need to look</thinking>", decision);
+        var decision = StructuredDecisionAdapter.ParseDecision(Synthesize(Response(message)));
+        Assert.True(decision.WantsToolCall);
+        Assert.Equal("need to look", decision.Reasoning);
     }
 
     [Fact]
     public void NoToolCalls_AnswerFromContent()
     {
         var message = JsonSerializer.Serialize(new { role = "assistant", content = "Hello!" });
-        var decision = StructuredDecisionAdapter.Convert(Synthesize(Response(message)));
-        Assert.Equal("<lm><thinking>Hello!</thinking><output>Hello!</output></lm>", decision);
+        var decision = StructuredDecisionAdapter.ParseDecision(Synthesize(Response(message)));
+        Assert.True(decision.WantsDirectAnswer);
+        Assert.Equal("Hello!", decision.AnswerText);
+        Assert.False(decision.WantsToolCall);
     }
 }

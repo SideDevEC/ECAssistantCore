@@ -17,7 +17,7 @@ public sealed class EcaTestSuite
         new TestScenario
         {
             Name = "smoke_simple_answer",
-            Description = "Ask a simple question that should get a direct <output> answer without tool calls",
+            Description = "Ask a simple question that should get a direct answer without tool calls",
             Prompt = "What is 2 + 2? Answer directly.",
             TimeoutSeconds = 90,
             ExpectedStatus = OrchestratorStatus.GoalAchieved,
@@ -343,7 +343,7 @@ public sealed class EcaTestSuite
         {
             Name = "parallel_five_files",
             Description = "Create 5 files in parallel — stress test ParallelToolExecutor with 5 concurrent toolcalls",
-            Prompt = "Create 5 files at the same time using 5 separate EShellAgent toolcalls in one response. Do NOT use semicolons. Each toolcall creates one file:\n1. p1.txt with content 'one'\n2. p2.txt with content 'two'\n3. p3.txt with content 'three'\n4. p4.txt with content 'four'\n5. p5.txt with content 'five'\nEach file must be its own <toolcall> block.",
+            Prompt = "Create 5 files at the same time using 5 separate EShellAgent tool calls in one response. Do NOT use semicolons. Each tool call creates one file:\n1. p1.txt with content 'one'\n2. p2.txt with content 'two'\n3. p3.txt with content 'three'\n4. p4.txt with content 'four'\n5. p5.txt with content 'five'\nEach file must be its own tool call.",
             TimeoutSeconds = 240,
             ExpectedStatus = OrchestratorStatus.GoalAchieved,
             ExpectedFiles = new() { "p1.txt", "p2.txt", "p3.txt", "p4.txt", "p5.txt" },
@@ -512,12 +512,12 @@ public sealed class EcaTestSuite
             // Should complete — sub-agent handles the error and returns a result
         },
 
-        // ── Tier 11: <lm> Container Tag System (v10.15) ──────────
+        // ── Tier 11: JSON Decision Envelope (v14) ─────────
 
         new TestScenario
         {
             Name = "tag_lm_direct_answer",
-            Description = "Verify the model uses <lm> container with <output> for direct answers",
+            Description = "Verify the model uses the JSON decision envelope for direct answers",
             Prompt = "What is the capital of France? Answer in one word.",
             TimeoutSeconds = 90,
             ExpectedStatus = OrchestratorStatus.GoalAchieved,
@@ -527,7 +527,7 @@ public sealed class EcaTestSuite
         new TestScenario
         {
             Name = "tag_lm_toolcall_format",
-            Description = "Verify the model uses <lm> container with <toolcall> for tool calls",
+            Description = "Verify the model uses the JSON decision envelope for tool calls",
             Prompt = "Create a file called tag_test.txt with content 'tag system works'. Use EShellAgent to create it.",
             TimeoutSeconds = 120,
             ExpectedStatus = OrchestratorStatus.GoalAchieved,
@@ -547,7 +547,7 @@ public sealed class EcaTestSuite
         new TestScenario
         {
             Name = "tag_lm_thinking_then_output",
-            Description = "Verify <thinking> block is present but not leaked to user output",
+            Description = "Verify thinking/reasoning is present but not leaked to user output",
             Prompt = "Think briefly about what 10 times 10 is, then give me just the number.",
             TimeoutSeconds = 90,
             ExpectedStatus = OrchestratorStatus.GoalAchieved,
@@ -598,7 +598,7 @@ public sealed class EcaTestSuite
         {
             Name = "selfcorrect_format_retry",
             Description = "Model produces invalid format — orchestrator should retry with format reminder",
-            Prompt = "Tell me about the weather. Use the proper response format with <lm> tags.",
+            Prompt = "Tell me about the weather. Use the proper JSON response format.",
             TimeoutSeconds = 120,
             ExpectedStatus = OrchestratorStatus.GoalAchieved,
             // Should eventually produce valid output after at most 2 format retries
@@ -814,7 +814,7 @@ public sealed class EcaTestSuite
     public List<TestScenario> SubAgentTests
         => ByNamePrefix("subagent_");
 
-    /// <summary>Get only the <lm> tag tests.</summary>
+    /// <summary>Get only the JSON decision envelope tests.</summary>
     public List<TestScenario> TagTests
         => ByNamePrefix("tag_");
 
@@ -854,7 +854,7 @@ public sealed class EcaTestSuite
         new TestScenario
         {
             Name = "mock_direct_answer",
-            Description = "Mock engine returns a direct answer via <output>",
+            Description = "Mock engine returns a direct answer",
             Prompt = "What is 2+2?",
             TimeoutSeconds = 30,
             ExpectedStatus = OrchestratorStatus.GoalAchieved,

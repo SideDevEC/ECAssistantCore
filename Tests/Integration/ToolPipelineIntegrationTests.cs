@@ -73,8 +73,8 @@ public class ToolPipelineIntegrationTests : IDisposable
         var (engine, orchestrator, procRunner, fileSystem, config) = CreatePipeline();
         engine.RegisterTool(new EShellAgent(procRunner.Object, config, _tempDir));
 
-        engine.AddResponse("<lm><thinking>Run echo</thinking><toolcall>EShellAgent<command>echo pipeline-test</command></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>Done</thinking><output>Command executed</output></lm>");
+        engine.EnqueueToolCall("EShellAgent", new() { ["command"] = "echo pipeline-test" });
+        engine.EnqueueDirectAnswer("Command executed");
 
         // EShellAgent wraps the command through ToolAdapter, so use It.IsAny
         procRunner
@@ -98,8 +98,8 @@ public class ToolPipelineIntegrationTests : IDisposable
         var (engine, orchestrator, procRunner, fileSystem, config) = CreatePipeline();
         engine.RegisterTool(new EFileReaderTool(fileSystem.Object, config));
 
-        engine.AddResponse($"<lm><thinking>Read file</thinking><toolcall>EFileReader<file>test.txt</file></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>Got content</thinking><output>File content retrieved</output></lm>");
+        engine.EnqueueToolCall("EFileReader", new() { ["file"] = "test.txt" });
+        engine.EnqueueDirectAnswer("File content retrieved");
 
         // Use It.IsAny for file path since the actual path depends on adapter conversion
         fileSystem.Setup(f => f.FileExists(It.IsAny<string>())).Returns(true);
@@ -121,10 +121,11 @@ public class ToolPipelineIntegrationTests : IDisposable
         var (engine, orchestrator, procRunner, fileSystem, config) = CreatePipeline();
         engine.RegisterTool(new ECodeEditorTool(fileSystem.Object, config));
 
-        engine.AddResponse(
-            "<lm><thinking>Create a file</thinking>" +
-            "<toolcall>ECodeEditor<action>create</action><file>newfile.txt</file><content>Hello World</content></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>File created</thinking><output>File created successfully</output></lm>");
+        engine.EnqueueToolCall("ECodeEditor", new()
+        {
+            ["action"] = "create", ["file"] = "newfile.txt", ["content"] = "Hello World"
+        });
+        engine.EnqueueDirectAnswer("File created successfully");
 
         fileSystem.Setup(f => f.FileExists(It.IsAny<string>())).Returns(false);
         fileSystem.Setup(f => f.DirectoryExists(It.IsAny<string>())).Returns(true);
@@ -143,10 +144,11 @@ public class ToolPipelineIntegrationTests : IDisposable
         var (engine, orchestrator, procRunner, fileSystem, config) = CreatePipeline();
         engine.RegisterTool(new ECodeEditorTool(fileSystem.Object, config));
 
-        engine.AddResponse(
-            "<lm><thinking>Patch the file</thinking>" +
-            "<toolcall>ECodeEditor<action>patch</action><file>patch.txt</file><old_text>old value</old_text><new_text>new value</new_text></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>Patch applied</thinking><output>File patched</output></lm>");
+        engine.EnqueueToolCall("ECodeEditor", new()
+        {
+            ["action"] = "patch", ["file"] = "patch.txt", ["old_text"] = "old value", ["new_text"] = "new value"
+        });
+        engine.EnqueueDirectAnswer("File patched");
 
         fileSystem.Setup(f => f.FileExists(It.IsAny<string>())).Returns(true);
         fileSystem.Setup(f => f.ReadFile(It.IsAny<string>())).Returns("Line 1\nold value\nLine 3");
@@ -169,8 +171,8 @@ public class ToolPipelineIntegrationTests : IDisposable
         config.Tools["EShellAgent"] = disabled;
         engine.RegisterTool(new EShellAgent(procRunner.Object, config, _tempDir));
 
-        engine.AddResponse("<lm><thinking>Run command</thinking><toolcall>EShellAgent<command>echo blocked</command></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>Tool was blocked</thinking><output>Could not run command</output></lm>");
+        engine.EnqueueToolCall("EShellAgent", new() { ["command"] = "echo blocked" });
+        engine.EnqueueDirectAnswer("Could not run command");
 
         procRunner
             .Setup(p => p.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -198,8 +200,8 @@ public class ToolPipelineIntegrationTests : IDisposable
         // Queue user approval
         _gui.QueueInput("y");
 
-        engine.AddResponse("<lm><thinking>Run command</thinking><toolcall>EShellAgent<command>echo approved</command></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>Approved and done</thinking><output>Command approved and executed</output></lm>");
+        engine.EnqueueToolCall("EShellAgent", new() { ["command"] = "echo approved" });
+        engine.EnqueueDirectAnswer("Command approved and executed");
 
         procRunner
             .Setup(p => p.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -222,8 +224,8 @@ public class ToolPipelineIntegrationTests : IDisposable
         // Queue user denial
         _gui.QueueInput("n");
 
-        engine.AddResponse("<lm><thinking>Run command</thinking><toolcall>EShellAgent<command>rm -rf build-output</command></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>Denied, reporting</thinking><output>Command was denied</output></lm>");
+        engine.EnqueueToolCall("EShellAgent", new() { ["command"] = "rm -rf build-output" });
+        engine.EnqueueDirectAnswer("Command was denied");
 
         procRunner
             .Setup(p => p.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -245,8 +247,8 @@ public class ToolPipelineIntegrationTests : IDisposable
 
         // Redirect (>) is a WRITE — policy requires approval; queue user approval.
         _gui.QueueInput("y");
-        engine.AddResponse("<lm><thinking>Create a file</thinking><toolcall>EShellAgent<command>echo test-content > created.txt</command></toolcall></lm>");
-        engine.AddResponse("<lm><thinking>File created</thinking><output>File created</output></lm>");
+        engine.EnqueueToolCall("EShellAgent", new() { ["command"] = "echo test-content > created.txt" });
+        engine.EnqueueDirectAnswer("File created");
 
         // Simulate the shell command creating a file
         procRunner

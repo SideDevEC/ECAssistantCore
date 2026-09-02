@@ -124,12 +124,12 @@ public class EToolBaseTests
     [Fact]
     public void ToSystemPromptBlock_WithExample_IncludesExamplesSection()
     {
-        var tool = new TestTool("T", "D", example: "<toolcall>T()</toolcall>");
+        var tool = new TestTool("T", "D", example: "T()");
 
         var block = tool.ToSystemPromptBlock();
 
         Assert.Contains("Examples:", block);
-        Assert.Contains("<toolcall>T()</toolcall>", block);
+        Assert.Contains("T()", block);
     }
 
     [Fact]

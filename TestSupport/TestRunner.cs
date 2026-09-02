@@ -438,32 +438,32 @@ public sealed class TestRunner : IAsyncDisposable
         switch (scenario.Name)
         {
             case "mock_direct_answer":
-                mock.AddResponse("<lm><thinking>2+2=4</thinking><output>4</output></lm>");
+                mock.EnqueueDirectAnswer("4");
                 break;
 
             case "mock_toolcall_then_answer":
-                mock.AddResponse("<lm><thinking>Need to create a file</thinking><toolcall>EShellAgent<command>echo hello > test.txt</command></toolcall></lm>");
-                mock.AddResponse("<lm><thinking>File created successfully</thinking><output>Done. Created test.txt.</output></lm>");
+                mock.EnqueueToolCall("EShellAgent", new() { ["command"] = "echo hello > test.txt" });
+                mock.EnqueueDirectAnswer("Done. Created test.txt.");
                 break;
 
             case "mock_format_retry":
-                mock.AddResponse("<lm><thinking>let me help</thinking><toolcall>EShellAgent<command>echo test</command></toolcall>");
-                mock.AddResponse("<lm><thinking>trying again</thinking><output>Format retry worked.</output></lm>");
+                mock.EnqueueToolCall("EShellAgent", new() { ["command"] = "echo test" });
+                mock.EnqueueDirectAnswer("Format retry worked.");
                 break;
 
             case "mock_multistep":
-                mock.AddResponse("<lm><thinking>step 1</thinking><toolcall>EShellAgent<command>echo step1 > step1.txt</command></toolcall></lm>");
-                mock.AddResponse("<lm><thinking>step 2</thinking><toolcall>EShellAgent<command>echo step2 > step2.txt</command></toolcall></lm>");
-                mock.AddResponse("<lm><thinking>all done</thinking><output>Completed 2 steps successfully.</output></lm>");
+                mock.EnqueueToolCall("EShellAgent", new() { ["command"] = "echo step1 > step1.txt" });
+                mock.EnqueueToolCall("EShellAgent", new() { ["command"] = "echo step2 > step2.txt" });
+                mock.EnqueueDirectAnswer("Completed 2 steps successfully.");
                 break;
 
             case "mock_subtask_advancement":
-                mock.AddResponse("<lm><thinking>create 3 files</thinking><toolcall>EShellAgent<command>echo f1 > f1.txt && echo f2 > f2.txt && echo f3 > f3.txt</command></toolcall></lm>");
-                mock.AddResponse("<lm><thinking>all 3 files created</thinking><output>Created 3 files: f1.txt, f2.txt, f3.txt</output></lm>");
+                mock.EnqueueToolCall("EShellAgent", new() { ["command"] = "echo f1 > f1.txt && echo f2 > f2.txt && echo f3 > f3.txt" });
+                mock.EnqueueDirectAnswer("Created 3 files: f1.txt, f2.txt, f3.txt");
                 break;
 
             default:
-                mock.AddResponse("<lm><thinking>default mock</thinking><output>Mock response for: " + scenario.Name + "</output></lm>");
+                mock.EnqueueDirectAnswer("Mock response for: " + scenario.Name);
                 break;
         }
     }

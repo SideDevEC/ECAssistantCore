@@ -13,6 +13,7 @@ namespace ECAssistant.Core.Engine;
 public class MockEngine : EAgentEngine
 {
     private readonly Queue<string> _responses = new();
+    private readonly Queue<LLMDecision> _decisions = new();
     private readonly bool _stopAfterFirstTool;
     private readonly bool _cycleResponses;
     private readonly ISessionOutput? _mockOut;
@@ -63,7 +64,28 @@ public class MockEngine : EAgentEngine
     public void EnqueueResponse(string response) => _responses.Enqueue(response);
     public void AddResponse(string response) => _responses.Enqueue(response);
     public void AddResponses(params string[] responses) { foreach (var r in responses) _responses.Enqueue(r); }
+
+    // ── v14: structured decision helpers (native JSON pipeline) ──
+
+    /// <summary>Queue a direct-answer LLMDecision.</summary>
+    public void EnqueueDirectAnswer(string answer)
+        => _responses.Enqueue($"__DIRECT__:{answer}");
+
+    /// <summary>Queue a single tool-call LLMDecision.</summary>
+    public void EnqueueToolCall(string toolName, Dictionary<string, string?> args)
+        => _responses.Enqueue($"__TOOLCALL__:{toolName}:{System.Text.Json.JsonSerializer.Serialize(args)}");
+
+    /// <summary>Queue an LLMDecision with multiple tool calls (parallel execution).</summary>
+    public void EnqueueMultiToolCall(params (string Name, Dictionary<string, string?> Args)[] calls)
+        => _responses.Enqueue($"__MULTITOOL__:{System.Text.Json.JsonSerializer.Serialize(calls.Select(c => new { c.Name, c.Args }))}");
+
+    /// <summary>Queue a pre-built LLMDecision directly.</summary>
+    public void EnqueueDecision(LLMDecision decision) => _decisions.Enqueue(decision);
     public void SetDefaultResponse(string response) => _defaultResponse = response;
+
+    /// <summary>v14: set the default response to a tool-call decision (for never-ending loops).</summary>
+    public void SetDefaultToolCall(string toolName, Dictionary<string, string?> args)
+        => _defaultResponse = $"__TOOLCALL__:{toolName}:{System.Text.Json.JsonSerializer.Serialize(args)}";
     public void ClearResponses() { _responses.Clear(); _allResponses.Clear(); GenerateCallCount = 0; }
     public int QueuedCount => _responses.Count;
 
@@ -104,34 +126,97 @@ public class MockEngine : EAgentEngine
         GenerateCallCount++;
         OnGenerateCalled?.Invoke(userPrompt);
 
-        string response;
-        if (_responses.Count > 0)
+        LLMDecision decision;
+        if (_decisions.Count > 0)
         {
-            response = _responses.Dequeue();
-            if (_cycleResponses) _responses.Enqueue(response);
+            decision = _decisions.Dequeue();
+            if (_cycleResponses) _decisions.Enqueue(decision);
         }
-        else if (_defaultResponse != null)
-            response = _defaultResponse;
         else
-            response = "(No more queued responses)";
-
-        _allResponses.Add(response);
-        OnResponseConsumed?.Invoke(response);
-
-        _mockOut?.WriteInfo($"[MockEngine] Returning queued response ({response.Length} chars)");
-
-        if (response.StartsWith("<assistant>", StringComparison.OrdinalIgnoreCase))
-            response = response.Substring("<assistant>".Length).Trim();
-
-        const int maxResponseLength = 2000;
-        if (response.Length > maxResponseLength)
         {
-            response = response.Substring(0, maxResponseLength) + "\n[response truncated for testing]";
-            _mockOut?.WriteWarning($"[MockEngine] Response truncated to {maxResponseLength} chars");
+            string response;
+            if (_responses.Count > 0)
+            {
+                response = _responses.Dequeue();
+                if (_cycleResponses) _responses.Enqueue(response);
+            }
+            else if (_defaultResponse != null)
+                response = _defaultResponse;
+            else
+                response = "(No more queued responses)";
+
+            _allResponses.Add(response);
+            OnResponseConsumed?.Invoke(response);
+
+            _mockOut?.WriteInfo($"[MockEngine] Returning queued response ({response.Length} chars)");
+
+            if (response.StartsWith("<assistant>", StringComparison.OrdinalIgnoreCase))
+                response = response.Substring("<assistant>".Length).Trim();
+
+            const int maxResponseLength = 2000;
+            if (response.Length > maxResponseLength)
+            {
+                response = response.Substring(0, maxResponseLength) + "\n[response truncated for testing]";
+                _mockOut?.WriteWarning($"[MockEngine] Response truncated to {maxResponseLength} chars");
+            }
+
+            // v14: structured prefixes build typed decisions; plain strings are direct answers.
+            if (response.StartsWith("__DIRECT__:", StringComparison.Ordinal))
+            {
+                decision = new LLMDecision(false, null, new Dictionary<string, string?>(), response.Substring("__DIRECT__:".Length));
+            }
+            else if (response.StartsWith("__TOOLCALL__:", StringComparison.Ordinal))
+            {
+                var rest = response.Substring("__TOOLCALL__:".Length);
+                var sep = rest.IndexOf(':');
+                var toolName = sep >= 0 ? rest[..sep] : rest;
+                var args = new Dictionary<string, string?>();
+                if (sep >= 0 && sep + 1 < rest.Length)
+                {
+                    using var argsDoc = System.Text.Json.JsonDocument.Parse(rest[(sep + 1)..]);
+                    foreach (var p in argsDoc.RootElement.EnumerateObject())
+                        args[p.Name] = p.Value.ValueKind == System.Text.Json.JsonValueKind.String
+                            ? p.Value.GetString()
+                            : p.Value.GetRawText();
+                }
+                decision = new LLMDecision(true, toolName, args);
+            }
+            else if (response.StartsWith("__MULTITOOL__:", StringComparison.Ordinal))
+            {
+                var requests = new List<ToolCallRequest>();
+                using (var doc = System.Text.Json.JsonDocument.Parse(response.Substring("__MULTITOOL__:".Length)))
+                {
+                    var i = 0;
+                    foreach (var c in doc.RootElement.EnumerateArray())
+                    {
+                        i++;
+                        var callArgs = new Dictionary<string, string?>();
+                        if (c.TryGetProperty("Args", out var a) && a.ValueKind == System.Text.Json.JsonValueKind.Object)
+                            foreach (var p in a.EnumerateObject())
+                                callArgs[p.Name] = p.Value.ValueKind == System.Text.Json.JsonValueKind.String
+                                    ? p.Value.GetString()
+                                    : p.Value.GetRawText();
+                        requests.Add(new ToolCallRequest
+                        {
+                            ToolName = c.GetProperty("Name").GetString() ?? "",
+                            Args = callArgs,
+                            Index = i
+                        });
+                    }
+                }
+                decision = new LLMDecision(requests);
+            }
+            else
+            {
+                // Backwards compat: plain string = direct answer.
+                decision = new LLMDecision(false, null, new Dictionary<string, string?>(), response);
+            }
         }
 
-        _transcript.AddAssistant(response);
-        _contextWindow.AddAssistantMessage(response);
+        var decisionText = decision.AnswerText
+            ?? string.Join("\n", decision.ToolCalls.Select(tc => $"[toolcall {tc.ToolName}]"));
+        _transcript.AddAssistant(decisionText);
+        _contextWindow.AddAssistantMessage(decisionText);
 
         if (_stopAfterFirstTool)
         {
@@ -148,8 +233,8 @@ public class MockEngine : EAgentEngine
         }
 
         await Task.CompletedTask;
-        // v14: wrap the queued text response as a direct-answer LLMDecision.
-        return new LLMDecision(false, null, new Dictionary<string, string?>(), response);
+        // v14: return the queued response as an LLMDecision (direct answer by default).
+        return decision;
     }
 
     protected override SubAgentManager CreateSubAgentManager()
