@@ -55,15 +55,15 @@
       "hf_repo": "ggml-org/SmolVLM2-2.2B-Instruct-GGUF",
       "files": [
         {
-          "filename": "smolvlm2-2.2b-instruct-q4_k_m.gguf",
+          "filename": "SmolVLM2-2.2B-Instruct-Q4_K_M.gguf",
           "size_gb": 1.5
         },
         {
-          "filename": "mmproj-smolvlm2-2.2b-instruct-f16.gguf",
+          "filename": "mmproj-SmolVLM2-2.2B-Instruct-f16.gguf",
           "size_gb": 0.4
         }
       ],
-      "mmproj_file": "mmproj-smolvlm2-2.2b-instruct-f16.gguf",
+      "mmproj_file": "mmproj-SmolVLM2-2.2B-Instruct-f16.gguf",
       "suggested_config": {
         "gpu_layers": 0,
         "context_size": 4096,
@@ -78,10 +78,10 @@
       "id": "all-minilm",
       "name": "all-MiniLM-L6-v2 (Embeddings)",
       "category": "Embedding",
-      "hf_repo": "ggml-org/all-MiniLM-L6-v2-GGUF",
+      "hf_repo": "leliuga/all-MiniLM-L6-v2-GGUF",
       "files": [
         {
-          "filename": "all-MiniLM-L6-v2-Q5_K_M.gguf",
+          "filename": "all-MiniLM-L6-v2.Q5_K_M.gguf",
           "size_gb": 0.05
         }
       ],
