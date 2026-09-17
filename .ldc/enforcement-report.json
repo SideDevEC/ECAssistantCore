@@ -8,7 +8,7 @@
     {
       "rule": "interface-first",
       "severity": "warning",
-      "file": "<project-root>/ECAssistantCore/Setup/SetupWizard.cs",
+      "file": "/Users/maintainer/Agent/ECAssistant/ECAssistantCore/Setup/SetupWizard.cs",
       "message": "Public class SetupWizard in ECAssistantCore implements no interface \u2014 may be a boundary leak"
     }
   ],
