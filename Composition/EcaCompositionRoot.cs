@@ -72,11 +72,11 @@ public class EcaCompositionRoot
             Directory.CreateDirectory(Path.Combine(_userConfigDir, config.Workspace.Path));
 
         // ── Ensure LLM server root directory exists ──
-        // The LLM server home is {appRoot}/llm. It contains llm-server.json, logs, and models/.
-        // The server generates a default config on first run if none exists.
+        // The LLM server home is the shared standalone location (~/.ECAssistantLLM).
+        // It contains llm-server.json, logs, models/, and server/.
         var llmRoot = string.IsNullOrEmpty(config.LlmProvider.ServerRootPath)
-            ? Path.Combine(_userConfigDir, "llm")
-            : config.LlmProvider.ServerRootPath;
+            ? PathExpander.Default.Expand("~/.ECAssistantLLM")
+            : PathExpander.Default.Expand(config.LlmProvider.ServerRootPath);
         Directory.CreateDirectory(llmRoot);
         Directory.CreateDirectory(Path.Combine(llmRoot, "models"));
 
@@ -98,19 +98,22 @@ public class EcaCompositionRoot
 
     private string ResolveModelPath(EAgentConfig config, string userConfigDir)
     {
-        // ROOT-ONLY contract: relative model paths resolve only inside the app root.
-        // No fallback to the binary directory (AppContext.BaseDirectory) — that would
-        // embed dev-tree/build-tree paths into the runtime configuration.
+        // Resolve model path from the shared LLM root's models directory.
+        // No dev-tree/build-tree paths — only the shared location.
         var modelPath = config.Llm.ModelPath;
         if (Path.IsPathRooted(modelPath))
             return modelPath;
 
-        var inWorkDir = Path.Combine(userConfigDir, modelPath);
-        var inLlmModels = Path.Combine(userConfigDir, "llm", "models", Path.GetFileName(modelPath));
-        if (File.Exists(inWorkDir))
-            return inWorkDir;
+        var llmRoot = string.IsNullOrEmpty(config.LlmProvider.ServerRootPath)
+            ? PathExpander.Default.Expand("~/.ECAssistantLLM")
+            : PathExpander.Default.Expand(config.LlmProvider.ServerRootPath);
+
+        var inLlmModels = Path.Combine(llmRoot, "models", Path.GetFileName(modelPath));
         if (File.Exists(inLlmModels))
             return inLlmModels;
+
+        // Fallback: check user config dir (legacy)
+        var inWorkDir = Path.Combine(userConfigDir, modelPath);
         return inWorkDir;
     }
 

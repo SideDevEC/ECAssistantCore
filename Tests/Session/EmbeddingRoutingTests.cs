@@ -20,11 +20,11 @@ public class EmbeddingRoutingTests
             Mode = "remote",
             Endpoint = "https://api.example.com/v1",
             EmbeddingModelId = "text-embedding-3-small",
-            Port = 58777
+            Port = 48217
         }
     };
 
-    private static EAgentConfig LocalMainConfig(int port = 58777) => new()
+    private static EAgentConfig LocalMainConfig(int port = 48217) => new()
     {
         LlmProvider = new LlmProviderConfig
         {
@@ -48,7 +48,7 @@ public class EmbeddingRoutingTests
         var endpoint = Builder(config).ResolveEmbeddingEndpoint();
         var modelId = Builder(config).ResolveEmbeddingModelId();
 
-        Assert.Equal("http://localhost:58777", endpoint);
+        Assert.Equal("http://localhost:48217", endpoint);
         Assert.Equal("embeddings", modelId);
     }
 
@@ -131,7 +131,7 @@ public class EmbeddingRoutingTests
         var config = RemoteMainConfig();
         config.Embedding = new EmbeddingConfig { Enabled = true, Mode = mode };
 
-        Assert.Equal("http://localhost:58777", Builder(config).ResolveEmbeddingEndpoint());
+        Assert.Equal("http://localhost:48217", Builder(config).ResolveEmbeddingEndpoint());
     }
 
     // ── persistence round-trip: writer output feeds the resolver ──
@@ -154,7 +154,7 @@ public class EmbeddingRoutingTests
             Assert.Equal("minilm", config.Embedding.ModelId);
 
             var builder = new SessionBuilder(config, dir, dir);
-            Assert.Equal("http://localhost:58777", builder.ResolveEmbeddingEndpoint());
+            Assert.Equal("http://localhost:48217", builder.ResolveEmbeddingEndpoint());
             Assert.Equal("minilm", builder.ResolveEmbeddingModelId());
         }
         finally

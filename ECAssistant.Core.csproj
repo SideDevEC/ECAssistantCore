@@ -43,18 +43,4 @@
     <EmbeddedResource Include="Setup\ModelCatalog.default.json" />
   </ItemGroup>
 
-  <!-- Stage the LLM server runtime into $(OutDir)server/ so Core's own output is
-       self-contained: the runtime copies root/server from BaseDirectory/server only. -->
-  <Target Name="StageLlmServer" AfterTargets="Build">
-    <PropertyGroup>
-      <_LlmOutDir>$(MSBuildThisFileDirectory)..\ECAssistantLLM\bin\$(Configuration)\net8.0\</_LlmOutDir>
-    </PropertyGroup>
-    <ItemGroup>
-      <_LlmServerFiles Include="$(_LlmOutDir)**\*" Exclude="$(_LlmOutDir)**\*.log;$(_LlmOutDir)logs\**" />
-    </ItemGroup>
-    <Copy SourceFiles="@(_LlmServerFiles)"
-          DestinationFiles="@(_LlmServerFiles->'$(OutDir)server\%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
-  </Target>
-
 </Project>

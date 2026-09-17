@@ -8,8 +8,10 @@ namespace ECAssistant.Core.Services.Http;
 /// Core owns the LLM server config. Before the server process is launched, this writer
 /// guarantees that {llmRoot}/llm-server.json exists and contains entries for exactly the
 /// model ids selected in appsettings.json (llm_provider.model_id / embedding_model_id),
-/// with paths resolved INSIDE the app root ({llmRoot}/models). The server is then launched
-/// with that explicit config path so it never invents its own defaults.
+/// with paths resolved INSIDE the shared LLM root ({llmRoot}/models). The server is then
+/// launched with that explicit config path so it never invents its own defaults.
+///
+/// All paths resolve relative to {llmRoot} only — no appRoot, no dev-tree fallbacks.
 /// </summary>
 public static class ServerConfigWriter
 {
@@ -18,22 +20,33 @@ public static class ServerConfigWriter
 
     /// <summary>
     /// Ensure llm-server.json exists and covers the configured chat + embedding model ids.
-    /// Returns true when a usable config is in place. Never writes paths outside appRoot.
+    /// Returns true when a usable config is in place. Never writes paths outside llmRoot.
     /// </summary>
-    public static bool EnsureServerConfig(string appRoot, string llmRoot, LlmProviderConfig provider)
+    public static bool EnsureServerConfig(string llmRoot, LlmProviderConfig provider)
+    {
+        return EnsureServerConfig(llmRoot, provider, appsettingsPath: null);
+    }
+
+    /// <summary>
+    /// Ensure llm-server.json exists and covers the configured chat + embedding model ids.
+    /// When appsettingsPath is provided, reads model paths from it; otherwise uses
+    /// the provider config directly.
+    /// </summary>
+    public static bool EnsureServerConfig(string llmRoot, LlmProviderConfig provider, string? appsettingsPath)
     {
         try
         {
             var configPath = GetConfigPath(llmRoot);
             var modelsDir = Path.Combine(llmRoot, "models");
-            var appsettingsPath = Path.Combine(appRoot, "appsettings.json");
 
             var root = LoadOrCreate(configPath, provider.Port);
             var models = EnsureModelsArray(root);
 
-            var appsettings = LoadJson(appsettingsPath);
-            var chatFile = ResolveChatModelFile(appsettings, modelsDir, appRoot);
-            var embedFile = ResolveEmbeddingModelFile(appsettings, modelsDir, appRoot);
+            var appsettings = appsettingsPath != null && File.Exists(appsettingsPath)
+                ? LoadJson(appsettingsPath)
+                : null;
+            var chatFile = ResolveChatModelFile(appsettings, modelsDir, provider);
+            var embedFile = ResolveEmbeddingModelFile(appsettings, modelsDir, provider);
 
             if (!string.IsNullOrWhiteSpace(provider.ModelId))
                 EnsureEntry(models, provider.ModelId, chatFile, isEmbedding: false,
@@ -95,8 +108,6 @@ public static class ServerConfigWriter
 
         if (existing != null)
         {
-            // Replace the path only when it is missing on disk (stale) and a
-            // root-contained candidate exists. Valid paths are left untouched.
             var current = existing["path"]?.GetValue<string>();
             if (string.IsNullOrWhiteSpace(current) || (!File.Exists(current) && rootContainedFile != null))
                 existing["path"] = rootContainedFile;
@@ -119,21 +130,21 @@ public static class ServerConfigWriter
         models.Add(entry);
     }
 
-    /// <summary>Chat model file from appsettings llm.model_path, resolved INSIDE {llmRoot}/models.</summary>
-    private static string? ResolveChatModelFile(JsonObject? appsettings, string modelsDir, string appRoot)
+    /// <summary>Chat model file resolved INSIDE {llmRoot}/models/.</summary>
+    private static string? ResolveChatModelFile(JsonObject? appsettings, string modelsDir, LlmProviderConfig provider)
     {
         var configured = ReadString(appsettings, "llm", "model_path");
-        return ResolveInsideModelsDir(configured, modelsDir, appRoot);
+        return ResolveInsideModelsDir(configured, modelsDir);
     }
 
-    /// <summary>Embedding model file from appsettings embedding.model_path, resolved INSIDE {llmRoot}/models.</summary>
-    private static string? ResolveEmbeddingModelFile(JsonObject? appsettings, string modelsDir, string appRoot)
+    /// <summary>Embedding model file resolved INSIDE {llmRoot}/models/.</summary>
+    private static string? ResolveEmbeddingModelFile(JsonObject? appsettings, string modelsDir, LlmProviderConfig provider)
     {
         var configured = ReadString(appsettings, "embedding", "model_path");
-        return ResolveInsideModelsDir(configured, modelsDir, appRoot);
+        return ResolveInsideModelsDir(configured, modelsDir);
     }
 
-    private static string? ResolveInsideModelsDir(string? configured, string modelsDir, string appRoot)
+    private static string? ResolveInsideModelsDir(string? configured, string modelsDir)
     {
         if (string.IsNullOrWhiteSpace(configured)) return null;
 
@@ -141,19 +152,11 @@ public static class ServerConfigWriter
         var inModels = Path.Combine(modelsDir, Path.GetFileName(configured));
         if (File.Exists(inModels)) return Path.GetFullPath(inModels);
 
-        // Accept the configured path only when it already sits inside the app root
-        var full = Path.GetFullPath(Path.IsPathRooted(configured)
-            ? configured
-            : Path.Combine(appRoot, configured));
-        if (File.Exists(full) && IsUnder(full, appRoot)) return full;
+        // Accept an absolute path only if it exists
+        if (Path.IsPathRooted(configured) && File.Exists(configured))
+            return configured;
 
         return null;
-    }
-
-    private static bool IsUnder(string path, string root)
-    {
-        var rel = Path.GetRelativePath(Path.GetFullPath(root), Path.GetFullPath(path));
-        return !rel.StartsWith("..") && !Path.IsPathRooted(rel);
     }
 
     private static JsonObject? LoadJson(string path)

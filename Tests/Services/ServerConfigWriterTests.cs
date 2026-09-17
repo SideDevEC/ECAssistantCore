@@ -30,7 +30,7 @@ public class ServerConfigWriterTests : IDisposable
     }
 
     private LlmProviderConfig Provider(string modelId = "main", string? embeddingId = "embeddings") =>
-        new() { Mode = "local", Port = 58777, ModelId = modelId, EmbeddingModelId = embeddingId };
+        new() { Mode = "local", Port = 48217, ModelId = modelId, EmbeddingModelId = embeddingId };
 
     private void WriteAppsettings(string? chatModelPath = null, string? embeddingModelPath = null)
     {
@@ -65,7 +65,7 @@ public class ServerConfigWriterTests : IDisposable
         var embed = Touch(Path.Combine(_modelsDir, "embed-model.gguf"));
         WriteAppsettings(chat, embed);
 
-        Assert.True(ServerConfigWriter.EnsureServerConfig(_appRoot, _llmRoot, Provider()));
+        Assert.True(ServerConfigWriter.EnsureServerConfig(_llmRoot, Provider(), Path.Combine(_appRoot, "appsettings.json")));
 
         var configPath = ServerConfigWriter.GetConfigPath(_llmRoot);
         Assert.True(File.Exists(configPath));
@@ -90,14 +90,14 @@ public class ServerConfigWriterTests : IDisposable
         var configPath = ServerConfigWriter.GetConfigPath(_llmRoot);
         var chat = Touch(Path.Combine(_modelsDir, "chat-model.gguf"));
         File.WriteAllText(configPath, $$"""
-            { "server": { "host": "localhost", "port": 58777 },
+            { "server": { "host": "localhost", "port": 48217 },
               "models": [ { "id": "main", "path": "{{chat.Replace("\\", "\\\\")}}", "gpu_layers": 10, "context_size": 8192 } ],
               "inference": {}, "logging": {} }
             """);
         var embed = Touch(Path.Combine(_modelsDir, "embed-model.gguf"));
         WriteAppsettings(embeddingModelPath: embed);
 
-        Assert.True(ServerConfigWriter.EnsureServerConfig(_appRoot, _llmRoot, Provider()));
+        Assert.True(ServerConfigWriter.EnsureServerConfig(_llmRoot, Provider(), Path.Combine(_appRoot, "appsettings.json")));
 
         var models = ParseModels(configPath);
         Assert.Equal(2, models.GetArrayLength());
@@ -115,13 +115,13 @@ public class ServerConfigWriterTests : IDisposable
         var configPath = ServerConfigWriter.GetConfigPath(_llmRoot);
         var currentChat = Touch(Path.Combine(_modelsDir, "chat-model.gguf"));
         File.WriteAllText(configPath, """
-            { "server": { "host": "localhost", "port": 58777 },
+            { "server": { "host": "localhost", "port": 48217 },
               "models": [ { "id": "main", "path": "/does/not/exist/old-model.gguf" } ],
               "inference": {}, "logging": {} }
             """);
         WriteAppsettings(currentChat);
 
-        Assert.True(ServerConfigWriter.EnsureServerConfig(_appRoot, _llmRoot, Provider()));
+        Assert.True(ServerConfigWriter.EnsureServerConfig(_llmRoot, Provider(), Path.Combine(_appRoot, "appsettings.json")));
 
         var models = ParseModels(configPath);
         Assert.Equal(currentChat, models[0].GetProperty("path").GetString());
@@ -133,7 +133,7 @@ public class ServerConfigWriterTests : IDisposable
         // appsettings points outside the app root and the file is not in llm/models
         WriteAppsettings("/tmp/somewhere-else/outside.gguf");
 
-        Assert.True(ServerConfigWriter.EnsureServerConfig(_appRoot, _llmRoot, Provider()));
+        Assert.True(ServerConfigWriter.EnsureServerConfig(_llmRoot, Provider(), Path.Combine(_appRoot, "appsettings.json")));
 
         var models = ParseModels(ServerConfigWriter.GetConfigPath(_llmRoot));
         Assert.Equal(0, models.GetArrayLength());
@@ -147,9 +147,9 @@ public class ServerConfigWriterTests : IDisposable
         var llmRoot = "/app/root/llm";
         var configPath = ServerConfigWriter.GetConfigPath(llmRoot);
 
-        var args = ServerLauncher.BuildServerArguments(llmRoot, configPath, portOverride: 58777);
+        var args = ServerLauncher.BuildServerArguments(llmRoot, configPath, portOverride: 48217);
 
-        Assert.Equal($"--root \"{llmRoot}\" \"{configPath}\" --port 58777", args);
+        Assert.Equal($"--root \"{llmRoot}\" \"{configPath}\" --port 48217", args);
         Assert.Contains("llm-server.json", args);
     }
 

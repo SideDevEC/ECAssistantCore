@@ -289,7 +289,7 @@ public sealed class ModelInstallerService
         {
             root = new JsonObject
             {
-                ["server"] = new JsonObject { ["host"] = "localhost", ["port"] = 58777 },
+                ["server"] = new JsonObject { ["host"] = "localhost", ["port"] = 48217 },
                 ["inference"] = new JsonObject(),
                 ["logging"] = new JsonObject()
             };

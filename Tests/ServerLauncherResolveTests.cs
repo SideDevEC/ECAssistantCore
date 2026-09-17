@@ -1,41 +1,27 @@
+using ECAssistant.Core.Config;
 using ECAssistant.Core.Services.Http;
 using Xunit;
 
 namespace ECAssistant.Core.Tests;
 
 /// <summary>
-/// v12.10 runtime contract tests: the integrating app gives Core a root folder; Core
-/// copies the LLM server runtime INTO the root (root/server/) and only ever executes
-/// from there. No runtime dependency on dev trees (bin/Debug siblings, repo layout).
+/// Tests for the standalone ServerLauncher: resolves the server binary from
+/// the shared location (~/.ECAssistantLLM/server/) only. No dev-tree scanning,
+/// no binary copying, no app-relative path resolution.
 /// </summary>
 public class ServerLauncherResolveTests : IDisposable
 {
-    private readonly string _root;      // the root folder given to the application
-    private readonly string _baseDir;   // the app binary's own folder (publish layout)
-    private readonly string _devDebug;  // dev build (ECAssistantLLM/bin/Debug/net8.0)
-    private readonly string _devRelease;// dev build (ECAssistantLLM/bin/Release/net8.0)
+    private readonly string _root;
 
     public ServerLauncherResolveTests()
     {
-        _root = CreateDir();
-        _baseDir = Path.Combine(_root, "publish");
-        Directory.CreateDirectory(_baseDir);
-        _devDebug = Path.Combine(_root, "ECAssistantLLM", "bin", "Debug", "net8.0");
-        _devRelease = Path.Combine(_root, "ECAssistantLLM", "bin", "Release", "net8.0");
-        Directory.CreateDirectory(_devDebug);
-        Directory.CreateDirectory(_devRelease);
+        _root = Path.Combine(Path.GetTempPath(), "sltest-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(_root);
     }
 
     public void Dispose()
     {
         try { Directory.Delete(_root, true); } catch { }
-    }
-
-    private static string CreateDir()
-    {
-        var d = Path.Combine(Path.GetTempPath(), "sltest-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(d);
-        return d;
     }
 
     private static string WriteMarker(string dir)
@@ -46,146 +32,75 @@ public class ServerLauncherResolveTests : IDisposable
         return p;
     }
 
-    private static string WriteExe(string dir)
-    {
-        Directory.CreateDirectory(dir);
-        var p = Path.Combine(dir, "ECAssistant.LLM");
-        File.WriteAllText(p, "stub");
-        return p;
-    }
-
-    // ── ResolveServerSourceDirectory ──
-
     [Fact]
-    public void SourceDir_StagedServerLayout_Preferred()
+    public void LlmRoot_ExpandsTilde_ToUserHome()
     {
-        var staged = Path.Combine(_baseDir, "server");
-        Directory.CreateDirectory(staged);
-        WriteMarker(staged);
-        WriteMarker(_baseDir);
+        var config = new LlmProviderConfig { ServerRootPath = "~/.ECAssistantLLM" };
+        var launcher = new ServerLauncher(config);
 
-        var got = ServerLauncher.ResolveServerSourceDirectory(_baseDir);
-        Assert.Equal(staged, got);
+        var llmRoot = launcher.LlmRoot;
+        Assert.Contains(".ECAssistantLLM", llmRoot);
+        Assert.False(llmRoot.StartsWith("~"));
+        Assert.True(Path.IsPathRooted(llmRoot));
     }
 
     [Fact]
-    public void SourceDir_PublishLayout_Fallback()
+    public void LlmRoot_AbsolutePath_UsedAsIs()
     {
-        WriteMarker(_baseDir);
-        var got = ServerLauncher.ResolveServerSourceDirectory(_baseDir);
-        Assert.Equal(_baseDir, got);
+        var config = new LlmProviderConfig { ServerRootPath = _root };
+        var launcher = new ServerLauncher(config);
+
+        Assert.Equal(_root, launcher.LlmRoot);
     }
 
     [Fact]
-    public void SourceDir_DevTree_Ignored()
+    public void LlmRoot_DefaultsToSharedLocation_WhenNull()
     {
-        // Dev-tree builds (ECAssistantLLM/bin/...) must never be picked up.
-        WriteMarker(_devDebug);
-        WriteMarker(_devRelease);
-        File.SetLastWriteTimeUtc(Path.Combine(_devDebug, "ECAssistant.LLM.dll"), DateTime.UtcNow.AddHours(1));
+        var config = new LlmProviderConfig { ServerRootPath = null };
+        var launcher = new ServerLauncher(config);
 
-        var got = ServerLauncher.ResolveServerSourceDirectory(_baseDir);
-        Assert.Null(got);
+        var llmRoot = launcher.LlmRoot;
+        Assert.Contains(".ECAssistantLLM", llmRoot);
+        Assert.True(Path.IsPathRooted(llmRoot));
     }
 
     [Fact]
-    public void SourceDir_None_ReturnsNull()
+    public void IsServerBinaryInstalled_True_WhenDllExists()
     {
-        Assert.Null(ServerLauncher.ResolveServerSourceDirectory(_baseDir));
-    }
+        var serverDir = Path.Combine(_root, "server");
+        WriteMarker(serverDir);
 
-    // ── EnsureServerBinaryCopied ──
+        var config = new LlmProviderConfig { ServerRootPath = _root };
+        var launcher = new ServerLauncher(config);
 
-    [Fact]
-    public void Copy_CreatesRootServer_WithFilesAndSubdirs()
-    {
-        var source = Path.Combine(_root, "source");
-        Directory.CreateDirectory(source);
-        File.WriteAllText(Path.Combine(source, "ECAssistant.LLM.dll"), "stub");
-        File.WriteAllText(Path.Combine(source, "ECAssistant.LLM"), "exe");
-        File.WriteAllText(Path.Combine(source, "runtimes.log"), "skip me");
-        Directory.CreateDirectory(Path.Combine(source, "runtimes", "osx"));
-        File.WriteAllText(Path.Combine(source, "runtimes", "osx", "libllama.dylib"), "native");
-
-        ServerLauncher.EnsureServerBinaryCopied(source, _root);
-
-        var target = Path.Combine(_root, "server");
-        Assert.True(File.Exists(Path.Combine(target, "ECAssistant.LLM.dll")));
-        Assert.True(File.Exists(Path.Combine(target, "ECAssistant.LLM")));
-        Assert.True(File.Exists(Path.Combine(target, "runtimes", "osx", "libllama.dylib")));
-        Assert.False(File.Exists(Path.Combine(target, "runtimes.log"))); // logs skipped
+        Assert.True(launcher.IsServerBinaryInstalled());
     }
 
     [Fact]
-    public void Copy_Skips_WhenUpToDate()
+    public void IsServerBinaryInstalled_False_WhenDllMissing()
     {
-        var source = Path.Combine(_root, "source");
-        Directory.CreateDirectory(source);
-        WriteMarker(source);
+        var config = new LlmProviderConfig { ServerRootPath = _root };
+        var launcher = new ServerLauncher(config);
 
-        ServerLauncher.EnsureServerBinaryCopied(source, _root);
-        var target = Path.Combine(_root, "server", "ECAssistant.LLM.dll");
-        Assert.Equal("stub", File.ReadAllText(target));
-
-        // unchanged source (mtime not newer than the copy stamp) → no re-copy work
-        ServerLauncher.EnsureServerBinaryCopied(source, _root);
-        Assert.Equal("stub", File.ReadAllText(target));
-
-        // newer source build → re-copied
-        Thread.Sleep(50);
-        File.WriteAllText(Path.Combine(source, "ECAssistant.LLM.dll"), "NEW BUILD");
-        File.SetLastWriteTimeUtc(Path.Combine(source, "ECAssistant.LLM.dll"), DateTime.UtcNow.AddMinutes(1));
-        ServerLauncher.EnsureServerBinaryCopied(source, _root);
-        Assert.Equal("NEW BUILD", File.ReadAllText(target));
+        Assert.False(launcher.IsServerBinaryInstalled());
     }
 
     [Fact]
-    public void Copy_NullOrInvalidSource_IsNoOp()
+    public void BuildServerArguments_AlwaysPassesExplicitConfigPath()
     {
-        ServerLauncher.EnsureServerBinaryCopied(null, _root);
-        ServerLauncher.EnsureServerBinaryCopied(Path.Combine(_root, "nope"), _root);
-        Assert.False(Directory.Exists(Path.Combine(_root, "server")));
-    }
+        var llmRoot = "/app/root/llm";
+        var configPath = ServerConfigWriter.GetConfigPath(llmRoot);
 
-    // ── ResolveExecutablePath ──
+        var args = ServerLauncher.BuildServerArguments(llmRoot, configPath, portOverride: 48217);
 
-    [Fact]
-    public void Resolve_PrimaryLocation_IsRootServer()
-    {
-        var exe = WriteExe(Path.Combine(_root, "server"));
-        var got = ServerLauncher.ResolveExecutablePath("../ECAssistantLLM/bin/Release/net8.0/ECAssistant.LLM", _root);
-        Assert.Equal(exe, got);
+        Assert.Equal($"--root \"{llmRoot}\" \"{configPath}\" --port 48217", args);
+        Assert.Contains("llm-server.json", args);
     }
 
     [Fact]
-    public void Resolve_OutsideRoot_Ignored()
+    public void BuildServerArguments_RemoteEmbedding_OmitsPort()
     {
-        // An absolute path outside the root must never be used (ROOT-ONLY contract).
-        var exe = WriteExe(Path.Combine(_root, "anywhere"));
-        var got = ServerLauncher.ResolveExecutablePath(exe, _root);
-        Assert.Null(got);
-    }
-
-    [Fact]
-    public void Resolve_RootScan_FindsLegacyCopy()
-    {
-        var exe = WriteExe(Path.Combine(_root, "ECAssistantLLM"));
-        var got = ServerLauncher.ResolveExecutablePath("missing/dir/ECAssistant.LLM", _root);
-        Assert.Equal(exe, got);
-    }
-
-    [Fact]
-    public void Resolve_AppBinaryDir_NeverUsed()
-    {
-        // Publish-layout copy next to the app binary is not executed — only root/server.
-        var exe = WriteExe(_baseDir);
-        var got = ServerLauncher.ResolveExecutablePath("ECAssistant.LLM", _root);
-        Assert.Null(got);
-    }
-
-    [Fact]
-    public void Resolve_Missing_ReturnsNull()
-    {
-        Assert.Null(ServerLauncher.ResolveExecutablePath("nope/ECAssistant.LLM", _root));
+        var args = ServerLauncher.BuildServerArguments("/app/llm", "/app/llm/llm-server.json", null);
+        Assert.DoesNotContain("--port", args);
     }
 }

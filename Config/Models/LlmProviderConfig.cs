@@ -17,21 +17,22 @@ public sealed class LlmProviderConfig
 
     /// <summary>
     /// Server/API endpoint URL.
-    /// Local: derived from Host + Port (e.g. http://localhost:58777).
+    /// Local: derived from Host + Port (e.g. http://localhost:48217).
     /// Remote: full URL from provider (e.g. https://api.openai.com).
     /// In local mode, setting Port + Host is preferred over setting Endpoint directly.
     /// </summary>
     [JsonPropertyName("endpoint")]
-    public string Endpoint { get; set; } = "http://localhost:58777";
+    public string Endpoint { get; set; } = "http://localhost:48217";
 
     /// <summary>
-    /// Port for the local ECAssistantLLM server. Default: 58777.
+    /// Port for the local ECAssistantLLM server. Default: 48217.
+    /// Chosen as an arbitrary port unlikely to collide with known services.
     /// In local mode, this port is passed to the LLM server on startup and used
     /// to build the endpoint URL if Endpoint is not explicitly set.
     /// Ignored in remote mode.
     /// </summary>
     [JsonPropertyName("port")]
-    public int Port { get; set; } = 58777;
+    public int Port { get; set; } = 48217;
 
     /// <summary>
     /// Host for the local ECAssistantLLM server. Default: localhost.
@@ -100,12 +101,13 @@ public sealed class LlmProviderConfig
     public int HeartbeatIntervalSec { get; set; } = 30;
 
     /// <summary>
-    /// Root directory for the LLM server. If not set, defaults to {appRoot}/llm.
+    /// Root directory for the LLM server. If not set, defaults to ~/.ECAssistantLLM.
     /// The LLM server creates llm-server.json, logs, and models/ under this directory.
     /// Passed to the server via --root argument.
+    /// Supports ~ expansion to the user's home directory.
     /// </summary>
     [JsonPropertyName("server_root_path")]
-    public string? ServerRootPath { get; set; }
+    public string? ServerRootPath { get; set; } = "~/.ECAssistantLLM";
 
     // ── Convenience properties ──
 

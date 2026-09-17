@@ -4,42 +4,51 @@ using System.Threading.Tasks;
 using ECAssistant.Core.Config;
 using ECAssistant.Core.Transport;
 
-using System.Linq;
 namespace ECAssistant.Core.Services.Http;
 
 /// <summary>
-/// Detects if ECAssistantLLM server is running. If not, launches it as a child process.
+/// Detects if ECAssistantLLM server is running. If not, launches it from the
+/// shared standalone location (~/.ECAssistantLLM/server/).
 /// Waits for health check to pass before returning.
 /// Local mode only — not used in remote mode.
+///
+/// The server binary is installed once by the wizard (via ServerBinaryInstaller)
+/// and lives permanently at {LlmRoot}/server/. This class never copies binaries,
+/// never scans dev trees, never references bin/Debug or bin/Release.
 /// </summary>
 public sealed class ServerLauncher
 {
     private readonly LlmProviderConfig _config;
-    private readonly string _appRoot;
     private readonly OpenAIClient _probeClient;
     private Process? _serverProcess;
 
     /// <summary>
     /// Create the server launcher.
     /// </summary>
-    /// <param name="config">LLM provider config</param>
-    /// <param name="appRoot">Application root directory (e.g. ~/ECAssistant). The LLM server home is {appRoot}/llm.</param>
-    public ServerLauncher(LlmProviderConfig config, string appRoot)
+    /// <param name="config">LLM provider config (carries ServerRootPath, Port, etc.)</param>
+    public ServerLauncher(LlmProviderConfig config)
     {
         _config = config ?? throw new ArgumentNullException(nameof(config));
-        _appRoot = appRoot ?? throw new ArgumentNullException(nameof(appRoot));
         _probeClient = new OpenAIClient(_config.ResolvedEndpoint);
     }
 
     /// <summary>
-    /// The LLM server root directory: {appRoot}/llm.
+    /// The LLM server root directory. Expanded from ServerRootPath (default ~/.ECAssistantLLM).
     /// </summary>
-    public string LlmRoot => string.IsNullOrEmpty(_config.ServerRootPath)
-        ? Path.Combine(_appRoot, "llm")
-        : _config.ServerRootPath;
+    public string LlmRoot
+    {
+        get
+        {
+            var raw = string.IsNullOrEmpty(_config.ServerRootPath)
+                ? "~/.ECAssistantLLM"
+                : _config.ServerRootPath;
+            return PathExpander.Default.Expand(raw);
+        }
+    }
 
     /// <summary>
-    /// Ensure server is running. If not detected and auto_start is true, launch it.
+    /// Ensure server is running. If not detected and auto_start is true, launch it
+    /// from the shared standalone location.
     /// Returns true if server is ready.
     /// </summary>
     public async Task<bool> EnsureServerRunningAsync(CancellationToken ct = default)
@@ -49,18 +58,10 @@ public sealed class ServerLauncher
             return true;
 
         if (!_config.AutoStart)
-        {
-            // Server not running, auto_start disabled
             return false;
-        }
 
-        // v12.11 ROOT-ONLY CONTRACT: the server runtime lives INSIDE the root (root/server/).
-        // If missing/stale it is copied from the app binary's own directory (BaseDirectory/server,
-        // staged there at build time). No CWD fallback, no dev-environment fallback — ever.
-        EnsureServerBinaryCopied(ResolveServerSourceDirectory(AppContext.BaseDirectory), _appRoot);
-
-        // Launch server process
-        var exePath = ResolveExecutablePath();
+        // Resolve the server binary from the shared location ONLY
+        var exePath = ResolveLaunchCommand(out var fullArgs);
         if (exePath == null)
             return false;
 
@@ -70,18 +71,16 @@ public sealed class ServerLauncher
         // Core owns the server config: write/update {llmRoot}/llm-server.json from the
         // appsettings model selections BEFORE launching, so the server never invents defaults.
         var configPath = ServerConfigWriter.GetConfigPath(LlmRoot);
-        if (!ServerConfigWriter.EnsureServerConfig(_appRoot, LlmRoot, _config) && !File.Exists(configPath))
+        if (!ServerConfigWriter.EnsureServerConfig(LlmRoot, _config) && !File.Exists(configPath))
         {
             System.Diagnostics.Debug.WriteLine($"[ServerLauncher] Could not prepare server config at {configPath}");
             return false;
         }
 
-        var args = BuildServerArguments(LlmRoot, configPath, _config.IsLocal ? _config.Port : null);
-
         var psi = new ProcessStartInfo
         {
             FileName = exePath,
-            Arguments = args,
+            Arguments = fullArgs,
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,
@@ -91,13 +90,12 @@ public sealed class ServerLauncher
         try
         {
             _serverProcess = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start LLM server process.");
-            
+
             // Discard stdout/stderr — the LLM server writes to its own log file
             // via ServerLogger. Without this, llama.cpp output floods the terminal.
             _serverProcess.OutputDataReceived += (_, _) => { };
             _serverProcess.ErrorDataReceived += (_, e) =>
             {
-                // Only capture fatal errors to our own log
                 if (e.Data != null && e.Data.Contains("FATAL"))
                     System.Diagnostics.Debug.WriteLine($"[ServerLauncher] LLM fatal: {e.Data}");
             };
@@ -120,7 +118,6 @@ public sealed class ServerLauncher
                 return true;
         }
 
-        // Timeout — server didn't start in time
         return false;
     }
 
@@ -142,14 +139,12 @@ public sealed class ServerLauncher
         // If we launched the process, wait for it and force-kill if needed
         if (_serverProcess != null && !_serverProcess.HasExited)
         {
-            // Wait for process to exit gracefully
             var deadline = DateTime.UtcNow.AddSeconds(10);
             while (DateTime.UtcNow < deadline && _serverProcess != null && !_serverProcess.HasExited)
             {
                 await Task.Delay(200, ct);
             }
 
-            // Force kill if still running (e.g. other clients kept it alive — but we launched it)
             if (_serverProcess != null && !_serverProcess.HasExited)
             {
                 try
@@ -186,87 +181,47 @@ public sealed class ServerLauncher
         return args;
     }
 
-    private string? ResolveExecutablePath()
+    /// <summary>
+    /// Resolve the launch command from the shared standalone location ONLY.
+    /// Returns the executable path and fills fullArgs with all arguments.
+    /// Returns null if the binary is not installed (wizard hasn't run yet).
+    /// Never scans dev trees, build output, or app-relative paths.
+    /// </summary>
+    private string? ResolveLaunchCommand(out string fullArgs)
     {
-        EnsureServerBinaryCopied(ResolveServerSourceDirectory(AppContext.BaseDirectory), _appRoot);
-        return ResolveExecutablePath(_config.ServerExecutablePath, _appRoot);
-    }
+        var serverDir = Path.Combine(LlmRoot, "server");
+        var dllPath = Path.Combine(serverDir, "ECAssistant.LLM.dll");
 
-    /// <summary>Resolves the LLM server runtime source directory. ROOT-ONLY contract (v12.11):
-    /// the source is the app's own output — {baseDirectory}/server (staged at build time) first,
-    /// then the publish layout (server files next to the app binary). Never scans dev trees
-    /// (ECAssistantLLM/bin siblings) or the CWD. Pure apart from File.Exists.</summary>
-    internal static string? ResolveServerSourceDirectory(string baseDirectory)
-    {
-        // Staged layout: server runtime staged under the app output's server/ folder
-        var staged = Path.Combine(baseDirectory, "server");
-        if (File.Exists(Path.Combine(staged, "ECAssistant.LLM.dll")))
-            return staged;
+        var configPath = ServerConfigWriter.GetConfigPath(LlmRoot);
+        var baseArgs = BuildServerArguments(LlmRoot, configPath, _config.IsLocal ? _config.Port : null);
 
-        // Publish layout: server built into the same folder as the app
-        if (File.Exists(Path.Combine(baseDirectory, "ECAssistant.LLM.dll")))
-            return baseDirectory;
+        // Primary: launch via dotnet exec on the DLL (framework-dependent)
+        if (File.Exists(dllPath))
+        {
+            fullArgs = $"\"{dllPath}\" {baseArgs}";
+            return "dotnet";
+        }
 
+        // Fallback: self-contained executable
+        var exeName = _config.ServerExecutablePath;
+        var exePath = Path.Combine(serverDir, exeName ?? "ECAssistant.LLM");
+        if (File.Exists(exePath))
+        {
+            fullArgs = baseArgs;
+            return exePath;
+        }
+
+        fullArgs = "";
         return null;
     }
 
     /// <summary>
-    /// v12.10: guarantees root/server/ contains a runnable LLM server. Copies the server
-    /// runtime from the newest available build (publish folder or dev output) when missing
-    /// or stale. After this, the runtime only ever executes from within the root.
+    /// Check if the server binary is installed at the shared location.
     /// </summary>
-    internal static void EnsureServerBinaryCopied(string? sourceDir, string appRoot)
+    public bool IsServerBinaryInstalled()
     {
-        if (string.IsNullOrEmpty(sourceDir) || !Directory.Exists(sourceDir)) return;
-        if (string.Equals(Path.GetFullPath(sourceDir), Path.GetFullPath(appRoot), StringComparison.OrdinalIgnoreCase)) return;
-
-        var target = Path.Combine(appRoot, "server");
-        var sourceMarker = Path.Combine(sourceDir, "ECAssistant.LLM.dll");
-        var targetMarker = Path.Combine(target, "ECAssistant.LLM.dll");
-        if (!File.Exists(sourceMarker)) return;
-        if (File.Exists(targetMarker) &&
-            File.GetLastWriteTimeUtc(targetMarker) >= File.GetLastWriteTimeUtc(sourceMarker))
-            return; // up to date
-
-        CopyDirectory(sourceDir, target);
-        // File.Copy preserves the source mtime — stamp the target marker so the
-        // staleness comparison compares against copy time, not build time.
-        File.SetLastWriteTimeUtc(targetMarker, DateTime.UtcNow);
-    }
-
-    // Stateless utility — no mutable state.
-    internal static void CopyDirectory(string sourceDir, string targetDir)
-    {
-        Directory.CreateDirectory(targetDir);
-        foreach (var file in Directory.GetFiles(sourceDir))
-        {
-            var name = Path.GetFileName(file);
-            if (name.EndsWith(".log", StringComparison.OrdinalIgnoreCase)) continue;
-            File.Copy(file, Path.Combine(targetDir, name), overwrite: true);
-        }
-        foreach (var dir in Directory.GetDirectories(sourceDir))
-        {
-            if (Path.GetFileName(dir).Equals("logs", StringComparison.OrdinalIgnoreCase)) continue;
-            CopyDirectory(dir, Path.Combine(targetDir, Path.GetFileName(dir)));
-        }
-    }
-
-    internal static string? ResolveExecutablePath(
-        string serverExecutablePath, string appRoot)
-    {
-        var exeName = Path.GetFileName(serverExecutablePath);
-        var candidates = new List<string>();
-
-        // 1. The managed copy inside the root (primary location)
-        candidates.Add(Path.Combine(appRoot, "server", exeName));
-
-        // 2. Root scan: the executable directly under the root (legacy installs)
-        foreach (var sub in new[] { "", "ECAssistantLLM" })
-            candidates.Add(Path.Combine(appRoot, sub, exeName));
-
-        // ROOT-ONLY contract: no CWD, no dev-tree, no app-binary-directory fallback.
-        // If the executable is not inside the root, the copy step above must have run first.
-        return candidates.FirstOrDefault(File.Exists);
+        var serverDir = Path.Combine(LlmRoot, "server");
+        return File.Exists(Path.Combine(serverDir, "ECAssistant.LLM.dll"));
     }
 
     public void Dispose()

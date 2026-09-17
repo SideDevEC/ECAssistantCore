@@ -126,7 +126,7 @@ public class SessionManager : IAsyncDisposable
         string workingDir,
         ILogger? logger = null,
         Func<string, string?, string?, OpenAIClient>? openAIClientFactory = null,
-        Func<LlmProviderConfig, string, ServerLauncher>? serverLauncherFactory = null,
+        Func<LlmProviderConfig, ServerLauncher>? serverLauncherFactory = null,
         LlmServerClient? serverClient = null,
         SecureKeyStore? keyStore = null,
         ILlmProviderRegistry? providerRegistry = null,
@@ -143,13 +143,13 @@ public class SessionManager : IAsyncDisposable
 
         // v12 DI: collaborators injectable for tests/composition; default to the production implementations.
         _newClient = openAIClientFactory ?? ((endpoint, apiKey, clientId) => new OpenAIClient(endpoint, apiKey: apiKey, clientId: clientId));
-        var launcherFactory = serverLauncherFactory ?? ((providerConfig, appRoot) => new ServerLauncher(providerConfig, appRoot));
+        var launcherFactory = serverLauncherFactory ?? ((providerConfig) => new ServerLauncher(providerConfig));
         var validator = modelParamValidator ?? new ModelParamValidator(_logger);
 
         if (provider.IsLocal)
         {
-            // ── Local mode: ECAssistantLLM server ──
-            _serverLauncher = launcherFactory(provider, _appRoot);
+            // ── Local mode: ECAssistantLLM server (shared standalone location) ──
+            _serverLauncher = launcherFactory(provider);
             _serverClient = serverClient ?? new LlmServerClient(provider.ResolvedEndpoint);
             _httpClient = _newClient(provider.ResolvedEndpoint, null, null);
         }
@@ -180,9 +180,9 @@ public class SessionManager : IAsyncDisposable
                     {
                         Mode = "local",
                         Endpoint = embedding.Endpoint ?? $"http://localhost:{config.LlmProvider.Port}",
-                        ServerRootPath = Path.Combine(_appRoot, "llm")
+                        ServerRootPath = config.LlmProvider.ServerRootPath ?? "~/.ECAssistantLLM"
                     };
-                    _embeddingServerLauncher = launcherFactory(embeddingProvider, _appRoot);
+                    _embeddingServerLauncher = launcherFactory(embeddingProvider);
                     var embedOk = _embeddingServerLauncher.EnsureServerRunningAsync().GetAwaiter().GetResult();
                     if (embedOk)
                         _logger.Info("SessionManager", "Embedding server started locally (main AI stays remote)");
