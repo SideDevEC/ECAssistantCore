@@ -9,7 +9,7 @@
     <AssemblyName>ECAssistant.Core</AssemblyName>
     <IsPackable>true</IsPackable>
     <PackageId>ECAssistant.Core</PackageId>
-    <PackageVersion>12.9.3</PackageVersion>
+    <PackageVersion>12.9.4</PackageVersion>
     <Authors>SideDevEC</Authors>
     <Company>SideDevEC</Company>
     <Product>ECAssistant</Product>

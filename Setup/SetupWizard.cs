@@ -18,6 +18,11 @@ public sealed class WizardContext
 
     /// <summary>Model files directory — used to detect entries whose files already exist (re-register instead of re-download).</summary>
     public required string ModelsDir { get; init; }
+
+    /// <summary>Interactive LLM-server installer (version checks, foreign-install prompts).
+    /// Called by the wizard exactly when a local path is chosen (local chat model OR local
+    /// embeddings) — pure remote users never trigger it and get zero LLM footprint.</summary>
+    public ServerInstallCoordinator? ServerInstaller { get; init; }
 }
 
 /// <summary>
@@ -75,6 +80,13 @@ public sealed class SetupWizard
 
     private async Task SetupLocalLlmAsync(WizardContext ctx)
     {
+        // Local provider path → the server binary is required (provider itself runs on it),
+        // regardless of which models get downloaded afterwards.
+        if (ctx.ServerInstaller != null && !await ctx.ServerInstaller.EnsureServerAsync().ConfigureAwait(false))
+        {
+            _ui.WriteLine("  Continuing without a local server — local models will not start until it is installed.");
+        }
+
         _ui.Write("Enable vision (image understanding)? [Y/n]: ");
         var visionEnabled = (_ui.ReadLine()?.Trim() ?? "").ToLowerInvariant() != "n";
 
@@ -185,6 +197,14 @@ public sealed class SetupWizard
 
     private async Task SetupLocalEmbeddingsAsync(WizardContext ctx)
     {
+        // Local embeddings run on the local server too — a remote-AI user choosing local
+        // embeddings triggers the (one-time) server install exactly here.
+        if (ctx.ServerInstaller != null && !await ctx.ServerInstaller.EnsureServerAsync().ConfigureAwait(false))
+        {
+            _ui.WriteLine("  Local embeddings need the local server — continuing without installing it.");
+            return;
+        }
+
         var selectable = ctx.Catalog.Models
             .Where(m => m.Category == CatalogModelCategory.Embedding)
             .ToList();

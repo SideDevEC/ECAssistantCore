@@ -1,0 +1,224 @@
+using System.Text.Json;
+using ECAssistant.Core;
+using ECAssistant.Core.Setup;
+
+namespace ECAssistant.Core.Setup;
+
+/// <summary>
+/// Unified first-run / reinstall orchestration, shared by ALL hosts (Console, TUI):
+/// detect installation state from disk truth → run the staged wizard when needed.
+/// The LLM server binary is NOT installed here — the wizard installs it exactly at
+/// the stage that first needs it (local chat model OR local embeddings), so pure
+/// remote users get zero LLM footprint.
+///
+/// State is always derived from disk (no flag files): gguf files in models/,
+/// model entries in llm-server.json, server binary presence. Crash-safe and
+/// resume-friendly by construction.
+/// </summary>
+public sealed class FirstRunOrchestrator
+{
+    private readonly string _userConfigDir;
+    private readonly string _llmRoot;
+    private readonly string _llmModelsDir;
+    private readonly string _llmServerConfigPath;
+    private readonly string _llmServerBinaryPath;
+    private readonly ISetupUi _ui;
+
+    public FirstRunOrchestrator(string userConfigDir, ISetupUi ui)
+    {
+        _userConfigDir = userConfigDir ?? throw new ArgumentNullException(nameof(userConfigDir));
+        _ui = ui ?? throw new ArgumentNullException(nameof(ui));
+        _llmRoot = PathExpander.Default.Expand("~/.ECAssistantLLM");
+        _llmModelsDir = Path.Combine(_llmRoot, "models");
+        _llmServerConfigPath = Path.Combine(_llmRoot, "llm-server.json");
+        _llmServerBinaryPath = Path.Combine(_llmRoot, "server", "ECAssistant.LLM.dll");
+    }
+
+    /// <summary>Paths into the shared LLM root for hosts that need them.</summary>
+    public string LlmRoot => _llmRoot;
+    public string ServerConfigPath => _llmServerConfigPath;
+    public string ServerBinaryPath => _llmServerBinaryPath;
+
+    /// <summary>
+    /// Runs setup when configs are missing or resolve to no usable model/provider.
+    /// No-op when a usable provider is already configured. Never throws for expected
+    /// I/O failures — setup must not block application startup.
+    /// </summary>
+    public async Task RunIfNeededAsync()
+    {
+        try
+        {
+            Directory.CreateDirectory(_userConfigDir);
+
+            var catalogPath = Path.Combine(_userConfigDir, "model-catalog.json");
+            var catalog = ModelCatalogDocument.Load(catalogPath);
+            var validationError = catalog.Validate();
+            if (validationError != null)
+            {
+                _ui.WriteLine($"[Setup] model-catalog.json is invalid: {validationError} — skipping setup.");
+                return;
+            }
+
+            var appsettingsPath = Path.Combine(_userConfigDir, "appsettings.json");
+            await RunSetupIfNeededAsync(appsettingsPath, catalog, catalogPath).ConfigureAwait(false);
+        }
+        // Deliberate boundary: first-run setup must never block application startup.
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or HttpRequestException or InvalidOperationException or OperationCanceledException)
+        {
+            _ui.WriteLine($"[Setup] First-run setup skipped: {ex.Message}");
+        }
+    }
+
+    private async Task RunSetupIfNeededAsync(
+        string appsettingsPath, ModelCatalogDocument catalog, string catalogPath)
+    {
+        QuarantineBrokenAppsettings(appsettingsPath);
+
+        var detector = new FirstRunDetector(_llmModelsDir, _llmServerConfigPath, _llmServerBinaryPath);
+        var status = detector.Evaluate(catalog.Models);
+
+        var remoteConfigured = File.Exists(appsettingsPath) && IsRemoteProviderConfigured(appsettingsPath);
+
+        var localUsable = IsLocalModelUsable(appsettingsPath, _llmServerConfigPath);
+        if (!status.NeedsSetup && !status.NeedsServerBinary && (remoteConfigured || localUsable)) return;
+
+        if (!status.NeedsSetup && status.NeedsServerBinary && !remoteConfigured)
+            _ui.WriteLine("[Setup] Server binary not installed — running installation.");
+        else if (!status.NeedsSetup)
+            _ui.WriteLine("[Setup] Config exists but no usable model or provider found — running installation.");
+
+        // NOTE: no unconditional LLM directory creation and no server install here —
+        // the wizard does both exactly when the user picks a local path.
+
+        using var http = new HttpClient();
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("ECAssistant-Installer/1.0");
+        var installer = new ModelInstallerService(
+            http, _llmModelsDir,
+            _llmServerConfigPath,
+            Path.Combine(_userConfigDir, "appsettings.json"));
+
+        var coordinator = new ServerInstallCoordinator(_llmRoot, _ui);
+        var wizard = new SetupWizard(_ui);
+        await wizard.RunAsync(new WizardContext
+        {
+            AppsettingsPath = appsettingsPath,
+            UserConfigDir = _userConfigDir,
+            Catalog = catalog,
+            InstalledEntryIds = status.InstalledEntryIds,
+            Installer = installer,
+            Probe = new RemoteModelProbe(),
+            ModelsDir = _llmModelsDir,
+            ServerInstaller = coordinator
+        }).ConfigureAwait(false);
+    }
+
+    /// <summary>Invalid appsettings.json → back it up so the wizard can regenerate it.</summary>
+    private void QuarantineBrokenAppsettings(string appsettingsPath)
+    {
+        if (!File.Exists(appsettingsPath)) return;
+        try { JsonDocument.Parse(File.ReadAllText(appsettingsPath)); }
+        catch (JsonException)
+        {
+            var backup = appsettingsPath + ".broken." + DateTime.UtcNow.Ticks;
+            File.Move(appsettingsPath, backup);
+            _ui.WriteLine($"[Setup] appsettings.json is invalid — backed up to {Path.GetFileName(backup)}, regenerating.");
+        }
+    }
+
+    /// <summary>
+    /// True when appsettings.json configures a usable remote provider.
+    /// Matches what SetupWizard/RemoteProviderSetupWriter writes: an
+    /// llm_provider section with mode="remote" and an endpoint, plus a
+    /// non-empty llm_providers section (either key is sufficient if only one
+    /// is present, since the writer always emits both).
+    /// </summary>
+    // Stateless utility — no mutable state.
+    public static bool IsRemoteProviderConfigured(string appsettingsPath)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(File.ReadAllText(appsettingsPath));
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object) return false;
+
+            bool hasRemoteMode = false, hasEndpoint = false, hasProviders = false;
+
+            if (root.TryGetProperty("llm_provider", out var llm) && llm.ValueKind == JsonValueKind.Object)
+            {
+                hasRemoteMode = llm.TryGetProperty("mode", out var mode) &&
+                                mode.ValueKind == JsonValueKind.String &&
+                                string.Equals(mode.GetString(), "remote", StringComparison.OrdinalIgnoreCase);
+                hasEndpoint = llm.TryGetProperty("endpoint", out var endpoint) &&
+                              endpoint.ValueKind == JsonValueKind.String &&
+                              !string.IsNullOrWhiteSpace(endpoint.GetString());
+            }
+
+            if (root.TryGetProperty("llm_providers", out var providers) && providers.ValueKind == JsonValueKind.Object)
+            {
+                hasProviders =
+                    (providers.TryGetProperty("default_provider", out var def) &&
+                     def.ValueKind == JsonValueKind.String &&
+                     !string.IsNullOrWhiteSpace(def.GetString())) ||
+                    (providers.TryGetProperty("providers", out var list) &&
+                     list.ValueKind == JsonValueKind.Array && list.GetArrayLength() > 0);
+            }
+
+            return hasRemoteMode && hasEndpoint && hasProviders;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+            // Unreadable/invalid config: treat as not configured; the wizard
+            // (or quarantine) will handle it.
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// True when a local model is usable: appsettings.json llm.model_path resolves
+    /// against the user config root (composition root resolves relative paths there —
+    /// File.Exists alone would check the CWD and falsely report an installed model as
+    /// missing), or llm-server.json has a model entry whose file exists.
+    /// </summary>
+    // Stateless utility — no mutable state.
+    public static bool IsLocalModelUsable(string appsettingsPath, string serverConfigPath)
+    {
+        var userConfigDir = Path.GetDirectoryName(Path.GetFullPath(appsettingsPath))!;
+
+        bool ExistsResolved(string? p) =>
+            !string.IsNullOrEmpty(p) &&
+            (File.Exists(p) || File.Exists(Path.Combine(userConfigDir, p)));
+
+        try
+        {
+            if (File.Exists(appsettingsPath))
+            {
+                using var doc = JsonDocument.Parse(File.ReadAllText(appsettingsPath));
+                if (doc.RootElement.TryGetProperty("llm", out var llm) &&
+                    llm.TryGetProperty("model_path", out var mp) &&
+                    mp.ValueKind == JsonValueKind.String &&
+                    ExistsResolved(mp.GetString()))
+                    return true;
+            }
+        }
+        catch (JsonException) { /* malformed handled earlier → not usable */ }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* unreadable → not usable */ }
+
+        try
+        {
+            if (File.Exists(serverConfigPath))
+            {
+                using var doc = JsonDocument.Parse(File.ReadAllText(serverConfigPath));
+                if (doc.RootElement.TryGetProperty("models", out var models))
+                    foreach (var m in models.EnumerateArray())
+                        if (m.TryGetProperty("path", out var p) &&
+                            p.ValueKind == JsonValueKind.String &&
+                            ExistsResolved(p.GetString()))
+                            return true;
+            }
+        }
+        catch (JsonException) { /* malformed server config → not usable */ }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* unreadable → not usable */ }
+
+        return false;
+    }
+}
