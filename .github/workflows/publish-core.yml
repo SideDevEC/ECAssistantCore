@@ -12,7 +12,7 @@ on:
       - 'core-v*'
 
 permissions:
-  contents: read
+  contents: write
   packages: write
   id-token: write
 
@@ -105,3 +105,14 @@ jobs:
           name: ecassistant-core-${{ steps.version.outputs.version }}
           path: ./nupkg/*.nupkg
           retention-days: 30
+
+      - name: Create GitHub Release (tag pushes only)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ECAssistant ${{ github.ref_name }}
+          generate_release_notes: true
+          files: ./nupkg/*.nupkg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
