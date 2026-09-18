@@ -9,6 +9,16 @@
     <AssemblyName>ECAssistant.Core</AssemblyName>
     <IsPackable>true</IsPackable>
     <PackageId>ECAssistant.Core</PackageId>
+    <PackageVersion>12.9.0</PackageVersion>
+    <Authors>SideDevEC</Authors>
+    <Company>SideDevEC</Company>
+    <Product>ECAssistant</Product>
+    <PackageTags>ecassistant;ai-agent;local-llm;tools;memory</PackageTags>
+    <PackageProjectUrl>https://github.com/SideDevEC/ECAssistantCore</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/SideDevEC/ECAssistantCore.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>ECAssistant Core — local AI agent engine, tools, session management, and memory system.</Description>
   </PropertyGroup>
 
@@ -23,9 +33,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Build-order only: ensures the LLM server is built before Core so the staging
-         target below can copy its output. Does NOT link Core against the server. -->
-    <ProjectReference Include="..\ECAssistantLLM\ECAssistant.LLM.csproj" ReferenceOutputAssembly="false" />
+    <!-- LLM server package: provides the build target that copies the server runtime
+         into the consumer's output (server/). Consumed as a NuGet dependency so
+         downstream projects get the server automatically — no lib/ DLLs anywhere. -->
+    <PackageReference Include="ECAssistant.LLM.Server" Version="14.7.7" />
   </ItemGroup>
 
   <ItemGroup>
@@ -41,6 +52,10 @@
     <EmbeddedResource Include="SystemPrompt.Mac.md" />
     <EmbeddedResource Include="appsettings.json" />
     <EmbeddedResource Include="Setup\ModelCatalog.default.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>
