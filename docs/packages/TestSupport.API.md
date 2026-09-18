@@ -1,6 +1,6 @@
 # TestSupport.API.md
 
-Types: 8  |  LOC: 1442  |  ~483 tokens
+Types: 8  |  LOC: 1512  |  ~483 tokens
 
 ---
 

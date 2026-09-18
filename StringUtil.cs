@@ -45,7 +45,7 @@ public class PathExpander
     /// <summary>
     /// Expand ~ and make the path absolute. Creates parent directories if needed.
     /// </summary>
-    public string ExpandAndResolve(string path)
+    public string ExpandAndCanonicalize(string path)
     {
         var expanded = Expand(path);
         return Path.GetFullPath(expanded);

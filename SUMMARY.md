@@ -1,6 +1,6 @@
 # ECAssistant — Project Summary
 
-**Updated:** 2026-08-18 (v11.5 — PrefixCachedExtractor for KV cache reuse)
+**Updated:** 2026-09-18 (Core/LLM boundary law + manifest-driven installer)
 **Status:** ✅ 857 tests pass, 0 errors, 13 warnings (pre-existing xUnit analyzers)
 **Target Framework:** .NET 8.0
 **Platform:** Cross-platform (Windows, macOS, Linux)
@@ -10,6 +10,19 @@
 ## What It Is
 
 ECAssistant is a local-first AI agent framework. It runs LLM inference on-device via LLamaSharp with multi-session orchestration, sub-agents, vector memory, self-correction, 12 built-in tools, and a full TUI — no cloud, no API keys.
+
+## 2026-09-18 — Core/LLM Boundary + Process Backend Support
+
+- **Boundary law enforced:** Core consumes ECAssistantLLM via HTTP endpoints ONLY.
+  `BackendProvisioner` (LLM internals in Core) DELETED; replaced by dumb
+  `ServerAssetInstaller` reading ECAssistantLLM's shipped `install-manifest.json`
+  (download → SHA-256 verify → extract → runtime_id layout normalization).
+- **Bonsai/Qwen3.8-27B ternary support:** wizard installs Prism llama.cpp runtime +
+  5.9 GB GGUF up front (no runtime downloads anywhere); verified end-to-end
+  (fresh-root wizard run → server boot → chat answered).
+- Wizard no longer writes `download_url`/`download_sha256` into llm-server.json.
+- Vision models ALWAYS listed with mmproj (catalog-enforced).
+- LDC artifacts regenerated; enforcement PASSED (renamed ExpandAndCanonicalize).
 
 ## v11.5 Changes (2026-08-18)
 

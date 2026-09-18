@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 299  |  LOC: 26449  |  ~13950 tokens
+Types: 305  |  LOC: 26938  |  ~14162 tokens
 
 ---
 
@@ -439,10 +439,6 @@ Cross-package deps: ECAssistant.Core.Engine
 ### Class: DebugProbeTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Web
 
-### Class: DecisionParserTests
-> v12.12 model-agnostic decision parsing — ANY model must produce a usable
-Cross-package deps: ECAssistant.Core.Orchestration, Xunit
-
 ### Class: DecisionResult
 
 ### Class: DecomposeConfig
@@ -715,7 +711,7 @@ Cross-package deps: ECAssistant.Core.Interfaces
 ### Class: FirstRunDetector
 > First-run / installed-model state.
 Constructor:
-  - FirstRunDetector(string modelsDir, string serverConfigPath)
+  - FirstRunDetector(string modelsDir, string serverConfigPath, string modelsDir, string serverConfigPath, string? serverBinaryPath)
 
 ### Class: FirstRunStatus
 > First-run / installed-model state.
@@ -778,6 +774,15 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
 
 ### Class: InferenceRequestParams
 > Abstracts LLM inference via HTTP (OpenAI-compatible endpoint).
+
+### Class: InstallManifest
+> One downloadable asset entry from an install manifest.
+
+### Class: InstallManifestAsset
+> One downloadable asset entry from an install manifest.
+
+### Class: InstallManifestRuntime
+> One downloadable asset entry from an install manifest.
 
 ### Class: InstallerVisionEmbeddingTests
 > Vision-capability + embeddings-mode wiring: mmproj pairing, vision_enabled flag,
@@ -910,7 +915,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
 Cross-package deps: ECAssistant.Core.Analysis
 
 ### Class: NativeToolCallsAdapterTests
-> v13b: remote native tool_calls (OpenAI function calling) → decision envelope → internal decision text.
+> v14: remote native tool_calls (OpenAI function calling) → decision envelope → LLMDecision.
 Cross-package deps: ECAssistant.Core.Engine, Xunit
 
 ### Class: NopKvCacheController
@@ -949,6 +954,9 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.
 
 ### Class: ParallelToolExecutorTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools, Moq
+
+### Class: PathExpander
+> String utility — truncation and text helpers.
 
 ### Class: PlannedToolCall
 > A single planned tool call — concrete mapping from a sub-task to a tool + args.
@@ -1024,6 +1032,10 @@ Constructor:
 ### Class: RemoteProviderConfig
 > A single remote OpenAI-compatible provider entry.
 
+### Class: RemoteProviderIntegrationTests
+> v14.7: Integration tests for the remote provider path (native OpenAI function calling).
+Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Tools, Xunit
+
 ### Class: RemoteProviderSetupWriter
 > Writes remote (OpenAI-compatible) provider settings chosen during first-run
 Constructor:
@@ -1064,6 +1076,16 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 ### Class: SelfCorrectionManagerTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
 
+### Class: ServerAssetInstaller
+> One downloadable asset entry from an install manifest.
+Constructor:
+  - ServerAssetInstaller(HttpClient http, string backendsRootDir, string platformKey)
+
+### Class: ServerBinaryInstaller
+> Copies the LLM server runtime from the app's NuGet-populated content directory
+Constructor:
+  - ServerBinaryInstaller(string sourceServerDir, string targetServerDir)
+
 ### Class: ServerConfigWriter
 > Core owns the LLM server config. Before the server process is launched, this writer
 Cross-package deps: ECAssistant.Core.Config
@@ -1077,15 +1099,15 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services.Http, Xun
 > Capabilities an LLM backend advertises at connect time. v13c.
 
 ### Class: ServerLauncher
-> Detects if ECAssistantLLM server is running. If not, launches it as a child process.
+> Detects if ECAssistantLLM server is running. If not, launches it from the
 Constructor:
-  - ServerLauncher(LlmProviderConfig config, string appRoot)
+  - ServerLauncher(LlmProviderConfig config)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Transport
 
 ### Class: ServerLauncherResolveTests
-> v12.10 runtime contract tests: the integrating app gives Core a root folder; Core
+> Tests for the standalone ServerLauncher: resolves the server binary from
 Implements: IDisposable
-Cross-package deps: ECAssistant.Core.Services.Http, Xunit
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services.Http, Xunit
 
 ### Class: SessionBuilder
 > Builder for creating and initializing AgentSessions with standard tools.
@@ -1110,7 +1132,7 @@ Cross-package deps: ECAssistant.Core.Session
 > Session Manager — creates, tracks, and manages all sessions.
 Implements: IAsyncDisposable
 Constructor:
-  - SessionManager(EAgentConfig config, string resolvedModelPath, string workingDir, ILogger? logger = null, Func<string, string?, string?, OpenAIClient>? openAIClientFactory = null, Func<LlmProviderConfig, string, ServerLauncher>? serverLauncherFactory = null, LlmServerClient? serverClient = null, SecureKeyStore? keyStore = null, ILlmProviderRegistry? providerRegistry = null, IModelParamValidator? modelParamValidator = null)
+  - SessionManager(EAgentConfig config, string resolvedModelPath, string workingDir, ILogger? logger = null, Func<string, string?, string?, OpenAIClient>? openAIClientFactory = null, Func<LlmProviderConfig, ServerLauncher>? serverLauncherFactory = null, LlmServerClient? serverClient = null, SecureKeyStore? keyStore = null, ILlmProviderRegistry? providerRegistry = null, IModelParamValidator? modelParamValidator = null)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Interfaces, ECAssistant.Core.Transport
 
 ### Class: SessionQueueTests
@@ -1152,7 +1174,7 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools
 Cross-package deps: ECAssistant.Core.Orchestration, ECAssistant.Core.Tools
 
 ### Class: StructuredDecisionAdapterTests
-> v13: grammar-forced decision envelope → internal decision text.
+> v14: grammar-forced decision envelope → LLMDecision (native JSON pipeline).
 Cross-package deps: ECAssistant.Core.Engine, Xunit
 
 ### Class: SubAgentConfig

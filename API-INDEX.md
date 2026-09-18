@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-02T09:11:58.471069+00:00
-Packages: 3  |  Types: 396
+Generated: 2026-09-18T09:57:27.391031+00:00
+Packages: 3  |  Types: 402
 
 ---
 
-## ECAssistantCore (299 types, ~26449 LOC)
+## ECAssistantCore (305 types, ~26938 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -75,7 +75,6 @@ Packages: 3  |  Types: 396
 - 🟡 ConversationTranscript  (ECAssistantCore)
 - 🟡 ConversationTranscriptTests  (ECAssistantCore)
 - 🟡 DebugProbeTests  (ECAssistantCore)
-- 🟡 DecisionParserTests  (ECAssistantCore)
 - 🟡 DecisionResult  (ECAssistantCore)
 - 🟡 DecomposeConfig  (ECAssistantCore)
 - 🟡 DependencyGroup  (ECAssistantCore)
@@ -141,7 +140,7 @@ Packages: 3  |  Types: 396
 - 🟡 FileSystemAdapter : IFileSystem  (ECAssistantCore)
 - 🟡 FileSystemAdapterTests : IDisposable  (ECAssistantCore)
 - 🟡 FileWatcherService : IDisposable  (ECAssistantCore)  deps: [string, string filter =, ILogger? logger =]
-- 🟡 FirstRunDetector  (ECAssistantCore)  deps: [string, string]
+- 🟡 FirstRunDetector  (ECAssistantCore)  deps: [string, string, string, string, string]
 - 🟡 FirstRunStatus  (ECAssistantCore)
 - 🟣 GenerationParams  (ECAssistantCore)  deps: [int, float, float, int, float]
 - 🟡 HomeController  (ECAssistantCore)
@@ -159,6 +158,9 @@ Packages: 3  |  Types: 396
 - 🟡 InferenceConfig  (ECAssistantCore)
 - 🟡 InferenceParamsFactory  (ECAssistantCore)
 - 🟡 InferenceRequestParams  (ECAssistantCore)
+- 🟡 InstallManifest  (ECAssistantCore)
+- 🟡 InstallManifestAsset  (ECAssistantCore)
+- 🟡 InstallManifestRuntime  (ECAssistantCore)
 - 🟣 InstallResult  (ECAssistantCore)  deps: [bool, string, IReadOnlyList]
 - 🟡 InstallerVisionEmbeddingTests : IDisposable  (ECAssistantCore)
 - 🟡 InterfaceConfig  (ECAssistantCore)
@@ -199,6 +201,7 @@ Packages: 3  |  Types: 396
 - 🟡 ParallelToolExecutor : IParallelToolExecutor  (ECAssistantCore)  deps: [EAgentEngine, ToolPolicy, Func, Action, ISessionOutput? sessionOutput =]
 - 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 ParallelToolExecutorTests  (ECAssistantCore)
+- 🟡 PathExpander  (ECAssistantCore)
 - 🟡 PlannedToolCall  (ECAssistantCore)
 - 🟡 PrefixCachedExtractor : IAsyncDisposable  (ECAssistantCore)  deps: [IInferenceEngine, IKvCacheController, string, InferenceParamsFactory? paramsFactory =]
 - 🟣 ProcessResult  (ECAssistantCore)  deps: [int, string, string, bool]
@@ -221,6 +224,7 @@ Packages: 3  |  Types: 396
 - 🟣 RemoteProbeResult  (ECAssistantCore)  deps: [bool, IReadOnlyList, string? Error =]
 - 🟣 RemoteProvider  (ECAssistantCore)  deps: [string, string, string, string, string]
 - 🟡 RemoteProviderConfig  (ECAssistantCore)
+- 🟡 RemoteProviderIntegrationTests  (ECAssistantCore)
 - 🟡 RemoteProviderSetupWriter  (ECAssistantCore)  deps: [string, string? keysDirectory =]
 - 🟡 RemoteProviderSetupWriterTests  (ECAssistantCore)
 - 🟡 RemoteTokenizer  (ECAssistantCore)  deps: [OpenAIClient, string modelId =]
@@ -230,10 +234,12 @@ Packages: 3  |  Types: 396
 - 🟡 SecureKeyStoreTests  (ECAssistantCore)
 - 🟡 SelfCorrectionManager : IDisposable  (ECAssistantCore)  deps: [string, ILogger? logger =]
 - 🟡 SelfCorrectionManagerTests  (ECAssistantCore)
+- 🟡 ServerAssetInstaller  (ECAssistantCore)  deps: [HttpClient, string, string]
+- 🟡 ServerBinaryInstaller  (ECAssistantCore)  deps: [string, string]
 - 🟡 ServerConfigWriter  (ECAssistantCore)
 - 🟡 ServerConfigWriterTests : IDisposable  (ECAssistantCore)
 - 🟡 ServerConnection  (ECAssistantCore)
-- 🟡 ServerLauncher  (ECAssistantCore)  deps: [LlmProviderConfig, string]
+- 🟡 ServerLauncher  (ECAssistantCore)  deps: [LlmProviderConfig]
 - 🟡 ServerLauncherResolveTests : IDisposable  (ECAssistantCore)
 - 🟡 SessionBuilder : ISessionBuilder  (ECAssistantCore)  deps: [EAgentConfig, string, string, ILogger? logger =, BackgroundProcessManager? bgManager =]
 - 🟡 SessionDiscovery  (ECAssistantCore)
@@ -307,7 +313,7 @@ Packages: 3  |  Types: 396
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## TestSupport (8 types, ~1442 LOC)
+## TestSupport (8 types, ~1512 LOC)
 
 - 🟡 EGuiTestHarness : EGuiBase  (TestSupport)
 - 🟡 EcaTestSuite  (TestSupport)
@@ -318,7 +324,7 @@ Packages: 3  |  Types: 396
 - 🟡 TestScenario  (TestSupport)
 - 🟡 TestSessionOutput : ISessionOutput  (TestSupport)  deps: [EGuiTestHarness]
 
-## Tests (89 types, ~11599 LOC)
+## Tests (89 types, ~11709 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -332,7 +338,6 @@ Packages: 3  |  Types: 396
 - 🟡 ContextWindowTests  (Tests)
 - 🟡 ConversationTranscriptTests  (Tests)
 - 🟡 DebugProbeTests  (Tests)
-- 🟡 DecisionParserTests  (Tests)
 - 🟡 DependencyGroupTests  (Tests)
 - 🟡 EAgentConfigTests : IDisposable  (Tests)
 - 🟡 EBackgroundExecToolTests : IDisposable  (Tests)
@@ -379,6 +384,7 @@ Packages: 3  |  Types: 396
 - 🟡 ProgramGuiCollection  (Tests)
 - 🟡 ProjectContextManagerTests  (Tests)
 - 🟡 ReadableContentExtractorTests  (Tests)
+- 🟡 RemoteProviderIntegrationTests  (Tests)
 - 🟡 RemoteProviderSetupWriterTests  (Tests)
 - 🟡 SecureKeyStoreTests  (Tests)
 - 🟡 SelfCorrectionManagerTests  (Tests)

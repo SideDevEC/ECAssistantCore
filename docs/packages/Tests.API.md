@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 89  |  LOC: 11599  |  ~3264 tokens
+Types: 89  |  LOC: 11709  |  ~3286 tokens
 
 ---
 
@@ -44,10 +44,6 @@ Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: DebugProbeTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Web
-
-### Class: DecisionParserTests
-> v12.12 model-agnostic decision parsing — ANY model must produce a usable
-Cross-package deps: ECAssistant.Core.Orchestration, Xunit
 
 ### Class: DependencyGroupTests
 Cross-package deps: ECAssistant.Core.Engine
@@ -192,7 +188,7 @@ Cross-package deps: ECAssistant.Core.Setup, Xunit
 Cross-package deps: ECAssistant.Core.Analysis
 
 ### Class: NativeToolCallsAdapterTests
-> v13b: remote native tool_calls (OpenAI function calling) → decision envelope → internal decision text.
+> v14: remote native tool_calls (OpenAI function calling) → decision envelope → LLMDecision.
 Cross-package deps: ECAssistant.Core.Engine, Xunit
 
 ### Class: OrchestratorIntegrationTests
@@ -220,6 +216,10 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
 ### Class: ReadableContentExtractorTests
 Cross-package deps: ECAssistant.Core.Services
 
+### Class: RemoteProviderIntegrationTests
+> v14.7: Integration tests for the remote provider path (native OpenAI function calling).
+Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Tools, Xunit
+
 ### Class: RemoteProviderSetupWriterTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup
 
@@ -235,9 +235,9 @@ Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services.Http, Xunit
 
 ### Class: ServerLauncherResolveTests
-> v12.10 runtime contract tests: the integrating app gives Core a root folder; Core
+> Tests for the standalone ServerLauncher: resolves the server binary from
 Implements: IDisposable
-Cross-package deps: ECAssistant.Core.Services.Http, Xunit
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services.Http, Xunit
 
 ### Class: SessionDiscoveryTests
 Implements: IDisposable
@@ -260,7 +260,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup, Xunit
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools
 
 ### Class: StructuredDecisionAdapterTests
-> v13: grammar-forced decision envelope → internal decision text.
+> v14: grammar-forced decision envelope → LLMDecision (native JSON pipeline).
 Cross-package deps: ECAssistant.Core.Engine, Xunit
 
 ### Class: SubAgentErrorTests

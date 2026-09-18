@@ -421,3 +421,18 @@ EWebFetch was reworked to produce LLM-parseable output. The old tool returned a 
 - **Session/**: `SessionManager` spawns a local LLM server for embeddings when main AI is remote but `embedding.mode=local` (`_embeddingServerLauncher`, ctor sync-over-async pattern, disposed on shutdown). `SessionBuilder.ResolveEmbeddingEndpoint/ModelId` route the embedder by embedding mode (local → localhost + "embeddings"; remote → provider endpoint/model)
 - **Setup/**: `EmbeddingSetupWriter` (embedding.mode persistence); `ModelInstallerService` keeps `llm.model_path` + `llm_provider.vision_enabled` in sync (creates minimal appsettings when missing — critical during first-run); `SecureKeyStore.SetKey`; `DetectSiblingMmproj` public (vision pairing); `LooksLikeEmbeddingModel` public
 - **Interfaces/**: `ISecureKeyStore.SetKey(fileName, plaintext)` — encrypt-on-save
+
+## Core/LLM Boundary Law + Manifest-Driven Installer (2026-09-18)
+
+**Boundary (hard rule):** ECAssistantCore consumes ECAssistantLLM ONLY via its HTTP
+endpoints. Core knows NOTHING about how the LLM server runs models. ECAssistantLLM is a
+self-contained finished product: it ships everything needed to run its models and NEVER
+downloads at runtime.
+
+- `ServerAssetInstaller` (replaces deleted `BackendProvisioner`): dumb installer that
+  reads `install-manifest.json` shipped with the LLM server package (content/server/),
+  downloads assets, verifies SHA-256, extracts, normalizes `archive_root` → `runtime_id`
+  layout. Zero LLM-internal knowledge lives in Core.
+- `ModelInstallerService`: no `download_url`/`download_sha256` in generated configs —
+  the wizard installs everything up front; the server only locates pre-installed assets.
+- Vision rule: vision-capable catalog entries ALWAYS carry their mmproj file.

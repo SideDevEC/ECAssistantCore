@@ -1,6 +1,6 @@
 {
   "project": "ECAssistantCore",
-  "timestamp": "2026-09-02T09:11:58.473877+00:00",
+  "timestamp": "2026-09-18T09:57:27.392977+00:00",
   "total_violations": 1,
   "errors": 0,
   "warnings": 1,
@@ -8,7 +8,7 @@
     {
       "rule": "interface-first",
       "severity": "warning",
-      "file": "/Users/maintainer/Agent/ECAssistant/ECAssistantCore/Setup/SetupWizard.cs",
+      "file": "<project-root>/ECAssistantCore/Setup/SetupWizard.cs",
       "message": "Public class SetupWizard in ECAssistantCore implements no interface \u2014 may be a boundary leak"
     }
   ],
