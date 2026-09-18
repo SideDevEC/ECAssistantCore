@@ -96,6 +96,7 @@ public sealed class ModelInstallerService
 
     /// <summary>
     /// Download all files of the entry (skipping files already present),
+    /// provision the external backend runtime when the entry requires one,
     /// then merge the model into llm-server.json.
     /// </summary>
     public async Task<InstallResult> InstallAsync(
@@ -115,6 +116,8 @@ public sealed class ModelInstallerService
 
                 var url = entry.GetDownloadUrl(file);
                 await DownloadFileAsync(url, target, file.Filename, progress, ct);
+                if (!string.IsNullOrWhiteSpace(file.Sha256))
+                    VerifySha256(target, file.Sha256);
                 downloaded.Add(file.Filename);
             }
         }
@@ -129,9 +132,55 @@ public sealed class ModelInstallerService
                 downloaded);
         }
 
+        var backendMessage = string.Empty;
+        if (string.Equals(entry.SuggestedConfig.Backend?.Trim(), "process", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var llmServerDir = Path.GetDirectoryName(Path.GetFullPath(_serverConfigPath))!;
+                var backendsRoot = Path.Combine(llmServerDir, "backends");
+                var manifestPath = Path.Combine(llmServerDir, "server", "install-manifest.json");
+                var installer = new ServerAssetInstaller(_http, backendsRoot, PlatformKey());
+                var binary = await installer.InstallFromManifestAsync(manifestPath, progress, ct);
+                backendMessage = $" Backend runtime installed: {binary}";
+            }
+            catch (OperationCanceledException)
+            {
+                return new InstallResult(false, "Download cancelled.", downloaded);
+            }
+            catch (Exception ex)
+            {
+                return new InstallResult(false,
+                    $"Model files downloaded, but backend runtime installation failed: {ex.Message}", downloaded);
+            }
+        }
+
         var configMessage = ApplyToServerConfig(entry);
         return new InstallResult(true,
-            $"Installed {entry.DisplayName}. {configMessage}", downloaded);
+            $"Installed {entry.DisplayName}.{backendMessage} {configMessage}", downloaded);
+    }
+
+    /// <summary>Platform key for ServerAssetInstaller: osx-arm64, win-x64, linux-x64.</summary>
+    // Stateless utility — no mutable state.
+    private static string PlatformKey()
+    {
+        if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX))
+            return "osx-arm64";
+        if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            return "win-x64";
+        if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
+            return "linux-x64";
+        throw new PlatformNotSupportedException("Unsupported OS for backend provisioning");
+    }
+
+    // Stateless utility — no mutable state.
+    private static void VerifySha256(string path, string expectedHex)
+    {
+        using var stream = File.OpenRead(path);
+        var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(stream)).ToLowerInvariant();
+        if (!string.Equals(hash, expectedHex.Trim(), StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException(
+                $"Checksum mismatch for '{Path.GetFileName(path)}': expected {expectedHex}, got {hash}");
     }
 
     /// <summary>Stream a file to disk with resume support (.part file + Range header).</summary>
@@ -321,6 +370,9 @@ public sealed class ModelInstallerService
             ["threads"] = -1,
             ["is_embedding"] = entry.Category == CatalogModelCategory.Embedding
         };
+        if (!string.IsNullOrWhiteSpace(entry.SuggestedConfig.Backend))
+            newEntry["backend"] = entry.SuggestedConfig.Backend;
+        // NOTE: no download fields — the server never downloads; the wizard installs everything up front.
         if (entry.Category == CatalogModelCategory.Embedding)
             newEntry["pooling_type"] = "mean";
         if (entry.SuggestedConfig.BatchSize > 0)

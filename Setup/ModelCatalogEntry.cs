@@ -28,6 +28,10 @@ public sealed class CatalogModelFile
     /// <summary>Approximate download size in GB (for display + disk checks).</summary>
     [JsonPropertyName("size_gb")]
     public double SizeGb { get; set; }
+
+    /// <summary>Expected SHA-256 (hex) of the downloaded file. Empty/absent = unverified.</summary>
+    [JsonPropertyName("sha256")]
+    public string? Sha256 { get; set; }
 }
 
 /// <summary>Suggested server config values for this model.</summary>
@@ -42,6 +46,14 @@ public sealed class CatalogSuggestedConfig
     /// <summary>Prompt-processing batch size. 0 = omit (library default).</summary>
     [JsonPropertyName("batch_size")]
     public int BatchSize { get; set; } = 0;
+
+    /// <summary>
+    /// Execution backend: "process" routes the model to an external llama-server
+    /// (ternary models requiring the Prism fork) and makes the installer provision
+    /// that runtime. Empty/"auto" = in-process LLamaSharp (auto-detect at runtime).
+    /// </summary>
+    [JsonPropertyName("backend")]
+    public string? Backend { get; set; }
 }
 
 /// <summary>
