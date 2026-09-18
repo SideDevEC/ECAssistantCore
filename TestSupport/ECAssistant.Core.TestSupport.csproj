@@ -9,7 +9,7 @@
     <AssemblyName>ECAssistant.Core.TestSupport</AssemblyName>
     <IsPackable>true</IsPackable>
     <PackageId>ECAssistant.Core.TestSupport</PackageId>
-    <PackageVersion>12.9.0</PackageVersion>
+    <PackageVersion>12.9.1</PackageVersion>
     <Authors>SideDevEC</Authors>
     <Company>SideDevEC</Company>
     <Product>ECAssistant</Product>
@@ -17,11 +17,16 @@
     <RepositoryUrl>https://github.com/SideDevEC/ECAssistantCore.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>Test-support harness for ECAssistant.Core (TestRunner, scenarios, MockEngine). Not for production use.</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ECAssistant.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>

@@ -99,7 +99,10 @@ public sealed class ServerAssetInstaller
         Directory.CreateDirectory(runtimeDir);
         foreach (var asset in runtime.Assets)
         {
-            var archivePath = Path.Combine(Path.GetTempPath(), Path.GetFileName(asset.Url));
+            // Unique temp name: parallel installs / same-named assets must not collide.
+            var archivePath = Path.Combine(
+                Path.GetTempPath(),
+                $".{Guid.NewGuid():N}-{Path.GetFileName(asset.Url)}");
             await DownloadAsync(asset.Url, archivePath, progress, ct).ConfigureAwait(false);
             if (!string.IsNullOrWhiteSpace(asset.Sha256))
                 VerifySha256(archivePath, asset.Sha256);
