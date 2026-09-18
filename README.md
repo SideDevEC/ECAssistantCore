@@ -16,6 +16,8 @@ Public on nuget.org — no token, no auth:
 dotnet add package ECAssistant.Core
 ```
 
+![ECAssistant in the terminal](demo.gif)
+
 ## Hello, agent
 
 ```csharp
