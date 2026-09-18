@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-18T09:57:27.391635+00:00
-Edges: 84  |  Packages: 3
+Generated: 2026-09-18T16:10:26.697682+00:00
+Edges: 86  |  Packages: 3
 
 ---
 
@@ -52,6 +52,7 @@ Edges: 84  |  Packages: 3
 - EcaServiceBundle ──uses──► ILogger (ECAssistantCore)
 - EcaServiceBundle ──uses──► ISessionBuilder (ECAssistantCore)
 - FileSystemAdapter ──implements──► IFileSystem (ECAssistantCore)
+- FirstRunOrchestrator ──uses──► ISetupUi (ECAssistantCore)
 - HtmlTextConverter ──implements──► IHtmlTextConverter (ECAssistantCore)
 - HttpClientAdapter ──implements──► IHttpClient (ECAssistantCore)
 - HttpEmbedder ──implements──► IVectorEmbedder (ECAssistantCore)
@@ -78,6 +79,7 @@ Edges: 84  |  Packages: 3
 - RemoteModelLoader ──implements──► IModelLoader (ECAssistantCore)
 - RemoteModelProbe ──implements──► IRemoteModelProbe (ECAssistantCore)
 - SecureKeyStore ──implements──► ISecureKeyStore (ECAssistantCore)
+- ServerInstallCoordinator ──uses──► ISetupUi (ECAssistantCore)
 - SessionBuilder ──implements──► ISessionBuilder (ECAssistantCore)
 - SetupWizard ──uses──► ISetupUi (ECAssistantCore)
 - StepMapper ──implements──► IStepMapper (ECAssistantCore)

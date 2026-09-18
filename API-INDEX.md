@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-18T09:57:27.391031+00:00
-Packages: 3  |  Types: 402
+Generated: 2026-09-18T16:10:26.697053+00:00
+Packages: 3  |  Types: 405
 
 ---
 
-## ECAssistantCore (305 types, ~26938 LOC)
+## ECAssistantCore (308 types, ~27338 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -141,6 +141,7 @@ Packages: 3  |  Types: 402
 - 🟡 FileSystemAdapterTests : IDisposable  (ECAssistantCore)
 - 🟡 FileWatcherService : IDisposable  (ECAssistantCore)  deps: [string, string filter =, ILogger? logger =]
 - 🟡 FirstRunDetector  (ECAssistantCore)  deps: [string, string, string, string, string]
+- 🟡 FirstRunOrchestrator  (ECAssistantCore)  deps: [string, ISetupUi]
 - 🟡 FirstRunStatus  (ECAssistantCore)
 - 🟣 GenerationParams  (ECAssistantCore)  deps: [int, float, float, int, float]
 - 🟡 HomeController  (ECAssistantCore)
@@ -194,6 +195,7 @@ Packages: 3  |  Types: 402
 - 🟡 MyTests  (ECAssistantCore)
 - 🟡 NativeToolCallsAdapterTests  (ECAssistantCore)
 - 🟡 NopKvCacheController : IKvCacheController  (ECAssistantCore)
+- 🟡 NuGetServerFetcher  (ECAssistantCore)  deps: [HttpClient, string, string? tempRoot =]
 - 🟡 OpenAIClient : IDisposable  (ECAssistantCore)  deps: [string, string? clientId =, string? apiKey =, TimeSpan? timeout =]
 - 🟡 OrchestratorIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 OrchestratorResult  (ECAssistantCore)
@@ -239,6 +241,7 @@ Packages: 3  |  Types: 402
 - 🟡 ServerConfigWriter  (ECAssistantCore)
 - 🟡 ServerConfigWriterTests : IDisposable  (ECAssistantCore)
 - 🟡 ServerConnection  (ECAssistantCore)
+- 🟡 ServerInstallCoordinator  (ECAssistantCore)  deps: [string, ISetupUi]
 - 🟡 ServerLauncher  (ECAssistantCore)  deps: [LlmProviderConfig]
 - 🟡 ServerLauncherResolveTests : IDisposable  (ECAssistantCore)
 - 🟡 SessionBuilder : ISessionBuilder  (ECAssistantCore)  deps: [EAgentConfig, string, string, ILogger? logger =, BackgroundProcessManager? bgManager =]

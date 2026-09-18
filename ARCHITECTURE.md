@@ -221,6 +221,24 @@ ECAssistantLLM server (model + GPU, shared)
 
 The actual HTTP wiring (`ServerLauncher` → `LlmServerClient` → `OpenAIClient` → `HttpStreamingEngine` / `RemoteKvCacheController` / `RemoteTokenizer`) happens inside `SessionManager` at `InitializeAsync`, using `LlmProviderConfig` (endpoint, mode, `auto_start`, `server_executable_path`, `heartbeat_interval_sec`, `host`, `port`).
 
+## First-Run Setup (v12.9 — unified orchestrator, wizard-time server install)
+
+ALL hosts (Console, TUI) share one Core flow — no per-host setup logic:
+
+```
+FirstRunOrchestrator (Setup/)
+├── FirstRunDetector.Evaluate()   ← disk truth: gguf files, llm-server.json entries, server binary
+├── RunIfNeededAsync()            ← wizard only when state unresolved; never blocks startup
+└── SetupWizard (ISetupUi)        ← adapters: ConsoleSetupUi (headless), TuiSetupUi (TUI)
+```
+
+- **Server install is wizard-time and conditional** — `ServerInstallCoordinator.EnsureServerAsync()` is called by the wizard ONLY when local chat (Stage 1) or local embeddings (Stage 2) is picked. Pure-remote users: zero `~/.ECAssistantLLM` footprint, no downloads, no folders.
+- **`NuGetServerFetcher`** downloads `ecassistant.llm.server` from nuget.org flat container (temp extract) — the tool packages are thin (~2.8 MB); the ~170 MB server is NEVER embedded anywhere.
+- **Interactive guarantees** (`ServerInstallCoordinator`): missing → install; ECAssistant version mismatch (VERSION stamp) → hint + ask to replace; foreign layout → hint + ask to place alongside. Writes only into `server/`, `models/`, `llm-server.json`. Binary-in-use guard before overwrite.
+- **Reinstall** (`/reinstall`, TUI): confirm → stop server (verified) → `AiSetupResetter` (config reset, keys/ + llm-server.json deleted, models + binary KEPT) → same orchestrator/wizard; existing models show "✓ already on disk" and re-register instead of re-downloading.
+- **Version upgrade path**: VERSION stamp vs `ServerInstallCoordinator.RequiredServerVersion` — mismatch prompts an upgrade at the next wizard run.
+- **No flag files**: all state derived from disk → crash-safe, resumable.
+
 ## Tool Permission Policy (v11.7)
 
 Two permission levels per tool: `approvalRequired: true/false`.

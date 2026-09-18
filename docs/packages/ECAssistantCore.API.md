@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 305  |  LOC: 26938  |  ~14162 tokens
+Types: 308  |  LOC: 27338  |  ~14317 tokens
 
 ---
 
@@ -713,6 +713,12 @@ Cross-package deps: ECAssistant.Core.Interfaces
 Constructor:
   - FirstRunDetector(string modelsDir, string serverConfigPath, string modelsDir, string serverConfigPath, string? serverBinaryPath)
 
+### Class: FirstRunOrchestrator
+> Unified first-run / reinstall orchestration, shared by ALL hosts (Console, TUI):
+Constructor:
+  - FirstRunOrchestrator(string userConfigDir, ISetupUi ui)
+Cross-package deps: ECAssistant.Core, ECAssistant.Core.Setup
+
 ### Class: FirstRunStatus
 > First-run / installed-model state.
 
@@ -923,6 +929,11 @@ Cross-package deps: ECAssistant.Core.Engine, Xunit
 Implements: IKvCacheController
 Cross-package deps: ECAssistant.Core.Interfaces
 
+### Class: NuGetServerFetcher
+> Downloads the ECAssistant.LLM.Server NuGet package from nuget.org and extracts the
+Constructor:
+  - NuGetServerFetcher(HttpClient http, string version, string? tempRoot = null)
+
 ### Class: OpenAIClient
 > HttpClient wrapper for OpenAI-compatible API calls.
 Implements: IDisposable
@@ -1097,6 +1108,11 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services.Http, Xun
 
 ### Class: ServerConnection
 > Capabilities an LLM backend advertises at connect time. v13c.
+
+### Class: ServerInstallCoordinator
+> Inspection result for an existing server directory.
+Constructor:
+  - ServerInstallCoordinator(string llmRoot, ISetupUi ui)
 
 ### Class: ServerLauncher
 > Detects if ECAssistantLLM server is running. If not, launches it from the

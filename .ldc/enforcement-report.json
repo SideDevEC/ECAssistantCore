@@ -1,14 +1,26 @@
 {
   "project": "ECAssistantCore",
-  "timestamp": "2026-09-18T09:57:27.392977+00:00",
-  "total_violations": 1,
+  "timestamp": "2026-09-18T16:10:26.699407+00:00",
+  "total_violations": 3,
   "errors": 0,
-  "warnings": 1,
+  "warnings": 3,
   "violations": [
     {
       "rule": "interface-first",
       "severity": "warning",
-      "file": "<project-root>/ECAssistantCore/Setup/SetupWizard.cs",
+      "file": "Setup/ServerInstallCoordinator.cs",
+      "message": "Public class ServerInstallCoordinator in ECAssistantCore implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "Setup/FirstRunOrchestrator.cs",
+      "message": "Public class FirstRunOrchestrator in ECAssistantCore implements no interface \u2014 may be a boundary leak"
+    },
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "Setup/SetupWizard.cs",
       "message": "Public class SetupWizard in ECAssistantCore implements no interface \u2014 may be a boundary leak"
     }
   ],
