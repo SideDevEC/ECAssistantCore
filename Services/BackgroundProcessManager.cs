@@ -67,9 +67,11 @@ public class BackgroundProcessManager : IDisposable
 
         // Capture output PROGRESSIVELY — ReadToEndAsync only surfaces output after
         // the process exits, so GetOutput on a running process returned nothing.
-        var stdoutBuffer = new StringBuilder();
-        var stderrBuffer = new StringBuilder();
-        var outputLock = new object();
+        // The buffers live ON the BgProcess (GetOutput reads bg.StdoutBuffer) — the
+        // pump tasks below must write THERE, not into detached locals (wiring bug).
+        var stdoutBuffer = bgProc.StdoutBuffer;
+        var stderrBuffer = bgProc.StderrBuffer;
+        var outputLock = bgProc.OutputLock;
         bgProc.OutputTask = Task.Run(async () =>
         {
             var line = await proc.StandardOutput.ReadLineAsync();

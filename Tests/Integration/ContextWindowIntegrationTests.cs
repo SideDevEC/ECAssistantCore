@@ -15,10 +15,13 @@ public class ContextWindowIntegrationTests
         => new(maxTokens, _tokenCounter);
 
     [Fact]
-    public void AddMessagesUntilOverBudget_AutoSummarizeTriggers()
+    public async Task AddMessagesUntilOverBudget_AutoSummarizeTriggers()
     {
-        // Use a very small budget to force summarization
-        var window = new ContextWindow(50, _tokenCounter);
+        // Requires a SummaryService — without one, SummarizeOldest no-ops by design
+        // (messages are never destroyed without a successful summary).
+        var window = new ContextWindow(50,
+            new SummaryService(_ => Task.FromResult("Summary of the earlier conversation.")),
+            _tokenCounter);
 
         // Add many messages to exceed budget
         for (int i = 0; i < 20; i++)
@@ -26,12 +29,16 @@ public class ContextWindowIntegrationTests
             window.AddUserMessage($"This is message number {i} with some content to add tokens");
         }
 
-        // GetWindowMessages triggers summarization when over budget
-        var messages = window.GetWindowMessages();
+        // GetWindowMessages triggers summarization when over budget. The trim happens
+        // in a background task after the summary succeeds — poll for it.
+        _ = window.GetWindowMessages();
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (window.MessageCount >= 20 && DateTime.UtcNow < deadline)
+            await Task.Delay(50);
 
         // After summarization, the message count should be reduced
         // (SummarizeOldest keeps ~30% of messages, minimum 5)
-        Assert.True(messages.Count < 20);
+        Assert.True(window.MessageCount < 20, $"summarize did not trim — count={window.MessageCount}");
     }
 
     [Fact]

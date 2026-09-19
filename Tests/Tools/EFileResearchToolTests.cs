@@ -52,7 +52,7 @@ public class EFileResearchToolTests : IDisposable
                    .Returns(Array.Empty<string>());
         var tool = CreateTool();
 
-        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["query"] = "test" });
+        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["query"] = "content" });
 
         Assert.Contains("Found 0 files", result.Output + result.Error);
     }
@@ -88,7 +88,7 @@ public class EFileResearchToolTests : IDisposable
                    .Returns("content");
         var tool = CreateTool();
 
-        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["query"] = "test" });
+        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["query"] = "content" });
 
         Assert.Contains("a.cs", result.Output + result.Error);
         Assert.Contains("b.txt", result.Output + result.Error);
@@ -107,7 +107,7 @@ public class EFileResearchToolTests : IDisposable
                    .Returns(bigContent);
         var tool = CreateTool();
 
-        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["query"] = "test" });
+        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["query"] = "content" });
 
     }
 
@@ -130,7 +130,7 @@ public class EFileResearchToolTests : IDisposable
                    .Returns("content");
         var tool = CreateTool();
 
-        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["query"] = "test", ["max_files"] = "2" });
+        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["query"] = "content", ["max_files"] = "2" });
 
         Assert.Contains("Found 2 files", result.Output + result.Error);
     }
@@ -144,7 +144,7 @@ public class EFileResearchToolTests : IDisposable
         cts.Cancel();
         var tool = CreateTool();
 
-        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["query"] = "test" }, cts.Token);
+        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["query"] = "content" }, cts.Token);
 
         Assert.Contains("cancelled", result.Error);
     }
@@ -197,7 +197,7 @@ public class EFileResearchToolTests : IDisposable
                    .Throws(new UnauthorizedAccessException("Access denied"));
         var tool = CreateTool();
 
-        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["query"] = "test" });
+        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["query"] = "content" });
 
         Assert.Contains("Access denied", result.Output + result.Error);
     }
@@ -209,7 +209,7 @@ public class EFileResearchToolTests : IDisposable
                    .Throws(new InvalidOperationException("boom"));
         var tool = CreateTool();
 
-        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["query"] = "test" });
+        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["query"] = "content" });
 
         Assert.Contains("boom", result.Error);
     }
@@ -219,7 +219,7 @@ public class EFileResearchToolTests : IDisposable
     [Fact]
     public async Task ExecuteAsync_FileReadError_ContinuesAndReportsError()
     {
-        var badFile = Path.Combine(_tempDir, "bad.cs");
+        var badFile = Path.Combine(_tempDir, "content-bad.cs");
         var goodFile = Path.Combine(_tempDir, "good.cs");
         File.WriteAllText(badFile, "bad");
         File.WriteAllText(goodFile, "good content");
@@ -232,7 +232,7 @@ public class EFileResearchToolTests : IDisposable
                    .Returns("good content");
         var tool = CreateTool();
 
-        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["query"] = "test" });
+        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["query"] = "content" });
 
         Assert.Contains("Error reading", result.Output + result.Error);
         Assert.Contains("good content", result.Output + result.Error);

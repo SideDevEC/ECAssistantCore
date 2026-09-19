@@ -130,11 +130,14 @@ public class ConfigProviderTests
     }
 
     [Fact]
-    public void GetSection_NonExistentSection_ThrowsKeyNotFoundException()
+    public void GetSection_NonExistentSection_ReturnsFreshDefault()
     {
         SetupConfigJson("""{"name":"test"}""");
         var provider = new ConfigProvider(_mockFileSystem.Object, ConfigPath);
-        Assert.Throws<KeyNotFoundException>(() => provider.GetSection<TestLlmConfig>("missing"));
+        var section = provider.GetSection<TestLlmConfig>("missing");
+        Assert.NotNull(section);              // no throw — deliberate: missing section = fresh default
+        Assert.Equal("", section.Model);      // defaults, no values
+        Assert.Equal(0f, section.Temperature);
     }
 
     [Fact]
