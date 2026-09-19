@@ -38,14 +38,23 @@ public sealed class ModelCatalogDocument
         var doc = JsonSerializer.Deserialize<ModelCatalogDocument>(File.ReadAllText(path), Options)
                ?? throw new InvalidOperationException($"Model catalog is empty or invalid: {path}");
 
+        // Stale user copy: when the shipped default catalog is NEWER, replace the
+        // user file wholesale (users who customized should raise Version themselves).
+        var defaults = CreateDefault();
+        if (doc.Version < defaults.Version)
+        {
+            File.WriteAllText(path, JsonSerializer.Serialize(defaults, Options));
+            return defaults;
+        }
+
         // Backfill display metadata missing from older catalog files (user-editable —
         // only fills EMPTY fields, never overwrites user customizations).
-        var defaults = CreateDefault().Models.Where(d => !string.IsNullOrWhiteSpace(d.License))
+        var defaultLicenses = defaults.Models.Where(d => !string.IsNullOrWhiteSpace(d.License))
                              .ToDictionary(d => d.Id, d => d.License, StringComparer.OrdinalIgnoreCase);
         foreach (var entry in doc.Models)
         {
             if (string.IsNullOrWhiteSpace(entry.License) &&
-                defaults.TryGetValue(entry.Id, out var license))
+                defaultLicenses.TryGetValue(entry.Id, out var license))
                 entry.License = license;
         }
         return doc;
