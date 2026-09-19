@@ -56,11 +56,13 @@ public sealed class HardwareProfile
         return modelSizeGb <= 8 ? 99 : 0;
     }
 
-    /// <summary>Context size: catalog suggestion, downscaled on low-RAM machines.</summary>
+    /// <summary>Context size: catalog suggestion is respected on any modern machine;
+    /// only genuinely tiny-RAM machines get downscaled (KV cache with GQA is small —
+    /// 32k on a 4B model is well under 2 GB).</summary>
     public uint ResolveContextSize(uint suggestedContextSize)
     {
-        if (TotalRamGb < 8) return Math.Min(suggestedContextSize, 4096);
-        if (TotalRamGb < 12) return Math.Min(suggestedContextSize, 8192);
+        if (TotalRamGb < 6) return Math.Min(suggestedContextSize, 16384);
+        if (TotalRamGb < 8) return Math.Min(suggestedContextSize, 32768);
         return suggestedContextSize;
     }
 

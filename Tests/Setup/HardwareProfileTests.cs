@@ -87,11 +87,30 @@ public sealed class HardwareProfileTests
     [Fact]
     public void Adjust_LowRam_ScalesContextAndBatch()
     {
-        var hw = new HardwareProfile { TotalRamGb = 6, IsAppleSilicon = true, HasCuda = false };
+        var hw = new HardwareProfile { TotalRamGb = 5, IsAppleSilicon = true, HasCuda = false };
         var tuned = hw.Adjust(Entry(1.5, ctx: 32768));
 
-        Assert.Equal(4096u, tuned.ContextSize);
+        Assert.Equal(16384u, tuned.ContextSize);
         Assert.Equal(256, tuned.BatchSize);
+    }
+
+    [Fact]
+    public void Adjust_NormalRam_KeepsCatalogContext()
+    {
+        // 65k context for the big catalog tiers must survive untouched on 12GB+ machines
+        var hw = new HardwareProfile { TotalRamGb = 16, IsAppleSilicon = true, HasCuda = false };
+        var tuned = hw.Adjust(Entry(1.5, ctx: 65536));
+
+        Assert.Equal(65536u, tuned.ContextSize);
+    }
+
+    [Fact]
+    public void Adjust_TinyRam_StillGetsAtLeast16k()
+    {
+        var hw = new HardwareProfile { TotalRamGb = 4, IsAppleSilicon = false, HasCuda = false };
+        var tuned = hw.Adjust(Entry(1.5, ctx: 65536));
+
+        Assert.Equal(16384u, tuned.ContextSize);
     }
 
     [Fact]
