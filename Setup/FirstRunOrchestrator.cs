@@ -51,7 +51,7 @@ public sealed class FirstRunOrchestrator
             Directory.CreateDirectory(_userConfigDir);
 
             var catalogPath = Path.Combine(_userConfigDir, "model-catalog.json");
-            var catalog = ModelCatalogDocument.Load(catalogPath);
+            var catalog = await LoadCatalogAsync(catalogPath).ConfigureAwait(false);
             var validationError = catalog.Validate();
             if (validationError != null)
             {
@@ -67,6 +67,32 @@ public sealed class FirstRunOrchestrator
         {
             _ui.WriteLine($"[Setup] First-run setup skipped: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Catalog resolution order: (1) live fetch from GitHub — keeps links/availability
+    /// current without app releases, (2) existing user copy, (3) embedded default.
+    /// A successful remote fetch replaces the local copy; any failure falls through.
+    /// </summary>
+    private async Task<ModelCatalogDocument> LoadCatalogAsync(string catalogPath)
+    {
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
+            var remote = await new CatalogFetcher(http).TryFetchAsync().ConfigureAwait(false);
+            if (remote != null)
+            {
+                File.WriteAllText(catalogPath, JsonSerializer.Serialize(remote, ModelCatalogDocument.Options));
+                _ui.WriteLine($"[Setup] Model catalog updated from GitHub ({remote.Models.Count} models).");
+                return remote;
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or HttpRequestException or TaskCanceledException)
+        {
+            _ui.WriteLine($"[Setup] Remote catalog unavailable ({ex.Message}) — using local catalog.");
+        }
+
+        return ModelCatalogDocument.Load(catalogPath);
     }
 
     private async Task RunSetupIfNeededAsync(

@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-09-19 (v12.9.5 — hardware-adaptive model catalog: HardwareProfile tunes gpu_layers/context/batch per machine; new default catalog: Bonsai 2 27B (process) + Qwen3.5-4B light + Qwen3.6-35B max, all with vision; per-file hf_repo override; per-model max_tokens. Requires LLM server 14.9.2+)
+**Updated:** 2026-09-19 (v12.9.8 — wizard rework: catalog pulled live from GitHub (catalog/model-catalog.json, embedded fallback), one flat "Available Models" list incl. discovered local GGUFs (green = on disk), vision derived from mmproj presence (no question), reinstall skips downloads and re-syncs config hardware-tuned; catalog = Bonsai 2 27B (process) + Qwen3.5-4B + Qwen3.6-35B + multilingual-e5-large. Requires LLM server 14.9.3+)
 **Status:** ✅ 0 errors, 0 warnings | LDC enforcement PASSED
 
 ## Overview
@@ -454,3 +454,23 @@ downloads at runtime.
 - `ModelInstallerService`: no `download_url`/`download_sha256` in generated configs —
   the wizard installs everything up front; the server only locates pre-installed assets.
 - Vision rule: vision-capable catalog entries ALWAYS carry their mmproj file.
+
+## Addendum — wizard rework (12.9.8)
+
+**Remote catalog:** `Setup/CatalogFetcher.cs` fetches `catalog/model-catalog.json`
+from GitHub main at wizard start (5s timeout, schema-validated via `Validate()`).
+Success → replaces the user copy in `~/.ECAssistant/model-catalog.json`. Any
+failure (offline/timeout/invalid) → embedded default catalog (same file, embedded
+resource — single source, two delivery paths). Catalog edits ship to users with
+zero app release.
+
+**Flat model list:** the Vision/Chat category split is gone — one "Available
+Models" list of all non-embedding catalog entries PLUS GGUFs discovered in the
+models folder (`ModelInstallerService.BuildLocalModelEntry`, sibling-mmproj
+detection). On-disk entries render green ("✓ already on disk"). Reinstalling
+skips downloads and re-applies the config hardware-tuned
+(`ApplyToServerConfigTuned` — also used by the download path).
+
+**Vision:** no prompt. Derived from `mmproj_file` presence (catalog entry or
+sibling detection). Remote-provider probe failure now assumes "no" instead of
+asking.

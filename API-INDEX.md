@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-19T14:03:47.690144+00:00
-Packages: 3  |  Types: 408
+Generated: 2026-09-19T15:22:31.042419+00:00
+Packages: 3  |  Types: 411
 
 ---
 
-## ECAssistantCore (310 types, ~27544 LOC)
+## ECAssistantCore (312 types, ~27674 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -58,6 +58,7 @@ Packages: 3  |  Types: 408
 - 🟡 BuildCallSignatureTests  (ECAssistantCore)
 - 🟣 BuildError  (ECAssistantCore)  deps: [string, int, string, string]
 - 🟡 BuildErrorParser  (ECAssistantCore)
+- 🟡 CatalogFetcher  (ECAssistantCore)  deps: [HttpClient]
 - 🟡 CatalogModelFile  (ECAssistantCore)
 - 🟡 CatalogSuggestedConfig  (ECAssistantCore)
 - 🟡 ConfigIntegrationTests : IDisposable  (ECAssistantCore)
@@ -314,6 +315,7 @@ Packages: 3  |  Types: 408
 - 🟡 VectorMemoryStoreTests : IDisposable  (ECAssistantCore)
 - 🟣 VectorResult  (ECAssistantCore)  deps: [string, string, float]
 - 🟡 VectorSearchResult  (ECAssistantCore)
+- 🟡 WizardCatalogTests : IDisposable  (ECAssistantCore)
 - 🟡 WizardContext  (ECAssistantCore)
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
@@ -329,7 +331,7 @@ Packages: 3  |  Types: 408
 - 🟡 TestScenario  (TestSupport)
 - 🟡 TestSessionOutput : ISessionOutput  (TestSupport)  deps: [EGuiTestHarness]
 
-## Tests (90 types, ~11821 LOC)
+## Tests (91 types, ~11892 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -420,4 +422,5 @@ Packages: 3  |  Types: 408
 - 🟡 TranscriptIntegrationTests : IDisposable  (Tests)
 - 🟡 VectorMemorySetupWriterTests : IDisposable  (Tests)
 - 🟡 VectorMemoryStoreTests : IDisposable  (Tests)
+- 🟡 WizardCatalogTests : IDisposable  (Tests)
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (Tests)

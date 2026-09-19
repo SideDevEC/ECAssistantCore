@@ -157,23 +157,7 @@ public sealed class ModelInstallerService
 
         // Hardware-adaptive tuning: the catalog suggests, this machine decides.
         // Catalog installs are tuned; explicit local registrations keep their config.
-        var hardware = HardwareProfile.Detect();
-        var tunedEntry = new ModelCatalogEntry
-        {
-            Id = entry.Id,
-            DisplayName = entry.DisplayName,
-            Category = entry.Category,
-            HfRepo = entry.HfRepo,
-            Files = entry.Files,
-            MmprojFile = entry.MmprojFile,
-            Recommended = entry.Recommended,
-            Quant = entry.Quant,
-            License = entry.License,
-            Notes = entry.Notes,
-            SuggestedConfig = hardware.Adjust(entry)
-        };
-
-        var configMessage = ApplyToServerConfig(tunedEntry);
+        var configMessage = ApplyToServerConfigTuned(entry);
         return new InstallResult(true,
             $"Installed {entry.DisplayName}.{backendMessage} {configMessage}", downloaded);
     }
@@ -262,6 +246,15 @@ public sealed class ModelInstallerService
     /// </summary>
     /// <param name="isEmbedding">Register as embedding model (is_embedding + mean pooling) instead of chat.</param>
     public string RegisterLocalModelFile(string filename, bool isEmbedding = false)
+        => ApplyToServerConfig(BuildLocalModelEntry(filename, isEmbedding));
+
+    /// <summary>
+    /// Build a catalog entry for an existing GGUF in the models folder (not in the
+    /// catalog) — selectable in the wizard like any catalog model. No download.
+    /// Defaults: CPU inference, 64k context, batch 512; a sibling mmproj projector is
+    /// auto-detected and linked for vision.
+    /// </summary>
+    public ModelCatalogEntry BuildLocalModelEntry(string filename, bool isEmbedding = false)
     {
         var entry = new ModelCatalogEntry
         {
@@ -281,7 +274,32 @@ public sealed class ModelInstallerService
             MmprojFile = isEmbedding ? null : DetectSiblingMmproj(filename)
         };
         entry.Files.Add(new CatalogModelFile { Filename = filename, SizeGb = 0 });
-        return ApplyToServerConfig(entry);
+        return entry;
+    }
+
+    /// <summary>
+    /// Hardware-tuned config apply: the catalog suggests, THIS machine decides
+    /// (GPU layers / context / batch per HardwareProfile). Used for every catalog
+    /// install and on-disk re-registration; explicit local registrations keep their
+    /// conservative defaults unless routed through here.
+    /// </summary>
+    public string ApplyToServerConfigTuned(ModelCatalogEntry entry)
+    {
+        var tunedEntry = new ModelCatalogEntry
+        {
+            Id = entry.Id,
+            DisplayName = entry.DisplayName,
+            Category = entry.Category,
+            HfRepo = entry.HfRepo,
+            Files = entry.Files,
+            MmprojFile = entry.MmprojFile,
+            Recommended = entry.Recommended,
+            Quant = entry.Quant,
+            License = entry.License,
+            Notes = entry.Notes,
+            SuggestedConfig = HardwareProfile.Detect().Adjust(entry)
+        };
+        return ApplyToServerConfig(tunedEntry);
     }
 
     /// <summary>

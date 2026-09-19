@@ -28,7 +28,7 @@ public sealed class ServerInstallCoordinator
 {
     /// <summary>ECAssistant.LLM.Server version the application was built against.
     /// Keep in sync with the release pipeline (llm-server-v* tag).</summary>
-    public const string RequiredServerVersion = "14.9.2";
+    public const string RequiredServerVersion = "14.9.3";
 
     private readonly string _llmRoot;
     private readonly string _serverDir;

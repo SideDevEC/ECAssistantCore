@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 310  |  LOC: 27544  |  ~14384 tokens
+Types: 312  |  LOC: 27674  |  ~14469 tokens
 
 ---
 
@@ -369,6 +369,11 @@ Cross-package deps: ECAssistant.Core.Orchestration, Xunit
 
 ### Class: BuildErrorParser
 > Parser for .NET build output — extracts errors and warnings.
+
+### Class: CatalogFetcher
+> Fetches the model catalog from GitHub at wizard time so model links/availability
+Constructor:
+  - CatalogFetcher(HttpClient http)
 
 ### Class: CatalogModelFile
 > Model category — drives config generation and UI grouping.
@@ -1388,6 +1393,11 @@ Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Memory, ECAssistant.Core.Services
 
 ### Class: VectorSearchResult
+
+### Class: WizardCatalogTests
+> Wizard rework units: remote catalog fetch fallback, local model discovery.
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Setup, Xunit
 
 ### Class: WizardContext
 > Paths and services the wizard needs; assembled by the host.

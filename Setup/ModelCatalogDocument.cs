@@ -15,7 +15,7 @@ public sealed class ModelCatalogDocument
     [JsonPropertyName("models")]
     public List<ModelCatalogEntry> Models { get; set; } = new();
 
-    private static readonly JsonSerializerOptions Options = new()
+    internal static readonly JsonSerializerOptions Options = new()
     {
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -85,7 +85,7 @@ public sealed class ModelCatalogDocument
     {
         var asm = typeof(ModelCatalogDocument).Assembly;
         var resourceName = asm.GetManifestResourceNames()
-            .Single(n => n.EndsWith("ModelCatalog.default.json", StringComparison.OrdinalIgnoreCase));
+            .Single(n => n.EndsWith("model-catalog.json", StringComparison.OrdinalIgnoreCase));
         using var stream = asm.GetManifestResourceStream(resourceName)!;
         using var reader = new StreamReader(stream);
         return JsonSerializer.Deserialize<ModelCatalogDocument>(reader.ReadToEnd(), Options)

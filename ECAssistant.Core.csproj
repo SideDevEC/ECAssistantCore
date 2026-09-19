@@ -9,7 +9,7 @@
     <AssemblyName>ECAssistant.Core</AssemblyName>
     <IsPackable>true</IsPackable>
     <PackageId>ECAssistant.Core</PackageId>
-    <PackageVersion>12.9.7</PackageVersion>
+    <PackageVersion>12.9.8</PackageVersion>
     <Authors>SideDevEC</Authors>
     <Company>SideDevEC</Company>
     <Product>ECAssistant</Product>
@@ -51,7 +51,7 @@
     <EmbeddedResource Include="SystemPrompt.Windows.md" />
     <EmbeddedResource Include="SystemPrompt.Mac.md" />
     <EmbeddedResource Include="appsettings.json" />
-    <EmbeddedResource Include="Setup\ModelCatalog.default.json" />
+    <EmbeddedResource Include="catalog\model-catalog.json" />
   </ItemGroup>
 
   <ItemGroup>

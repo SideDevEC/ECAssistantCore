@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 90  |  LOC: 11821  |  ~3328 tokens
+Types: 91  |  LOC: 11892  |  ~3373 tokens
 
 ---
 
@@ -329,6 +329,11 @@ Cross-package deps: ECAssistant.Core.Setup
 ### Class: VectorMemoryStoreTests
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Memory, ECAssistant.Core.Services
+
+### Class: WizardCatalogTests
+> Wizard rework units: remote catalog fetch fallback, local model discovery.
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Setup, Xunit
 
 ### Class: WizardOnDiskDetectionTests
 > v12.8 regression: the installer must detect models already on disk so

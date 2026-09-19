@@ -87,28 +87,38 @@ public sealed class SetupWizard
             _ui.WriteLine("  Continuing without a local server — local models will not start until it is installed.");
         }
 
-        _ui.Write("Enable vision (image understanding)? [Y/n]: ");
-        var visionEnabled = (_ui.ReadLine()?.Trim() ?? "").ToLowerInvariant() != "n";
+        // One flat list: catalog models + GGUFs already in the models folder (marked local).
+        // Vision is a model property (mmproj present), never a question.
+        var selectable = new List<ModelCatalogEntry>();
+        foreach (var m in ctx.Catalog.Models.Where(m => m.Category != CatalogModelCategory.Embedding))
+            selectable.Add(m);
 
-        var category = visionEnabled ? CatalogModelCategory.Vision : CatalogModelCategory.Chat;
-        var selectable = ctx.Catalog.Models
-            .Where(m => m.Category == category)
-            .ToList();
+        var knownFiles = selectable.SelectMany(m => m.Files).Select(f => f.Filename).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (Directory.Exists(ctx.ModelsDir))
+        {
+            foreach (var gguf in Directory.EnumerateFiles(ctx.ModelsDir, "*.gguf")
+                         .Select(Path.GetFileName)
+                         .Where(f => f is not null && !knownFiles.Contains(f))
+                         .Distinct(StringComparer.OrdinalIgnoreCase))
+                selectable.Add(ctx.Installer.BuildLocalModelEntry(gguf!));
+        }
 
         if (selectable.Count == 0)
         {
-            _ui.WriteLine($"No {category} models in the catalog — skipping.");
+            _ui.WriteLine("No models available — catalog is empty and the models folder has no GGUFs.");
             return;
         }
 
         _ui.WriteLine();
-        _ui.WriteLine($"── Available {category} models ──");
+        _ui.WriteLine("── Available models ──");
         for (var i = 0; i < selectable.Count; i++)
         {
             var m = selectable[i];
-            var installedMark = IsEntryOnDisk(ctx, m) ? "  ✓ already on disk" : "";
-            var line = $"  [{i + 1}] {m.DisplayName}{(m.Recommended ? " ★" : "")}  ({m.TotalSizeGb:0.##} GB{(LicenseLabel(m).Length > 0 ? ", " + LicenseLabel(m) : "")}){installedMark}";
-            if (installedMark.Length > 0) _ui.WriteLineGreen(line);
+            var onDisk = IsEntryOnDisk(ctx, m);
+            var origin = m.HfRepo == "local" ? "  [local]" : "";
+            var vision = string.IsNullOrEmpty(m.MmprojFile) ? "" : "  (vision)";
+            var line = $"  [{i + 1}] {m.DisplayName}{(m.Recommended ? " ★" : "")}  ({m.TotalSizeGb:0.##} GB{(LicenseLabel(m).Length > 0 ? ", " + LicenseLabel(m) : "")}){vision}{origin}{(onDisk ? "  ✓ already on disk" : "")}";
+            if (onDisk) _ui.WriteLineGreen(line);
             else _ui.WriteLine(line);
         }
 
@@ -312,8 +322,10 @@ public sealed class SetupWizard
 
     private bool AskVisionFallback()
     {
-        _ui.Write("  Could not detect vision capability — does this model support vision? [y/N]: ");
-        return (_ui.ReadLine()?.Trim() ?? "").ToLowerInvariant() is "y" or "yes";
+        // Vision is a model property — never a question. When the API probe cannot
+        // detect it, assume no (safe: image features stay off until verified).
+        _ui.WriteLine("  Vision capability could not be detected — assuming no.");
+        return false;
     }
 
     /// <summary>License label for selection lines; empty when unset.</summary>
@@ -334,9 +346,11 @@ public sealed class SetupWizard
             entry.SuggestedConfig.GpuLayers = ctx.GpuLayers; // v12.7: GPU off by default — users tune config later
 
             // v12.8: files already on disk (reinstall keeps models) — skip download, re-register config.
+            // Hardware-adaptive tuning for on-disk re-registration too (download path
+            // tunes inside InstallAsync) — the machine decides, the catalog suggests.
             if (IsEntryOnDisk(ctx, entry))
             {
-                ctx.Installer.ApplyToServerConfig(entry);
+                ctx.Installer.ApplyToServerConfigTuned(entry);
                 _ui.WriteLine($"✓ {entry.DisplayName} — files already on disk, registered in llm-server.json");
                 installed.Add(entry);
                 continue;
