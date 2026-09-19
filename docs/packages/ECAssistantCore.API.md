@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 312  |  LOC: 27674  |  ~14469 tokens
+Types: 312  |  LOC: 27706  |  ~14476 tokens
 
 ---
 
@@ -373,7 +373,7 @@ Cross-package deps: ECAssistant.Core.Orchestration, Xunit
 ### Class: CatalogFetcher
 > Fetches the model catalog from GitHub at wizard time so model links/availability
 Constructor:
-  - CatalogFetcher(HttpClient http)
+  - CatalogFetcher(HttpClient http, HttpClient http, string url)
 
 ### Class: CatalogModelFile
 > Model category — drives config generation and UI grouping.

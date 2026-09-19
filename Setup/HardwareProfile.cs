@@ -44,6 +44,7 @@ public sealed class HardwareProfile
     /// </summary>
     public int ResolveGpuLayers(double modelSizeGb)
     {
+        if (TotalRamGb <= 0) return 99; // RAM unknown (constrained env) — trust the catalog suggestion
         if (IsAppleSilicon)
         {
             var usableGb = TotalRamGb * AppleSiliconUsableFraction;
@@ -61,6 +62,7 @@ public sealed class HardwareProfile
     /// 32k on a 4B model is well under 2 GB).</summary>
     public uint ResolveContextSize(uint suggestedContextSize)
     {
+        if (TotalRamGb <= 0) return suggestedContextSize; // unknown machine — keep suggestion
         if (TotalRamGb < 6) return Math.Min(suggestedContextSize, 16384);
         if (TotalRamGb < 8) return Math.Min(suggestedContextSize, 32768);
         return suggestedContextSize;
@@ -68,7 +70,7 @@ public sealed class HardwareProfile
 
     /// <summary>Prompt-processing batch: larger on capable machines, embeddings omit.</summary>
     public int ResolveBatchSize(bool isEmbedding)
-        => isEmbedding ? 0 : (TotalRamGb >= 16 ? 512 : 256);
+        => isEmbedding ? 0 : (TotalRamGb > 0 && TotalRamGb < 16 ? 256 : 512);
 
     private static bool IsCudaDriverPresent()
     {

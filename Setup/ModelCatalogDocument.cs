@@ -38,13 +38,18 @@ public sealed class ModelCatalogDocument
         var doc = JsonSerializer.Deserialize<ModelCatalogDocument>(File.ReadAllText(path), Options)
                ?? throw new InvalidOperationException($"Model catalog is empty or invalid: {path}");
 
-        // Stale user copy: when the shipped default catalog is NEWER, replace the
-        // user file wholesale (users who customized should raise Version themselves).
+        // Stale user copy: when the shipped default catalog is NEWER, MERGE — add new
+        // default entries by id, keep user-added entries, adopt default entries the
+        // user removed? No: user removals are respected (union, not reset).
         var defaults = CreateDefault();
         if (doc.Version < defaults.Version)
         {
-            File.WriteAllText(path, JsonSerializer.Serialize(defaults, Options));
-            return defaults;
+            var user = doc.Models.Select(m => m.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var dm in defaults.Models.Where(dm => !user.Contains(dm.Id)))
+                doc.Models.Add(dm);
+            doc.Version = defaults.Version;
+            File.WriteAllText(path, JsonSerializer.Serialize(doc, Options));
+            return doc;
         }
 
         // Backfill display metadata missing from older catalog files (user-editable —

@@ -19,8 +19,8 @@ public sealed class WizardCatalogTests : IDisposable
     public async Task CatalogFetcher_UnreachableEndpoint_ReturnsNull()
     {
         // Invalid host — fetch must fail fast and return null (embedded fallback kicks in)
-        using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:9/") };
-        var doc = await new CatalogFetcher(http).TryFetchAsync();
+        using var http = new HttpClient();
+        var doc = await new CatalogFetcher(http, "http://127.0.0.1:9/catalog.json").TryFetchAsync();
 
         Assert.Null(doc);
     }
@@ -47,8 +47,8 @@ public sealed class WizardCatalogTests : IDisposable
             }
         });
 
-        using var http = new HttpClient { BaseAddress = new Uri($"http://127.0.0.1:{port}/") };
-        var doc = await new CatalogFetcher(http).TryFetchAsync();
+        using var http = new HttpClient();
+        var doc = await new CatalogFetcher(http, $"http://127.0.0.1:{port}/catalog.json").TryFetchAsync();
 
         Assert.Null(doc);
     }

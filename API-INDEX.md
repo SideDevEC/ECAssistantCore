@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-19T15:48:58.123668+00:00
+Generated: 2026-09-19T16:04:43.062307+00:00
 Packages: 3  |  Types: 411
 
 ---
 
-## ECAssistantCore (312 types, ~27674 LOC)
+## ECAssistantCore (312 types, ~27706 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -58,7 +58,7 @@ Packages: 3  |  Types: 411
 - 🟡 BuildCallSignatureTests  (ECAssistantCore)
 - 🟣 BuildError  (ECAssistantCore)  deps: [string, int, string, string]
 - 🟡 BuildErrorParser  (ECAssistantCore)
-- 🟡 CatalogFetcher  (ECAssistantCore)  deps: [HttpClient]
+- 🟡 CatalogFetcher  (ECAssistantCore)  deps: [HttpClient, HttpClient, string]
 - 🟡 CatalogModelFile  (ECAssistantCore)
 - 🟡 CatalogSuggestedConfig  (ECAssistantCore)
 - 🟡 ConfigIntegrationTests : IDisposable  (ECAssistantCore)

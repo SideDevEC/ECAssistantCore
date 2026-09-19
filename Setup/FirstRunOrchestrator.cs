@@ -82,9 +82,17 @@ public sealed class FirstRunOrchestrator
             var remote = await new CatalogFetcher(http).TryFetchAsync().ConfigureAwait(false);
             if (remote != null)
             {
-                File.WriteAllText(catalogPath, JsonSerializer.Serialize(remote, ModelCatalogDocument.Options));
-                _ui.WriteLine($"[Setup] Model catalog updated from GitHub ({remote.Models.Count} models).");
-                return remote;
+                var local = File.Exists(catalogPath)
+                    ? JsonSerializer.Deserialize<ModelCatalogDocument>(File.ReadAllText(catalogPath), ModelCatalogDocument.Options)
+                    : null;
+                if (local == null || remote.Version > local.Version)
+                {
+                    File.WriteAllText(catalogPath, JsonSerializer.Serialize(remote, ModelCatalogDocument.Options));
+                    _ui.WriteLine($"[Setup] Model catalog updated from GitHub ({remote.Models.Count} models).");
+                    return remote;
+                }
+                _ui.WriteLine("[Setup] Local model catalog is up to date — keeping user copy.");
+                return ModelCatalogDocument.Load(catalogPath);
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or HttpRequestException or TaskCanceledException)

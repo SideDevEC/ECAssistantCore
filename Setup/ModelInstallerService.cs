@@ -125,6 +125,13 @@ public sealed class ModelInstallerService
         {
             return new InstallResult(false, "Download cancelled.", downloaded);
         }
+        catch (InvalidOperationException ex)
+        {
+            // Checksum mismatch / verification failure — delete partial file, report per-model failure
+            // instead of letting it abort the whole wizard flow.
+            try { var partPath = Path.Combine(_modelsDir, entry.Files.First().Filename); if (File.Exists(partPath)) File.Delete(partPath); } catch { }
+            return new InstallResult(false, $"Install failed for {entry.DisplayName}: {ex.Message}", downloaded);
+        }
         catch (HttpRequestException ex)
         {
             return new InstallResult(false,
@@ -203,6 +210,13 @@ public sealed class ModelInstallerService
         using var response = await _http.SendAsync(
             request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
         response.EnsureSuccessStatusCode();
+
+        // Server ignored our Range request (200 with full content) — appending would
+        // corrupt the file. Reset and rewrite from scratch instead.
+        if (existing > 0 && response.StatusCode != System.Net.HttpStatusCode.PartialContent)
+        {
+            existing = 0;
+        }
 
         long? total = response.Content.Headers.ContentLength.HasValue
             ? response.Content.Headers.ContentLength + existing
@@ -291,7 +305,7 @@ public sealed class ModelInstallerService
             DisplayName = entry.DisplayName,
             Category = entry.Category,
             HfRepo = entry.HfRepo,
-            Files = entry.Files,
+            Files = new List<CatalogModelFile>(entry.Files),
             MmprojFile = entry.MmprojFile,
             Recommended = entry.Recommended,
             Quant = entry.Quant,

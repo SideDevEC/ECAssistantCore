@@ -13,9 +13,6 @@ public sealed class WizardContext
     public required ModelInstallerService Installer { get; init; }
     public required IRemoteModelProbe Probe { get; init; }
 
-    /// <summary>gpu_layers applied to every installed model (v12.7: always 0 — users tune it in config afterwards).</summary>
-    public int GpuLayers { get; init; } = 0;
-
     /// <summary>Model files directory — used to detect entries whose files already exist (re-register instead of re-download).</summary>
     public required string ModelsDir { get; init; }
 
@@ -98,7 +95,9 @@ public sealed class SetupWizard
         {
             foreach (var gguf in Directory.EnumerateFiles(ctx.ModelsDir, "*.gguf")
                          .Select(Path.GetFileName)
-                         .Where(f => f is not null && !knownFiles.Contains(f))
+                         .Where(f => f is not null
+                                  && !f.StartsWith("mmproj", StringComparison.OrdinalIgnoreCase) // projectors are sidecars, not chat models
+                                  && !knownFiles.Contains(f))
                          .Distinct(StringComparer.OrdinalIgnoreCase))
                 selectable.Add(ctx.Installer.BuildLocalModelEntry(gguf!));
         }
@@ -139,7 +138,7 @@ public sealed class SetupWizard
         }
 
         _ui.Write("  API key: ");
-        var apiKey = ReadSecret();
+        var apiKey = _ui.ReadLine()?.Trim() ?? "";
 
         _ui.WriteLine("  Checking API…");
         var probe = await ctx.Probe.ProbeAsync(endpoint, apiKey);
@@ -317,7 +316,7 @@ public sealed class SetupWizard
         var input = _ui.ReadLine()?.Trim() ?? "";
         if (input.Length == 0) return models[0].Id;
         if (int.TryParse(input, out var n) && n >= 1 && n <= models.Count) return models[n - 1].Id;
-        return models.Any(m => m.Id == input) ? input : input; // allow unlisted custom ids
+        return input; // allow unlisted custom ids
     }
 
     private bool AskVisionFallback()
@@ -343,14 +342,16 @@ public sealed class SetupWizard
         var installed = new List<ModelCatalogEntry>();
         foreach (var entry in picks)
         {
-            entry.SuggestedConfig.GpuLayers = ctx.GpuLayers; // v12.7: GPU off by default — users tune config later
-
             // v12.8: files already on disk (reinstall keeps models) — skip download, re-register config.
             // Hardware-adaptive tuning for on-disk re-registration too (download path
             // tunes inside InstallAsync) — the machine decides, the catalog suggests.
+            // Discovered local models keep their deliberate conservative CPU defaults.
             if (IsEntryOnDisk(ctx, entry))
             {
-                ctx.Installer.ApplyToServerConfigTuned(entry);
+                if (string.Equals(entry.HfRepo, "local", StringComparison.OrdinalIgnoreCase))
+                    ctx.Installer.ApplyToServerConfig(entry);
+                else
+                    ctx.Installer.ApplyToServerConfigTuned(entry);
                 _ui.WriteLine($"✓ {entry.DisplayName} — files already on disk, registered in llm-server.json");
                 installed.Add(entry);
                 continue;

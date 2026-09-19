@@ -17,8 +17,16 @@ public sealed class CatalogFetcher
         "https://raw.githubusercontent.com/SideDevEC/ECAssistantCore/main/catalog/model-catalog.json";
 
     private readonly HttpClient _http;
+    private readonly string _url;
 
-    public CatalogFetcher(HttpClient http) => _http = http ?? throw new ArgumentNullException(nameof(http));
+    public CatalogFetcher(HttpClient http) : this(http, RemoteUrl) { }
+
+    /// <summary>Test/override constructor — custom catalog URL.</summary>
+    public CatalogFetcher(HttpClient http, string url)
+    {
+        _http = http ?? throw new ArgumentNullException(nameof(http));
+        _url = url ?? throw new ArgumentNullException(nameof(url));
+    }
 
     /// <summary>
     /// Try to fetch + validate the remote catalog. Returns null on any failure —
@@ -31,7 +39,7 @@ public sealed class CatalogFetcher
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             cts.CancelAfter(TimeSpan.FromSeconds(5));
 
-            using var resp = await _http.GetAsync(RemoteUrl, cts.Token);
+            using var resp = await _http.GetAsync(_url, cts.Token);
             if (!resp.IsSuccessStatusCode) return null;
 
             await using var stream = await resp.Content.ReadAsStreamAsync(cts.Token);
@@ -40,7 +48,7 @@ public sealed class CatalogFetcher
 
             return doc;
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or OperationCanceledException)
+        catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or JsonException)
         {
             return null; // offline / timeout / invalid — caller falls back to embedded
         }

@@ -474,3 +474,13 @@ skips downloads and re-applies the config hardware-tuned
 **Vision:** no prompt. Derived from `mmproj_file` presence (catalog entry or
 sibling detection). Remote-provider probe failure now assumes "no" instead of
 asking.
+
+## Addendum — audit fixes (12.9.8, pre-release hardening)
+
+- Checksum mismatch no longer aborts the whole wizard (per-model failure + partial-file cleanup).
+- Download resume verifies HTTP 206; servers ignoring Range reset to a clean rewrite (no corrupt appends).
+- Remote catalog only replaces the user copy when strictly newer (version-aware).
+- Stale-catalog merge is a UNION now: new default entries added by id, user entries preserved.
+- Discovered local models keep their conservative CPU defaults (not hardware-tuned); orphan `mmproj*.gguf` files excluded from discovery.
+- RAM probe returning 0 → catalog suggestions kept (no silent tiny-machine downgrade).
+- Dead code removed: WizardContext.GpuLayers, IsInstalled, IsInternetAvailableAsync, GetFreeSpaceGb, ListModelFiles, RegisterLocalModelFile (prod path), LooksLikeEmbeddingModel (prod), dead ternaries/usings; Files aliasing copy in tuned apply.
