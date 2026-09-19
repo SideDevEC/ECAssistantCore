@@ -155,7 +155,25 @@ public sealed class ModelInstallerService
             }
         }
 
-        var configMessage = ApplyToServerConfig(entry);
+        // Hardware-adaptive tuning: the catalog suggests, this machine decides.
+        // Catalog installs are tuned; explicit local registrations keep their config.
+        var hardware = HardwareProfile.Detect();
+        var tunedEntry = new ModelCatalogEntry
+        {
+            Id = entry.Id,
+            DisplayName = entry.DisplayName,
+            Category = entry.Category,
+            HfRepo = entry.HfRepo,
+            Files = entry.Files,
+            MmprojFile = entry.MmprojFile,
+            Recommended = entry.Recommended,
+            Quant = entry.Quant,
+            License = entry.License,
+            Notes = entry.Notes,
+            SuggestedConfig = hardware.Adjust(entry)
+        };
+
+        var configMessage = ApplyToServerConfig(tunedEntry);
         return new InstallResult(true,
             $"Installed {entry.DisplayName}.{backendMessage} {configMessage}", downloaded);
     }
@@ -370,6 +388,8 @@ public sealed class ModelInstallerService
             ["threads"] = -1,
             ["is_embedding"] = entry.Category == CatalogModelCategory.Embedding
         };
+        if (entry.SuggestedConfig.MaxTokens > 0)
+            newEntry["max_tokens"] = entry.SuggestedConfig.MaxTokens;
         if (!string.IsNullOrWhiteSpace(entry.SuggestedConfig.Backend))
             newEntry["backend"] = entry.SuggestedConfig.Backend;
         // NOTE: no download fields — the server never downloads; the wizard installs everything up front.

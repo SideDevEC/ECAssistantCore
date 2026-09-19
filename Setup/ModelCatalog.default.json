@@ -122,32 +122,6 @@
       "license": "Apache-2.0"
     },
     {
-      "id": "qwen35-35b-a3b",
-      "name": "Qwen3.5 35B-A3B (Vision + deep reasoning, MoE)",
-      "category": "Vision",
-      "hf_repo": "unsloth/Qwen3.5-35B-A3B-GGUF",
-      "files": [
-        {
-          "filename": "Qwen3.5-35B-A3B-UD-Q4_K_XL.gguf",
-          "size_gb": 20.71
-        },
-        {
-          "filename": "mmproj-F16.gguf",
-          "size_gb": 0.84
-        }
-      ],
-      "mmproj_file": "mmproj-F16.gguf",
-      "suggested_config": {
-        "gpu_layers": 0,
-        "context_size": 65536,
-        "batch_size": 0
-      },
-      "recommended": false,
-      "quant": "UD-Q4_K_XL",
-      "notes": "Top pick for heavy analytics: 35B-class reasoning, only ~3B active (fast). Native vision, 256K context, thinking mode. ~21 GB RAM.",
-      "license": "Apache-2.0"
-    },
-    {
       "id": "qwen3-vl-8b",
       "name": "Qwen3-VL 8B Instruct (Vision)",
       "category": "Vision",
@@ -245,6 +219,89 @@
       "quant": "Q8_0",
       "notes": "Multilingual embeddings (100+ languages), 1024-dim. Replaces English-only MiniLM. MIT license.",
       "license": "MIT"
+    },
+    {
+      "id": "bonsai-2-27b",
+      "name": "Ternary Bonsai 2 27B (default chat, Prism)",
+      "category": "Vision",
+      "hf_repo": "prism-ml/Ternary-Bonsai-2-27B-gguf",
+      "files": [
+        {
+          "filename": "Ternary-Bonsai-2-27B-PTQ1_0.gguf",
+          "size_gb": 5.95
+        },
+        {
+          "filename": "Ternary-Bonsai-2-27B-mmproj-Q8_0.gguf",
+          "size_gb": 0.63
+        }
+      ],
+      "mmproj_file": "Ternary-Bonsai-2-27B-mmproj-Q8_0.gguf",
+      "suggested_config": {
+        "gpu_layers": 99,
+        "context_size": 32768,
+        "batch_size": 512,
+        "backend": "process",
+        "max_tokens": 512
+      },
+      "recommended": true,
+      "quant": "PTQ1_0",
+      "notes": "Default chat model: ternary 27B, ~6 GB, blazing fast on Prism runtime. Native vision via mmproj. Runs on CPU too — ternary models are extremely light.",
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "qwen35-4b",
+      "name": "Qwen3.5 4B (light chat + vision)",
+      "category": "Vision",
+      "hf_repo": "unsloth/Qwen3.5-4B-GGUF",
+      "files": [
+        {
+          "filename": "Qwen3.5-4B-Q4_K_M.gguf",
+          "size_gb": 2.7
+        },
+        {
+          "filename": "mmproj-Qwen3.5-4B-BF16.gguf",
+          "size_gb": 0.68,
+          "hf_repo": "lmstudio-community/Qwen3.5-4B-GGUF"
+        }
+      ],
+      "mmproj_file": "mmproj-Qwen3.5-4B-BF16.gguf",
+      "suggested_config": {
+        "gpu_layers": 99,
+        "context_size": 32768,
+        "batch_size": 512,
+        "max_tokens": 1024
+      },
+      "recommended": true,
+      "quant": "Q4_K_M",
+      "notes": "Light tier: fast on any machine, full GPU everywhere (Vulkan included). Vision via separate projector (unsloth ships none — projector comes from lmstudio-community).",
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "qwen36-35b-a3b",
+      "name": "Qwen3.6 35B-A3B (max reasoning + vision, MoE)",
+      "category": "Vision",
+      "hf_repo": "unsloth/Qwen3.6-35B-A3B-GGUF",
+      "files": [
+        {
+          "filename": "Qwen3.6-35B-A3B-UD-Q4_K_M.gguf",
+          "size_gb": 20.0
+        },
+        {
+          "filename": "mmproj-F16.gguf",
+          "size_gb": 0.84
+        }
+      ],
+      "mmproj_file": "mmproj-F16.gguf",
+      "suggested_config": {
+        "gpu_layers": 99,
+        "context_size": 65536,
+        "batch_size": 512,
+        "max_tokens": 2048
+      },
+      "recommended": false,
+      "quant": "Q4_K_M",
+      "notes": "Max tier: 35B-class reasoning, ~3B active (fast). Native vision, thinking mode. On Vulkan machines the engine automatically runs it CPU-only (partial-offload crash upstream); full GPU on Apple Silicon and CUDA.",
+      "license": "Apache-2.0"
     }
   ]
 }

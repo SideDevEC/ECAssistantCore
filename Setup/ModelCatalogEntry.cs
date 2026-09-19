@@ -32,6 +32,10 @@ public sealed class CatalogModelFile
     /// <summary>Expected SHA-256 (hex) of the downloaded file. Empty/absent = unverified.</summary>
     [JsonPropertyName("sha256")]
     public string? Sha256 { get; set; }
+
+    /// <summary>Optional per-file HuggingFace repo override (org/name). Falls back to the entry's repo. Used when the mmproj ships from a different org than the weights.</summary>
+    [JsonPropertyName("hf_repo")]
+    public string? HfRepo { get; set; }
 }
 
 /// <summary>Suggested server config values for this model.</summary>
@@ -54,6 +58,13 @@ public sealed class CatalogSuggestedConfig
     /// </summary>
     [JsonPropertyName("backend")]
     public string? Backend { get; set; }
+
+    /// <summary>
+    /// Per-model default output tokens for chat (written to llm-server.json).
+    /// 0 = omit (server global default). Thinking models need a larger budget.
+    /// </summary>
+    [JsonPropertyName("max_tokens")]
+    public int MaxTokens { get; set; } = 0;
 }
 
 /// <summary>
@@ -110,6 +121,7 @@ public sealed class ModelCatalogEntry
     public string GetDownloadUrl(CatalogModelFile file)
     {
         var path = string.IsNullOrEmpty(file.HfPath) ? file.Filename : file.HfPath;
-        return $"https://huggingface.co/{HfRepo}/resolve/main/{path}";
+        var repo = string.IsNullOrWhiteSpace(file.HfRepo) ? HfRepo : file.HfRepo;
+        return $"https://huggingface.co/{repo}/resolve/main/{path}";
     }
 }
