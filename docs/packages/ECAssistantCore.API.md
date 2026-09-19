@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 308  |  LOC: 27338  |  ~14317 tokens
+Types: 310  |  LOC: 27538  |  ~14384 tokens
 
 ---
 
@@ -721,6 +721,13 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Setup
 
 ### Class: FirstRunStatus
 > First-run / installed-model state.
+
+### Class: HardwareProfile
+> Machine capabilities of the machine running the setup wizard. Used to tune
+
+### Class: HardwareProfileTests
+> HardwareProfile tuning rules: GPU layers / context / batch adapt to the machine.
+Cross-package deps: ECAssistant.Core.Setup, Xunit
 
 ### Class: HomeController
 Cross-package deps: ECAssistant.Core.Analysis

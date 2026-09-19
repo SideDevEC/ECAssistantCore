@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-09-02 (v14.7 — tag system removed, native JSON decisions, reasoning in history, early termination, grammar + KV cache fixed)
+**Updated:** 2026-09-19 (v12.9.5 — hardware-adaptive model catalog: HardwareProfile tunes gpu_layers/context/batch per machine; new default catalog: Bonsai 2 27B (process) + Qwen3.5-4B light + Qwen3.6-35B max, all with vision; per-file hf_repo override; per-model max_tokens. Requires LLM server 14.9.2+)
 **Status:** ✅ 0 errors, 0 warnings | LDC enforcement PASSED
 
 ## Overview

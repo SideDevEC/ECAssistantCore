@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-18T16:10:26.697053+00:00
-Packages: 3  |  Types: 405
+Generated: 2026-09-19T13:41:17.862491+00:00
+Packages: 3  |  Types: 408
 
 ---
 
-## ECAssistantCore (308 types, ~27338 LOC)
+## ECAssistantCore (310 types, ~27538 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -144,6 +144,8 @@ Packages: 3  |  Types: 405
 - 🟡 FirstRunOrchestrator  (ECAssistantCore)  deps: [string, ISetupUi]
 - 🟡 FirstRunStatus  (ECAssistantCore)
 - 🟣 GenerationParams  (ECAssistantCore)  deps: [int, float, float, int, float]
+- 🟡 HardwareProfile  (ECAssistantCore)
+- 🟡 HardwareProfileTests  (ECAssistantCore)
 - 🟡 HomeController  (ECAssistantCore)
 - 🟡 HtmlTextConverter : IHtmlTextConverter  (ECAssistantCore)
 - 🟡 HtmlTextConverterTests  (ECAssistantCore)
@@ -327,7 +329,7 @@ Packages: 3  |  Types: 405
 - 🟡 TestScenario  (TestSupport)
 - 🟡 TestSessionOutput : ISessionOutput  (TestSupport)  deps: [EGuiTestHarness]
 
-## Tests (89 types, ~11709 LOC)
+## Tests (90 types, ~11821 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -364,6 +366,7 @@ Packages: 3  |  Types: 405
 - 🟡 FailurePatternTests  (Tests)
 - 🟡 FakeLlmServer : IDisposable  (Tests)
 - 🟡 FileSystemAdapterTests : IDisposable  (Tests)
+- 🟡 HardwareProfileTests  (Tests)
 - 🟡 HomeController  (Tests)
 - 🟡 HtmlTextConverterTests  (Tests)
 - 🟡 HttpClientAdapterTests : IDisposable  (Tests)

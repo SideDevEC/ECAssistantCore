@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 89  |  LOC: 11709  |  ~3286 tokens
+Types: 90  |  LOC: 11821  |  ~3328 tokens
 
 ---
 
@@ -125,6 +125,10 @@ Cross-package deps: ECAssistant.Core.Services.Http
 ### Class: FileSystemAdapterTests
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
+
+### Class: HardwareProfileTests
+> HardwareProfile tuning rules: GPU layers / context / batch adapt to the machine.
+Cross-package deps: ECAssistant.Core.Setup, Xunit
 
 ### Class: HomeController
 Cross-package deps: ECAssistant.Core.Analysis
