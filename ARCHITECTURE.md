@@ -477,6 +477,12 @@ asking.
 
 ## Addendum — audit fixes (12.9.8, pre-release hardening)
 
+- **BackgroundProcessManager (real bug):** progressive-capture pump tasks wrote into
+  detached local buffers — `GetOutput` always returned empty. Closures now use the
+  BgProcess-owned buffers. Test staleness fixed for EFileResearchTool (query-aware
+  selection), ConfigProvider (missing-section = fresh default contract), ContextWindow
+  (auto-summarize requires a SummaryService). Core suite fully green: 1034/1034.
+
 - Checksum mismatch no longer aborts the whole wizard (per-model failure + partial-file cleanup).
 - Download resume verifies HTTP 206; servers ignoring Range reset to a clean rewrite (no corrupt appends).
 - Remote catalog only replaces the user copy when strictly newer (version-aware).
