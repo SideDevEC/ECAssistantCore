@@ -52,7 +52,7 @@ await loop.ExecuteInteractiveLoop("Summarize the docs in this folder");
 | **Custom tools** | Implement one interface, register it. That's the whole API. |
 | **Memory** | Vector memory (embeddings) + daily notes + curated long-term memory |
 | **Local or remote LLM** | GGUF via the bundled [LLM server](https://github.com/SideDevEC/ECAssistantLLM), or any OpenAI-compatible endpoint — identical code path |
-| **Model catalog** | Data-driven (`model-catalog.json`) — add models without code changes |
+| **Model catalog** | Data-driven and pulled live from GitHub at setup time (embedded fallback) — add/update models without code changes |
 | **First-run wizard** | Provisions server + models interactively; nothing downloads at chat time |
 
 ## Architecture boundary (by design)
