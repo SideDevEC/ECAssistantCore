@@ -21,8 +21,9 @@ public class ModelCatalogTests : IDisposable
         var doc = ModelCatalogDocument.Load(path);
 
         Assert.True(File.Exists(path), "default catalog should be written to disk (user-editable)");
-        Assert.All(doc.Models, m => Assert.Equal(CatalogModelCategory.Vision, m.Category)); // all 3 chat models have native vision
-        Assert.Equal(3, doc.Models.Count); // Bonsai + Qwen3.5-4B + Qwen3.6-35B — nothing else
+        Assert.Equal(3, doc.Models.Count(m => m.Category == CatalogModelCategory.Vision)); // Bonsai + Qwen3.5-4B + Qwen3.6-35B
+        Assert.Single(doc.Models.Where(m => m.Category == CatalogModelCategory.Embedding)); // vector memory
+        Assert.Equal(4, doc.Models.Count); // nothing else
         Assert.All(doc.Models.Where(m => m.Category == CatalogModelCategory.Vision),
             m => Assert.False(string.IsNullOrEmpty(m.MmprojFile)));
         Assert.Null(doc.Validate());
