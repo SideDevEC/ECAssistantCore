@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-21T22:31:30.671582+00:00
-Edges: 80  |  Packages: 2
+Generated: 2026-09-21T22:36:40.229151+00:00
+Edges: 78  |  Packages: 2
 
 ---
 
@@ -69,8 +69,6 @@ Edges: 80  |  Packages: 2
 - ModelParamValidator ──implements──► IModelParamValidator (ECAssistantCore)
 - NopKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
 - ParallelToolExecutor ──implements──► IParallelToolExecutor (ECAssistantCore)
-- PrefixCachedExtractor ──uses──► IInferenceEngine (ECAssistantCore)
-- PrefixCachedExtractor ──uses──► IKvCacheController (ECAssistantCore)
 - ProcessRunner ──implements──► IProcessRunner (ECAssistantCore)
 - ReadableContentExtractor ──implements──► IReadableContentExtractor (ECAssistantCore)
 - RemoteKvCacheController ──implements──► IKvCacheController (ECAssistantCore)

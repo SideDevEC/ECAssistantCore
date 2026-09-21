@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-21T22:31:30.670972+00:00
-Packages: 2  |  Types: 412
+Generated: 2026-09-21T22:36:40.228541+00:00
+Packages: 2  |  Types: 411
 
 ---
 
-## ECAssistantCore (314 types, ~27169 LOC)
+## ECAssistantCore (313 types, ~26974 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -210,7 +210,6 @@ Packages: 2  |  Types: 412
 - 🟡 ParallelToolExecutorTests  (ECAssistantCore)
 - 🟡 PathExpander  (ECAssistantCore)
 - 🟡 PlannedToolCall  (ECAssistantCore)
-- 🟡 PrefixCachedExtractor : IAsyncDisposable  (ECAssistantCore)  deps: [IInferenceEngine, IKvCacheController, string, InferenceParamsFactory? paramsFactory =]
 - 🟣 ProcessResult  (ECAssistantCore)  deps: [int, string, string, bool]
 - 🟡 ProcessRunner : IProcessRunner  (ECAssistantCore)
 - 🟡 ProcessRunnerTests  (ECAssistantCore)

@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 314  |  LOC: 27169  |  ~14472 tokens
+Types: 313  |  LOC: 26974  |  ~14383 tokens
 
 ---
 
@@ -990,13 +990,6 @@ Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.Engine, ECAssistan
 
 ### Class: PlannedToolCall
 > A single planned tool call — concrete mapping from a sub-task to a tool + args.
-
-### Class: PrefixCachedExtractor
-> One-shot LLM extraction with a persistent KV cache via HTTP.
-Implements: IAsyncDisposable
-Constructor:
-  - PrefixCachedExtractor(IInferenceEngine engine, IKvCacheController kvCache, string sessionId, InferenceParamsFactory? paramsFactory = null)
-Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Services
 
 ### Class: ProcessRunner
 > Concrete process execution implementation.
