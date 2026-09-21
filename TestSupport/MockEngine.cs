@@ -263,7 +263,7 @@ public class MockEngine : EAgentEngine
     internal sealed class KvCacheNoop : IKvCacheController
     {
         public static readonly KvCacheNoop Instance = new();
-        public Task<bool> CreateSessionAsync(string sessionId, CancellationToken ct = default) => Task.FromResult(true);
+        public Task<bool> CreateSessionAsync(string sessionId, string? modelId = null, CancellationToken ct = default) => Task.FromResult(true);
         public Task<bool> DestroySessionAsync(string sessionId, CancellationToken ct = default) => Task.FromResult(true);
         public Task<bool> PrefillAsync(string sessionId, string text, CancellationToken ct = default) => Task.FromResult(true);
         public Task<bool> SaveStateAsync(string sessionId, CancellationToken ct = default) => Task.FromResult(true);
