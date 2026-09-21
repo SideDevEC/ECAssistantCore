@@ -27,7 +27,7 @@ public class ECodeEditorTool : EToolBase
         {
           "type": "object", "required": ["action"],
           "properties": {
-            "action": { "type": "string", "enum": ["write", "edit", "delete"], "description": "write = create/overwrite file; edit = replace old_text with new_text; delete = remove file" },
+            "action": { "type": "string", "enum": ["create", "diff", "patch", "search", "replace-all", "insert", "delete-lines", "delete"], "description": "create = new file (content/new_text); diff = preview change; patch = replace old_text with new_text; search = find text; replace-all = replace every occurrence; insert = add lines; delete-lines = remove lines; delete = remove file" },
             "file": { "type": "string", "description": "Target file path" },
             "content": { "type": "string", "description": "Full file content (action=write)" },
             "old_text": { "type": "string", "description": "Exact text to replace (action=edit)" },
@@ -78,10 +78,13 @@ public class ECodeEditorTool : EToolBase
     private async Task<(bool Ok, string Message)> DoCreate(Dictionary<string, string?> args, CancellationToken ct)
     {
         var file = args.GetValueOrDefault("file")?.Trim();
-        var content = args.GetValueOrDefault("content") ?? "";
+        // Tolerant lookup: models sometimes send content as new_text (schema drift fallback).
+        var content = args.GetValueOrDefault("content") ?? args.GetValueOrDefault("new_text") ?? "";
 
         if (string.IsNullOrEmpty(file))
             return (false, "ECodeEditor: Missing 'file' argument.");
+        if (string.IsNullOrWhiteSpace(content))
+            return (false, "ECodeEditor: Missing 'content' argument (send the full file content; empty files are not created).");
 
         var fullPath = ResolvePath(file);
 

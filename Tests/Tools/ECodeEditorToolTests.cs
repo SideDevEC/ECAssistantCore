@@ -101,6 +101,31 @@ public class ECodeEditorToolTests
         _fileSystem.Verify(f => f.CreateDirectory(It.IsAny<string>()), Times.Once);
     }
 
+    // Regression: glm-5.3-flash sent new_text instead of content → 0-byte file with SUCCESS.
+    [Fact]
+    public async Task ExecuteAsync_Create_WithNewTextInsteadOfContent_WritesFile()
+    {
+        _fileSystem.Setup(f => f.FileExists(It.IsAny<string>())).Returns(false);
+        var tool = CreateTool();
+
+        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["action"] = "create", ["file"] = "fib.py", ["new_text"] = "print(1)" });
+
+        Assert.Contains("Created", result.Output + result.Error);
+        _fileSystem.Verify(f => f.WriteFile(It.IsAny<string>(), "print(1)"), Times.Once);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Create_MissingContent_FailsWithoutWriting()
+    {
+        _fileSystem.Setup(f => f.FileExists(It.IsAny<string>())).Returns(false);
+        var tool = CreateTool();
+
+        var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["action"] = "create", ["file"] = "fib.py" });
+
+        Assert.Contains("Missing 'content'", result.Error);
+        _fileSystem.Verify(f => f.WriteFile(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
     // ── ExecuteAsync — patch ──
 
     [Fact]

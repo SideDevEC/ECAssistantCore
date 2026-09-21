@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-09-21 (PM — pure-remote first-run fix, endpoint normalization (EndpointNormalizer), project-context host-file exclusion, all harness parameters config-driven (llm.context_size wired, interface.max_turns, turns_per_subtask, subtask_turn_buffer, compact_threshold_percent))
+**Updated:** 2026-09-21 (late PM — ECodeEditorTool contract-drift fix: schema action enum aligned with implemented actions (create/diff/patch/search/replace-all/insert/delete-lines/delete, was write/edit/delete), DoCreate accepts new_text as content fallback (models mix them), missing content now FAILS with clear error instead of writing a 0-byte file with SUCCESS; found by production-env benchmark with glm-5.3-flash; 31/31 ECodeEditorToolTests pass incl. 2 regression tests)
 **Status:** ✅ 0 errors, 0 warnings | LDC enforcement PASSED
 
 ## Overview
@@ -414,6 +414,10 @@ EWebFetch was reworked to produce LLM-parseable output. The old tool returned a 
 - `BackgroundProcessManager`: unix/macOS branch now executes the temp script file directly (was inline `-c "{command}"`, broke on embedded quotes)
 - `SessionManager`: `StopSession`/`CreateSession` dictionary access moved under `_sessionsLock`; session counter is `Interlocked`
 - `ECodeEditorTool`: empty `old_text`/`pattern` rejected before `CountOccurrences` (was an infinite loop); `file_filter` wildcard matching actually applied in search/replace-all
+
+## Audit Fixes (2026-09-21, PM)
+
+- `ECodeEditorTool`: GetParameterSchema action enum aligned with the dispatcher (create/diff/patch/search/replace-all/insert/delete-lines/delete — schema previously advertised write/edit/delete which don't exist). `DoCreate` reads `new_text` as fallback when `content` is absent (models send either) and returns a clear failure when both are missing — previously wrote a 0-byte file and returned SUCCESS, triggering empty-patch retry cascades (observed with glm-5.3-flash in production benchmark)
 
 ## Vision (2026-08-27)
 
