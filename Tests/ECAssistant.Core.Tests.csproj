@@ -26,7 +26,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ECAssistant.Core.csproj" />
-    <ProjectReference Include="..\TestSupport\ECAssistant.Core.TestSupport.csproj" />
+  </ItemGroup>
+
+  <!-- TestSupport: own repo (sibling). Local dev → project ref; CI/NuGet → package. -->
+  <ItemGroup Condition="'$(EcaUseProjectRefs)' == 'true'">
+    <ProjectReference Include="..\..\ECAssistantTestSupport\ECAssistant.Core.TestSupport.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(EcaUseProjectRefs)' != 'true'">
+    <PackageReference Include="ECAssistant.Core.TestSupport" Version="12.9.9" />
   </ItemGroup>
 
 </Project>

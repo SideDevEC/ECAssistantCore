@@ -29,7 +29,6 @@
 
   <ItemGroup>
     <Compile Remove="Tests/**" />
-    <Compile Remove="TestSupport/**" />
   </ItemGroup>
 
   <ItemGroup>
