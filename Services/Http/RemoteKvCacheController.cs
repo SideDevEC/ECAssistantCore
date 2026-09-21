@@ -29,9 +29,14 @@ public sealed class RemoteKvCacheController : IKvCacheController
     /// <summary>Session IDs can contain characters that are illegal in URL paths — escape them.</summary>
     private static string Enc(string sessionId) => Uri.EscapeDataString(sessionId);
 
-    public async Task<bool> CreateSessionAsync(string sessionId, CancellationToken ct = default)
+    public async Task<bool> CreateSessionAsync(string sessionId, string? modelId = null, CancellationToken ct = default)
     {
-        var body = JsonSerializer.Serialize(new { session_id = sessionId });
+        // model_id is required for process-backend models — without it the server
+        // resolves the default model itself, which is fine, but sending it keeps the
+        // session bound to the configured chat model explicitly.
+        var body = modelId != null
+            ? JsonSerializer.Serialize(new { session_id = sessionId, model_id = modelId })
+            : JsonSerializer.Serialize(new { session_id = sessionId });
         var json = await _client.PostJsonAsync("/eca/sessions", body, ct);
         // Proper JSON parsing instead of substring matching — substring checks can
         // match fields we don't care about (e.g. an error body mentioning the field).

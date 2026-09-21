@@ -9,8 +9,10 @@ namespace ECAssistant.Core.Interfaces;
 /// </summary>
 public interface IKvCacheController
 {
-    /// <summary>Create a new inference session (own KV cache) on the server.</summary>
-    Task<bool> CreateSessionAsync(string sessionId, CancellationToken ct = default);
+    /// <summary>Create a new inference session (own KV cache) on the server.
+    /// modelId routes process-backend models into the server's process-session registry;
+    /// omit to let the server use its default (main) model.</summary>
+    Task<bool> CreateSessionAsync(string sessionId, string? modelId = null, CancellationToken ct = default);
 
     /// <summary>Destroy a session (frees KV cache on the server).</summary>
     Task<bool> DestroySessionAsync(string sessionId, CancellationToken ct = default);

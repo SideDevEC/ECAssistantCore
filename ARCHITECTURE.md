@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-09-19 (v12.9.8 — wizard rework: catalog pulled live from GitHub (catalog/model-catalog.json, embedded fallback), one flat "Available Models" list incl. discovered local GGUFs (green = on disk), vision derived from mmproj presence (no question), reinstall skips downloads and re-syncs config hardware-tuned; catalog = Bonsai 2 27B (process) + Qwen3.5-4B + Qwen3.6-35B + multilingual-e5-large. Requires LLM server 14.9.3+)
+**Updated:** 2026-09-21 (v12.9.9 — process-backend fix: IKvCacheController.CreateSessionAsync now sends model_id so process-backend models route into the correct session registry; RequiredServerVersion 14.9.5)
 **Status:** ✅ 0 errors, 0 warnings | LDC enforcement PASSED
 
 ## Overview

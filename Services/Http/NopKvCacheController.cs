@@ -13,7 +13,7 @@ namespace ECAssistant.Core.Services.Http;
 /// </summary>
 public sealed class NopKvCacheController : IKvCacheController
 {
-    public Task<bool> CreateSessionAsync(string sessionId, CancellationToken ct = default)
+    public Task<bool> CreateSessionAsync(string sessionId, string? modelId = null, CancellationToken ct = default)
         => Task.FromResult(true);
 
     public Task<bool> DestroySessionAsync(string sessionId, CancellationToken ct = default)

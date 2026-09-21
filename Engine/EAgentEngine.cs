@@ -678,7 +678,7 @@ User: " + userRequest + "\n";
              {
                 try
                  {
-                    await _kvCacheController.CreateSessionAsync(_sessionId);
+                    await _kvCacheController.CreateSessionAsync(_sessionId, _config.LlmProvider.ModelId);
                     _kvState.SessionActive = true;
                  }
                 catch (Exception ex)
