@@ -7,9 +7,9 @@
     <OutputType>Library</OutputType>
     <RootNamespace>ECAssistant.Core.TestSupport</RootNamespace>
     <AssemblyName>ECAssistant.Core.TestSupport</AssemblyName>
-    <IsPackable>true</IsPackable>
-    <PackageId>ECAssistant.Core.TestSupport</PackageId>
-    <PackageVersion>12.9.3</PackageVersion>
+    <IsPackable>false</IsPackable>
+    <!-- INTERNAL TEST HARNESS — never published to NuGet. Consumed by Core Tests
+         (ProjectReference) and Console dev tests (cross-repo ProjectReference). -->
     <Authors>SideDevEC</Authors>
     <Company>SideDevEC</Company>
     <Product>ECAssistant</Product>

@@ -56,17 +56,14 @@ jobs:
             echo "version=$TAG" >> $GITHUB_OUTPUT
           fi
 
-      - name: Pack NuGet packages
+      - name: Pack NuGet package
         run: |
           dotnet pack ECAssistant.Core.csproj \
             --configuration Release \
             --no-build \
             /p:PackageVersion=${{ steps.version.outputs.version }} \
             -o ./nupkg
-          dotnet pack TestSupport/ECAssistant.Core.TestSupport.csproj \
-            --configuration Release \
-            /p:PackageVersion=${{ steps.version.outputs.version }} \
-            -o ./nupkg
+          # TestSupport is an internal, non-packable harness (TestSupport/IsPackable=false)
 
       - name: Publish to GitHub Packages
         run: |
@@ -83,35 +80,19 @@ jobs:
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
 
-      - name: Log in to nuget.org via OIDC (trusted publishing — Core)
+      - name: Log in to nuget.org via OIDC (trusted publishing)
         uses: NuGet/login@v1
-        id: nuget-login-core
+        id: nuget-login
         continue-on-error: true
         with:
           user: SideDevEC
 
-      - name: Publish Core to nuget.org (trusted publishing)
-        if: ${{ steps.nuget-login-core.outputs.NUGET_API_KEY != '' }}
+      - name: Publish to nuget.org (trusted publishing)
+        if: ${{ steps.nuget-login.outputs.NUGET_API_KEY != '' }}
         continue-on-error: true
         run: |
-          dotnet nuget push ./nupkg/ECAssistant.Core.*.nupkg \
-            --api-key ${{ steps.nuget-login-core.outputs.NUGET_API_KEY }} \
-            --source https://api.nuget.org/v3/index.json \
-            --skip-duplicate
-
-      - name: Log in to nuget.org via OIDC (trusted publishing — TestSupport)
-        uses: NuGet/login@v1
-        id: nuget-login-testsupport
-        continue-on-error: true
-        with:
-          user: SideDevEC
-
-      - name: Publish TestSupport to nuget.org (trusted publishing)
-        if: ${{ steps.nuget-login-testsupport.outputs.NUGET_API_KEY != '' }}
-        continue-on-error: true
-        run: |
-          dotnet nuget push ./nupkg/ECAssistant.Core.TestSupport.*.nupkg \
-            --api-key ${{ steps.nuget-login-testsupport.outputs.NUGET_API_KEY }} \
+          dotnet nuget push ./nupkg/*.nupkg \
+            --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
 
