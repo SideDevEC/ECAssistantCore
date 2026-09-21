@@ -20,10 +20,11 @@ public class InterfaceConfig
 
     /// <summary>
     /// Verbose mode: show token stream, debug info, KV cache status, raw outputs.
-    /// Default: true (shows everything).
+    /// Default: false (silent mode — only user input, answers, tool results, warnings
+    /// and errors reach the UI; diagnostics stay in the transcript).
     /// </summary>
     [JsonPropertyName("verbose")]
-    public bool Verbose { get; init; } = true;
+    public bool Verbose { get; init; } = false;
 
     /// <summary>
     /// Silent mode: suppress token stream noise (the ── Token Stream ── headers,

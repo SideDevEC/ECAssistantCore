@@ -86,6 +86,16 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     // ── Tool policy ───────────────────────────────────
     private readonly ECAssistant.Core.Tools.ToolPolicy _toolPolicy;
     private readonly EAgentConfig? _config;  // v10.24: for tool config registration
+
+    /// <summary>UI verbosity. Silent (default) filters diagnostic lines from the UI;
+    /// everything is still written to the session transcript file.</summary>
+    private volatile SessionVerbosity _verbosity = SessionVerbosity.Silent;
+
+    /// <summary>Current UI verbosity of this session.</summary>
+    public SessionVerbosity Verbosity => _verbosity;
+
+    /// <summary>Change UI verbosity at runtime (/verbose, /silent).</summary>
+    public void SetVerbosity(SessionVerbosity verbosity) => _verbosity = verbosity;
     private readonly ILogger _logger;
 
     /// <summary>
@@ -123,6 +133,12 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         if (config?.ToolPermissions != null)
             _toolPolicy.LoadFromConfig(config.ToolPermissions);
         _config = config;
+
+        // Verbosity from config: silent=true → Silent; verbose=true → Verbose; both unset → Silent.
+        if (config?.Interface.Silent == true)
+            _verbosity = SessionVerbosity.Silent;
+        else if (config?.Interface.Verbose == true)
+            _verbosity = SessionVerbosity.Verbose;
 
         // Create session directory
         _sessionDir = Path.Combine(workingDir, ".sessions", key);
@@ -337,6 +353,38 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     // ═══════════════════════════════════════════════════
 
     /// <summary>
+    /// True when a line should be hidden from the UI in Silent mode.
+    /// Diagnostic chatter ([Orchestrator]/[Engine]/[KVCache]/[Memory]/[Plan] status,
+    /// Dim debug lines) is filtered; errors, warnings, answers and stream output show.
+    /// The session transcript file always receives everything.
+    /// </summary>
+    private bool IsHiddenInSilentMode(string text, OutputState state)
+    {
+        if (state == OutputState.Error || state == OutputState.Warning) return false;
+        if (state == OutputState.Raw || state == OutputState.Bold || state == OutputState.Success) return false;
+
+        // All Dim lines are diagnostics
+        if (state == OutputState.Dim) return true;
+
+        // Info/System lines: hide known diagnostic prefixes only
+        if (text.Length > 1 && text[0] == '[')
+        {
+            foreach (var prefix in DiagnosticPrefixes)
+            {
+                if (text.StartsWith(prefix, StringComparison.Ordinal)) return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>Line prefixes treated as internal diagnostics (hidden in Silent mode).</summary>
+    private static readonly string[] DiagnosticPrefixes =
+    {
+        "[Orchestrator]", "[Engine]", "[KVCache]", "[Memory]", "[StepMapper]",
+        "[Plan]", "[Last session]", "[Vision]", "[Tool] Registered", "[Decompose]",
+    };
+
+    /// <summary>
     /// Write a line with a state. If a stream is active, stops it first,
     /// flushes the buffer as a stream entry, then writes the line.
     /// </summary>
@@ -360,6 +408,10 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
             };
 
             WriteEntryToFile(entry);
+
+            // Silent mode: transcript gets everything, the UI gets only essentials.
+            if (_verbosity == SessionVerbosity.Silent && IsHiddenInSilentMode(text, state))
+                return;
 
             lock (_uiLock)
             {
@@ -516,6 +568,10 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         };
 
         WriteEntryToFile(entry);
+
+        // Silent mode: transcript gets everything, the UI gets only essentials.
+        if (_verbosity == SessionVerbosity.Silent && IsHiddenInSilentMode(text, _currentState))
+            return;
 
         lock (_uiLock)
         {

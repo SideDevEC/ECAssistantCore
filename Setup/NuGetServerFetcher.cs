@@ -39,6 +39,19 @@ public sealed class NuGetServerFetcher
     /// <summary>Package version this fetcher downloads.</summary>
     public string Version => _version;
 
+    /// <summary>Content length of the server package from nuget.org, or null if unavailable.</summary>
+    public async Task<long?> GetPackageSizeAsync(CancellationToken ct = default)
+    {
+        var url = $"{NuGetFlatContainerBase}{PackageIdLower}/{_version}/{PackageIdLower}.{_version}.nupkg";
+        try
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Head, url);
+            using var resp = await _http.SendAsync(req, ct).ConfigureAwait(false);
+            return resp.Content.Headers.ContentLength;
+        }
+        catch { return null; }
+    }
+
     /// <summary>
     /// Downloads the server package and extracts it. Returns the directory containing the
     /// server runtime (content/server inside the nupkg). Caller must delete the returned
@@ -100,6 +113,10 @@ public sealed class NuGetServerFetcher
                 nextReport = written + (10L << 20); // report every ~10 MB
             }
         }
+
+        // Final tick — the 10 MB cadence never reports the last partial chunk,
+        // which made the progress line freeze a few MB short of the real size.
+        progress?.Invoke(written, total);
     }
 
     private static void TryDelete(string dir)

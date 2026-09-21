@@ -59,7 +59,7 @@ public sealed class ServerInstallCoordinator
                 return true;
 
             case ServerInstallState.Missing:
-                _ui.WriteLine($"[Setup] LLM server {RequiredServerVersion} is not installed — downloading (~170 MB, one time).");
+                _ui.WriteLine($"[Setup] LLM server {RequiredServerVersion} is not installed — downloading ({await DescribePackageSizeAsync(cancellationToken).ConfigureAwait(false)}, one time).");
                 return await InstallAsync(cancellationToken).ConfigureAwait(false);
 
             case ServerInstallState.VersionMismatch:
@@ -103,6 +103,16 @@ public sealed class ServerInstallCoordinator
             : ServerInstallState.VersionMismatch;
     }
 
+    /// <summary>Human-readable package size, e.g. "~76 MB". Falls back to a neutral wording
+    /// when nuget.org is unreachable or the size is unknown — never a hardcoded guess.</summary>
+    private async Task<string> DescribePackageSizeAsync(CancellationToken ct)
+    {
+        using var http = new HttpClient();
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("ECAssistant-Installer/1.0");
+        var size = await new NuGetServerFetcher(http, RequiredServerVersion).GetPackageSizeAsync(ct).ConfigureAwait(false);
+        return size.HasValue ? $"~{size.Value / 1048576} MB" : "size unknown";
+    }
+
     private async Task<bool> InstallAsync(CancellationToken cancellationToken)
     {
         // The server must not be running while we replace files. At first-run there is
@@ -128,10 +138,12 @@ public sealed class ServerInstallCoordinator
         var fetcher = new NuGetServerFetcher(http, RequiredServerVersion);
 
         string stagedDir;
+        long? lastTotal = null;
         try
         {
             stagedDir = await fetcher.FetchAsync((received, total) =>
             {
+                lastTotal = total;
                 if (total.HasValue)
                     _ui.Write($"\r[Setup]   {received / 1048576} / {total.Value / 1048576} MB   ");
                 else
@@ -143,7 +155,13 @@ public sealed class ServerInstallCoordinator
             _ui.WriteLine($"[Setup] ✘ Download failed: {ex.Message}");
             return false;
         }
-        _ui.WriteLine();
+
+        // Download finished — replace the \r progress line with the completed size so the
+        // user sees the real full size, not the last 10 MB cadence tick.
+        if (lastTotal is long t)
+            _ui.WriteLine($"\r[Setup] ✔ Downloaded {t / 1048576} MB                ");
+        else
+            _ui.WriteLine();
 
         try
         {
