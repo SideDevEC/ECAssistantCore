@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-21T16:04:46.117280+00:00
-Packages: 2  |  Types: 402
+Generated: 2026-09-21T16:09:09.857952+00:00
+Packages: 2  |  Types: 406
 
 ---
 
-## ECAssistantCore (308 types, ~26520 LOC)
+## ECAssistantCore (310 types, ~26659 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -61,6 +61,7 @@ Packages: 2  |  Types: 402
 - 🟡 CatalogFetcher  (ECAssistantCore)  deps: [HttpClient, HttpClient, string]
 - 🟡 CatalogModelFile  (ECAssistantCore)
 - 🟡 CatalogSuggestedConfig  (ECAssistantCore)
+- 🟡 ConfigDrivenParamsTests : IDisposable  (ECAssistantCore)
 - 🟡 ConfigIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 ConfigLoader : IConfigLoader  (ECAssistantCore)  deps: [IFileSystem]
 - 🟡 ConfigLoaderTests  (ECAssistantCore)
@@ -215,6 +216,7 @@ Packages: 2  |  Types: 402
 - 🟡 ProgramGuiCollection  (ECAssistantCore)
 - 🟡 ProjectArchitecture  (ECAssistantCore)
 - 🟡 ProjectContext  (ECAssistantCore)
+- 🟡 ProjectContextExclusionTests : IDisposable  (ECAssistantCore)
 - 🟡 ProjectContextManager : IDisposable  (ECAssistantCore)  deps: [string, ILogger? logger =]
 - 🟡 ProjectContextManagerTests  (ECAssistantCore)
 - 🟡 ProjectRelationship  (ECAssistantCore)
@@ -316,12 +318,13 @@ Packages: 2  |  Types: 402
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (94 types, ~12080 LOC)
+## Tests (96 types, ~12219 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (Tests)
 - 🟡 BuildCallSignatureTests  (Tests)
+- 🟡 ConfigDrivenParamsTests : IDisposable  (Tests)
 - 🟡 ConfigIntegrationTests : IDisposable  (Tests)
 - 🟡 ConfigLoaderTests  (Tests)
 - 🟡 ConfigProviderTests  (Tests)
@@ -377,6 +380,7 @@ Packages: 2  |  Types: 402
 - 🟡 ParallelToolExecutorTests  (Tests)
 - 🟡 ProcessRunnerTests  (Tests)
 - 🟡 ProgramGuiCollection  (Tests)
+- 🟡 ProjectContextExclusionTests : IDisposable  (Tests)
 - 🟡 ProjectContextManagerTests  (Tests)
 - 🟡 ReadableContentExtractorTests  (Tests)
 - 🟡 RemoteModelProbePathTests  (Tests)

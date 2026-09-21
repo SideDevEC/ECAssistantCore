@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 94  |  LOC: 12080  |  ~3512 tokens
+Types: 96  |  LOC: 12219  |  ~3636 tokens
 
 ---
 
@@ -17,6 +17,11 @@ Cross-package deps: ECAssistant.Core.Services
 ### Class: BuildCallSignatureTests
 > v12.4/v12.5 regression: tool-call signatures must be deterministic and
 Cross-package deps: ECAssistant.Core.Orchestration, Xunit
+
+### Class: ConfigDrivenParamsTests
+> "Every parameter from the config" (Emre, 2026-09-21): new config keys must
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Engine, ECAssistant.Core.Setup, ECAssistant.Core.Session
 
 ### Class: ConfigIntegrationTests
 > Integration tests for the config loading pipeline — uses real FileSystemAdapter
@@ -222,6 +227,11 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 
 ### Class: ProgramGuiCollection
 > xUnit test collection that serializes tests sharing the static EGuiTestHarness field.
+
+### Class: ProjectContextExclusionTests
+> Project-context scan must exclude host runtime/config files — the model should
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine
 
 ### Class: ProjectContextManagerTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq

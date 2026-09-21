@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 308  |  LOC: 26520  |  ~14191 tokens
+Types: 310  |  LOC: 26659  |  ~14316 tokens
 
 ---
 
@@ -380,6 +380,11 @@ Constructor:
 
 ### Class: CatalogSuggestedConfig
 > Model category — drives config generation and UI grouping.
+
+### Class: ConfigDrivenParamsTests
+> "Every parameter from the config" (Emre, 2026-09-21): new config keys must
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Engine, ECAssistant.Core.Setup, ECAssistant.Core.Session
 
 ### Class: ConfigIntegrationTests
 > Integration tests for the config loading pipeline — uses real FileSystemAdapter
@@ -1002,6 +1007,11 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 ### Class: ProjectArchitecture
 
 ### Class: ProjectContext
+
+### Class: ProjectContextExclusionTests
+> Project-context scan must exclude host runtime/config files — the model should
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine
 
 ### Class: ProjectContextManager
 > Project Context Manager — maintains persistent knowledge about the project structure,
