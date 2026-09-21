@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-19T16:36:36.061371+00:00
-Edges: 86  |  Packages: 3
+Generated: 2026-09-21T12:37:49.301079+00:00
+Edges: 80  |  Packages: 2
 
 ---
 
@@ -39,7 +39,6 @@ Edges: 86  |  Packages: 3
 - EGitTool ──implements──► EToolBase (ECAssistantCore)
 - EGitTool ──uses──► IFileSystem (ECAssistantCore)
 - EGitTool ──uses──► IProcessRunner (ECAssistantCore)
-- EGuiTestHarness ──implements──► EGuiBase (ECAssistantCore)
 - EShellAgent ──implements──► EToolBase (ECAssistantCore)
 - EShellAgent ──uses──► IProcessRunner (ECAssistantCore)
 - ESubAgentTool ──implements──► EToolBase (ECAssistantCore)
@@ -66,7 +65,6 @@ Edges: 86  |  Packages: 3
 - MemoryService ──uses──► IFileSystem (ECAssistantCore)
 - MemoryService ──uses──► IVectorEmbedder (ECAssistantCore)
 - MemoryService ──uses──► IVectorStore (ECAssistantCore)
-- MockEngine ──implements──► EAgentEngine (ECAssistantCore)
 - MockSubAgentTool ──implements──► EToolBase (ECAssistantCore)
 - ModelParamValidator ──implements──► IModelParamValidator (ECAssistantCore)
 - NopKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
@@ -87,14 +85,7 @@ Edges: 86  |  Packages: 3
 - SubAgentManager ──uses──► ISubAgentEngineHost (ECAssistantCore)
 - TaskPlanner ──implements──► ITaskPlanner (ECAssistantCore)
 - TerminalAdapter ──implements──► ITerminal (ECAssistantCore)
-- TestSessionOutput ──implements──► ISessionOutput (ECAssistantCore)
 - TfidfEmbedder ──implements──► IVectorEmbedder (ECAssistantCore)
-
-## TestSupport
-
-- EGuiTestHarness ──implements──► EGuiBase (ECAssistantCore) ← CROSS-PKG
-- MockEngine ──implements──► EAgentEngine (ECAssistantCore) ← CROSS-PKG
-- TestSessionOutput ──implements──► ISessionOutput (ECAssistantCore) ← CROSS-PKG
 
 ## Tests
 

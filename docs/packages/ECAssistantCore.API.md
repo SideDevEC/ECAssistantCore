@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 312  |  LOC: 27714  |  ~14476 tokens
+Types: 304  |  LOC: 26207  |  ~14004 tokens
 
 ---
 
@@ -90,7 +90,7 @@ Methods:
 ### Interface: IKvCacheController
 > KV cache control over HTTP. Replaces direct LLamaSharp executor state management.
 Methods:
-  - Task<bool> CreateSessionAsync(string sessionId, CancellationToken ct = default)
+  - Task<bool> CreateSessionAsync(string sessionId, string? modelId = null, CancellationToken ct = default)
   - Task<bool> DestroySessionAsync(string sessionId, CancellationToken ct = default)
   - Task<bool> PrefillAsync(string sessionId, string text, CancellationToken ct = default)
   - Task<bool> SaveStateAsync(string sessionId, CancellationToken ct = default)
@@ -570,14 +570,9 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 ### Class: EGuiBase
 > Abstract base for ALL console / I/O interaction points.
 
-### Class: EGuiTestHarness
-> Non-interactive test harness for EGuiBase.
-Implements: EGuiBase
-Cross-package deps: ECAssistant.Core.UI
-
 ### Class: EGuiTestHarnessTests
 > Tests for EGuiTestHarness — verifies it captures output correctly.
-Cross-package deps: ECAssistant.Core.Testing, ECAssistant.Core.UI
+Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.UI
 
 ### Class: EMemoryManager
 > Persistent Memory Manager - gives the agent long-term memory across sessions.
@@ -642,10 +637,6 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 Constructor:
   - EcaCompositionRoot(string userConfigDir, string[] args)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services, ECAssistant.Core.Interfaces
-
-### Class: EcaTestSuite
-> Predefined test scenarios for ECAssistant.
-Cross-package deps: ECAssistant.Core.Orchestration
 
 ### Class: EmbeddingConfig
 > Configuration for the embedding model used by vector memory.
@@ -880,17 +871,10 @@ Cross-package deps: ECAssistant.Core.Interfaces
 ### Class: MemoryServiceTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, Moq
 
-### Class: MockEngine
-> Mock engine for testing — no real model loaded. Returns pre-queued responses.
-Implements: EAgentEngine
-Constructor:
-  - MockEngine(Queue<string> responses, int maxIterations = 5, bool stopAfterFirstTool = false, string? workingDir = null, ISessionOutput? sessionOutput = null, string? workingDir = null, ISessionOutput? sessionOutput = null, bool cycleResponses = false)
-Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Session
-
 ### Class: MockSubAgentTool
 > Integration tests for sub-agent spawning through the orchestrator.
 Implements: EToolBase
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Testing, ECAssistant.Core.Tools, ECAssistant.Core.UI
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.UI
 
 ### Class: ModelCatalogDocument
 > Root document for model-catalog.json. Lives in the app root dir;
@@ -955,7 +939,7 @@ Constructor:
 ### Class: OrchestratorIntegrationTests
 > Integration tests for the full Orchestrator → Engine → Tools → Output pipeline.
 Implements: IDisposable
-Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Testing, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
+Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
 
 ### Class: OrchestratorResult
 > Result from the orchestrator after execution completes.
@@ -973,10 +957,10 @@ Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Tools, ECAssis
 ### Class: ParallelToolExecutorIntegrationTests
 > Integration tests for ParallelToolExecutor — dependency analysis and parallel
 Implements: IDisposable
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Testing, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
 
 ### Class: ParallelToolExecutorTests
-Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools, Moq
+Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.Engine, ECAssistant.Core.Tools, Moq
 
 ### Class: PathExpander
 > String utility — truncation and text helpers.
@@ -1217,7 +1201,7 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Orchestration
 ### Class: SubAgentIntegrationTests
 > Integration tests for sub-agent spawning through the orchestrator.
 Implements: IDisposable
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Testing, ECAssistant.Core.Tools, ECAssistant.Core.UI
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.UI
 
 ### Class: SubAgentManager
 > Sub-agent task definition — what the main agent wants a sub-agent to do.
@@ -1281,29 +1265,6 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 ### Class: Test
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Research
 
-### Class: TestContext
-Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Orchestration
-
-### Class: TestResult
-
-### Class: TestRunner
-> Automated test runner for ECAssistant.
-Implements: IAsyncDisposable
-Constructor:
-  - TestRunner(string modelPath, string? testRootDir = null, ILogger? logger = null)
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Research, ECAssistant.Core.Tools.Background, ECAssistant.Core.Tools.Web, ECAssistant.Core.Tools.Build, ECAssistant.Core.Tools.Git, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.Analysis, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Interfaces, ECAssistant.Core.Transport, ECAssistant.Core.UI
-
-### Class: TestScenario
-> Scripted inputs for approval prompts (e.g., "y" to approve).
-Cross-package deps: ECAssistant.Core.Orchestration
-
-### Class: TestSessionOutput
-> Test implementation of ISessionOutput.
-Implements: ISessionOutput
-Constructor:
-  - TestSessionOutput(EGuiTestHarness gui)
-Cross-package deps: ECAssistant.Core.Session
-
 ### Class: TfidfEmbedder
 > TF-IDF text embedding implementation.
 Implements: IVectorEmbedder
@@ -1346,7 +1307,7 @@ Cross-package deps: ECAssistant.Core.Engine
 ### Class: ToolPipelineIntegrationTests
 > Integration tests for tools working through the full pipeline:
 Implements: IDisposable
-Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Testing, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
+Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
 
 ### Class: ToolPolicy
 > Tool policy manager — checks if a tool requires user approval before execution.

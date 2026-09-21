@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-19T16:36:36.060765+00:00
-Packages: 3  |  Types: 411
+Generated: 2026-09-21T12:37:49.300440+00:00
+Packages: 2  |  Types: 395
 
 ---
 
-## ECAssistantCore (312 types, ~27714 LOC)
+## ECAssistantCore (304 types, ~26207 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -104,7 +104,6 @@ Packages: 3  |  Types: 411
 - 🟡 EGitTool : EToolBase  (ECAssistantCore)  deps: [IProcessRunner, IFileSystem, EAgentConfig]
 - 🟡 EGitToolTests  (ECAssistantCore)
 - 🟡 EGuiBase  (ECAssistantCore)
-- 🟡 EGuiTestHarness : EGuiBase  (ECAssistantCore)
 - 🟡 EGuiTestHarnessTests  (ECAssistantCore)
 - 🟡 EMemoryManager : IDisposable  (ECAssistantCore)  deps: [string? dataPath =]
 - 🟡 EMemoryManagerTests : IDisposable  (ECAssistantCore)
@@ -120,7 +119,6 @@ Packages: 3  |  Types: 411
 - 🟡 EWebSearchToolTests  (ECAssistantCore)
 - 🟡 EcaCompositionRoot  (ECAssistantCore)  deps: [string, string]
 - 🟣 EcaServiceBundle  (ECAssistantCore)  deps: [EAgentConfig, string, string, string, ILogger, BackgroundProcessManager, FileWatcherService, ISessionBuilder]
-- 🟡 EcaTestSuite  (ECAssistantCore)
 - 🟡 EmbeddingConfig  (ECAssistantCore)
 - 🟡 EmbeddingRoutingTests  (ECAssistantCore)
 - 🟡 EmbeddingSetupWriter  (ECAssistantCore)  deps: [string]
@@ -185,7 +183,6 @@ Packages: 3  |  Types: 411
 - 🟡 MemoryIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 MemoryService : IMemoryService  (ECAssistantCore)  deps: [IFileSystem, IVectorStore, IConfigProvider, IVectorEmbedder]
 - 🟡 MemoryServiceTests  (ECAssistantCore)
-- 🟡 MockEngine : EAgentEngine  (ECAssistantCore)  deps: [Queue, int maxIterations =, bool stopAfterFirstTool =, string? workingDir =, ISessionOutput? sessionOutput =, string? workingDir =, ISessionOutput? sessionOutput =, bool cycleResponses =]
 - 🟡 MockSubAgentTool : EToolBase  (ECAssistantCore)
 - 🟡 ModelCatalogDocument  (ECAssistantCore)
 - 🟡 ModelCatalogEntry  (ECAssistantCore)
@@ -283,11 +280,6 @@ Packages: 3  |  Types: 411
 - 🟡 TerminalAdapter : ITerminal  (ECAssistantCore)
 - 🟡 Test  (ECAssistantCore)
 - 🟡 Test  (ECAssistantCore)
-- 🟡 TestContext  (ECAssistantCore)
-- 🟡 TestResult  (ECAssistantCore)
-- 🟡 TestRunner : IAsyncDisposable  (ECAssistantCore)  deps: [string, string? testRootDir =, ILogger? logger =]
-- 🟡 TestScenario  (ECAssistantCore)
-- 🟡 TestSessionOutput : ISessionOutput  (ECAssistantCore)  deps: [EGuiTestHarness]
 - 🟡 TfidfEmbedder : IVectorEmbedder  (ECAssistantCore)
 - 🟡 TfidfEmbedderTests  (ECAssistantCore)
 - 🟡 TokenCounter  (ECAssistantCore)  deps: [RemoteTokenizer? tokenizer =]
@@ -320,18 +312,7 @@ Packages: 3  |  Types: 411
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## TestSupport (8 types, ~1512 LOC)
-
-- 🟡 EGuiTestHarness : EGuiBase  (TestSupport)
-- 🟡 EcaTestSuite  (TestSupport)
-- 🟡 MockEngine : EAgentEngine  (TestSupport)  deps: [Queue, int maxIterations =, bool stopAfterFirstTool =, string? workingDir =, ISessionOutput? sessionOutput =, string? workingDir =, ISessionOutput? sessionOutput =, bool cycleResponses =]
-- 🟡 TestContext  (TestSupport)
-- 🟡 TestResult  (TestSupport)
-- 🟡 TestRunner : IAsyncDisposable  (TestSupport)  deps: [string, string? testRootDir =, ILogger? logger =]
-- 🟡 TestScenario  (TestSupport)
-- 🟡 TestSessionOutput : ISessionOutput  (TestSupport)  deps: [EGuiTestHarness]
-
-## Tests (91 types, ~11900 LOC)
+## Tests (91 types, ~11901 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)

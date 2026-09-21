@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 91  |  LOC: 11900  |  ~3373 tokens
+Types: 91  |  LOC: 11901  |  ~3378 tokens
 
 ---
 
@@ -85,7 +85,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 
 ### Class: EGuiTestHarnessTests
 > Tests for EGuiTestHarness — verifies it captures output correctly.
-Cross-package deps: ECAssistant.Core.Testing, ECAssistant.Core.UI
+Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.UI
 
 ### Class: EMemoryManagerTests
 Implements: IDisposable
@@ -176,7 +176,7 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, Moq
 ### Class: MockSubAgentTool
 > Integration tests for sub-agent spawning through the orchestrator.
 Implements: EToolBase
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Testing, ECAssistant.Core.Tools, ECAssistant.Core.UI
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.UI
 
 ### Class: ModelCatalogTests
 > Catalog loading, default generation, validation, first-run detection.
@@ -198,15 +198,15 @@ Cross-package deps: ECAssistant.Core.Engine, Xunit
 ### Class: OrchestratorIntegrationTests
 > Integration tests for the full Orchestrator → Engine → Tools → Output pipeline.
 Implements: IDisposable
-Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Testing, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
+Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
 
 ### Class: ParallelToolExecutorIntegrationTests
 > Integration tests for ParallelToolExecutor — dependency analysis and parallel
 Implements: IDisposable
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Testing, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
 
 ### Class: ParallelToolExecutorTests
-Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools, Moq
+Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.Engine, ECAssistant.Core.Tools, Moq
 
 ### Class: ProcessRunnerTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
@@ -273,7 +273,7 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Orchestration
 ### Class: SubAgentIntegrationTests
 > Integration tests for sub-agent spawning through the orchestrator.
 Implements: IDisposable
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Testing, ECAssistant.Core.Tools, ECAssistant.Core.UI
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.UI
 
 ### Class: SubAgentResultTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Orchestration
@@ -312,7 +312,7 @@ Cross-package deps: ECAssistant.Core.Engine
 ### Class: ToolPipelineIntegrationTests
 > Integration tests for tools working through the full pipeline:
 Implements: IDisposable
-Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Testing, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
+Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
 
 ### Class: ToolPolicyTests
 Cross-package deps: ECAssistant.Core.Tools
