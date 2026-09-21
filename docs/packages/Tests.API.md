@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 91  |  LOC: 11901  |  ~3378 tokens
+Types: 94  |  LOC: 12080  |  ~3512 tokens
 
 ---
 
@@ -108,6 +108,10 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 > Embedding routing: embedding.mode is independent of the main LLM mode.
 Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Setup, Xunit
 
+### Class: EndpointNormalizerTests
+> Tests for base-URL normalization (strip trailing "/v1") and the remote
+Cross-package deps: ECAssistant.Core.Setup, ECAssistant.Core.Transport
+
 ### Class: FailureAnalysisTests
 Cross-package deps: ECAssistant.Core.Engine
 
@@ -125,6 +129,11 @@ Cross-package deps: ECAssistant.Core.Services.Http
 ### Class: FileSystemAdapterTests
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
+
+### Class: FirstRunDetectorTests
+> Tests for FirstRunDetector remote-provider awareness: a configured remote
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Setup
 
 ### Class: HardwareProfileTests
 > HardwareProfile tuning rules: GPU layers / context / batch adapt to the machine.
@@ -219,6 +228,10 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
 
 ### Class: ReadableContentExtractorTests
 Cross-package deps: ECAssistant.Core.Services
+
+### Class: RemoteModelProbePathTests
+> Tests for base-URL normalization (strip trailing "/v1") and the remote
+Cross-package deps: ECAssistant.Core.Setup, ECAssistant.Core.Transport
 
 ### Class: RemoteProviderIntegrationTests
 > v14.7: Integration tests for the remote provider path (native OpenAI function calling).

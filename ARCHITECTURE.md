@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-09-21 (v12.9.9 — process-backend fix: IKvCacheController.CreateSessionAsync now sends model_id so process-backend models route into the correct session registry; RequiredServerVersion 14.9.5)
+**Updated:** 2026-09-21 (PM — pure-remote first-run fix, endpoint normalization (EndpointNormalizer), project-context host-file exclusion, all harness parameters config-driven (llm.context_size wired, interface.max_turns, turns_per_subtask, subtask_turn_buffer, compact_threshold_percent))
 **Status:** ✅ 0 errors, 0 warnings | LDC enforcement PASSED
 
 ## Overview
@@ -144,6 +144,7 @@ ECAssistantConsole ←── [Core DLL, TUI DLL]
 **Transport (not interfaces, concrete classes in `Transport/`):**
 - `OpenAIClient` — `HttpClient` wrapper (PostJson/GetJson/Delete/PostStream/Ping), `X-Client-Id` header
 - `SseParser` — static `ParseTokenStreamAsync` extracts `choices[0].delta.content` from SSE until `data: [DONE]`
+- `EndpointNormalizer` — pure utility, strips a trailing `/v1` from base URLs so users may type endpoints with or without a version suffix; used by OpenAIClient + ServerConnection
 
 ## Session Architecture
 
@@ -227,7 +228,9 @@ ALL hosts (Console, TUI) share one Core flow — no per-host setup logic:
 
 ```
 FirstRunOrchestrator (Setup/)
-├── FirstRunDetector.Evaluate()   ← disk truth: gguf files, llm-server.json entries, server binary
+├── FirstRunDetector.Evaluate()   ← disk truth: gguf files, llm-server.json entries, server binary,
+│                                    appsettings.json remote-provider config (IsRemoteProviderConfigured:
+│                                    mode=remote + endpoint + llm_providers entry → NeedsSetup=false)
 ├── RunIfNeededAsync()            ← wizard only when state unresolved; never blocks startup
 └── SetupWizard (ISetupUi)        ← adapters: ConsoleSetupUi (headless), TuiSetupUi (TUI)
 ```
@@ -238,6 +241,7 @@ FirstRunOrchestrator (Setup/)
 - **Reinstall** (`/reinstall`, TUI): confirm → stop server (verified) → `AiSetupResetter` (config reset, keys/ + llm-server.json deleted, models + binary KEPT) → same orchestrator/wizard; existing models show "✓ already on disk" and re-register instead of re-downloading.
 - **Version upgrade path**: VERSION stamp vs `ServerInstallCoordinator.RequiredServerVersion` — mismatch prompts an upgrade at the next wizard run.
 - **No flag files**: all state derived from disk → crash-safe, resumable.
+- **Pure-remote installs are final** (2026-09-21 fix): a configured remote provider suppresses NeedsSetup even with an empty models dir; the server binary is only required when a local chat model or local embeddings is configured (`IsLocalEmbeddingsRequested`).
 
 ## Tool Permission Policy (v11.7)
 
@@ -490,3 +494,10 @@ asking.
 - Discovered local models keep their conservative CPU defaults (not hardware-tuned); orphan `mmproj*.gguf` files excluded from discovery.
 - RAM probe returning 0 → catalog suggestions kept (no silent tiny-machine downgrade).
 - Dead code removed: WizardContext.GpuLayers, IsInstalled, IsInternetAvailableAsync, GetFreeSpaceGb, ListModelFiles, RegisterLocalModelFile (prod path), LooksLikeEmbeddingModel (prod), dead ternaries/usings; Files aliasing copy in tuned apply.
+
+## Addendum — pure-remote first-run + config-driven harness (2026-09-21 PM)
+
+- **EndpointNormalizer** (Transport): one convention — base URLs without trailing `/v1`; all versioned paths appended by the client. `RemoteModelProbe` (Setup) tries `{base}/models` then `{base}/v1/models`.
+- **ProjectContextManager**: host runtime files excluded from the project scan (appsettings.json, model-catalog.json, .project_context.json, ECAssistant.log; dirs .sessions, Workspace, tool_outputs) + prompt nudge — the model no longer narrates the app's own config.
+- **Every harness parameter is config-driven now**: engine context window ← `llm.context_size` (hardcoded 8192 wiring bug fixed), orchestrator turn limit ← `interface.max_turns` (was hardcoded 5), subtask turn budget ← `interface.turns_per_subtask` + `interface.subtask_turn_buffer`, compaction trigger ← `context_management.compact_threshold_percent`. New keys default to the previous hardcoded values.
+- Core suite: 1053/1053 green (FirstRunDetectorTests ×9, EndpointNormalizerTests + RemoteModelProbePathTests ×6 added).

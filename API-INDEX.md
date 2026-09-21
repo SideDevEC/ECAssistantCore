@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-21T12:37:49.300440+00:00
-Packages: 2  |  Types: 395
+Generated: 2026-09-21T15:45:22.751987+00:00
+Packages: 2  |  Types: 402
 
 ---
 
-## ECAssistantCore (304 types, ~26207 LOC)
+## ECAssistantCore (308 types, ~26520 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -122,6 +122,8 @@ Packages: 2  |  Types: 395
 - 🟡 EmbeddingConfig  (ECAssistantCore)
 - 🟡 EmbeddingRoutingTests  (ECAssistantCore)
 - 🟡 EmbeddingSetupWriter  (ECAssistantCore)  deps: [string]
+- 🟡 EndpointNormalizer  (ECAssistantCore)
+- 🟡 EndpointNormalizerTests  (ECAssistantCore)
 - 🟡 ExecutionLifecycleState  (ECAssistantCore)
 - 🟡 ExecutionPlan  (ECAssistantCore)
 - 🟡 ExecutionState  (ECAssistantCore)
@@ -139,7 +141,8 @@ Packages: 2  |  Types: 395
 - 🟡 FileSystemAdapter : IFileSystem  (ECAssistantCore)
 - 🟡 FileSystemAdapterTests : IDisposable  (ECAssistantCore)
 - 🟡 FileWatcherService : IDisposable  (ECAssistantCore)  deps: [string, string filter =, ILogger? logger =]
-- 🟡 FirstRunDetector  (ECAssistantCore)  deps: [string, string, string, string, string]
+- 🟡 FirstRunDetector  (ECAssistantCore)  deps: [string, string, string, string, string, string? appsettingsPath =]
+- 🟡 FirstRunDetectorTests : IDisposable  (ECAssistantCore)
 - 🟡 FirstRunOrchestrator  (ECAssistantCore)  deps: [string, ISetupUi]
 - 🟡 FirstRunStatus  (ECAssistantCore)
 - 🟣 GenerationParams  (ECAssistantCore)  deps: [int, float, float, int, float]
@@ -223,6 +226,7 @@ Packages: 2  |  Types: 395
 - 🟡 RemoteModelLoadOptions  (ECAssistantCore)
 - 🟡 RemoteModelLoader : IModelLoader  (ECAssistantCore)  deps: [OpenAIClient]
 - 🟡 RemoteModelProbe : IRemoteModelProbe  (ECAssistantCore)  deps: [HttpClient? httpClient =]
+- 🟡 RemoteModelProbePathTests  (ECAssistantCore)
 - 🟣 RemoteProbeResult  (ECAssistantCore)  deps: [bool, IReadOnlyList, string? Error =]
 - 🟣 RemoteProvider  (ECAssistantCore)  deps: [string, string, string, string, string]
 - 🟡 RemoteProviderConfig  (ECAssistantCore)
@@ -312,7 +316,7 @@ Packages: 2  |  Types: 395
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (91 types, ~11901 LOC)
+## Tests (94 types, ~12080 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -344,11 +348,13 @@ Packages: 2  |  Types: 395
 - 🟡 EWebFetchToolTests  (Tests)
 - 🟡 EWebSearchToolTests  (Tests)
 - 🟡 EmbeddingRoutingTests  (Tests)
+- 🟡 EndpointNormalizerTests  (Tests)
 - 🟡 FailureAnalysisTests  (Tests)
 - 🟡 FailureEntryTests  (Tests)
 - 🟡 FailurePatternTests  (Tests)
 - 🟡 FakeLlmServer : IDisposable  (Tests)
 - 🟡 FileSystemAdapterTests : IDisposable  (Tests)
+- 🟡 FirstRunDetectorTests : IDisposable  (Tests)
 - 🟡 HardwareProfileTests  (Tests)
 - 🟡 HomeController  (Tests)
 - 🟡 HtmlTextConverterTests  (Tests)
@@ -373,6 +379,7 @@ Packages: 2  |  Types: 395
 - 🟡 ProgramGuiCollection  (Tests)
 - 🟡 ProjectContextManagerTests  (Tests)
 - 🟡 ReadableContentExtractorTests  (Tests)
+- 🟡 RemoteModelProbePathTests  (Tests)
 - 🟡 RemoteProviderIntegrationTests  (Tests)
 - 🟡 RemoteProviderSetupWriterTests  (Tests)
 - 🟡 SecureKeyStoreTests  (Tests)

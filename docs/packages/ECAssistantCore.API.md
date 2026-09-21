@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 304  |  LOC: 26207  |  ~14004 tokens
+Types: 308  |  LOC: 26520  |  ~14191 tokens
 
 ---
 
@@ -411,6 +411,7 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, Moq
 Implements: ISetupUi
 
 ### Class: ContextManagementConfig
+> Context-window fill percentage (0-100) that triggers KV-cache rebuild +
 
 ### Class: ContextManager
 > Context window management with summary-and-shift strategy.
@@ -650,6 +651,13 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.
 Constructor:
   - EmbeddingSetupWriter(string appsettingsPath)
 
+### Class: EndpointNormalizer
+> Normalizes OpenAI-compatible base URLs so the rest of the engine can safely
+
+### Class: EndpointNormalizerTests
+> Tests for base-URL normalization (strip trailing "/v1") and the remote
+Cross-package deps: ECAssistant.Core.Setup, ECAssistant.Core.Transport
+
 ### Class: ExecutionLifecycleState
 > Execution lifecycle state for the main agent loop (CTS, ESC flag, turn counter).
 
@@ -707,7 +715,12 @@ Cross-package deps: ECAssistant.Core.Interfaces
 ### Class: FirstRunDetector
 > First-run / installed-model state.
 Constructor:
-  - FirstRunDetector(string modelsDir, string serverConfigPath, string modelsDir, string serverConfigPath, string? serverBinaryPath)
+  - FirstRunDetector(string modelsDir, string serverConfigPath, string modelsDir, string serverConfigPath, string? serverBinaryPath, string? appsettingsPath = null)
+
+### Class: FirstRunDetectorTests
+> Tests for FirstRunDetector remote-provider awareness: a configured remote
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Setup
 
 ### Class: FirstRunOrchestrator
 > Unified first-run / reinstall orchestration, shared by ALL hosts (Console, TUI):
@@ -1035,6 +1048,10 @@ Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Transport
 Implements: IRemoteModelProbe
 Constructor:
   - RemoteModelProbe(HttpClient? httpClient = null)
+
+### Class: RemoteModelProbePathTests
+> Tests for base-URL normalization (strip trailing "/v1") and the remote
+Cross-package deps: ECAssistant.Core.Setup, ECAssistant.Core.Transport
 
 ### Class: RemoteProviderConfig
 > A single remote OpenAI-compatible provider entry.
