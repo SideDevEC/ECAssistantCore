@@ -83,19 +83,35 @@ jobs:
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
 
-      - name: Log in to nuget.org via OIDC (trusted publishing)
+      - name: Log in to nuget.org via OIDC (trusted publishing — Core)
         uses: NuGet/login@v1
-        id: nuget-login
+        id: nuget-login-core
         continue-on-error: true
         with:
           user: SideDevEC
 
-      - name: Publish to nuget.org (trusted publishing)
-        if: ${{ steps.nuget-login.outputs.NUGET_API_KEY != '' }}
+      - name: Publish Core to nuget.org (trusted publishing)
+        if: ${{ steps.nuget-login-core.outputs.NUGET_API_KEY != '' }}
         continue-on-error: true
         run: |
-          dotnet nuget push ./nupkg/*.nupkg \
-            --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} \
+          dotnet nuget push ./nupkg/ECAssistant.Core.*.nupkg \
+            --api-key ${{ steps.nuget-login-core.outputs.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Log in to nuget.org via OIDC (trusted publishing — TestSupport)
+        uses: NuGet/login@v1
+        id: nuget-login-testsupport
+        continue-on-error: true
+        with:
+          user: SideDevEC
+
+      - name: Publish TestSupport to nuget.org (trusted publishing)
+        if: ${{ steps.nuget-login-testsupport.outputs.NUGET_API_KEY != '' }}
+        continue-on-error: true
+        run: |
+          dotnet nuget push ./nupkg/ECAssistant.Core.TestSupport.*.nupkg \
+            --api-key ${{ steps.nuget-login-testsupport.outputs.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
 
