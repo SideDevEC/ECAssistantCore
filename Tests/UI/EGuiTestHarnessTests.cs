@@ -1,4 +1,4 @@
-using ECAssistant.Core.Testing;
+using ECAssistant.TestSupport;
 using ECAssistant.Core.UI;
 
 namespace ECAssistant.Core.Tests.UI;

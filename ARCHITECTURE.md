@@ -341,7 +341,7 @@ No admin/elevated rights required anywhere: user-scope crypto, non-privileged po
 | UI | 1+4 | ~17 |
 | **Total** | **62+4** | **914** |
 
-`MockEngine` (now in the separate `ECAssistant.Core.TestSupport` project) extends `EAgentEngine` with a no-op HTTP transport so tests run without a live ECAssistantLLM server. TestRunner/TestScenario/EcaTests also live in TestSupport.
+`MockEngine` (now in the separate `ECAssistant.TestSupport` project) extends `EAgentEngine` with a no-op HTTP transport so tests run without a live ECAssistantLLM server. TestRunner/TestScenario/EcaTests also live in TestSupport.
 
 ## EWebFetch v2 — Structured Content Pipeline (v12.1)
 

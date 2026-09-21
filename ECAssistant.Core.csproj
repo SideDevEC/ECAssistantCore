@@ -24,7 +24,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="ECAssistant.Core.Tests" />
-    <InternalsVisibleTo Include="ECAssistant.Core.TestSupport" />
+    <InternalsVisibleTo Include="ECAssistant.TestSupport" />
   </ItemGroup>
 
   <ItemGroup>
