@@ -179,7 +179,10 @@ public sealed class ServerLauncher
     internal static string BuildServerArguments(string llmRoot, string configPath, int? portOverride)
     {
         var args = $"--root \"{llmRoot}\" \"{configPath}\"";
-        if (portOverride.HasValue)
+        // Port <= 0 is not a valid listen port — omit the override and let the server
+        // use the port from its config file (default 48217). Passing 0 crashes the
+        // server with "Invalid port in prefix." (2026-09-21).
+        if (portOverride is > 0)
             args += $" --port {portOverride.Value}";
         return args;
     }

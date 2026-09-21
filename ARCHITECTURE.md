@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-09-21 (late PM — ECodeEditorTool contract-drift fix: schema action enum aligned with implemented actions (create/diff/patch/search/replace-all/insert/delete-lines/delete, was write/edit/delete), DoCreate accepts new_text as content fallback (models mix them), missing content now FAILS with clear error instead of writing a 0-byte file with SUCCESS; found by production-env benchmark with glm-5.3-flash; 31/31 ECodeEditorToolTests pass incl. 2 regression tests)
+**Updated:** 2026-09-21 (late PM — ServerLauncher: `--port` override now omitted when port <= 0; passing 0 crashed the server with "Invalid port in prefix." — server then falls back to the port in llm-server.json, default 48217. Regression tests added, ServerLauncherResolveTests 9/9)
 **Status:** ✅ 0 errors, 0 warnings | LDC enforcement PASSED
 
 ## Overview

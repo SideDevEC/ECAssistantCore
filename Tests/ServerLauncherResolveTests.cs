@@ -103,4 +103,14 @@ public class ServerLauncherResolveTests : IDisposable
         var args = ServerLauncher.BuildServerArguments("/app/llm", "/app/llm/llm-server.json", null);
         Assert.DoesNotContain("--port", args);
     }
+
+    // Regression: port 0 in config crashed the server with "Invalid port in prefix."
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-5)]
+    public void BuildServerArguments_NonPositivePort_OmitsOverride(int port)
+    {
+        var args = ServerLauncher.BuildServerArguments("/app/llm", "/app/llm/llm-server.json", port);
+        Assert.DoesNotContain("--port", args);
+    }
 }
