@@ -1230,7 +1230,8 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
 
             // Staged compaction stage 1: trim stale tool outputs first (zero LLM cost).
             // Only fall back to the full summarize-rebuild when trimming isn't enough.
-            if (!_contextWindow.TrimStaleToolOutputs())
+            var keepRecent = Math.Max(1, _config?.ContextManagement?.KeepRecentToolOutputs ?? 3);
+            if (!_contextWindow.TrimStaleToolOutputs(keepRecent))
             {
                 _contextWindow.Clear();
                 await ResetAndRebuildCacheAsync();

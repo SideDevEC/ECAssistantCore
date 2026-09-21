@@ -32,6 +32,8 @@ public sealed class AgentOrchestrator : IAsyncDisposable
     private List<SubTask>? _subTasks = null;
     private readonly HashSet<string> _failedCallSignatures = new(StringComparer.Ordinal);
     private string? _lastSuccessfulCallSignature;
+    // v14.9: long-range loop detection (A→B→A→B, 3+ identical repeats, batch repeats)
+    private readonly Engine.ToolRepeatTracker _repeatTracker = new();
     private int _currentSubTask = 0;
      // v10.17: Execution plan from StepMapper
     private ExecutionPlan? _executionPlan = null;
@@ -287,6 +289,26 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                     _logger?.Info("Orchestrator", $"Multi-tool call: {decision.ToolCallCount} tools");
                     _out?.WriteInfo($"Multi-tool call: {decision.ToolCallCount} tools — analyzing dependencies...");
 
+                     // v14.9: record batch signatures for long-range loop detection; if any
+                     // call in the batch is a 3+ repeat, stop the run (same as single path).
+                    foreach (var tc in decision.ToolCalls)
+                     {
+                        var batchSig = BuildCallSignature(tc.ToolName, tc.Args);
+                        var batchRepeat = _repeatTracker.Record(batchSig);
+                        if (_repeatTracker.IsStopLevel(batchRepeat))
+                         {
+                            _out?.WriteWarning($"Loop detected in batch: '{tc.ToolName}' identical repeat #{batchRepeat}. Stopping.");
+                            _logger?.Warn("Orchestrator", $"Batch loop stop: {batchSig} x{batchRepeat}");
+                            return new OrchestratorResult
+                             {
+                                FinalOutput = $"Stopped: tool loop detected — '{tc.ToolName}' was called with identical arguments {batchRepeat} times.\n" +
+                                              "Steps completed so far:\n" + string.Join("\n", _completedSteps.TakeLast(10)),
+                                ToolCallsMade = _turnCount,
+                                Status = OrchestratorStatus.TurnsExhausted
+                             };
+                         }
+                     }
+
                      // Create parallel executor
                     var parallelExec = new ParallelToolExecutor(
                          _engine,
@@ -425,6 +447,23 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                         // v12.4: never re-execute a call that already failed with identical arguments —
                         // force the model to change approach instead of looping on the same error.
                         var callSignature = BuildCallSignature(decision.ToolName!, argsDict);
+                        // v14.9: long-range repeat guard — record BEFORE the v12.4/v12.5 checks
+                        // so nudges/stop levels are accurate even when those guards fire first.
+                        var repeatCount = _repeatTracker.Record(callSignature);
+                        // v14.9: stop level — 3+ identical repeats = detected loop. End the run
+                        // with a clear report instead of burning the remaining turn budget.
+                        if (_repeatTracker.IsStopLevel(repeatCount))
+                         {
+                            _out?.WriteWarning($"Loop detected: '{decision.ToolName}' called identically {repeatCount} times. Stopping.");
+                            _logger?.Warn("Orchestrator", $"Loop stop: {callSignature} x{repeatCount}");
+                            return new OrchestratorResult
+                             {
+                                FinalOutput = $"Stopped: tool loop detected — '{decision.ToolName}' was called with identical arguments {repeatCount} times.\n" +
+                                              "Steps completed so far:\n" + string.Join("\n", _completedSteps.TakeLast(10)),
+                                ToolCallsMade = _turnCount,
+                                Status = OrchestratorStatus.TurnsExhausted
+                             };
+                         }
                         if (_failedCallSignatures.Contains(callSignature))
                          {
                             _out?.WriteWarning("Identical tool call already failed — blocked. Forcing a different approach.");
@@ -447,6 +486,24 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                                 "You already executed exactly this call and its results are ABOVE in the conversation.\n" +
                                 "Do NOT repeat it, do NOT start a new or unrelated task. Use those results to answer the ORIGINAL request directly. " +
                                 "Only call a tool again with CHANGED arguments if you genuinely need different data for it.");
+                            _turnCount++;
+                            continue;
+                         }
+                        // v14.9: nudge level — 2nd identical repeat that the v12.4/v12.5 guards
+                        // don't cover (first one succeeded but is no longer the last call),
+                        // or an A→B→A→B alternation. Redirect without executing.
+                        var alternationLoop = _repeatTracker.IsAlternationLoop();
+                        if (_repeatTracker.IsNudgeLevel(repeatCount) || alternationLoop)
+                         {
+                            var reason = alternationLoop
+                                 ? "You are alternating between the same calls without progress (A→B→A→B pattern)."
+                                 : $"You already executed '{decision.ToolName}' with exactly these arguments {repeatCount - 1} time(s) before.";
+                            _out?.WriteWarning("Tool repeat nudge injected (no re-execution).");
+                            _logger?.Warn("Orchestrator", $"Repeat nudge: {callSignature} x{repeatCount} alt={alternationLoop}");
+                            _engine.InjectFormatRetry(
+                                $"The user's original request was: \"{goal}\"\n" +
+                                reason + " Repeating identical calls wastes turns and gives the same result.\n" +
+                                "Change your approach: use DIFFERENT arguments, a DIFFERENT tool, or answer directly with what you already have.");
                             _turnCount++;
                             continue;
                          }

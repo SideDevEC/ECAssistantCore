@@ -25,4 +25,11 @@ public class ContextManagementConfig
     /// </summary>
     [JsonPropertyName("compact_threshold_percent")]
     public int CompactThresholdPercent { get; init; } = 80;
+
+    /// <summary>
+    /// v14.9 tool-aware compaction: how many RECENT tool outputs survive the stage-1
+    /// trim unchanged; older ones are replaced with a one-line stub. Default: 3.
+    /// </summary>
+    [JsonPropertyName("keep_recent_tool_outputs")]
+    public int KeepRecentToolOutputs { get; init; } = 3;
 }

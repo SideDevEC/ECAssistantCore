@@ -139,7 +139,13 @@ public class ContextWindow
     /// most recent) WITHOUT an LLM summarize call — the cheapest way to reclaim
     /// budget. Returns true if trimming brought the window back under budget.
     /// </summary>
-    public bool TrimStaleToolOutputs()
+    /// <summary>
+    /// v14.9 tool-aware trim: keeps the <paramref name="keepRecent"/> most recent tool
+    /// outputs verbatim; older ones are replaced with a one-line stub (positions stay
+    /// valid, context keeps a trace that the call happened). Returns true when the
+    /// window is back within budget after trimming.
+    /// </summary>
+    public bool TrimStaleToolOutputs(int keepRecent = 1)
     {
         lock (_messagesLock)
         {
@@ -147,10 +153,14 @@ public class ContextWindow
             for (int i = 0; i < _messages.Count; i++)
                 if (_messages[i].Role == "tool_output") toolIndices.Add(i);
 
-            // Remove oldest→newest except the LAST tool output (often the relevant
-            // observation) — descending index order keeps positions valid.
-            for (int k = toolIndices.Count - 2; k >= 0; k--)
-                _messages.RemoveAt(toolIndices[k]);
+            // Replace older tool outputs (descending keeps positions valid). Replacement
+            // preserves the marker that a tool ran without retaining the bulky output.
+            for (int k = toolIndices.Count - keepRecent - 1; k >= 0; k--)
+            {
+                var msg = _messages[toolIndices[k]];
+                msg.Content = "[earlier tool output trimmed by compaction — full result in transcript]";
+                msg.EstimatedTokens = 12;
+            }
         }
         return GetTotalTokens() <= (int)_maxTokens;
     }

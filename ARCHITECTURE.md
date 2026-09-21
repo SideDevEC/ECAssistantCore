@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-09-21 (late PM — ServerLauncher: `--port` override now omitted when port <= 0; passing 0 crashed the server with "Invalid port in prefix." — server then falls back to the port in llm-server.json, default 48217. Regression tests added, ServerLauncherResolveTests 9/9)
+**Updated:** 2026-09-22 (early AM — harness optimizations v14.9: (1) ToolRepeatTracker long-range loop detection in AgentOrchestrator — 2nd identical repeat or A→B→A→B alternation injects a redirect nudge, 3+ identical repeats stops the run (TurnsExhausted), batch path records signatures too; (2) tool-aware compaction — ContextWindow.TrimStaleToolOutputs(keepRecent) stubs older tool outputs (context_management.keep_recent_tool_outputs, default 3) instead of dropping all but the last; server-side toolset pinning in ECAssistantLLM (session tools_hash + deterministic KV reset on mismatch) — ServerLauncher: `--port` override now omitted when port <= 0; passing 0 crashed the server with "Invalid port in prefix." — server then falls back to the port in llm-server.json, default 48217. Regression tests added, ServerLauncherResolveTests 9/9)
 **Status:** ✅ 0 errors, 0 warnings | LDC enforcement PASSED
 
 ## Overview

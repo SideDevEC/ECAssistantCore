@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-21T22:03:46.437183+00:00
-Packages: 2  |  Types: 409
+Generated: 2026-09-21T22:26:40.945499+00:00
+Packages: 2  |  Types: 412
 
 ---
 
-## ECAssistantCore (312 types, ~26995 LOC)
+## ECAssistantCore (314 types, ~27169 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -303,6 +303,8 @@ Packages: 2  |  Types: 409
 - 🟡 ToolPolicy  (ECAssistantCore)
 - 🟡 ToolPolicyDecision  (ECAssistantCore)
 - 🟡 ToolPolicyTests  (ECAssistantCore)
+- 🟡 ToolRepeatTracker  (ECAssistantCore)
+- 🟡 ToolRepeatTrackerTests  (ECAssistantCore)
 - 🟡 ToolSpec  (ECAssistantCore)
 - 🟡 TranscriptIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 TranscriptMessage  (ECAssistantCore)
@@ -320,7 +322,7 @@ Packages: 2  |  Types: 409
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (97 types, ~12392 LOC)
+## Tests (98 types, ~12479 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -414,6 +416,7 @@ Packages: 2  |  Types: 409
 - 🟡 ToolDependencyAnalyzerTests  (Tests)
 - 🟡 ToolPipelineIntegrationTests : IDisposable  (Tests)
 - 🟡 ToolPolicyTests  (Tests)
+- 🟡 ToolRepeatTrackerTests  (Tests)
 - 🟡 TranscriptIntegrationTests : IDisposable  (Tests)
 - 🟡 VectorMemorySetupWriterTests : IDisposable  (Tests)
 - 🟡 VectorMemoryStoreTests : IDisposable  (Tests)

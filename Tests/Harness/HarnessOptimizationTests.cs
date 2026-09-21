@@ -112,13 +112,34 @@ public sealed class HarnessOptimizationTests : IDisposable
         cw.AddToolOutput(new string('b', 500), "T2");
         cw.AddToolOutput(new string('c', 500), "T3");
 
-        cw.TrimStaleToolOutputs();
+        cw.TrimStaleToolOutputs(keepRecent: 1);
 
         var msgs = cw.GetWindowMessages();
         var toolMsgs = msgs.Where(m => m.Role == "tool_output").ToList();
-        Assert.Single(toolMsgs);
-        Assert.Equal(new string('c', 500), toolMsgs[0].Content); // most recent kept
+        Assert.Equal(3, toolMsgs.Count); // stubs keep positions
+        Assert.Contains("trimmed by compaction", toolMsgs[0].Content);
+        Assert.Contains("trimmed by compaction", toolMsgs[1].Content);
+        Assert.Equal(new string('c', 500), toolMsgs[2].Content); // most recent verbatim
         Assert.Contains(msgs, m => m.Role == "user"); // user turns untouched
+    }
+
+    [Fact]
+    public void TrimStaleToolOutputs_KeepRecent_StubOlder()
+    {
+        var cw = new ContextWindow(64_000);
+        cw.AddUserMessage("task");
+        for (int i = 0; i < 5; i++)
+            cw.AddToolOutput(new string((char)('a' + i), 300), $"T{i}");
+
+        cw.TrimStaleToolOutputs(keepRecent: 3);
+
+        var toolMsgs = cw.GetWindowMessages().Where(m => m.Role == "tool_output").ToList();
+        Assert.Equal(5, toolMsgs.Count); // stubs, not removals — trace preserved
+        Assert.Contains("trimmed by compaction", toolMsgs[0].Content);
+        Assert.Contains("trimmed by compaction", toolMsgs[1].Content);
+        Assert.Equal(new string('c', 300), toolMsgs[2].Content); // last 3 verbatim
+        Assert.Equal(new string('d', 300), toolMsgs[3].Content);
+        Assert.Equal(new string('e', 300), toolMsgs[4].Content);
     }
 
     [Fact]

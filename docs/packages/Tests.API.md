@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 97  |  LOC: 12392  |  ~3696 tokens
+Types: 98  |  LOC: 12479  |  ~3736 tokens
 
 ---
 
@@ -344,6 +344,10 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.
 
 ### Class: ToolPolicyTests
 Cross-package deps: ECAssistant.Core.Tools
+
+### Class: ToolRepeatTrackerTests
+> Unit tests for the v14.9 orchestrator loop detection (ToolRepeatTracker):
+Cross-package deps: ECAssistant.Core.Engine, Xunit
 
 ### Class: TranscriptIntegrationTests
 > Integration tests for ConversationTranscript persistence —

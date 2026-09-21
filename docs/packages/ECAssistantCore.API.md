@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 312  |  LOC: 26995  |  ~14404 tokens
+Types: 314  |  LOC: 27169  |  ~14472 tokens
 
 ---
 
@@ -1352,6 +1352,13 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.
 
 ### Class: ToolPolicyTests
 Cross-package deps: ECAssistant.Core.Tools
+
+### Class: ToolRepeatTracker
+> Detects pathological tool-call repetition in the orchestrator loop — beyond the
+
+### Class: ToolRepeatTrackerTests
+> Unit tests for the v14.9 orchestrator loop detection (ToolRepeatTracker):
+Cross-package deps: ECAssistant.Core.Engine, Xunit
 
 ### Class: ToolSpec
 > Abstracts LLM inference via HTTP (OpenAI-compatible endpoint).

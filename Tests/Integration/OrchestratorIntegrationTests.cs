@@ -159,7 +159,9 @@ public class OrchestratorIntegrationTests : IDisposable
         var result = await orchestrator.ExecuteMultiStep("Never-ending task");
 
         Assert.Equal(OrchestratorStatus.TurnsExhausted, result.Status);
-        Assert.Contains("max turns", result.FinalOutput, StringComparison.OrdinalIgnoreCase);
+        // v14.9: the engine repeats an identical call every turn → the loop detector
+        // now stops the run before the turn budget is consumed (same status, new reason).
+        Assert.Contains("loop detected", result.FinalOutput, StringComparison.OrdinalIgnoreCase);
     }
 
     // ── Tool failure: mock IProcessRunner returns error ──
