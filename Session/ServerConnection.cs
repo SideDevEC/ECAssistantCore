@@ -31,7 +31,9 @@ public sealed class ServerConnection
     private static HttpClient CreateProbeClient()
     {
         var c = new HttpClient();
-        c.Timeout = TimeSpan.FromSeconds(6);
+        // Remote providers can be slow on cold model-list responses (OpenRouter
+        // observed >10s) — a 5s probe falsely reports "endpoint unreachable".
+        c.Timeout = TimeSpan.FromSeconds(15);
         return c;
     }
 
@@ -92,7 +94,7 @@ public sealed class ServerConnection
         try
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            cts.CancelAfter(TimeSpan.FromSeconds(5));
+            cts.CancelAfter(TimeSpan.FromSeconds(12));
             var response = await client.GetAsync(url, cts.Token);
             if (!response.IsSuccessStatusCode) return (false, "");
             return (true, await response.Content.ReadAsStringAsync(cts.Token));
