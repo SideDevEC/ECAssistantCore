@@ -86,12 +86,6 @@ public class EDecisionLoop : IDisposable
         };
     }
 
-    public void ProcessFeedback(string userFeedback)
-    {
-        _engine.SaveMemory("feedback", userFeedback, "decision_loop");
-        _out?.WriteTag("Feedback", $"Saved: {userFeedback.Substring(0, Math.Min(userFeedback.Length, 100))}", OutputState.Info);
-    }
-
     public void Dispose() => _running = false;
 }
 

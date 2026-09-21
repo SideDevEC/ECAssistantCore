@@ -31,12 +31,6 @@ public sealed class ServerBinaryInstaller
         _targetServerDir = targetServerDir ?? throw new ArgumentNullException(nameof(targetServerDir));
     }
 
-    /// <summary>True when the server binary is already installed at the target.</summary>
-    public bool IsInstalled()
-    {
-        return File.Exists(Path.Combine(_targetServerDir, "ECAssistant.LLM.dll"));
-    }
-
     /// <summary>True when the source server runtime is available in the app's content.</summary>
     public bool IsSourceAvailable()
     {
@@ -68,16 +62,6 @@ public sealed class ServerBinaryInstaller
 
         // Stamp the target marker so the staleness comparison compares against copy time
         File.SetLastWriteTimeUtc(targetMarker, DateTime.UtcNow);
-    }
-
-    /// <summary>
-    /// Version of the installed server binary, if a VERSION file exists.
-    /// Returns null if no version file is present.
-    /// </summary>
-    public string? GetInstalledVersion()
-    {
-        var versionFile = Path.Combine(_targetServerDir, "VERSION");
-        return File.Exists(versionFile) ? File.ReadAllText(versionFile).Trim() : null;
     }
 
     private static void CopyDirectory(string sourceDir, string targetDir)

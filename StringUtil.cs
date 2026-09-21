@@ -42,15 +42,6 @@ public class PathExpander
         return path;
     }
 
-    /// <summary>
-    /// Expand ~ and make the path absolute. Creates parent directories if needed.
-    /// </summary>
-    public string ExpandAndCanonicalize(string path)
-    {
-        var expanded = Expand(path);
-        return Path.GetFullPath(expanded);
-    }
-
     private static string GetUserHome()
     {
         return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);

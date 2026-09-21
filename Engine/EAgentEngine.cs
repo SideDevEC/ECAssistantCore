@@ -186,6 +186,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
      {
         if (max > 0) MaxIterations = max;
      }
+
     public ContextWindow ContextWindow => _contextWindow;
     public ConversationTranscript Transcript => _transcript;
     public EMemoryManager Memory => _memoryManager;
@@ -903,13 +904,7 @@ User: " + userRequest + "\n";
         _out?.WriteInfo("[Context] Context window cleared (transcript preserved).");
     }
 
-     /// <summary>Reset the turn counter for a new user request.</summary>
-    public virtual void ResetTurnCount()
-     {
-        _lifecycle.TurnCount = 0;
-    }
-
-     /// <summary>Reset KV cache dynamic context for a new user request (keeps static prefix).</summary>
+          /// <summary>Reset KV cache dynamic context for a new user request (keeps static prefix).</summary>
     public virtual void ResetForNewRequest()
      {
         _lifecycle.TurnCount = 0;
@@ -1114,22 +1109,7 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
         return truncated;
     }
 
-    public string? GetStoredOutput(string key, int offset = 0, int maxChars = 4000)
-     {
-        if (!_toolOutputStore.TryGetValue(key, out var full)) return null;
-        if (offset >= full.Length) return "(Offset beyond output length)";
-        var available = full.Length - offset;
-        var take = Math.Min(maxChars, available);
-        var result = full.Substring(offset, take);
-        if (take < available)
-            result += $"\n[Showing {take}/{available} chars from offset {offset}. Use higher offset to see more.]";
-        return result;
-    }
-
      // ── Memory helpers ─────────────────────────────────────────
-
-    public string QueryMemory(string s, int maxResults = 5)
-         => (_memoryManager == null) ? "(Not initialized)" : _memoryManager.Query(s, maxResults: maxResults);
 
     public void SaveMemory(string k, string c, string cat = "general")
          => _memoryManager?.AddEntry(k, c, cat);
@@ -1139,9 +1119,6 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
         if (_memoryManager != null) _memoryManager.Load();
         _out?.WriteInfo("[Memory] Loaded.");
     }
-
-    public void SaveContext()
-         => _memoryManager?.Save();
 
     public void SaveTranscript(string? path = null)
      {

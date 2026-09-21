@@ -164,44 +164,6 @@ public sealed class SubAgentManager : IDisposable
         return lastResult ?? new SubAgentResult { Succeeded = false, Error = new SubAgentError { Kind = SubAgentErrorKind.Exception, Message = "No result returned" } };
     }
 
-    /// <summary>Run multiple sub-agents in parallel (Level 2 parallelism).</summary>
-    public async Task<List<SubAgentResult>> RunParallelAsync(List<SubAgentTask> tasks)
-    {
-        if (tasks.Count == 0) return new();
-
-        var concurrent = Math.Min(tasks.Count, MaxConcurrent);
-        _out?.WriteTag("SubAgent",
-            $"Spawning {tasks.Count} sub-agent(s) ({concurrent} concurrent)", OutputState.Info);
-
-        using var semaphore = new SemaphoreSlim(concurrent);
-        var tasksWithSem = tasks.Select(async task =>
-        {
-            await semaphore.WaitAsync();
-            try { return await RunAsync(task); }
-            finally { semaphore.Release(); }
-        });
-
-        var results = (await Task.WhenAll(tasksWithSem)).ToList();
-
-        var succeeded = results.Count(r => r.Succeeded);
-        var failed = results.Count(r => !r.Succeeded);
-        _out?.WriteTag("SubAgent",
-            $"All {results.Count} sub-agents done: {succeeded} succeeded, {failed} failed", OutputState.Info);
-
-        return results;
-    }
-
-    /// <summary>v10.18.1: Cancel a specific sub-agent by ID.</summary>
-    public void CancelSubAgent(string subAgentId)
-    {
-        if (_activeSubAgents.TryGetValue(subAgentId, out var agent))
-        {
-            _out?.WriteTag("SubAgent", $"Cancelling {subAgentId}: {agent.Description}", OutputState.Warning);
-            agent.Cts.Cancel();
-            agent.Engine?.StopExecution();
-        }
-    }
-
     /// <summary>v10.18.1: Cancel ALL active sub-agents (called when main agent gets ESC).</summary>
     public void CancelAll()
     {

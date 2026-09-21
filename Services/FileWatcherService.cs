@@ -90,24 +90,6 @@ public class FileWatcherService : IDisposable
         }
     }
 
-    /// <summary>Get a summary of recent changes (for LLM consumption).</summary>
-    public string GetChangeSummary()
-    {
-        var changes = DrainChanges();
-        if (changes.Count == 0) return "(No file changes detected.)";
-
-        var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"File changes ({changes.Count}):");
-        foreach (var c in changes.Take(20))
-        {
-            var relPath = Path.GetRelativePath(_watchPath, c.Path);
-            sb.AppendLine($"  [{c.Type}] {relPath}");
-        }
-        if (changes.Count > 20)
-            sb.AppendLine($"  ... and {changes.Count - 20} more");
-        return sb.ToString();
-    }
-
     public bool IsRunning => _running;
     public string WatchPath => _watchPath;
 

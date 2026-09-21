@@ -623,15 +623,6 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         }
     }
 
-    /// <summary>Get a copy of the output buffer (for UI to display history).</summary>
-    public List<OutputEntry> GetOutputBuffer()
-    {
-        lock (_uiLock)
-        {
-            return _outputBuffer.ToList();
-        }
-    }
-
     /// <summary>Read the full output history from the JSONL file.</summary>
     public List<OutputEntry> ReadOutputHistory()
     {

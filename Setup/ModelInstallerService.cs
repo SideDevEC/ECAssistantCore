@@ -38,13 +38,6 @@ public sealed class ModelInstallerService
         _appsettingsPath = appsettingsPath;
     }
 
-    /// <summary>True when the primary file of the entry already exists in models/.</summary>
-    public bool IsInstalled(ModelCatalogEntry entry)
-    {
-        var primary = entry.Files.FirstOrDefault();
-        return primary != null && File.Exists(Path.Combine(_modelsDir, primary.Filename));
-    }
-
     /// <summary>Quick reachability probe for HuggingFace (5s timeout). Downloads need this.</summary>
     public static async Task<bool> IsInternetAvailableAsync()
     {
@@ -58,18 +51,6 @@ public sealed class ModelInstallerService
         {
             return false;
         }
-    }
-
-    /// <summary>Free disk space (GB) on the volume hosting the models dir; null when unavailable.</summary>
-    public double? GetFreeSpaceGb()
-    {
-        try
-        {
-            var root = Path.GetPathRoot(Path.GetFullPath(_modelsDir));
-            if (root == null) return null;
-            return new DriveInfo(root).AvailableFreeSpace / 1073741824.0;
-        }
-        catch { return null; }
     }
 
     /// <summary>All GGUF files in the models folder as (name, sizeGB), sorted by name.</summary>
