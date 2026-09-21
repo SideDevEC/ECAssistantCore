@@ -149,7 +149,8 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
             inferenceParams: inferenceParams,
             workingDir: workingDir,
             logger: _logger,
-            tokenizer: remoteTokenizer);
+            tokenizer: remoteTokenizer,
+            config: _config);
 
         _engine.LoadContext();
         _engine.WireSummaryService();

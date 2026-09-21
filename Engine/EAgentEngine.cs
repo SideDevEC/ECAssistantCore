@@ -155,7 +155,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
             _kvCacheController = new RemoteKvCacheController(newClient);
         }
         // Recreate inference engine with new client
-        var modelId = _requestParams?.ModelId ?? "main";
+        var modelId = _requestParams?.ModelId ?? _config.LlmProvider.ModelId;
         _inferenceEngine = new HttpStreamingEngine(newClient, modelId, _sessionId);
         // Reset KV session state so PrefillStaticPrefix recreates it.
         // BOTH flags must clear: SessionActive gates CreateSession, IsPrefilled

@@ -36,11 +36,17 @@
     <!-- LLM server package: provides the build target that copies the server runtime
          into the consumer's output (server/). Consumed as a NuGet dependency so
          downstream projects get the server automatically — no lib/ DLLs anywhere. -->
-    <PackageReference Include="ECAssistant.LLM.Server" Version="14.9.5" />
+    <PackageReference Include="ECAssistant.LLM.Server" Version="14.9.5" Condition="'$(EcaUseProjectRefs)' != 'true'" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(EcaUseProjectRefs)' == 'true'">
+    <ProjectReference Include="../ECAssistantLLM/ECAssistant.LLM.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="8.0.11" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="8.0.11" />
+  </ItemGroup>
 
+  <ItemGroup Condition="'$(EcaUseProjectRefs)' != 'true'">
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="8.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="8.0.11" />

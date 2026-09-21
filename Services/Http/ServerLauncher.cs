@@ -126,12 +126,15 @@ public sealed class ServerLauncher
     /// then waits for the process to exit. Falls back to Kill if needed.
     /// If there are other clients connected, the server will stay running for them.
     /// </summary>
-    public async Task StopServerAsync(CancellationToken ct = default)
+    /// <param name="clientId">Registered client id sent as X-Client-Id. Required: the
+    /// server 401s /eca/* requests from unregistered identities, so a headerless
+    /// shutdown request is silently rejected and the server stays orphaned.</param>
+    public async Task StopServerAsync(string? clientId = null, CancellationToken ct = default)
     {
         // Always send graceful shutdown via HTTP endpoint — even if we didn't start the server
         try
         {
-            using var shutdownClient = new OpenAIClient(_config.ResolvedEndpoint);
+            using var shutdownClient = new OpenAIClient(_config.ResolvedEndpoint, clientId);
             await shutdownClient.PostJsonAsync("/eca/shutdown", "{}", ct);
         }
         catch { /* server may already be down */ }

@@ -25,6 +25,7 @@ public class InferenceParamsFactory
             TopK = config.Sampling.TopK,
             RepeatPenalty = config.Sampling.RepeatPenalty,
             Stop = config.Inference.AntiPrompts,
+            ModelId = config.LlmProvider.ModelId,
             Stream = true
         };
     }

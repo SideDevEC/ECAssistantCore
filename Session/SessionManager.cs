@@ -533,8 +533,10 @@ public class SessionManager : IAsyncDisposable
             // Stop heartbeat
             _serverClient?.StopHeartbeat();
 
-            // Send shutdown request — server will wind down if we're the only client
-            await _serverLauncher!.StopServerAsync();
+            // Send shutdown WITH our registered client id (server 401s anonymous /eca/*).
+            // HandleShutdownAsync disconnects the requesting client itself, so the
+            // explicit DELETE below is only a best-effort fallback afterwards.
+            await _serverLauncher!.StopServerAsync(_serverClient?.ClientId);
         }
         catch (Exception ex)
         {
@@ -655,9 +657,9 @@ public class SessionManager : IAsyncDisposable
     public async Task StopLocalServerAsync()
     {
         if (!IsLocalMode || _serverLauncher == null) return;
-        try { await _serverClient!.DisconnectAsync(); }
+        try { await _serverLauncher.StopServerAsync(_serverClient?.ClientId); }
         catch { /* best effort */ }
-        try { await _serverLauncher.StopServerAsync(); }
+        try { await _serverClient!.DisconnectAsync(); }
         catch { /* best effort */ }
     }
 
@@ -669,12 +671,14 @@ public class SessionManager : IAsyncDisposable
         // Stop all sessions
         StopAll();
 
-        // Local mode: disconnect from server + trigger graceful shutdown
+        // Local mode: trigger graceful shutdown FIRST, while our client id is still
+        // registered — /eca/shutdown requires a valid X-Client-Id and disconnects the
+        // requesting client itself (winding the server down if it was the last one).
         if (IsLocalMode)
         {
-            try { await _serverClient!.DisconnectAsync(); }
+            try { await _serverLauncher!.StopServerAsync(_serverClient?.ClientId); }
             catch { /* best effort */ }
-            try { await _serverLauncher!.StopServerAsync(); }
+            try { await _serverClient!.DisconnectAsync(); }
             catch { /* best effort */ }
         }
 
