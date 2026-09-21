@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 310  |  LOC: 26659  |  ~14316 tokens
+Types: 312  |  LOC: 26967  |  ~14404 tokens
 
 ---
 
@@ -743,6 +743,11 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Setup
 > HardwareProfile tuning rules: GPU layers / context / batch adapt to the machine.
 Cross-package deps: ECAssistant.Core.Setup, Xunit
 
+### Class: HarnessOptimizationTests
+> Tests for the 2026-09-21 harness optimizations (P1-P6): tool-result truncation
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces
+
 ### Class: HomeController
 Cross-package deps: ECAssistant.Core.Analysis
 
@@ -1324,6 +1329,9 @@ Cross-package deps: ECAssistant.Core.Tools
 
 ### Class: ToolDependencyAnalyzerTests
 Cross-package deps: ECAssistant.Core.Engine
+
+### Class: ToolOutputLimitsConfig
+> Tool-result truncation limits (2026-09-21 — previously hardcoded constants).
 
 ### Class: ToolPermission
 > Permission rule for a single tool.

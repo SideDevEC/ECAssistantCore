@@ -509,3 +509,29 @@ asking.
   "LLM endpoint unreachable", which also triggered the ugly init-failure exit path.
 - Companion: TUI restores the terminal on all exit paths; Console host wraps
   RunAsync in try/finally (see TUI/Console ARCHITECTURE.md changelogs).
+
+## Addendum — harness optimization P1-P6 (2026-09-21 night, local-first low-compute)
+
+Research-grounded (2026 harness-engineering sources: Terminal-Bench harness-only
+delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-driven.
+
+- **P1 — Tool-result truncation limits config-driven** (`tool_output_limits`):
+  `max_result_chars` (default 4000), per-tool overrides
+  (`max_result_chars_per_tool`), `max_stored_outputs`. Truncation before
+  injection already existed (EAgentEngine.TruncateToolOutput) — the hardcoded
+  4000/6000/8000 constants are now config values with the same defaults.
+- **P2 — In-loop planning by default** (`interface.preplanning`, default false):
+  skips the 2-3 LLM pre-pass calls (Decompose + StepMapper). Pre-planning stays
+  available via config for small models that want explicit step lists.
+- **P3 — Verifier contract** (`interface.verify_command`): injected into the
+  system prompt (VERIFIER rule) — act → observe → verify loop.
+- **P4 — Typed tool schemas**: `EToolBase.GetParameterSchema()` (virtual, JSON
+  Schema string) implemented on Shell/CodeEditor/FileReader/WebSearch/WebFetch/
+  DotnetBuild/FileResearch; `ToolSpec.ParameterSchema` carries it into the
+  native function-calling request (tools without a schema fall back permissive).
+- **P5 — Staged compaction**: `ContextWindow.TrimStaleToolOutputs()` drops stale
+  tool outputs (keeps the last) — zero-LLM-cost stage 1 before the full
+  summarize-rebuild.
+- **P6 — Rules file**: working-dir `AGENTS.md` injected into the system prompt
+  (## PROJECT RULES, truncated at 6000 chars).
+- Tests: HarnessOptimizationTests ×10. Suite 1071/1071.

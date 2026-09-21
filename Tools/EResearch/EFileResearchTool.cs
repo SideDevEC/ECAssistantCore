@@ -24,6 +24,17 @@ public class EFileResearchTool : EToolBase
         "Scan project files, read content for LLM analysis. Use for: finding code patterns, " +
         "checking file structure, reading source code, researching project dependencies.";
 
+    public override string GetParameterSchema() =>
+        """
+        {
+          "type": "object", "required": ["query"],
+          "properties": {
+            "query": { "type": "string", "description": "What to find in the codebase" },
+            "max_files": { "type": "integer", "description": "Max files to scan (default 20)" },
+            "extensions": { "type": "string", "description": "Comma-separated extension filter, e.g. .cs,.py" }
+          }
+        }
+        """;
     public override string UsageExample =>
         "EFileResearchTool(query:find all controllers, max_files:20)";
 

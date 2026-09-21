@@ -109,20 +109,32 @@ public sealed class HttpStreamingEngine : IInferenceEngine
         InferenceRequestParams parameters,
         CancellationToken ct)
     {
-        var tools = parameters.Tools!.Select(t => new
+        // Typed schemas: use the tool's real parameter schema when it provides one;
+        // fall back to the permissive string-args stub for tools without a schema.
+        var tools = parameters.Tools!.Select(t =>
         {
-            type = "function",
-            function = new
+            JsonDocument? schemaDoc = null;
+            try
             {
-                name = t.Name,
-                description = t.Description,
-                parameters = new
-                {
-                    type = "object",
-                    properties = new { },
-                    additionalProperties = new { type = "string" }
-                }
+                if (!string.IsNullOrWhiteSpace(t.ParameterSchema))
+                    schemaDoc = JsonDocument.Parse(t.ParameterSchema);
             }
+            catch (JsonException) { /* malformed schema → permissive fallback */ }
+
+            object parameters = schemaDoc is null
+                ? new { type = "object", properties = new { }, additionalProperties = new { type = "string" } }
+                : (object)schemaDoc.RootElement.Clone();
+
+            return new
+            {
+                type = "function",
+                function = new
+                {
+                    name = t.Name,
+                    description = t.Description,
+                    parameters
+                }
+            };
         }).ToList();
 
         var body = JsonSerializer.Serialize(new

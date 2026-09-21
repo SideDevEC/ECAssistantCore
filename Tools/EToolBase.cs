@@ -51,7 +51,16 @@ public abstract class EToolBase
                 /// Override to provide additional tool-specific system prompt text.
                 /// Returned text is appended to the main system prompt.
                  /// </summary>
-          public virtual string GetExtendedSystemPrompt() 
+          /// <summary>
+    /// JSON Schema for this tool's arguments (OpenAI function schema "parameters"
+    /// object). Used by the remote/native function-calling decision path so the
+    /// model gets REAL parameter definitions instead of an empty stub. Return ""
+    /// to fall back to the permissive default (any string args).
+    /// Override in tools with known parameters.
+    /// </summary>
+    public virtual string GetParameterSchema() => "";
+
+    public virtual string GetExtendedSystemPrompt() 
                   => string.Empty;
 
                    /// <summary>

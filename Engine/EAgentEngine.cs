@@ -664,6 +664,33 @@ User: " + userRequest + "\n";
         sb.AppendLine($"- Application log: {Path.Combine(_workingDir, "ECAssistant.log")}");
         sb.AppendLine();
         sb.AppendLine("When the user asks about the app itself — its configuration, models, memory or history — these are the paths to inspect. Do not modify config files unless the user explicitly asks for it.");
+
+        // Rules file (AGENTS.md convention): project conventions live with the
+        // project. Small models depend on this far more than large ones — they
+        // cannot infer conventions from a few files.
+        try
+        {
+            var rulesPath = Path.Combine(_workingDir, "AGENTS.md");
+            if (File.Exists(rulesPath))
+            {
+                var rules = File.ReadAllText(rulesPath);
+                const int MaxRulesChars = 6000;
+                if (rules.Length > MaxRulesChars)
+                    rules = rules.Substring(0, MaxRulesChars) + "\n[AGENTS.md truncated]";
+                sb.AppendLine();
+                sb.AppendLine("## PROJECT RULES (AGENTS.md)");
+                sb.AppendLine();
+                sb.AppendLine(rules);
+            }
+        }
+        catch { /* non-critical — unreadable rules file must not break the prompt */ }
+
+        var verifyCommand = _config?.Interface.VerifyCommand;
+        if (!string.IsNullOrWhiteSpace(verifyCommand))
+        {
+            sb.AppendLine();
+            sb.AppendLine($"VERIFIER: after making code changes, run `{verifyCommand}` to verify them and read its output. Fix failures and re-run until it passes — never claim success without running it.");
+        }
         sb.AppendLine();
         return sb.ToString();
      }
@@ -1018,23 +1045,42 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
     private const int MaxToolOutputDefault = 4000;
     private const int MaxToolOutputCode = 8000;
     private const int MaxToolOutputSearch = 6000;
+    private const int MaxStoredOutputsConst = 20;
 
     private readonly Dictionary<string, string> _toolOutputStore = new();
     private int _outputStoreCounter = 0;
-    private const int MaxStoredOutputs = 20;
+
+    private ToolOutputLimitsConfig Limits => _config.ToolOutputLimits ?? new ToolOutputLimitsConfig();
 
      /// <summary>Truncate tool output based on tool type. Store full output for retrieval.</summary>
     private string TruncateToolOutput(string text, string toolName = "")
      {
         if (string.IsNullOrEmpty(text)) return text;
 
-        var limit = toolName.ToLowerInvariant() switch
-         {
-             "ecodeeditor" => MaxToolOutputCode,
-             "efileresearchtool" => MaxToolOutputCode,
-             "ewebsearch" => MaxToolOutputSearch,
-             _ => MaxToolOutputDefault
-         };
+        // Config-driven limits (tool_output_limits section); per-tool overrides win,
+        // then legacy per-kind defaults for tools with no config entry.
+        var limits = Limits;
+        int limit;
+        var perTool = limits.MaxResultCharsPerTool;
+        if (perTool != null)
+        {
+            var exact = perTool.FirstOrDefault(kv => kv.Key.Equals(toolName, StringComparison.OrdinalIgnoreCase));
+            if (exact.Key != null) limit = exact.Value;
+            else limit = toolName.ToLowerInvariant() switch
+            {
+                "ecodeeditor" => MaxToolOutputCode,
+                "efileresearchtool" => MaxToolOutputCode,
+                "ewebsearch" => MaxToolOutputSearch,
+                _ => limits.MaxResultChars > 0 ? limits.MaxResultChars : MaxToolOutputDefault
+            };
+        }
+        else limit = toolName.ToLowerInvariant() switch
+        {
+            "ecodeeditor" => MaxToolOutputCode,
+            "efileresearchtool" => MaxToolOutputCode,
+            "ewebsearch" => MaxToolOutputSearch,
+            _ => limits.MaxResultChars > 0 ? limits.MaxResultChars : MaxToolOutputDefault
+        };
 
         if (text.Length <= limit) return text;
 
@@ -1042,7 +1088,8 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
         var storeKey = $"output_{_outputStoreCounter}";
         _toolOutputStore[storeKey] = text;
 
-        if (_toolOutputStore.Count > MaxStoredOutputs)
+        var maxStored = limits.MaxStoredOutputs > 0 ? limits.MaxStoredOutputs : MaxStoredOutputsConst;
+        if (_toolOutputStore.Count > maxStored)
          {
             // Evict oldest by insertion order (keys are output_<n>; lexicographic sort
             // would evict output_10 before output_2). Prefer the in-memory counter.
@@ -1181,8 +1228,13 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                 catch (OperationCanceledException) { }
              }
 
-            _contextWindow.Clear();
-            await ResetAndRebuildCacheAsync();
+            // Staged compaction stage 1: trim stale tool outputs first (zero LLM cost).
+            // Only fall back to the full summarize-rebuild when trimming isn't enough.
+            if (!_contextWindow.TrimStaleToolOutputs())
+            {
+                _contextWindow.Clear();
+                await ResetAndRebuildCacheAsync();
+            }
 
             if (!string.IsNullOrWhiteSpace(summaryText))
              {

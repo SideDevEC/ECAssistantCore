@@ -22,6 +22,19 @@ public class ECodeEditorTool : EToolBase
         "Surgical code editing: create files, multi-line patch, diff preview, cross-file search & replace, " +
         "line insertion/deletion. Better than shell echo for code changes.";
 
+    public override string GetParameterSchema() =>
+        """
+        {
+          "type": "object", "required": ["action"],
+          "properties": {
+            "action": { "type": "string", "enum": ["write", "edit", "delete"], "description": "write = create/overwrite file; edit = replace old_text with new_text; delete = remove file" },
+            "file": { "type": "string", "description": "Target file path" },
+            "content": { "type": "string", "description": "Full file content (action=write)" },
+            "old_text": { "type": "string", "description": "Exact text to replace (action=edit)" },
+            "new_text": { "type": "string", "description": "Replacement text (action=edit)" }
+          }
+        }
+        """;
     public override string UsageExample =>
         "ECodeEditor(action:patch, file:Program.cs, old_text:bug, new_text:fix)";
 

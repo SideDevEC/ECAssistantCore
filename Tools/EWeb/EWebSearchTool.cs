@@ -31,6 +31,16 @@ public class EWebSearchTool : EToolBase
         "or earlier tool results, for questions your own knowledge already covers, or when you are unsure " +
         "what to search. Never call without a specific, meaningful query.";
 
+    public override string GetParameterSchema() =>
+        """
+        {
+          "type": "object", "required": ["query"],
+          "properties": {
+            "query": { "type": "string", "description": "Search query" },
+            "max_results": { "type": "integer", "description": "Max results (default engine setting)" }
+          }
+        }
+        """;
     public override string UsageExample =>
         "EWebSearch(query:dotnet 8 async streams)\n" +
         "EWebSearch(query:bitcoin price today, max_results:3)";

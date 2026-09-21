@@ -134,6 +134,27 @@ public class ContextWindow
 
     public void Clear() { lock (_messagesLock) _messages.Clear(); }
 
+    /// <summary>
+    /// Staged compaction stage 1 (2026-09-21): drop stale tool outputs (all but the
+    /// most recent) WITHOUT an LLM summarize call — the cheapest way to reclaim
+    /// budget. Returns true if trimming brought the window back under budget.
+    /// </summary>
+    public bool TrimStaleToolOutputs()
+    {
+        lock (_messagesLock)
+        {
+            var toolIndices = new List<int>();
+            for (int i = 0; i < _messages.Count; i++)
+                if (_messages[i].Role == "tool_output") toolIndices.Add(i);
+
+            // Remove oldest→newest except the LAST tool output (often the relevant
+            // observation) — descending index order keeps positions valid.
+            for (int k = toolIndices.Count - 2; k >= 0; k--)
+                _messages.RemoveAt(toolIndices[k]);
+        }
+        return GetTotalTokens() <= (int)_maxTokens;
+    }
+
     public bool IsWithinBudget()
     {
         lock (_messagesLock)

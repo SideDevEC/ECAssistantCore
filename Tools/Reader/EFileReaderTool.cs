@@ -21,6 +21,18 @@ public class EFileReaderTool : EToolBase
         "Prevents context blowups on large files by controlling how much is read. " +
         "Returns line-numbered content plus total line count so you know if there's more.";
 
+    public override string GetParameterSchema() =>
+        """
+        {
+          "type": "object", "required": ["file"],
+          "properties": {
+            "file": { "type": "string", "description": "File path to read" },
+            "offset": { "type": "integer", "description": "Start line (1-based)" },
+            "limit": { "type": "integer", "description": "Max lines to read" },
+            "maxchars": { "type": "integer", "description": "Max characters to return" }
+          }
+        }
+        """;
     public override string UsageExample =>
         "EFileReader(file:Program.cs, offset:1, limit:50)";
 

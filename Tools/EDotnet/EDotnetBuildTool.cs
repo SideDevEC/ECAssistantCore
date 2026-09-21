@@ -19,6 +19,16 @@ public class EDotnetBuildTool : EToolBase
 
     public override string Name => "DotnetBuild";
     public override string Description => "Run dotnet build, test, or restore commands.";
+    public override string GetParameterSchema() =>
+        """
+        {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "enum": ["build", "test", "format"], "description": "build (default), test, or format" },
+            "projectPath": { "type": "string", "description": "Project or solution path; empty = current project" }
+          }
+        }
+        """;
     public override string UsageExample => "DotnetBuild(action:build)";
 
     public override bool IsEnabled { get; protected set; } = true;

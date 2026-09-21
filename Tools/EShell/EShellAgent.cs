@@ -26,6 +26,13 @@ public class EShellAgent : EToolBase
         "Working directory is set automatically — use relative paths.\n" +
         HostShellPrompt();
 
+    public override string GetParameterSchema() =>
+        """
+        {
+          "type": "object", "required": ["command"],
+          "properties": { "command": { "type": "string", "description": "The shell command to execute. Quote paths with spaces." } }
+        }
+        """;
     public override string UsageExample => OperatingSystem.IsWindows()
         ? "EShellAgent(command:Get-ChildItem -Force)"
         : "EShellAgent(command:ls -la)";

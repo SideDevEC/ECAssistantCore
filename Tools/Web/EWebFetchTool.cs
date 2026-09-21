@@ -29,6 +29,17 @@ public class EWebFetchTool : EToolBase
         "Use for reading documentation, articles, API reference pages, blog posts. " +
         "Supports offset to page through long content.";
 
+    public override string GetParameterSchema() =>
+        """
+        {
+          "type": "object", "required": ["url"],
+          "properties": {
+            "url": { "type": "string", "description": "URL to fetch" },
+            "maxchars": { "type": "integer", "description": "Max characters to return" },
+            "offset": { "type": "integer", "description": "Character offset to start from" }
+          }
+        }
+        """;
     public override string UsageExample =>
         "EWebFetch(url:https://example.com)\n" +
         "EWebFetch(url:https://example.com/docs, offset:4000)";

@@ -23,6 +23,10 @@ public class EAgentConfig
     [JsonPropertyName("tools")]
     public Dictionary<string, JsonElement> Tools { get; set; } = new();
 
+    /// <summary>Tool-result truncation limits (2026-09-21 — was hardcoded constants).</summary>
+    [JsonPropertyName("tool_output_limits")]
+    public ToolOutputLimitsConfig ToolOutputLimits { get; set; } = new();
+
     [JsonPropertyName("llm")]
     public LlmConfig Llm { get; set; } = new();
 

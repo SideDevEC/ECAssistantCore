@@ -115,7 +115,16 @@ public sealed class AgentOrchestrator : IAsyncDisposable
          // v10.6: Decompose the request into sub-tasks using TaskPlanner
          // v11.4: Gate — skip decomposition for conversational questions
          var planner = _engine.TaskPlanner;
-         if (planner != null)
+         var preplanning = _config?.Interface.Preplanning == true;
+         if (!preplanning)
+         {
+            // In-loop planning (default): skip the 2-3 pre-pass LLM calls; the
+            // loop's model plans as it goes (Claude Code-style). Turn budget
+            // stays at base/max — no sub-task expansion without decomposition.
+            _subTasks = new List<SubTask> { new SubTask { Description = goal, Status = SubTaskStatus.Pending } };
+            _currentSubTask = 0;
+         }
+         else if (planner != null)
          {
             List<SubTask>? decomposed = null;
 

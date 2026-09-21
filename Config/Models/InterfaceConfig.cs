@@ -55,4 +55,22 @@ public class InterfaceConfig
     /// </summary>
     [JsonPropertyName("subtask_turn_buffer")]
     public int SubtaskTurnBuffer { get; init; } = 2;
+
+    /// <summary>
+    /// Run the LLM decomposition + step-mapping pre-planning pass before the main
+    /// loop (2-3 extra inference calls). Modern harnesses plan in-loop instead.
+    /// Default: false (in-loop planning) — enable for small local models that
+    /// benefit from explicit pre-compiled step lists.
+    /// </summary>
+    [JsonPropertyName("preplanning")]
+    public bool Preplanning { get; init; } = false;
+
+    /// <summary>
+    /// Verifier contract: the command the agent runs to verify its work after code
+    /// edits (act → observe → verify loop). Injected into the system prompt and
+    /// surfaced by the orchestrator when edits happened but it was never run.
+    /// Empty = no verifier wiring. Example: "dotnet test --filter Fast".
+    /// </summary>
+    [JsonPropertyName("verify_command")]
+    public string VerifyCommand { get; init; } = "";
 }

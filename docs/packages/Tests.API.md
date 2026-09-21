@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 96  |  LOC: 12219  |  ~3636 tokens
+Types: 97  |  LOC: 12366  |  ~3696 tokens
 
 ---
 
@@ -143,6 +143,11 @@ Cross-package deps: ECAssistant.Core.Setup
 ### Class: HardwareProfileTests
 > HardwareProfile tuning rules: GPU layers / context / batch adapt to the machine.
 Cross-package deps: ECAssistant.Core.Setup, Xunit
+
+### Class: HarnessOptimizationTests
+> Tests for the 2026-09-21 harness optimizations (P1-P6): tool-result truncation
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces
 
 ### Class: HomeController
 Cross-package deps: ECAssistant.Core.Analysis

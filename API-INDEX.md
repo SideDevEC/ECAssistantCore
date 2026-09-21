@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-21T16:09:09.857952+00:00
-Packages: 2  |  Types: 406
+Generated: 2026-09-21T17:28:36.361631+00:00
+Packages: 2  |  Types: 409
 
 ---
 
-## ECAssistantCore (310 types, ~26659 LOC)
+## ECAssistantCore (312 types, ~26967 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -149,6 +149,7 @@ Packages: 2  |  Types: 406
 - 🟣 GenerationParams  (ECAssistantCore)  deps: [int, float, float, int, float]
 - 🟡 HardwareProfile  (ECAssistantCore)
 - 🟡 HardwareProfileTests  (ECAssistantCore)
+- 🟡 HarnessOptimizationTests : IDisposable  (ECAssistantCore)
 - 🟡 HomeController  (ECAssistantCore)
 - 🟡 HtmlTextConverter : IHtmlTextConverter  (ECAssistantCore)
 - 🟡 HtmlTextConverterTests  (ECAssistantCore)
@@ -295,6 +296,7 @@ Packages: 2  |  Types: 406
 - 🟡 ToolCallResult  (ECAssistantCore)
 - 🟡 ToolDependencyAnalyzer  (ECAssistantCore)
 - 🟡 ToolDependencyAnalyzerTests  (ECAssistantCore)
+- 🟡 ToolOutputLimitsConfig  (ECAssistantCore)
 - 🟡 ToolPermission  (ECAssistantCore)
 - 🟡 ToolPermissionConfigEntry  (ECAssistantCore)
 - 🟡 ToolPipelineIntegrationTests : IDisposable  (ECAssistantCore)
@@ -318,7 +320,7 @@ Packages: 2  |  Types: 406
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (96 types, ~12219 LOC)
+## Tests (97 types, ~12366 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -359,6 +361,7 @@ Packages: 2  |  Types: 406
 - 🟡 FileSystemAdapterTests : IDisposable  (Tests)
 - 🟡 FirstRunDetectorTests : IDisposable  (Tests)
 - 🟡 HardwareProfileTests  (Tests)
+- 🟡 HarnessOptimizationTests : IDisposable  (Tests)
 - 🟡 HomeController  (Tests)
 - 🟡 HtmlTextConverterTests  (Tests)
 - 🟡 HttpClientAdapterTests : IDisposable  (Tests)

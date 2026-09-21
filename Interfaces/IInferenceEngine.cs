@@ -70,4 +70,7 @@ public sealed class ToolSpec
 {
     public string Name { get; init; } = "";
     public string Description { get; init; } = "";
+
+    /// <summary>Optional JSON Schema for the tool's arguments ("" = permissive fallback).</summary>
+    public string ParameterSchema { get; init; } = "";
 }
