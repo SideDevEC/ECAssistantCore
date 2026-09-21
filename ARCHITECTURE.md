@@ -501,3 +501,11 @@ asking.
 - **ProjectContextManager**: host runtime files excluded from the project scan (appsettings.json, model-catalog.json, .project_context.json, ECAssistant.log; dirs .sessions, Workspace, tool_outputs) + prompt nudge — the model no longer narrates the app's own config.
 - **Every harness parameter is config-driven now**: engine context window ← `llm.context_size` (hardcoded 8192 wiring bug fixed), orchestrator turn limit ← `interface.max_turns` (was hardcoded 5), subtask turn budget ← `interface.turns_per_subtask` + `interface.subtask_turn_buffer`, compaction trigger ← `context_management.compact_threshold_percent`. New keys default to the previous hardcoded values.
 - Core suite: 1053/1053 green (FirstRunDetectorTests ×9, EndpointNormalizerTests + RemoteModelProbePathTests ×6 added).
+
+## Addendum — terminal restore + probe reliability (2026-09-21 evening)
+
+- `ServerConnection` probe timeout raised 5s → 12s (client 15s): remote model-list
+  probes (OpenRouter) measured 10-20s during service slowness and falsely reported
+  "LLM endpoint unreachable", which also triggered the ugly init-failure exit path.
+- Companion: TUI restores the terminal on all exit paths; Console host wraps
+  RunAsync in try/finally (see TUI/Console ARCHITECTURE.md changelogs).
