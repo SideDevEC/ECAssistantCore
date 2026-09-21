@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 98  |  LOC: 12479  |  ~3736 tokens
+Types: 99  |  LOC: 12541  |  ~3784 tokens
 
 ---
 
@@ -254,6 +254,11 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECA
 
 ### Class: RemoteProviderSetupWriterTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup
+
+### Class: RequestChoiceTests
+> v14.9 interactive checkpoint (RequestChoice): listener gets the prompt + options,
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Session, Xunit
 
 ### Class: SecureKeyStoreTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services

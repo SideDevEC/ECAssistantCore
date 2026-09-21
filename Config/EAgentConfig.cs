@@ -36,6 +36,10 @@ public class EAgentConfig
     [JsonPropertyName("subagent")]
     public SubAgentConfig SubAgent { get; set; } = new();
 
+    /// <summary>v14.9: interactive checkpoint policy (RequestChoice hook points).</summary>
+    [JsonPropertyName("interaction")]
+    public InteractionConfig Interaction { get; set; } = new();
+
     [JsonPropertyName("vector_memory")]
     public VectorMemoryConfig VectorMemory { get; set; } = new();
 

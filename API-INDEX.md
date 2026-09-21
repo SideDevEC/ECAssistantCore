@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-21T22:36:40.228541+00:00
-Packages: 2  |  Types: 411
+Generated: 2026-09-21T22:53:15.969520+00:00
+Packages: 2  |  Types: 414
 
 ---
 
-## ECAssistantCore (313 types, ~26974 LOC)
+## ECAssistantCore (315 types, ~27112 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -170,6 +170,7 @@ Packages: 2  |  Types: 411
 - 🟡 InstallManifestRuntime  (ECAssistantCore)
 - 🟣 InstallResult  (ECAssistantCore)  deps: [bool, string, IReadOnlyList]
 - 🟡 InstallerVisionEmbeddingTests : IDisposable  (ECAssistantCore)
+- 🟡 InteractionConfig  (ECAssistantCore)
 - 🟡 InterfaceConfig  (ECAssistantCore)
 - 🟡 KvCacheStatus  (ECAssistantCore)
 - 🟡 LLMDecision  (ECAssistantCore)  deps: [bool, string, Dictionary, string? answerText =, string? reasoning =, List, string? reasoning =]
@@ -236,6 +237,7 @@ Packages: 2  |  Types: 411
 - 🟡 RemoteProviderSetupWriter  (ECAssistantCore)  deps: [string, string? keysDirectory =]
 - 🟡 RemoteProviderSetupWriterTests  (ECAssistantCore)
 - 🟡 RemoteTokenizer  (ECAssistantCore)  deps: [OpenAIClient, string modelId =]
+- 🟡 RequestChoiceTests : IDisposable  (ECAssistantCore)
 - 🟡 ResourceLoader  (ECAssistantCore)
 - 🟡 SamplingConfig  (ECAssistantCore)
 - 🟡 SecureKeyStore : ISecureKeyStore  (ECAssistantCore)  deps: [string, ILogger? logger =]
@@ -321,7 +323,7 @@ Packages: 2  |  Types: 411
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (98 types, ~12479 LOC)
+## Tests (99 types, ~12541 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -390,6 +392,7 @@ Packages: 2  |  Types: 411
 - 🟡 RemoteModelProbePathTests  (Tests)
 - 🟡 RemoteProviderIntegrationTests  (Tests)
 - 🟡 RemoteProviderSetupWriterTests  (Tests)
+- 🟡 RequestChoiceTests : IDisposable  (Tests)
 - 🟡 SecureKeyStoreTests  (Tests)
 - 🟡 SelfCorrectionManagerTests  (Tests)
 - 🟡 ServerConfigWriterTests : IDisposable  (Tests)

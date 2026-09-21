@@ -485,6 +485,54 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     public bool RequestApproval(string message)
         => RequestApprovalAsync(message).GetAwaiter().GetResult();
 
+    /// <summary>v14.9: blocking choice request — see RequestChoiceAsync.</summary>
+    public int? RequestChoice(string prompt, IReadOnlyList<string> options)
+        => RequestChoiceAsync(prompt, options).GetAwaiter().GetResult();
+
+    /// <summary>
+    /// v14.9: interactive checkpoint — present prompt + numbered options and block
+    /// until a listener responds. Mirrors RequestApprovalAsync (write, immediate
+    /// listener attempt, then bounded wait; null on timeout/cancel/no listener).
+    /// </summary>
+    public async Task<int?> RequestChoiceAsync(string prompt, IReadOnlyList<string> options)
+    {
+        // Render the checkpoint: prompt + numbered options
+        WriteLine(prompt, OutputState.Warning);
+        for (int i = 0; i < options.Count; i++)
+            WriteLine($"  {i + 1}) {options[i]}", OutputState.Info);
+
+        lock (_uiLock)
+        {
+            if (_listeners.Count > 0)
+            {
+                try { return _listeners[0].OnRequestChoice(prompt, options); }
+                catch { return null; }
+            }
+        }
+
+        var waitMs = 100;
+        var maxWaitMs = 60000; // 60s — choices deserve more patience than y/n gates
+        var waited = 0;
+        while (waited < maxWaitMs)
+        {
+            await Task.Delay(waitMs);
+            waited += waitMs;
+
+            lock (_uiLock)
+            {
+                if (_listeners.Count > 0)
+                {
+                    try { return _listeners[0].OnRequestChoice(prompt, options); }
+                    catch { return null; }
+                }
+            }
+
+            if (_executionCts?.IsCancellationRequested == true)
+                return null;
+        }
+        return null; // timeout — caller proceeds autonomously
+    }
+
     /// <summary>
     /// Async approval polling: Task.Delay instead of Thread.Sleep keeps the waiting
     /// thread-pool thread free while polling for a listener.

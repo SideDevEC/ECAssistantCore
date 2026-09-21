@@ -22,4 +22,11 @@ public interface IOutputListener
     /// Returns true if approved, false if denied.
     /// </summary>
     bool OnRequestApproval(string message);
+
+    /// <summary>
+    /// v14.9: display the prompt and options, collect a choice (1-based index).
+    /// Default: null (no choice) — existing listeners keep compiling and the
+    /// orchestrator proceeds autonomously when null is returned.
+    /// </summary>
+    int? OnRequestChoice(string prompt, IReadOnlyList<string> options) => null;
 }

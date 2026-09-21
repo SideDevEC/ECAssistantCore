@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 313  |  LOC: 26974  |  ~14383 tokens
+Types: 315  |  LOC: 27112  |  ~14493 tokens
 
 ---
 
@@ -165,6 +165,7 @@ Methods:
   - void OnStreamStart()
   - void OnStreamStop()
   - bool OnRequestApproval(string message)
+  - int? OnRequestChoice(string prompt, IReadOnlyList<string> options)
 
 ### Interface: IOutputRenderer
 > Terminal output abstraction.
@@ -251,6 +252,7 @@ Methods:
   - string GetStreamBuffer()
   - OutputState GetStreamState()
   - bool RequestApproval(string message)
+  - int? RequestChoice(string prompt, IReadOnlyList<string> options)
 
 ### Interface: ISetupUi
 > Console I/O abstraction for the setup wizard — enables unit testing of flow logic.
@@ -821,6 +823,9 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Setup
 
+### Class: InteractionConfig
+> v14.9: interactive checkpoint policy — decides WHEN the orchestrator may pause
+
 ### Class: InterfaceConfig
 > UI and output configuration. Verbose/silent controls token stream visibility.
 
@@ -1082,6 +1087,11 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup
 Constructor:
   - RemoteTokenizer(OpenAIClient client, string modelId = "main")
 Cross-package deps: ECAssistant.Core.Transport
+
+### Class: RequestChoiceTests
+> v14.9 interactive checkpoint (RequestChoice): listener gets the prompt + options,
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Session, Xunit
 
 ### Class: ResourceLoader
 > Loads embedded resources from the Core DLL.

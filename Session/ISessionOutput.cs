@@ -69,4 +69,13 @@ public interface ISessionOutput
     /// Returns true if approved, false if denied.
     /// </summary>
     bool RequestApproval(string message);
+
+    /// <summary>
+    /// v14.9: ask the user to pick from explicit options at a decision checkpoint
+    /// (see InteractionConfig). Blocks until the attached listener responds.
+    /// Returns the 1-based index of the chosen option, or null if no listener is
+    /// attached / the user cancelled — callers MUST treat null as "proceed
+    /// autonomously with the default" so the feature stays non-breaking.
+    /// </summary>
+    int? RequestChoice(string prompt, IReadOnlyList<string> options);
 }

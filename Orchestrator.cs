@@ -179,6 +179,40 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                 for (int i = 0; i < _subTasks.Count; i++)
                     _out?.WriteDim($"  Step {i+1}: {_subTasks[i].Description}");
                 _out?.BlankLine();
+
+                // v14.9: interactive checkpoint — present the plan as choices when the
+                // interaction policy allows. null answer (no listener, timeout, cancel,
+                // invalid input) = proceed autonomously with the decomposed plan.
+                if (_config?.Interaction.ConfirmPlan == true && _out != null)
+                {
+                    var planLines = _subTasks.Select((t, i) => $"{i + 1}. {t.Description}").ToList();
+                    var planText = "Planned steps:\n" + string.Join("\n", planLines);
+                    var choice = _out.RequestChoice(
+                        $"Plan for: {goal}\nExecute this plan?",
+                        new List<string>
+                        {
+                            "Execute the plan",
+                            "Answer directly without tools",
+                            "Proceed without the plan (turn-by-turn)",
+                        });
+                    switch (choice)
+                    {
+                        case 2: // answer directly
+                            _subTasks = new List<SubTask> { new SubTask { Description = goal, Status = SubTaskStatus.Pending } };
+                            _currentSubTask = 0;
+                            _out.WriteDim("Checkpoint: answering directly — planning skipped.");
+                            break;
+                        case 3: // no plan
+                            _subTasks = new List<SubTask> { new SubTask { Description = goal, Status = SubTaskStatus.Pending } };
+                            _currentSubTask = 0;
+                            _maxTurns = _baseMaxTurns;
+                            _out.WriteDim("Checkpoint: proceeding without the plan.");
+                            break;
+                        default: // 1 or null — execute plan (autonomous default)
+                            _out?.WriteDim(choice == null ? "No checkpoint answer — executing plan autonomously." : "Plan approved.");
+                            break;
+                    }
+                }
              }
 
              // v10.17: Step Mapping — map sub-tasks to concrete tool calls
