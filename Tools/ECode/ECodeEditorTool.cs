@@ -28,15 +28,15 @@ public class ECodeEditorTool : EToolBase
           "type": "object", "required": ["action"],
           "properties": {
             "action": { "type": "string", "enum": ["create", "diff", "patch", "search", "replace-all", "insert", "delete-lines", "delete"], "description": "create = new file (content/new_text); diff = preview change; patch = replace old_text with new_text; search = find text; replace-all = replace every occurrence; insert = add lines; delete-lines = remove lines; delete = remove file" },
-            "file": { "type": "string", "description": "Target file path" },
-            "content": { "type": "string", "description": "Full file content (action=write)" },
-            "old_text": { "type": "string", "description": "Exact text to replace (action=edit)" },
-            "new_text": { "type": "string", "description": "Replacement text (action=edit)" }
+            "file": { "type": "string", "description": "Target file path (relative to workspace)" },
+            "content": { "type": "string", "description": "Full file content (action=create)" },
+            "old_text": { "type": "string", "description": "Exact text to replace (action=patch)" },
+            "new_text": { "type": "string", "description": "Replacement text (action=patch)" }
           }
         }
         """;
     public override string UsageExample =>
-        "ECodeEditor(action:patch, file:Program.cs, old_text:bug, new_text:fix)";
+        "ECodeEditor(action:create, file:hello.py, content:print(1))";
 
     public override bool IsEnabled { get; protected set; } = true;
 
