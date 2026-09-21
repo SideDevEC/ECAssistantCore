@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 315  |  LOC: 27112  |  ~14493 tokens
+Types: 317  |  LOC: 27264  |  ~14597 tokens
 
 ---
 
@@ -619,6 +619,17 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Tools
 
 ### Class: EToolResult
 > Standardized tool call result that flows from any Tool back to the Agent.
+
+### Class: EUserAskTool
+> v14.9 ambiguity-triggered checkpoint: lets the MODEL declare uncertainty and ask
+Implements: EToolBase
+Constructor:
+  - EUserAskTool(ISessionOutput? sessionOutput)
+Cross-package deps: ECAssistant.Core.Session
+
+### Class: EUserAskToolTests
+> v14.9 AskUser tool — model-driven ambiguity checkpoint: parses options,
+Cross-package deps: ECAssistant.Core.Session, ECAssistant.Core.Tools.User, Xunit
 
 ### Class: EWebFetchTool
 > EWebFetch — fetch a URL, extract main readable content, convert to

@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-21T22:53:15.969520+00:00
-Packages: 2  |  Types: 414
+Generated: 2026-09-21T23:05:32.039438+00:00
+Packages: 2  |  Types: 417
 
 ---
 
-## ECAssistantCore (315 types, ~27112 LOC)
+## ECAssistantCore (317 types, ~27264 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -114,6 +114,8 @@ Packages: 2  |  Types: 414
 - 🟡 EToolBase  (ECAssistantCore)
 - 🟡 EToolBaseTests  (ECAssistantCore)
 - 🟡 EToolResult  (ECAssistantCore)
+- 🟡 EUserAskTool : EToolBase  (ECAssistantCore)  deps: [ISessionOutput]
+- 🟡 EUserAskToolTests  (ECAssistantCore)
 - 🟡 EWebFetchTool : EToolBase  (ECAssistantCore)  deps: [IHttpClient, IReadableContentExtractor, IHtmlTextConverter, EAgentConfig]
 - 🟡 EWebFetchToolTests  (ECAssistantCore)
 - 🟡 EWebSearchTool : EToolBase  (ECAssistantCore)  deps: [IHttpClient, EAgentConfig]
@@ -323,7 +325,7 @@ Packages: 2  |  Types: 414
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (99 types, ~12541 LOC)
+## Tests (100 types, ~12619 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -353,6 +355,7 @@ Packages: 2  |  Types: 414
 - 🟡 EMemoryManagerTests : IDisposable  (Tests)
 - 🟡 EShellAgentTests  (Tests)
 - 🟡 EToolBaseTests  (Tests)
+- 🟡 EUserAskToolTests  (Tests)
 - 🟡 EWebFetchToolTests  (Tests)
 - 🟡 EWebSearchToolTests  (Tests)
 - 🟡 EmbeddingRoutingTests  (Tests)

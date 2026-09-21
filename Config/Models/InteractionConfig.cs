@@ -16,4 +16,12 @@ public class InteractionConfig
     /// </summary>
     [JsonPropertyName("confirm_plan")]
     public bool ConfirmPlan { get; init; } = false;
+
+    /// <summary>
+    /// When true (default), the AskUser tool is registered so the model can raise its
+    /// own ambiguity checkpoints mid-task. Results flow back as tool output; null
+    /// answer falls back to the declared default option or autonomous continuation.
+    /// </summary>
+    [JsonPropertyName("allow_user_ask")]
+    public bool AllowUserAsk { get; init; } = true;
 }

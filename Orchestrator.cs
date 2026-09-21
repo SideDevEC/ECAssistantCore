@@ -327,7 +327,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                      // call in the batch is a 3+ repeat, stop the run (same as single path).
                     foreach (var tc in decision.ToolCalls)
                      {
-                        var batchSig = BuildCallSignature(tc.ToolName, tc.Args);
+                        var batchSig = BuildCallSignature(tc.ToolName ?? "(unknown)", tc.Args);
                         var batchRepeat = _repeatTracker.Record(batchSig);
                         if (_repeatTracker.IsStopLevel(batchRepeat))
                          {

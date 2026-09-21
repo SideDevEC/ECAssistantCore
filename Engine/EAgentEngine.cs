@@ -1292,7 +1292,9 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                     requestParams = _requestParams;
                  }
                 else
-                    requestParams = InferenceParamsFactory.Default.Create(_config);
+                    requestParams = _config != null
+                        ? InferenceParamsFactory.Default.Create(_config)
+                        : new InferenceRequestParams(); // no config — factory defaults
 
                 bool retriedAfterRecovery = false;
                 bool retryingStream = false;
@@ -1303,7 +1305,7 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                     // decision envelopes — convert to internal decision text instead of
                     // free-form streaming. Falls back to text streaming when unsupported.
                     // v13b: remote requests carry tool specs for native function calling.
-                    if (_useStructuredDecoding && !(_config.LlmProvider?.IsLocal ?? false))
+                    if (_useStructuredDecoding && !(_config?.LlmProvider?.IsLocal ?? false))
                         requestParams.Tools = BuildToolSpecs();
 
                     var structured = _useStructuredDecoding && _inferenceEngine != null

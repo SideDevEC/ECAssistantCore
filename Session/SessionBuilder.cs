@@ -244,6 +244,10 @@ public class SessionBuilder : ISessionBuilder
         var fileReader = new EFileReaderTool(fileSystem, _config);
         var webFetch = new EWebFetchTool(httpClient, contentExtractor, htmlConverter, _config);
         var fileResearch = new EFileResearchTool(fileSystem, _config);
+        // v14.9 ambiguity checkpoint — model-driven AskUser (gated: allow_user_ask)
+        Tools.User.EUserAskTool? userAsk = _config?.Interaction.AllowUserAsk != false
+            ? new Tools.User.EUserAskTool(session)
+            : null;
 
         // Ensure config sections exist for all tools (regardless of enabled state)
         // and register only enabled tools
@@ -256,6 +260,8 @@ public class SessionBuilder : ISessionBuilder
         EnsureAndRegister(session, fileReader);
         EnsureAndRegister(session, webFetch);
         EnsureAndRegister(session, fileResearch);
+        if (userAsk != null)
+            EnsureAndRegister(session, userAsk);
     }
 
     /// <summary>

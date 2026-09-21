@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-21T22:53:15.970137+00:00
-Edges: 78  |  Packages: 2
+Generated: 2026-09-21T23:05:32.040069+00:00
+Edges: 80  |  Packages: 2
 
 ---
 
@@ -42,6 +42,8 @@ Edges: 78  |  Packages: 2
 - EShellAgent ──implements──► EToolBase (ECAssistantCore)
 - EShellAgent ──uses──► IProcessRunner (ECAssistantCore)
 - ESubAgentTool ──implements──► EToolBase (ECAssistantCore)
+- EUserAskTool ──implements──► EToolBase (ECAssistantCore)
+- EUserAskTool ──uses──► ISessionOutput (ECAssistantCore)
 - EWebFetchTool ──implements──► EToolBase (ECAssistantCore)
 - EWebFetchTool ──uses──► IHtmlTextConverter (ECAssistantCore)
 - EWebFetchTool ──uses──► IHttpClient (ECAssistantCore)

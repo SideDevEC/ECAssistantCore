@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 99  |  LOC: 12541  |  ~3784 tokens
+Types: 100  |  LOC: 12619  |  ~3830 tokens
 
 ---
 
@@ -102,6 +102,10 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 ### Class: EToolBaseTests
 > Concrete subclass for testing EToolBase abstract members.
 Cross-package deps: ECAssistant.Core, ECAssistant.Core.Tools
+
+### Class: EUserAskToolTests
+> v14.9 AskUser tool — model-driven ambiguity checkpoint: parses options,
+Cross-package deps: ECAssistant.Core.Session, ECAssistant.Core.Tools.User, Xunit
 
 ### Class: EWebFetchToolTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Web
