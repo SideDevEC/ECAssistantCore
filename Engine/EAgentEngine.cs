@@ -218,7 +218,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
          }
      }
     public bool IsContextNearOverflow =>
-        _kvState.ContextSize > 0 && _kvState.ApproxTokens > _kvState.ContextSize * 0.8;
+        _kvState.ContextSize > 0 && _kvState.ApproxTokens > _kvState.ContextSize * CompactThreshold();
 
      // ── Constructor (HTTP transport) ───────────────────────────
 
@@ -462,6 +462,13 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
      }
 
      // ── Stateless helpers (summary / plan / decompose / intent) ──
+
+    /// <summary>Compaction trigger threshold — context_management.compact_threshold_percent (default 80%).</summary>
+    private double CompactThreshold() =>
+        _config?.ContextManagement?.CompactThresholdPercent is > 0 and <= 100
+            ? _config.ContextManagement.CompactThresholdPercent / 100.0
+            : 0.8;
+
 
     /// <summary>Build request params for a stateless (no session) call.</summary>
     private InferenceRequestParams BuildStatelessParams()
@@ -1128,7 +1135,7 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
          // KV cache overflow handling — rebuild with summarized conversation
         var tokenBudget = _contextWindow.GetTotalTokens();
         var maxBudget = (int)_contextWindow.MaxTokens;
-        if (maxBudget > 0 && tokenBudget > maxBudget * 0.8)
+        if (maxBudget > 0 && tokenBudget > maxBudget * CompactThreshold())
          {
             _out?.WriteWarning($"[KVCache] Context at {tokenBudget}/{maxBudget} tokens ({tokenBudget * 100 / maxBudget}%). Rebuilding cache...");
 

@@ -26,7 +26,7 @@ public sealed class OpenAIClient : IDisposable
     /// </summary>
     public OpenAIClient(string baseUrl, string? clientId = null, string? apiKey = null, TimeSpan? timeout = null)
     {
-        _baseUrl = baseUrl.TrimEnd('/');
+        _baseUrl = EndpointNormalizer.NormalizeBaseUrl(baseUrl);
         _clientId = clientId;
         _apiKey = apiKey;
         _http = new HttpClient { Timeout = timeout ?? TimeSpan.FromMinutes(10) };

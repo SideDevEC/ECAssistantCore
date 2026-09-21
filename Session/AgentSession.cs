@@ -163,6 +163,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
             inferenceEngine: inferenceEngine,
             kvCacheController: kvCacheController,
             inferenceParams: inferenceParams,
+            contextSize: config?.Llm.ContextSize > 0 ? config.Llm.ContextSize : 16384,
             workingDir: workingDir,
             logger: _logger,
             tokenizer: remoteTokenizer,
@@ -172,7 +173,9 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         _engine.WireSummaryService();
 
         // Create orchestrator
-        _orchestrator = new AgentOrchestrator(_engine, sessionOutput: this, maxTurns: 5, maxFailures: 3, toolPolicy: _toolPolicy, logger: _logger, config: config);
+        // Turn limit from config — interface.max_turns (0 = unlimited is clamped by the orchestrator).
+        var orchestratorTurns = config?.Interface.MaxTurns > 0 ? config.Interface.MaxTurns : 10;
+        _orchestrator = new AgentOrchestrator(_engine, sessionOutput: this, maxTurns: orchestratorTurns, maxFailures: 3, toolPolicy: _toolPolicy, logger: _logger, config: config);
 
         // Wire engine output through this session
         _engine.SetSessionOutput(this);

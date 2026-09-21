@@ -17,6 +17,14 @@ public sealed class RemoteModelProbe : IRemoteModelProbe
         _httpClient = httpClient;
     }
 
+    // Stateless utility — no mutable state.
+    private static async Task<IReadOnlyList<RemoteModelInfo>> ParseBodyAsync(HttpResponseMessage resp, CancellationToken ct)
+    {
+        await using var stream = await resp.Content.ReadAsStreamAsync(ct);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+        return ParseModels(doc.RootElement);
+    }
+
     /// <inheritdoc />
     public async Task<RemoteProbeResult> ProbeAsync(string endpoint, string? apiKey, CancellationToken ct = default)
     {
@@ -34,13 +42,23 @@ public sealed class RemoteModelProbe : IRemoteModelProbe
                     http.DefaultRequestHeaders.Authorization =
                         new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
 
-                using var resp = await http.GetAsync($"{endpoint.TrimEnd('/')}/models", ct);
-                if (!resp.IsSuccessStatusCode)
-                    return new RemoteProbeResult(false, Array.Empty<RemoteModelInfo>(), $"HTTP {(int)resp.StatusCode}");
+                // Endpoints may be typed with or without a trailing "/v1" — try both
+                // model-list locations before giving up.
+                var baseUrl = endpoint.TrimEnd('/');
+                using var resp = await http.GetAsync($"{baseUrl}/models", ct);
+                if (resp.IsSuccessStatusCode)
+                    return new RemoteProbeResult(true, await ParseBodyAsync(resp, ct));
 
-                await using var stream = await resp.Content.ReadAsStreamAsync(ct);
-                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
-                return new RemoteProbeResult(true, ParseModels(doc.RootElement));
+                // Endpoints may be typed with or without a trailing "/v1" — try the
+                // versioned model-list location before giving up.
+                if (!baseUrl.EndsWith("/v1", StringComparison.OrdinalIgnoreCase))
+                {
+                    using var resp2 = await http.GetAsync($"{baseUrl}/v1/models", ct);
+                    if (resp2.IsSuccessStatusCode)
+                        return new RemoteProbeResult(true, await ParseBodyAsync(resp2, ct));
+                    return new RemoteProbeResult(false, Array.Empty<RemoteModelInfo>(), $"HTTP {(int)resp.StatusCode}");
+                }
+                return new RemoteProbeResult(false, Array.Empty<RemoteModelInfo>(), $"HTTP {(int)resp.StatusCode}");
             }
         }
         catch (HttpRequestException ex)

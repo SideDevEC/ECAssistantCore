@@ -161,7 +161,9 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                  // v10.6: Dynamic turn limit — allow 2 turns per sub-task + 2 buffer for output/retries
                  // Recompute from the ORIGINAL maxTurns — Math.Max against the field made
                  // the limit grow monotonically across orchestrator runs.
-                 _maxTurns = Math.Max(_baseMaxTurns, _subTasks.Count * 2 + 2);
+                 var turnsPerSubtask = _config?.Interface.TurnsPerSubtask > 0 ? _config.Interface.TurnsPerSubtask : 2;
+                 var turnBuffer = _config?.Interface.SubtaskTurnBuffer > 0 ? _config.Interface.SubtaskTurnBuffer : 2;
+                 _maxTurns = Math.Max(_baseMaxTurns, _subTasks.Count * turnsPerSubtask + turnBuffer);
                 _out?.WriteInfo($"Decomposed into {_subTasks.Count} steps — max turns adjusted to {_maxTurns}");
                 for (int i = 0; i < _subTasks.Count; i++)
                     _out?.WriteDim($"  Step {i+1}: {_subTasks[i].Description}");

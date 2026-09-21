@@ -41,4 +41,18 @@ public class InterfaceConfig
     /// </summary>
     [JsonPropertyName("max_turns")]
     public int MaxTurns { get; init; } = 10;
+
+    /// <summary>
+    /// Turns budgeted per decomposed sub-task when the orchestrator expands the
+    /// turn limit for multi-step goals. Default: 2.
+    /// </summary>
+    [JsonPropertyName("turns_per_subtask")]
+    public int TurnsPerSubtask { get; init; } = 2;
+
+    /// <summary>
+    /// Extra buffer turns added on top of (subtasks × turns_per_subtask).
+    /// Default: 2.
+    /// </summary>
+    [JsonPropertyName("subtask_turn_buffer")]
+    public int SubtaskTurnBuffer { get; init; } = 2;
 }

@@ -45,7 +45,12 @@ public class ProjectContextManager : IDisposable
     /// <summary>Scan the project directory and build context.</summary>
     public async Task ScanProjectAsync()
     {
-        var exclude = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "bin", "obj", ".git", ".vs", "node_modules", ".snapshots", "vecmem", "Memory" };
+        var exclude = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "bin", "obj", ".git", ".vs", "node_modules", ".snapshots", "vecmem", "Memory", ".sessions", "Workspace", "tool_outputs" };
+        // Host runtime/config files are NOT project files — including them makes the
+        // model narrate the app's own config in every conversation. They remain
+        // accessible via the HOST ENVIRONMENT section of the system prompt.
+        var excludedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        { "appsettings.json", "model-catalog.json", ".project_context.json", "ECAssistant.log" };
         var exts = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".cs", ".csproj", ".sln", ".md", ".json", ".ps1", ".sql", ".html", ".css", ".js" };
 
         _context.Files.Clear();
@@ -53,6 +58,7 @@ public class ProjectContextManager : IDisposable
 
         var allFiles = Directory.GetFiles(_workingDir, "*.*", SearchOption.AllDirectories)
             .Where(f => !exclude.Any(ex => f.Contains(Path.DirectorySeparatorChar + ex + Path.DirectorySeparatorChar)))
+            .Where(f => !excludedFiles.Contains(Path.GetFileName(f)))
             .Where(f => exts.Contains(Path.GetExtension(f)))
             .ToList();
 
@@ -138,6 +144,11 @@ public class ProjectContextManager : IDisposable
             foreach (var r in _context.Relationships.Take(15))
                 sb.AppendLine($"  {r.Source} → {r.Target}");
         }
+
+        // Runtime/config files that remain in the list are the host app's internals —
+        // the model should not proactively comment on them.
+        sb.AppendLine("Note: appsettings.json and model-catalog.json (if listed) are the host application's runtime files, not part of your user's project. Do not proactively mention or analyze them — only touch them when the user explicitly asks about the app's own configuration.");
+        sb.AppendLine();
 
         return sb.ToString();
     }

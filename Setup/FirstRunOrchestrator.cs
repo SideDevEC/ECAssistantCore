@@ -108,15 +108,18 @@ public sealed class FirstRunOrchestrator
     {
         QuarantineBrokenAppsettings(appsettingsPath);
 
-        var detector = new FirstRunDetector(_llmModelsDir, _llmServerConfigPath, _llmServerBinaryPath);
+        var detector = new FirstRunDetector(_llmModelsDir, _llmServerConfigPath, _llmServerBinaryPath, appsettingsPath);
         var status = detector.Evaluate(catalog.Models);
 
         var remoteConfigured = File.Exists(appsettingsPath) && IsRemoteProviderConfigured(appsettingsPath);
 
         var localUsable = IsLocalModelUsable(appsettingsPath, _llmServerConfigPath);
-        if (!status.NeedsSetup && !status.NeedsServerBinary && (remoteConfigured || localUsable)) return;
+        // The server binary is only required when something local actually runs on it
+        // (a local chat model or local embeddings). Pure-remote installs never need it.
+        var needsBinary = status.NeedsServerBinary && (localUsable || IsLocalEmbeddingsRequested(appsettingsPath));
+        if (!status.NeedsSetup && !needsBinary && (remoteConfigured || localUsable)) return;
 
-        if (!status.NeedsSetup && status.NeedsServerBinary && !remoteConfigured)
+        if (!status.NeedsSetup && needsBinary && !remoteConfigured)
             _ui.WriteLine("[Setup] Server binary not installed — running installation.");
         else if (!status.NeedsSetup)
             _ui.WriteLine("[Setup] Config exists but no usable model or provider found — running installation.");
@@ -160,52 +163,43 @@ public sealed class FirstRunOrchestrator
     }
 
     /// <summary>
-    /// True when appsettings.json configures a usable remote provider.
-    /// Matches what SetupWizard/RemoteProviderSetupWriter writes: an
-    /// llm_provider section with mode="remote" and an endpoint, plus a
-    /// non-empty llm_providers section (either key is sufficient if only one
-    /// is present, since the writer always emits both).
+    /// True when appsettings.json requests local embeddings (embedding.enabled
+    /// with mode="local" and no remote endpoint). The server binary is only
+    /// required for a first-run install when something local runs on it.
     /// </summary>
     // Stateless utility — no mutable state.
-    public static bool IsRemoteProviderConfigured(string appsettingsPath)
+    public static bool IsLocalEmbeddingsRequested(string appsettingsPath)
     {
         try
         {
             using var doc = JsonDocument.Parse(File.ReadAllText(appsettingsPath));
-            var root = doc.RootElement;
-            if (root.ValueKind != JsonValueKind.Object) return false;
+            if (!doc.RootElement.TryGetProperty("embedding", out var emb) ||
+                emb.ValueKind != JsonValueKind.Object) return false;
 
-            bool hasRemoteMode = false, hasEndpoint = false, hasProviders = false;
+            var enabled = emb.TryGetProperty("enabled", out var en) &&
+                          en.ValueKind == JsonValueKind.True;
+            var modeIsLocal = emb.TryGetProperty("mode", out var mode) &&
+                              mode.ValueKind == JsonValueKind.String &&
+                              string.Equals(mode.GetString(), "local", StringComparison.OrdinalIgnoreCase);
+            var endpointSet = emb.TryGetProperty("endpoint", out var ep) &&
+                              ep.ValueKind == JsonValueKind.String &&
+                              !string.IsNullOrWhiteSpace(ep.GetString());
 
-            if (root.TryGetProperty("llm_provider", out var llm) && llm.ValueKind == JsonValueKind.Object)
-            {
-                hasRemoteMode = llm.TryGetProperty("mode", out var mode) &&
-                                mode.ValueKind == JsonValueKind.String &&
-                                string.Equals(mode.GetString(), "remote", StringComparison.OrdinalIgnoreCase);
-                hasEndpoint = llm.TryGetProperty("endpoint", out var endpoint) &&
-                              endpoint.ValueKind == JsonValueKind.String &&
-                              !string.IsNullOrWhiteSpace(endpoint.GetString());
-            }
-
-            if (root.TryGetProperty("llm_providers", out var providers) && providers.ValueKind == JsonValueKind.Object)
-            {
-                hasProviders =
-                    (providers.TryGetProperty("default_provider", out var def) &&
-                     def.ValueKind == JsonValueKind.String &&
-                     !string.IsNullOrWhiteSpace(def.GetString())) ||
-                    (providers.TryGetProperty("providers", out var list) &&
-                     list.ValueKind == JsonValueKind.Array && list.GetArrayLength() > 0);
-            }
-
-            return hasRemoteMode && hasEndpoint && hasProviders;
+            return enabled && (modeIsLocal || !endpointSet);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {
-            // Unreadable/invalid config: treat as not configured; the wizard
-            // (or quarantine) will handle it.
             return false;
         }
     }
+
+    /// <summary>
+    /// True when appsettings.json configures a usable remote provider.
+    /// Delegates to <see cref="FirstRunDetector.IsRemoteProviderConfigured"/>.
+    /// </summary>
+    // Stateless utility — no mutable state.
+    public static bool IsRemoteProviderConfigured(string appsettingsPath) =>
+        FirstRunDetector.IsRemoteProviderConfigured(appsettingsPath);
 
     /// <summary>
     /// True when a local model is usable: appsettings.json llm.model_path resolves

@@ -18,4 +18,11 @@ public class ContextManagementConfig
     public bool AutoShiftOnGenerate { get; init; } = true;
     [JsonPropertyName("shift_guardrail_threshold")]
     public int ShiftGuardrailThreshold { get; init; } = 3;
+
+    /// <summary>
+    /// Context-window fill percentage (0-100) that triggers KV-cache rebuild +
+    /// conversation compaction. Default: 80.
+    /// </summary>
+    [JsonPropertyName("compact_threshold_percent")]
+    public int CompactThresholdPercent { get; init; } = 80;
 }

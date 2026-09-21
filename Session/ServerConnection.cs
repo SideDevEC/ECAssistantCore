@@ -49,7 +49,9 @@ public sealed class ServerConnection
     /// </summary>
     public async Task<ServerConnection> ConnectAsync(string endpoint, CancellationToken ct = default)
     {
-        Endpoint = endpoint.TrimEnd('/');
+        // Normalize so users can enter endpoints with or without a trailing "/v1":
+        // all subsequent probes and clients append versioned paths themselves.
+        Endpoint = Transport.EndpointNormalizer.NormalizeBaseUrl(endpoint);
         Capabilities = ServerCapabilities.None;
 
         // 1. ECAssistant server?
