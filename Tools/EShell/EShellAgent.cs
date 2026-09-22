@@ -23,6 +23,7 @@ public class EShellAgent : EToolBase
         "Full filesystem and shell command execution on the host OS. " +
         "Can read/write/copy/move/delete files and folders, run any shell command, " +
         "compile code, search files, manage projects. " +
+        "NEVER use heredocs ('<<') to write files — use ECodeEditor with action=create and the 'content' argument instead. " +
         "Working directory is set automatically — use relative paths.\n" +
         HostShellPrompt();
 
@@ -127,6 +128,18 @@ public class EShellAgent : EToolBase
 
         try
         {
+            // v14.10.2: heredoc-collapse guard. Small/grammar-constrained models emit
+            // tool-call args with newlines collapsed to spaces, turning a multi-line
+            // heredoc into ONE line — which zsh -c treats as "delimiter never found":
+            // exit 0, empty output, and NO side effect (verified repro). Report it
+            // instead of reporting SUCCESS on a silent no-op.
+            if (command.Contains("<<") && !command.Contains('\n'))
+            {
+                return EToolResult.Failure(Name,
+                    "Command contains a heredoc ('<<') but has no newlines — the heredoc body was lost when the arguments were produced, so this command would do nothing. " +
+                    "Do NOT use shell heredocs to write files: use the ECodeEditor tool with action=create and pass the file content in the 'content' argument instead.");
+            }
+
             var result = await RunShellAsync(command, _workingDirectory, cancellationToken);
 
             var hasStderrOutput = !string.IsNullOrWhiteSpace(result.StandardError);

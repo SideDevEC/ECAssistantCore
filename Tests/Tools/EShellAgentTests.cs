@@ -205,4 +205,34 @@ public class EShellAgentTests
 
         Assert.Contains("Missing command", result.Error);
     }
+
+    // ── v14.10.2: heredoc-collapse guard ──
+
+    [Fact]
+    public async Task ExecuteAsync_OneLineHeredoc_FailsWithoutExecuting()
+    {
+        var token = new CancellationTokenSource().Token;
+        var tool = CreateTool();
+
+        var result = await tool.ExecuteAsync(
+            new Dictionary<string, string?> { ["command"] = "cat > /tmp/f.txt << 'EOF' Sub Foo() End Sub EOF" }, token);
+
+        Assert.Contains("heredoc", result.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ECodeEditor", result.Error);
+        _processRunner.Verify(p => p.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_MultilineHeredoc_StillExecutes()
+    {
+        var token = new CancellationTokenSource().Token;
+        _processRunner.Setup(p => p.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult(0, "", "", false));
+        var tool = CreateTool();
+
+        var result = await tool.ExecuteAsync(
+            new Dictionary<string, string?> { ["command"] = "cat > /tmp/f.txt << 'EOF'\nSub Foo()\nEnd Sub\nEOF" }, token);
+
+        _processRunner.Verify(p => p.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

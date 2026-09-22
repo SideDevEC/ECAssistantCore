@@ -98,7 +98,16 @@ public class ECodeEditorTool : EToolBase
                 _fileSystem.CreateDirectory(dir);
 
             await Task.Run(() => _fileSystem.WriteFile(fullPath, content));
-            return (true, $"✅ Created {file} ({content.Length} chars).\nContent:\n{content}");
+            // v14.10.2: verify-on-write — models claim success even when the write
+            // silently failed; report actual disk bytes so the next turn sees the truth.
+            int bytesOnDisk;
+            try { bytesOnDisk = _fileSystem.ReadFile(fullPath).Length; }
+            catch { bytesOnDisk = 0; }
+            if (bytesOnDisk != content.Length)
+            {
+                return (false, $"ECodeEditor: write NOT verified for {file} — expected {content.Length} chars, found {bytesOnDisk} on disk.");
+            }
+            return (true, $"✅ Created {file} ({bytesOnDisk} chars verified on disk).\nContent:\n{content}");
         }
         catch (Exception ex)
         {

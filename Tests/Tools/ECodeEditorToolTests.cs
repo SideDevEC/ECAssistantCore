@@ -58,6 +58,7 @@ public class ECodeEditorToolTests
     public async Task ExecuteAsync_Create_NewFile_CreatesFile()
     {
         _fileSystem.Setup(f => f.FileExists(It.IsAny<string>())).Returns(false);
+        _fileSystem.Setup(f => f.ReadFile(It.IsAny<string>())).Returns("Hello");
         var tool = CreateTool();
 
         var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["action"] = "create", ["file"] = "test.txt", ["content"] = "Hello" });
@@ -93,6 +94,7 @@ public class ECodeEditorToolTests
     {
         _fileSystem.Setup(f => f.FileExists(It.IsAny<string>())).Returns(false);
         _fileSystem.Setup(f => f.DirectoryExists(It.IsAny<string>())).Returns(false);
+        _fileSystem.Setup(f => f.ReadFile(It.IsAny<string>())).Returns("Hi");
         var tool = CreateTool();
 
         var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["action"] = "create", ["file"] = "sub/test.txt", ["content"] = "Hi" });
@@ -106,6 +108,7 @@ public class ECodeEditorToolTests
     public async Task ExecuteAsync_Create_WithNewTextInsteadOfContent_WritesFile()
     {
         _fileSystem.Setup(f => f.FileExists(It.IsAny<string>())).Returns(false);
+        _fileSystem.Setup(f => f.ReadFile(It.IsAny<string>())).Returns("print(1)");
         var tool = CreateTool();
 
         var result = await tool.ExecuteAsync(new Dictionary<string, string?> { ["action"] = "create", ["file"] = "fib.py", ["new_text"] = "print(1)" });
