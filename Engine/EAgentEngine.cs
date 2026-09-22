@@ -1495,6 +1495,14 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
         if (string.IsNullOrWhiteSpace(raw))
             return new LLMDecision(false, null, new Dictionary<string, string?>(), raw);
 
+        // v14.10.1: the system prompt mandates the {"thinking","answer"} envelope —
+        // when the structured path fell back to text streaming, the model still
+        // emits it and it leaked to the UI as raw JSON. Parse the envelope here so
+        // fallback answers render clean (answer only) and reasoning is preserved.
+        var envelope = TryParseJsonEnvelope(raw);
+        if (envelope != null)
+            return envelope;
+
         var toolCalls = new List<ToolCallRequest>();
         var searchFrom = 0;
         while (searchFrom < raw.Length)
@@ -1516,6 +1524,65 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
             return new LLMDecision(toolCalls);
 
         return new LLMDecision(false, null, new Dictionary<string, string?>(), raw);
+     }
+
+    /// <summary>
+    /// v14.10.1: parse a JSON decision envelope ({"thinking","answer"} or
+    /// {"thinking","toolcalls":[{name,args}]}) out of fallback text-stream output.
+    /// Tolerates markdown code fences. Returns null when the text is not an
+    /// envelope (plain prose) — caller keeps legacy behavior.
+    /// </summary>
+    private static LLMDecision? TryParseJsonEnvelope(string raw)
+     {
+        var trimmed = raw.Trim();
+        if (trimmed.StartsWith("```", StringComparison.Ordinal))
+         {
+            var firstNl = trimmed.IndexOf('\n');
+            var lastFence = trimmed.LastIndexOf("```", StringComparison.Ordinal);
+            if (firstNl >= 0 && lastFence > firstNl)
+                trimmed = trimmed.Substring(firstNl + 1, lastFence - firstNl - 1).Trim();
+         }
+        if (!trimmed.StartsWith("{", StringComparison.Ordinal))
+            return null;
+
+        try
+         {
+            using var doc = System.Text.Json.JsonDocument.Parse(trimmed);
+            var root = doc.RootElement;
+            if (root.ValueKind != System.Text.Json.JsonValueKind.Object)
+                return null;
+
+            string? thinking = null;
+            if (root.TryGetProperty("thinking", out var tElem) && tElem.ValueKind == System.Text.Json.JsonValueKind.String)
+                thinking = tElem.GetString();
+
+            if (root.TryGetProperty("answer", out var aElem) && aElem.ValueKind == System.Text.Json.JsonValueKind.String)
+                return new LLMDecision(false, null, new Dictionary<string, string?>(), aElem.GetString(), thinking);
+
+            if (root.TryGetProperty("toolcalls", out var tcElem) && tcElem.ValueKind == System.Text.Json.JsonValueKind.Array)
+             {
+                var requests = new List<ToolCallRequest>();
+                foreach (var item in tcElem.EnumerateArray())
+                 {
+                    if (item.ValueKind != System.Text.Json.JsonValueKind.Object) continue;
+                    var name = item.TryGetProperty("name", out var nElem) && nElem.ValueKind == System.Text.Json.JsonValueKind.String
+                        ? nElem.GetString() : null;
+                    if (string.IsNullOrEmpty(name)) continue;
+                    var args = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+                    if (item.TryGetProperty("args", out var argsElem) && argsElem.ValueKind == System.Text.Json.JsonValueKind.Object)
+                        foreach (var p in argsElem.EnumerateObject())
+                            args[p.Name] = p.Value.ValueKind == System.Text.Json.JsonValueKind.String ? p.Value.GetString() : p.Value.GetRawText();
+                    requests.Add(new ToolCallRequest { ToolName = name!, Args = args, Index = requests.Count + 1 });
+                 }
+                if (requests.Count > 0)
+                    return new LLMDecision(requests, thinking);
+             }
+         }
+        catch (System.Text.Json.JsonException)
+         {
+            // Not a valid envelope — plain text or malformed; caller falls through.
+         }
+        return null;
      }
 
     /// <summary>Parses legacy &lt;toolcall&gt; block content (text fallback only): tool name + &lt;arg&gt;value&lt;/arg&gt; pairs.</summary>

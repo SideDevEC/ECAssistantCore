@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 317  |  LOC: 27036  |  ~14644 tokens
+Types: 318  |  LOC: 27136  |  ~14684 tokens
 
 ---
 
@@ -814,6 +814,10 @@ Cross-package deps: ECAssistant.Core.Setup
 
 ### Class: InterfaceConfig
 > UI and output configuration. Verbose/silent controls token stream visibility.
+
+### Class: JsonEnvelopeFallbackTests
+> v14.10.1: when the structured path falls back to text streaming, the model
+Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: KvCacheStatus
 > KV cache control over HTTP. Replaces direct LLamaSharp executor state management.

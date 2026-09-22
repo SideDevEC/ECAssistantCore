@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 97  |  LOC: 12208  |  ~3761 tokens
+Types: 98  |  LOC: 12258  |  ~3800 tokens
 
 ---
 
@@ -167,6 +167,10 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 > Vision-capability + embeddings-mode wiring: mmproj pairing, vision_enabled flag,
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Setup
+
+### Class: JsonEnvelopeFallbackTests
+> v14.10.1: when the structured path falls back to text streaming, the model
+Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: LlmProviderRegistryTests
 Implements: IDisposable

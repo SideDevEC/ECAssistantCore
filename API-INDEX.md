@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-22T09:01:51.964273+00:00
-Packages: 2  |  Types: 414
+Generated: 2026-09-22T13:16:08.232725+00:00
+Packages: 2  |  Types: 416
 
 ---
 
-## ECAssistantCore (317 types, ~27036 LOC)
+## ECAssistantCore (318 types, ~27136 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -168,6 +168,7 @@ Packages: 2  |  Types: 414
 - 🟡 InstallerVisionEmbeddingTests : IDisposable  (ECAssistantCore)
 - 🟡 InteractionConfig  (ECAssistantCore)
 - 🟡 InterfaceConfig  (ECAssistantCore)
+- 🟡 JsonEnvelopeFallbackTests  (ECAssistantCore)
 - 🟡 KvCacheStatus  (ECAssistantCore)
 - 🟡 LLMDecision  (ECAssistantCore)  deps: [bool, string, Dictionary, string? answerText =, string? reasoning =, List, string? reasoning =]
 - 🟡 LlmConfig  (ECAssistantCore)
@@ -325,7 +326,7 @@ Packages: 2  |  Types: 414
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (97 types, ~12208 LOC)
+## Tests (98 types, ~12258 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -371,6 +372,7 @@ Packages: 2  |  Types: 414
 - 🟡 ImageAttachmentParserTests : IDisposable  (Tests)
 - 🟡 InMemoryVectorStoreTests  (Tests)
 - 🟡 InstallerVisionEmbeddingTests : IDisposable  (Tests)
+- 🟡 JsonEnvelopeFallbackTests  (Tests)
 - 🟡 LlmProviderRegistryTests : IDisposable  (Tests)
 - 🟡 LlmServerClientReconnectTests  (Tests)
 - 🟡 LoggerTests : IDisposable  (Tests)
