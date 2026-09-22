@@ -35,11 +35,6 @@ public sealed class AgentOrchestrator : IAsyncDisposable
     // v14.9: long-range loop detection (A→B→A→B, 3+ identical repeats, batch repeats)
     private readonly Engine.ToolRepeatTracker _repeatTracker = new();
     private int _currentSubTask = 0;
-    // v14.10.3: non-blocking background planner (Emre's option 3).
-    private Task<List<SubTask>?>? _backgroundPlanTask;
-    private bool _backgroundPlanFolded;
-    private readonly Engine.BackgroundPlannerPolicy _backgroundPlannerPolicy = new();
-    private string _backgroundPlanGoal = "";
      // v10.17: Execution plan from StepMapper
     private ExecutionPlan? _executionPlan = null;
 
@@ -123,24 +118,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
          // v11.4: Gate — skip decomposition for conversational questions
          var planner = _engine.TaskPlanner;
          var preplanning = _config?.Interface.Preplanning == true;
-         if (preplanning && planner != null && _config?.Interface.BackgroundPlanner == true)
-         {
-            // v14.10.3: non-blocking background planner (option 3). The decision loop
-            // starts immediately on the raw goal; the decomposition pass runs in
-            // parallel and folds in on arrival (loop-top hook). If the loop finishes
-            // first, the plan is simply discarded — no latency is ever added.
-            _out?.WriteDim("Background planner armed — decision loop starts immediately.");
-            _subTasks = new List<SubTask> { new SubTask { Description = goal, Status = SubTaskStatus.Pending } };
-            _currentSubTask = 0;
-            _backgroundPlanFolded = false;
-            _backgroundPlanGoal = goal;
-            _backgroundPlanTask = PlanInBackgroundAsync(goal, planner);
-            // Observe faults so an abandoned plan never becomes an UnobservedTaskException.
-            _ = _backgroundPlanTask.ContinueWith(t =>
-                _logger?.Warn("BackgroundPlanner", "Decomposition faulted: " + t.Exception?.GetBaseException().Message),
-                TaskContinuationOptions.OnlyOnFaulted);
-         }
-         else if (!preplanning)
+         if (!preplanning)
          {
             // In-loop planning (default): skip the 2-3 pre-pass LLM calls; the
             // loop's model plans as it goes (Claude Code-style). Turn budget
@@ -285,9 +263,6 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                         Status = OrchestratorStatus.GoalAchieved   // not an error — user chose to stop
                      };
                  }
-            // v14.10.3: fold in the background plan the moment it lands (single-shot).
-            FoldInBackgroundPlanIfReady();
-
             _logger?.Info("Orchestrator", $"Turn {_turnCount + 1}/{_maxTurns}");
 
                   // v12.0: chat-classified goals answer directly — no toolcall demanded
@@ -828,92 +803,6 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
       // v10.6: Build step-aware directive that tells the LLM which sub-task to focus on.
       // This is injected after each tool result to guide the LLM through chained tasks.
-    // ─── v14.10.3: background planner (option 3) ───
-
-    /// <summary>
-    /// Runs the decomposition pass off the decision loop's critical path. Mirrors the
-    /// blocking path's behavior (verb gate → LLM decomposition → keyword fallback)
-    /// but returns the raw plan for a later fold-in decision.
-    /// </summary>
-    private async Task<List<SubTask>?> PlanInBackgroundAsync(string goal, ITaskPlanner planner)
-    {
-        try
-        {
-            if (LooksConversational(goal))
-            {
-                _out?.WriteDim("[BackgroundPlanner] Conversational question — planning skipped.");
-                return null;
-            }
-
-            var steps = await _engine.DecomposeTaskAsync(goal);
-            if (steps != null && steps.Count > 0)
-                return steps.Select(s => new SubTask { Description = s, Status = SubTaskStatus.Pending }).ToList();
-
-            var keywordSteps = planner.Decompose(goal);
-            return keywordSteps != null && keywordSteps.Count > 0 ? keywordSteps : null;
-        }
-        catch (Exception ex)
-        {
-            _logger?.Warn("BackgroundPlanner", $"Decomposition failed: {ex.Message}");
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// v14.10.3: fold the background plan in once, when it completes while the loop
-    /// is still running. Uses BackgroundPlannerPolicy: fold only multi-step plans
-    /// into an active loop; everything else is discarded without touching the loop.
-    /// The plan becomes the sub-task list — subsequent [TASK PROGRESS] directives
-    /// carry it automatically — and an explicit [BACKGROUND PLAN] message is
-    /// injected so the model immediately knows the plan exists.
-    /// </summary>
-    private void FoldInBackgroundPlanIfReady()
-    {
-        if (_backgroundPlanTask == null || _backgroundPlanFolded || !_backgroundPlanTask.IsCompleted)
-            return;
-
-        _backgroundPlanFolded = true;
-        List<SubTask>? bgPlan = null;
-        if (_backgroundPlanTask.Status == TaskStatus.RanToCompletion)
-            bgPlan = _backgroundPlanTask.Result;
-
-        var planSize = bgPlan?.Count ?? 0;
-        if (_backgroundPlannerPolicy.Decide(planSize, loopFinished: false) != Engine.BackgroundPlanAction.FoldIn || bgPlan == null)
-        {
-            _out?.WriteDim("[BackgroundPlanner] Plan too trivial or loop finished — discarded.");
-            return;
-        }
-
-        _subTasks = bgPlan;
-        _currentSubTask = 0;
-        _subTasks[0].Status = SubTaskStatus.InProgress;
-        var turnsPerSubtask = _config?.Interface.TurnsPerSubtask > 0 ? _config.Interface.TurnsPerSubtask : 2;
-        var turnBuffer = _config?.Interface.SubtaskTurnBuffer > 0 ? _config.Interface.SubtaskTurnBuffer : 2;
-        _maxTurns = _backgroundPlannerPolicy.AdjustTurnBudget(_maxTurns, planSize, turnsPerSubtask, turnBuffer);
-
-        _out?.WriteSuccess($"[BackgroundPlanner] Plan arrived at turn {_turnCount + 1}: {_subTasks.Count} steps (max turns → {_maxTurns}).");
-        for (int i = 0; i < _subTasks.Count; i++)
-            _out?.WriteDim($"  Step {i + 1}: {_subTasks[i].Description}");
-
-        _engine.InjectExecutionPlan(BuildBackgroundPlanDirective(_backgroundPlanGoal));
-    }
-
-    /// <summary>One-shot [BACKGROUND PLAN] directive injected when a background plan folds in.</summary>
-    private string BuildBackgroundPlanDirective(string originalGoal)
-    {
-        var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"[BACKGROUND PLAN] The planning pass for \"{originalGoal}\" finished while you were already working.");
-        sb.AppendLine("Below is the decomposed plan for the overall goal. Check the tool results above:");
-        sb.AppendLine("if a step is already done, do NOT repeat it — continue with the first incomplete step.");
-        sb.AppendLine();
-        for (int i = 0; i < _subTasks.Count; i++)
-        {
-            var safeDesc = _subTasks[i].Description.Replace("<", "&lt;").Replace(">", "&gt;");
-            sb.AppendLine($"{i + 1}. {safeDesc}");
-        }
-        return sb.ToString();
-    }
-
     private string BuildStepDirective()
       {
         var sb = new StringBuilder();

@@ -68,17 +68,6 @@ public class InterfaceConfig
     public bool Preplanning { get; init; } = true;
 
     /// <summary>
-    /// v14.10.3 (Emre's option 3): when true AND preplanning=true, the decomposition
-    /// pass runs on a BACKGROUND task while the decision loop starts immediately —
-    /// zero added latency for tasks the loop solves before the plan arrives. When the
-    /// plan arrives mid-loop it folds in once (steps + raised turn budget); if the
-    /// loop already answered, the plan is discarded. No conversational classifier
-    /// needed — the verb gate still runs inside the background planner.
-    /// </summary>
-    [JsonPropertyName("background_planner")]
-    public bool BackgroundPlanner { get; init; } = false;
-
-    /// <summary>
     /// Verifier contract: the command the agent runs to verify its work after code
     /// edits (act → observe → verify loop). Injected into the system prompt and
     /// surfaced by the orchestrator when edits happened but it was never run.
