@@ -137,10 +137,22 @@ public sealed class HttpStreamingEngine : IInferenceEngine
             };
         }).ToList();
 
+        // v14.10.2: carry the full conversation — system prompt (static prefix) and
+        // prior turns — instead of a context-free single user message. The local path
+        // gets this from the server-side KV prefix/session; remote has no server-side
+        // state, so without this the model is a goldfish (no rules, no history).
+        var messages = new List<object>();
+        if (!string.IsNullOrWhiteSpace(parameters.SystemPrompt))
+            messages.Add(new { role = "system", content = parameters.SystemPrompt });
+        if (parameters.HistoryMessages is { Count: > 0 })
+            foreach (var (role, msgContent) in parameters.HistoryMessages)
+                messages.Add(new { role, content = msgContent });
+        messages.Add(new { role = "user", content = prompt });
+
         var body = JsonSerializer.Serialize(new
         {
             model = parameters.ModelId ?? _defaultModelId,
-            messages = new[] { new { role = "user", content = prompt } },
+            messages,
             stream = false,
             tools,
             tool_choice = "auto",
@@ -157,7 +169,7 @@ public sealed class HttpStreamingEngine : IInferenceEngine
         var message = choices[0].GetProperty("message");
         var thinking = message.TryGetProperty("reasoning_content", out var rc) && rc.ValueKind == JsonValueKind.String
             ? rc.GetString() ?? ""
-            : message.TryGetProperty("content", out var c) && c.ValueKind == JsonValueKind.String ? c.GetString() ?? "" : "";
+            : "";
 
         if (message.TryGetProperty("tool_calls", out var toolCalls) && toolCalls.ValueKind == JsonValueKind.Array && toolCalls.GetArrayLength() > 0)
         {
@@ -188,9 +200,19 @@ public sealed class HttpStreamingEngine : IInferenceEngine
         }
 
         // No tool calls — content is the answer, reasoning is the thinking.
+        // v14.10.2: envelope-trained models sometimes echo the {"thinking","answer"}
+        // envelope as plain content. Unwrap it so raw JSON never leaks to the UI
+        // (previously thinking ALSO duplicated content when no reasoning_content was
+        // returned, doubling the leak).
         var content = message.TryGetProperty("content", out var contentEl) && contentEl.ValueKind == JsonValueKind.String
             ? contentEl.GetString() ?? ""
             : thinking;
+        if (content.TrimStart().StartsWith('{'))
+        {
+            var unwrapped = Engine.StructuredDecisionAdapter.TryExtractAnswer(content);
+            if (unwrapped != null)
+                content = unwrapped;
+        }
         return JsonSerializer.Serialize(new { thinking, answer = content });
     }
 

@@ -584,6 +584,10 @@ User: " + userRequest + "\n";
             var raw = await _inferenceEngine.GenerateAsync(prompt, decomposeParams, CancellationToken.None);
             _logger?.Info("Decompose", $"Raw output:\n{raw}");
 
+            // v14.10.2: envelope-trained models wrap even plain-text replies in
+            // {"thinking","answer"} — unwrap before parsing numbered steps.
+            raw = Engine.StructuredDecisionAdapter.TryExtractAnswer(raw) ?? raw;
+
             if (string.IsNullOrWhiteSpace(raw))
                 return null;
 
@@ -1308,8 +1312,15 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                     // decision envelopes — convert to internal decision text instead of
                     // free-form streaming. Falls back to text streaming when unsupported.
                     // v13b: remote requests carry tool specs for native function calling.
+                    // v14.10.2: remote also gets the static prefix (system prompt) and
+                    // conversation history — remote providers have NO server-side state,
+                    // so without this the model sees only the incremental turn fragment.
                     if (_useStructuredDecoding && !(_config?.LlmProvider?.IsLocal ?? false))
+                    {
                         requestParams.Tools = BuildToolSpecs();
+                        requestParams.SystemPrompt = BuildRemoteSystemPrompt();
+                        requestParams.HistoryMessages = BuildRemoteHistoryMessages();
+                    }
 
                     var structured = _useStructuredDecoding && _inferenceEngine != null
                         ? await TryGenerateStructuredAsync(incrementalInput, requestParams, cts.Token)
@@ -1680,6 +1691,62 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                 ? t.Description
                 : t.Description + "\n\nExample: " + t.UsageExample,
          }).ToList();
+
+    /// <summary>
+    /// v14.10.2: system prompt for remote native function-calling mode.
+    /// The static prefix's "respond as JSON envelope" section is meant for the local
+    /// grammar path; sent verbatim to a native-tools provider it makes the model echo
+    /// envelope JSON as plain text. Append an authoritative override instead.
+    /// </summary>
+    private string BuildRemoteSystemPrompt()
+     {
+        var prefix = _cachedStaticPrefix ?? BuildSystemToolsPrompt();
+        return prefix +
+            "\n## RESPONSE FORMAT (native tools mode)\n" +
+            "You have native function-calling tools (provided in this request).\n" +
+            "- To use a tool, emit a NATIVE tool call. Do NOT write JSON, envelopes, or code blocks in your reply text.\n" +
+            "- When you have the final response for the user, write it as PLAIN TEXT (no JSON, no envelope).\n";
+     }
+
+    /// <summary>
+    /// v14.10.2: conversation history for remote mode, mapped to OpenAI chat roles.
+    /// System messages are skipped (the static prefix carries them). The LAST tool
+    /// output is excluded — BuildIncrementalInput already includes it on turn 2+.
+    /// </summary>
+    private List<(string Role, string Content)>? BuildRemoteHistoryMessages()
+     {
+        var messages = _contextWindow.GetWindowMessages();
+        if (messages.Count == 0)
+            return null;
+
+        var lastToolOutputIndex = -1;
+        for (var i = messages.Count - 1; i >= 0; i--)
+        {
+            if (messages[i].Role == "tool_output") { lastToolOutputIndex = i; break; }
+        }
+
+        var result = new List<(string, string)>();
+        for (var i = 0; i < messages.Count; i++)
+         {
+            var m = messages[i];
+            if (string.IsNullOrWhiteSpace(m.Content)) continue;
+            switch (m.Role)
+             {
+                case "user":
+                    result.Add(("user", m.Content));
+                    break;
+                case "assistant":
+                    result.Add(("assistant", m.Content));
+                    break;
+                case "tool_output":
+                    if (i == lastToolOutputIndex) continue; // duplicated in incremental input
+                    result.Add(("user", $"[Tool result from {m.Source}]:\n{m.Content}"));
+                    break;
+                // "system" messages live in the static prefix — skip here.
+             }
+         }
+        return result.Count > 0 ? result : null;
+     }
 
     /// <summary>v14: Parses the grammar-forced envelope JSON directly into an LLMDecision; null when unsupported/unavailable.</summary>
     private async Task<LLMDecision?> TryGenerateStructuredAsync(string prompt, InferenceRequestParams parameters, CancellationToken ct)

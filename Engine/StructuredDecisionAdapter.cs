@@ -51,8 +51,58 @@ public static class StructuredDecisionAdapter
             return LLMDecision.FromEnvelope(thinking, null, toolCalls);
          }
 
-        // Neither answer nor toolcalls — treat thinking as the answer (defense in depth;
-        // the server's StructuredDecoder normally rejects this first).
         return LLMDecision.FromEnvelope(thinking, null, null);
+    }
+
+    /// <summary>
+    /// v14.10.2: envelope-tolerant extraction for stateless side-channel calls
+    /// (decompose, plan, summarize). Envelope-trained models often wrap their
+    /// plain-text reply in {"thinking","answer"} even when the prompt asks for
+    /// free text. Returns the answer text when <paramref name="raw"/> is (or
+    /// contains) a valid decision envelope; null when it is plain text.
+    /// Stateless utility — no mutable state.
+    /// </summary>
+    public static string? TryExtractAnswer(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return null;
+
+        var trimmed = raw.Trim();
+        if (!trimmed.StartsWith('{'))
+            return null;
+
+        // Find the matching closing brace of the top-level object (string-aware).
+        int end = -1;
+        var inString = false;
+        var escape = false;
+        var depth = 0;
+        for (var i = 0; i < trimmed.Length; i++)
+        {
+            var ch = trimmed[i];
+            if (escape) { escape = false; continue; }
+            if (ch == '\\') { escape = true; continue; }
+            if (ch == '"') inString = !inString;
+            if (inString) continue;
+            if (ch == '{') depth++;
+            else if (ch == '}')
+            {
+                depth--;
+                if (depth == 0) { end = i; break; }
+            }
+        }
+        if (end < 0)
+            return null;
+
+        try
+        {
+            var decision = ParseDecision(trimmed.Substring(0, end + 1));
+            return decision.WantsDirectAnswer && !string.IsNullOrWhiteSpace(decision.AnswerText)
+                ? decision.AnswerText
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 }

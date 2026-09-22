@@ -55,4 +55,47 @@ public class StructuredDecisionAdapterTests
     {
         Assert.ThrowsAny<System.Text.Json.JsonException>(() => StructuredDecisionAdapter.ParseDecision("junk"));
     }
+
+    // ── v14.10.2 TryExtractAnswer ──
+
+    [Fact]
+    public void TryExtractAnswer_EnvelopeWithAnswer_ReturnsAnswer()
+    {
+        const string raw = """{"thinking":"greeting","answer":"Hello there!"}""";
+        Assert.Equal("Hello there!", StructuredDecisionAdapter.TryExtractAnswer(raw));
+    }
+
+    [Fact]
+    public void TryExtractAnswer_EnvelopeWithToolcalls_ReturnsNull()
+    {
+        const string raw = """{"thinking":"need data","toolcalls":[{"name":"EShellAgent","args":{"command":"ls"}}]}""";
+        Assert.Null(StructuredDecisionAdapter.TryExtractAnswer(raw));
+    }
+
+    [Fact]
+    public void TryExtractAnswer_PlainText_ReturnsNull()
+    {
+        Assert.Null(StructuredDecisionAdapter.TryExtractAnswer("1. Read file\n2. Fix bug"));
+    }
+
+    [Fact]
+    public void TryExtractAnswer_Empty_ReturnsNull()
+    {
+        Assert.Null(StructuredDecisionAdapter.TryExtractAnswer(""));
+        Assert.Null(StructuredDecisionAdapter.TryExtractAnswer("   "));
+    }
+
+    [Fact]
+    public void TryExtractAnswer_BracesInsideStrings_AreNotCounted()
+    {
+        const string raw = """{"thinking":"json { inside","answer":"done } ok"}""";
+        Assert.Equal("done } ok", StructuredDecisionAdapter.TryExtractAnswer(raw));
+    }
+
+    [Fact]
+    public void TryExtractAnswer_InvalidJsonObject_ReturnsNull()
+    {
+        Assert.Null(StructuredDecisionAdapter.TryExtractAnswer("{"));
+        Assert.Null(StructuredDecisionAdapter.TryExtractAnswer("{\"not\":\"json\"}"));
+    }
 }

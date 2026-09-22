@@ -69,6 +69,19 @@ public sealed class InferenceRequestParams
     /// Null/empty on local mode — the local server enforces the decision grammar instead.
     /// </summary>
     public List<ToolSpec>? Tools { get; set; }
+
+    /// <summary>
+    /// v14.10.2: remote-mode system prompt (static prefix + native-tools directive).
+    /// Local mode ignores this — the system prompt lives in the server-side KV prefix.
+    /// </summary>
+    public string? SystemPrompt { get; set; }
+
+    /// <summary>
+    /// v14.10.2: remote-mode conversation history as (role, content) pairs, oldest first.
+    /// Roles are OpenAI chat roles ("user", "assistant"); tool results are mapped to
+    /// "user" with a source prefix. Local mode ignores this (history lives in the KV cache).
+    /// </summary>
+    public List<(string Role, string Content)>? HistoryMessages { get; set; }
 }
 
 /// <summary>v13b: tool definition for remote native function calling.</summary>

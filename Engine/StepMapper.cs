@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using ECAssistant.Core.Services;
 using System.Text;
 using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Engine;
 namespace ECAssistant.Core.Engine;
 
 /// <summary>
@@ -97,9 +98,15 @@ Combine steps into one call when possible (e.g., batch shell commands).
 
         // Use the main LLM to generate the plan
         // We feed this as a special prompt and parse the <plan> block
-        var response = await _engine.GeneratePlanAsync(prompt);
+                    var response = await _engine.GeneratePlanAsync(prompt);
 
-        return ParsePlan(response ?? "", subTasks);
+            // v14.10.2: envelope-tolerant — unwrap {"thinking","answer"} wrappers
+            // before <plan> parsing so envelope-trained models don't yield empty plans.
+            var unwrapped = StructuredDecisionAdapter.TryExtractAnswer(response);
+            if (!string.IsNullOrWhiteSpace(unwrapped))
+                response = unwrapped;
+
+            return ParsePlan(response ?? "", subTasks);
     }
 
     /// <summary>Parse the LLM's <plan> response into an ExecutionPlan.</summary>
