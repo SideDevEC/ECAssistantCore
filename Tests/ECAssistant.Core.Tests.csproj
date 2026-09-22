@@ -34,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(EcaUseProjectRefs)' != 'true'">
-    <PackageReference Include="ECAssistant.TestSupport" Version="12.9.9" />
+    <PackageReference Include="ECAssistant.TestSupport" Version="12.9.10" />
   </ItemGroup>
 
 </Project>
