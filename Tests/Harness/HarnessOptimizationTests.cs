@@ -45,12 +45,14 @@ public sealed class HarnessOptimizationTests : IDisposable
     }
 
     // ── P2/P3: preplanning toggle + verifier contract (config surface) ──
+    // 2026-09-22: preplanning default REVERTED to true (in-loop planning regressed
+    // live — model wandered without explicit step lists). See InterfaceConfig.
 
     [Fact]
-    public void Preplanning_DefaultsOff_ForLowCompute()
+    public void Preplanning_DefaultsOn_AfterLiveRegression()
     {
         var config = JsonSerializer.Deserialize<EAgentConfig>("{}");
-        Assert.False(config!.Interface.Preplanning);
+        Assert.True(config!.Interface.Preplanning);
     }
 
     [Fact]

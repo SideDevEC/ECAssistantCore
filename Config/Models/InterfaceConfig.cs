@@ -58,12 +58,14 @@ public class InterfaceConfig
 
     /// <summary>
     /// Run the LLM decomposition + step-mapping pre-planning pass before the main
-    /// loop (2-3 extra inference calls). Modern harnesses plan in-loop instead.
-    /// Default: false (in-loop planning) — enable for small local models that
-    /// benefit from explicit pre-compiled step lists.
+    /// loop (2-3 extra inference calls). REVERTED to default true (2026-09-22,
+    /// Emre's call after live regression): in-loop planning left the model to
+    /// pick tools freestyle and it wandered (project-folder obsession, redundant
+    /// tool calls on trivial questions). The explicit step list constrains picking.
+    /// Conversational questions still skip decomposition via the verb gate.
     /// </summary>
     [JsonPropertyName("preplanning")]
-    public bool Preplanning { get; init; } = false;
+    public bool Preplanning { get; init; } = true;
 
     /// <summary>
     /// Verifier contract: the command the agent runs to verify its work after code
