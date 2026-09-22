@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 319  |  LOC: 27136  |  ~14685 tokens
+Types: 317  |  LOC: 27036  |  ~14644 tokens
 
 ---
 
@@ -1002,9 +1002,6 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine
 
-### Class: ProjectContextGateTests
-Cross-package deps: ECAssistant.Core.Engine
-
 ### Class: ProjectContextManager
 > Project Context Manager — maintains persistent knowledge about the project structure,
 Implements: IDisposable
@@ -1263,9 +1260,6 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, Xunit
 
 ### Class: SystemPromptBuilder
 > Builds a system prompt for ECAssistant.Core that includes operating rules,
-
-### Class: SystemPromptDateSectionTests
-Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: SystemToolConfigEntry
 > Config entry for system-critical tools.

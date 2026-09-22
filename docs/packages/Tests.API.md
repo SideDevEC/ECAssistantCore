@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 99  |  LOC: 12278  |  ~3801 tokens
+Types: 97  |  LOC: 12208  |  ~3761 tokens
 
 ---
 
@@ -234,9 +234,6 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine
 
-### Class: ProjectContextGateTests
-Cross-package deps: ECAssistant.Core.Engine
-
 ### Class: ProjectContextManagerTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
 
@@ -316,9 +313,6 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Engine
 ### Class: SupportsVisionTests
 > SupportsVision is the single, mode-independent capability answer for
 Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, Xunit
-
-### Class: SystemPromptDateSectionTests
-Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: TaskPlannerTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq

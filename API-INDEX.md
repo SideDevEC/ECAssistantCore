@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-22T08:21:04.497021+00:00
-Packages: 2  |  Types: 418
+Generated: 2026-09-22T08:24:48.315757+00:00
+Packages: 2  |  Types: 414
 
 ---
 
-## ECAssistantCore (319 types, ~27136 LOC)
+## ECAssistantCore (317 types, ~27036 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -214,7 +214,6 @@ Packages: 2  |  Types: 418
 - 🟡 ProjectArchitecture  (ECAssistantCore)
 - 🟡 ProjectContext  (ECAssistantCore)
 - 🟡 ProjectContextExclusionTests : IDisposable  (ECAssistantCore)
-- 🟡 ProjectContextGateTests  (ECAssistantCore)
 - 🟡 ProjectContextManager : IDisposable  (ECAssistantCore)  deps: [string, ILogger? logger =]
 - 🟡 ProjectContextManagerTests  (ECAssistantCore)
 - 🟡 ProjectRelationship  (ECAssistantCore)
@@ -278,7 +277,6 @@ Packages: 2  |  Types: 418
 - 🟡 SummaryServiceTests  (ECAssistantCore)
 - 🟡 SupportsVisionTests  (ECAssistantCore)
 - 🟡 SystemPromptBuilder  (ECAssistantCore)
-- 🟡 SystemPromptDateSectionTests  (ECAssistantCore)
 - 🟡 SystemToolConfigEntry  (ECAssistantCore)
 - 🟡 TaskPlanner : ITaskPlanner  (ECAssistantCore)  deps: [ILogger? logger =]
 - 🟡 TaskPlannerTests  (ECAssistantCore)
@@ -327,7 +325,7 @@ Packages: 2  |  Types: 418
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (99 types, ~12278 LOC)
+## Tests (97 types, ~12208 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -389,7 +387,6 @@ Packages: 2  |  Types: 418
 - 🟡 ProcessRunnerTests  (Tests)
 - 🟡 ProgramGuiCollection  (Tests)
 - 🟡 ProjectContextExclusionTests : IDisposable  (Tests)
-- 🟡 ProjectContextGateTests  (Tests)
 - 🟡 ProjectContextManagerTests  (Tests)
 - 🟡 RemoteModelProbePathTests  (Tests)
 - 🟡 RemoteProviderIntegrationTests  (Tests)
@@ -411,7 +408,6 @@ Packages: 2  |  Types: 418
 - 🟡 SubAgentTaskTests  (Tests)
 - 🟡 SummaryServiceTests  (Tests)
 - 🟡 SupportsVisionTests  (Tests)
-- 🟡 SystemPromptDateSectionTests  (Tests)
 - 🟡 TaskPlannerTests  (Tests)
 - 🟡 Test  (Tests)
 - 🟡 Test  (Tests)

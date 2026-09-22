@@ -348,7 +348,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
              {
                 if (File.Exists(_systemPromptPathOverride))
                  {
-                    _systemPromptText = AppendCurrentDateSection(File.ReadAllText(_systemPromptPathOverride));
+                    _systemPromptText = File.ReadAllText(_systemPromptPathOverride);
                     _out?.WriteInfo($"[Config] System prompt loaded from: {_systemPromptPathOverride} ({_systemPromptText.Length} chars)");
                  }
                 else
@@ -366,7 +366,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
                 var embedded = ResourceLoader.Default.LoadTextWithFallback(promptResourceName, "SystemPrompt.Linux.md");
                 if (embedded != null)
                  {
-                    _systemPromptText = AppendCurrentDateSection(embedded);
+                    _systemPromptText = embedded;
                     _out?.WriteInfo($"[Config] System prompt loaded from embedded resource: {promptResourceName} ({_systemPromptText.Length} chars)");
                  }
                 else
@@ -381,7 +381,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
                      }
                     if (File.Exists(sysPromptPath))
                      {
-                        _systemPromptText = AppendCurrentDateSection(File.ReadAllText(sysPromptPath));
+                        _systemPromptText = File.ReadAllText(sysPromptPath);
                         _out?.WriteInfo($"[Config] System prompt loaded from: {promptResourceName} ({_systemPromptText.Length} chars)");
                      }
                     else
@@ -426,22 +426,6 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
             ?? new ECAssistant.Core.Engine.SelfCorrectionManager(workingDir, _logger);
     }
 
-    /// <summary>
-    /// v14.10: append the current local date/time to the system prompt so the
-    /// model can answer date/time questions directly — no tool call needed
-    /// (fixes the "dumps the project folder to answer 'what day is it'" class).
-    /// Refreshed on engine start; long-running sessions see the load-time date.
-    /// </summary>
-    private static string AppendCurrentDateSection(string prompt)
-    {
-        var now = DateTime.Now;
-        return prompt.TrimEnd() + Environment.NewLine + Environment.NewLine +
-            "## CURRENT DATE & TIME" + Environment.NewLine +
-            Environment.NewLine +
-            $"Today is {now:dddd}, {now:MMMM d, yyyy} — local time {now:HH:mm}. " +
-            "For date/time questions, answer directly from this line — do NOT run tools or explore the filesystem." +
-            Environment.NewLine;
-    }
 
     public async Task InitializeVectorMemoryAsync(string storeDir, ECAssistant.Core.Interfaces.IVectorEmbedder? embedder = null)
      {
@@ -1020,43 +1004,8 @@ User: " + userRequest + "\n";
         return sb.Length > 0 ? sb.ToString().Trim() : null;
      }
 
-    private string? GetProjectContextInjection(string userRequest)
-     {
-        if (_projectContext == null) return null;
-        // v14.10: relevance gate — inject the project summary ONLY when the
-        // request actually touches the project. Injecting a 30-file listing
-        // into every conversational turn ("what day is today?") made the
-        // model fixate on the folder and over-explore (live-tested regression).
-        return IsProjectRelatedRequest(userRequest) ? _projectContext.GetProjectSummary() : null;
-     }
+    private string? GetProjectContextInjection(string userRequest) => _projectContext?.GetProjectSummary();
 
-    /// <summary>
-    /// Heuristic: does the user request plausibly touch the project/files?
-    /// Pure function, deterministic, no LLM call. Deliberately conservative —
-    /// false positives just restore the old behavior, false negatives hide a
-    /// summary the model would have liked. Verified against live regressions.
-    /// </summary>
-    // Stateless utility — no mutable state, no external dependencies.
-    private static bool IsProjectRelatedRequest(string? userRequest)
-    {
-        if (string.IsNullOrWhiteSpace(userRequest)) return false;
-
-        // File names / extensions are the strongest signal
-        var extensions = new[] { ".cs", ".json", ".py", ".md", ".xml", ".sql", ".js", ".ts", ".html", ".css", ".csproj", ".sln", ".yaml", ".yml", ".sh" };
-        if (extensions.Any(e => userRequest.Contains(e, StringComparison.OrdinalIgnoreCase)))
-            return true;
-
-        // Task-domain keywords
-        string[] signals =
-        {
-            "file", "folder", "directory", "project", "code", "class", "method", "function",
-            "build", "compile", "refactor", "implement", "test", "git", "commit", "branch",
-            "bug", "error", "exception", "debug", "fix", "patch", "script", "config",
-            "appsettings", "log", "line ", "read", "edit", "delete", "rename", "structure",
-            "dependencies", "package", "namespace", "solution", "src", "output", "run "
-        };
-        return signals.Any(s => userRequest.Contains(s, StringComparison.OrdinalIgnoreCase));
-    }
     private string? GetTaskProgressInjection() => null;
     private string? GetFailureInjection() => null;
 
