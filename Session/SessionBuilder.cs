@@ -11,7 +11,6 @@ using ECAssistant.Core.Tools.Git;
 using ECAssistant.Core.Tools.Reader;
 using ECAssistant.Core.Tools.Research;
 using ECAssistant.Core.Tools.Shell;
-using ECAssistant.Core.Tools.Web;
 using ECAssistant.Core.Interfaces;
 using ECAssistant.Core.Services.Http;
 using ECAssistant.Core.Transport;
@@ -231,18 +230,14 @@ public class SessionBuilder : ISessionBuilder
         var fileSystem = new FileSystemAdapter();
         var processRunner = new ProcessRunner();
         var httpClient = new HttpClientAdapter();
-        var contentExtractor = new ReadableContentExtractor();
-        var htmlConverter = new HtmlTextConverter();
 
         // Create all tool instances
         var shellAgent = new EShellAgent(processRunner, _config, _workingDir);
         var backgroundExec = new EBackgroundExecTool(_bgManager, processRunner, fileSystem, _config);
-        var webSearch = new EWebSearchTool(httpClient, _config);
         var dotnetBuild = new EDotnetBuildTool(processRunner, _config);
         var gitTool = new EGitTool(processRunner, fileSystem, _config);
         var codeEditor = new ECodeEditorTool(fileSystem, _config);
         var fileReader = new EFileReaderTool(fileSystem, _config);
-        var webFetch = new EWebFetchTool(httpClient, contentExtractor, htmlConverter, _config);
         var fileResearch = new EFileResearchTool(fileSystem, _config);
         // v14.10 vision structure tool — gated on vision-capable model (mmproj / vision flag)
         Tools.EVision.EVisionStructureTool? visionStructure = null;
@@ -258,12 +253,10 @@ public class SessionBuilder : ISessionBuilder
         // and register only enabled tools
         EnsureAndRegister(session, shellAgent);
         EnsureAndRegister(session, backgroundExec);
-        EnsureAndRegister(session, webSearch);
         EnsureAndRegister(session, dotnetBuild);
         EnsureAndRegister(session, gitTool);
         EnsureAndRegister(session, codeEditor);
         EnsureAndRegister(session, fileReader);
-        EnsureAndRegister(session, webFetch);
         EnsureAndRegister(session, fileResearch);
         if (visionStructure != null)
             EnsureAndRegister(session, visionStructure);

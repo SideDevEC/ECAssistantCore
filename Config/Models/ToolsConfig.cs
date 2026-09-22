@@ -14,7 +14,7 @@ public class ToolOutputLimitsConfig
     [JsonPropertyName("max_result_chars")]
     public int MaxResultChars { get; init; } = 4000;
 
-    /// <summary>Per-tool overrides, e.g. {"ECodeEditor": 8000, "EWebSearch": 6000}.</summary>
+    /// <summary>Per-tool overrides, e.g. {"ECodeEditor": 8000, "EShellAgent": 6000}.</summary>
     [JsonPropertyName("max_result_chars_per_tool")]
     public Dictionary<string, int>? MaxResultCharsPerTool { get; init; }
 

@@ -29,7 +29,7 @@ public class TranscriptIntegrationTests : IDisposable
         transcript.AddSystem("You are a helpful assistant.");
         transcript.AddUser("What is the capital of France?");
         transcript.AddAssistant("The capital of France is Paris.");
-        transcript.AddToolOutput("Verified: Paris", "EWebSearchTool");
+        transcript.AddToolOutput("Verified: Paris", "EFileReader");
 
         var filePath = Path.Combine(_tempDir, "transcript.json");
         transcript.SaveToDisk(filePath);
@@ -49,7 +49,7 @@ public class TranscriptIntegrationTests : IDisposable
         Assert.Equal("The capital of France is Paris.", loaded.Messages[2].Content);
 
         Assert.Equal("tool_output", loaded.Messages[3].Role);
-        Assert.Equal("EWebSearchTool", loaded.Messages[3].Source);
+        Assert.Equal("EFileReader", loaded.Messages[3].Source);
         Assert.Equal("Verified: Paris", loaded.Messages[3].Content);
     }
 

@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-22T06:50:09.200077+00:00
-Packages: 2  |  Types: 430
+Generated: 2026-09-22T06:53:19.995496+00:00
+Packages: 2  |  Types: 414
 
 ---
 
-## ECAssistantCore (328 types, ~28153 LOC)
+## ECAssistantCore (317 types, ~26898 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -14,7 +14,6 @@ Packages: 2  |  Types: 430
 - 🔵 IEngine  (ECAssistantCore)
 - 🔵 IEngineToolContext  (ECAssistantCore)
 - 🔵 IFileSystem  (ECAssistantCore)
-- 🔵 IHtmlTextConverter  (ECAssistantCore)
 - 🔵 IHttpClient  (ECAssistantCore)
 - 🔵 IInferenceEngine  (ECAssistantCore)
 - 🔵 IKvCacheController  (ECAssistantCore)
@@ -29,7 +28,6 @@ Packages: 2  |  Types: 430
 - 🔵 IParallelToolExecutor  (ECAssistantCore)
 - 🔵 IPdfPageRenderer  (ECAssistantCore)
 - 🔵 IProcessRunner  (ECAssistantCore)
-- 🔵 IReadableContentExtractor  (ECAssistantCore)
 - 🔵 IRemoteModelProbe  (ECAssistantCore)
 - 🔵 ISecureKeyStore  (ECAssistantCore)
 - 🔵 ISessionBuilder  (ECAssistantCore)
@@ -77,7 +75,6 @@ Packages: 2  |  Types: 430
 - 🟡 ContextWindowTests  (ECAssistantCore)
 - 🟡 ConversationTranscript  (ECAssistantCore)
 - 🟡 ConversationTranscriptTests  (ECAssistantCore)
-- 🟡 DebugProbeTests  (ECAssistantCore)
 - 🟡 DecisionResult  (ECAssistantCore)
 - 🟡 DecomposeConfig  (ECAssistantCore)
 - 🟡 DependencyGroup  (ECAssistantCore)
@@ -119,10 +116,6 @@ Packages: 2  |  Types: 430
 - 🟡 EUserAskToolTests  (ECAssistantCore)
 - 🟡 EVisionStructureTool : EToolBase  (ECAssistantCore)  deps: [IInferenceEngine, IPdfPageRenderer, EAgentConfig]
 - 🟡 EVisionStructureToolTests : IDisposable  (ECAssistantCore)
-- 🟡 EWebFetchTool : EToolBase  (ECAssistantCore)  deps: [IHttpClient, IReadableContentExtractor, IHtmlTextConverter, EAgentConfig]
-- 🟡 EWebFetchToolTests  (ECAssistantCore)
-- 🟡 EWebSearchTool : EToolBase  (ECAssistantCore)  deps: [IHttpClient, EAgentConfig]
-- 🟡 EWebSearchToolTests  (ECAssistantCore)
 - 🟡 EcaCompositionRoot  (ECAssistantCore)  deps: [string, string]
 - 🟣 EcaServiceBundle  (ECAssistantCore)  deps: [EAgentConfig, string, string, string, ILogger, BackgroundProcessManager, FileWatcherService, ISessionBuilder]
 - 🟡 EmbeddingConfig  (ECAssistantCore)
@@ -156,8 +149,6 @@ Packages: 2  |  Types: 430
 - 🟡 HardwareProfileTests  (ECAssistantCore)
 - 🟡 HarnessOptimizationTests : IDisposable  (ECAssistantCore)
 - 🟡 HomeController  (ECAssistantCore)
-- 🟡 HtmlTextConverter : IHtmlTextConverter  (ECAssistantCore)
-- 🟡 HtmlTextConverterTests  (ECAssistantCore)
 - 🟡 HttpClientAdapter : IHttpClient, IDisposable  (ECAssistantCore)
 - 🟡 HttpClientAdapterTests : IDisposable  (ECAssistantCore)
 - 🟡 HttpEmbedder : IVectorEmbedder  (ECAssistantCore)  deps: [OpenAIClient, string modelId =]
@@ -226,8 +217,6 @@ Packages: 2  |  Types: 430
 - 🟡 ProjectContextManager : IDisposable  (ECAssistantCore)  deps: [string, ILogger? logger =]
 - 🟡 ProjectContextManagerTests  (ECAssistantCore)
 - 🟡 ProjectRelationship  (ECAssistantCore)
-- 🟡 ReadableContentExtractor : IReadableContentExtractor  (ECAssistantCore)
-- 🟡 ReadableContentExtractorTests  (ECAssistantCore)
 - 🟡 RemoteKvCacheController : IKvCacheController  (ECAssistantCore)  deps: [OpenAIClient]
 - 🟣 RemoteModelInfo  (ECAssistantCore)  deps: [string, bool]
 - 🟡 RemoteModelInfo  (ECAssistantCore)
@@ -336,7 +325,7 @@ Packages: 2  |  Types: 430
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (102 types, ~12938 LOC)
+## Tests (97 types, ~12139 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -350,7 +339,6 @@ Packages: 2  |  Types: 430
 - 🟡 ContextWindowIntegrationTests  (Tests)
 - 🟡 ContextWindowTests  (Tests)
 - 🟡 ConversationTranscriptTests  (Tests)
-- 🟡 DebugProbeTests  (Tests)
 - 🟡 DependencyGroupTests  (Tests)
 - 🟡 EAgentConfigTests : IDisposable  (Tests)
 - 🟡 EBackgroundExecToolTests : IDisposable  (Tests)
@@ -368,8 +356,6 @@ Packages: 2  |  Types: 430
 - 🟡 EToolBaseTests  (Tests)
 - 🟡 EUserAskToolTests  (Tests)
 - 🟡 EVisionStructureToolTests : IDisposable  (Tests)
-- 🟡 EWebFetchToolTests  (Tests)
-- 🟡 EWebSearchToolTests  (Tests)
 - 🟡 EmbeddingRoutingTests  (Tests)
 - 🟡 EndpointNormalizerTests  (Tests)
 - 🟡 FailureAnalysisTests  (Tests)
@@ -381,7 +367,6 @@ Packages: 2  |  Types: 430
 - 🟡 HardwareProfileTests  (Tests)
 - 🟡 HarnessOptimizationTests : IDisposable  (Tests)
 - 🟡 HomeController  (Tests)
-- 🟡 HtmlTextConverterTests  (Tests)
 - 🟡 HttpClientAdapterTests : IDisposable  (Tests)
 - 🟡 ImageAttachmentParserTests : IDisposable  (Tests)
 - 🟡 InMemoryVectorStoreTests  (Tests)
@@ -403,7 +388,6 @@ Packages: 2  |  Types: 430
 - 🟡 ProgramGuiCollection  (Tests)
 - 🟡 ProjectContextExclusionTests : IDisposable  (Tests)
 - 🟡 ProjectContextManagerTests  (Tests)
-- 🟡 ReadableContentExtractorTests  (Tests)
 - 🟡 RemoteModelProbePathTests  (Tests)
 - 🟡 RemoteProviderIntegrationTests  (Tests)
 - 🟡 RemoteProviderSetupWriterTests  (Tests)

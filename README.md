@@ -48,7 +48,7 @@ await loop.ExecuteInteractiveLoop("Summarize the docs in this folder");
 | Capability | What it means for your app |
 |---|---|
 | **Agent engine** | Multi-session orchestration, sub-agents, self-correction, task planning |
-| **12 built-in tools** | Shell, file I/O, code editing, git, dotnet, web search/fetch — permission-gated (approve / always / never per tool) |
+| **11 built-in tools** | Shell, file I/O, code editing, git, dotnet, sub-agents, vision structure — permission-gated (approve / always / never per tool) |
 | **Custom tools** | Implement one interface, register it. That's the whole API. |
 | **Memory** | Vector memory (embeddings) + daily notes + curated long-term memory |
 | **Local or remote LLM** | GGUF via the bundled [LLM server](https://github.com/SideDevEC/ECAssistantLLM), or any OpenAI-compatible endpoint — identical code path |

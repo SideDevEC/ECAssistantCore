@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 102  |  LOC: 12938  |  ~3900 tokens
+Types: 97  |  LOC: 12139  |  ~3761 tokens
 
 ---
 
@@ -46,9 +46,6 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Services
 
 ### Class: ConversationTranscriptTests
 Cross-package deps: ECAssistant.Core.Engine
-
-### Class: DebugProbeTests
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Web
 
 ### Class: DependencyGroupTests
 Cross-package deps: ECAssistant.Core.Engine
@@ -111,12 +108,6 @@ Cross-package deps: ECAssistant.Core.Session, ECAssistant.Core.Tools.User, Xunit
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.EVision, ECAssistant.Core.Vision, Moq
 
-### Class: EWebFetchToolTests
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Web
-
-### Class: EWebSearchToolTests
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Web
-
 ### Class: EmbeddingRoutingTests
 > Embedding routing: embedding.mode is independent of the main LLM mode.
 Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Setup, Xunit
@@ -159,9 +150,6 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistan
 
 ### Class: HomeController
 Cross-package deps: ECAssistant.Core.Analysis
-
-### Class: HtmlTextConverterTests
-Cross-package deps: ECAssistant.Core.Services
 
 ### Class: HttpClientAdapterTests
 Implements: IDisposable
@@ -248,9 +236,6 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine
 
 ### Class: ProjectContextManagerTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
-
-### Class: ReadableContentExtractorTests
-Cross-package deps: ECAssistant.Core.Services
 
 ### Class: RemoteModelProbePathTests
 > Tests for base-URL normalization (strip trailing "/v1") and the remote

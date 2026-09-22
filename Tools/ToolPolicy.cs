@@ -22,8 +22,6 @@ public class ToolPolicy
         SetPermission("EFileResearchTool", approvalRequired: false, "Read-only research");
         SetPermission("EFileAnalyzer", approvalRequired: false, "Read-only analysis");
         SetPermission("EFileReader", approvalRequired: false, "Read-only file access");
-        SetPermission("EWebSearch", approvalRequired: false, "Read-only web search");
-        SetPermission("EWebFetch", approvalRequired: false, "Read-only web fetch");
         SetPermission("EDotnetBuild", approvalRequired: false, "Build only — no side effects");
         SetPermission("ESubAgent", approvalRequired: false, "Sub-agent orchestration");
 

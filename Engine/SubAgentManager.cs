@@ -245,7 +245,6 @@ public sealed class SubAgentManager : IDisposable
             // Register tools — use injected service dependencies
             childEngine.RegisterTool(new Tools.Shell.EShellAgent(_processRunner, _config, workingDir));
             childEngine.RegisterTool(new Tools.Background.EBackgroundExecTool(_bgManager, _processRunner, _fileSystem, _config));
-            childEngine.RegisterTool(new Tools.Web.EWebSearchTool(_httpClient, _config));
             childEngine.RegisterTool(new Tools.Build.EDotnetBuildTool(_processRunner, _config));
             childEngine.RegisterTool(new Tools.Git.EGitTool(_processRunner, _fileSystem, _config));
             childEngine.RegisterTool(new Tools.Code.ECodeEditorTool(_fileSystem, _config));

@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-22T06:50:09.200782+00:00
-Edges: 85  |  Packages: 2
+Generated: 2026-09-22T06:53:19.996127+00:00
+Edges: 77  |  Packages: 2
 
 ---
 
@@ -47,17 +47,10 @@ Edges: 85  |  Packages: 2
 - EVisionStructureTool ──implements──► EToolBase (ECAssistantCore)
 - EVisionStructureTool ──uses──► IInferenceEngine (ECAssistantCore)
 - EVisionStructureTool ──uses──► IPdfPageRenderer (ECAssistantCore)
-- EWebFetchTool ──implements──► EToolBase (ECAssistantCore)
-- EWebFetchTool ──uses──► IHtmlTextConverter (ECAssistantCore)
-- EWebFetchTool ──uses──► IHttpClient (ECAssistantCore)
-- EWebFetchTool ──uses──► IReadableContentExtractor (ECAssistantCore)
-- EWebSearchTool ──implements──► EToolBase (ECAssistantCore)
-- EWebSearchTool ──uses──► IHttpClient (ECAssistantCore)
 - EcaServiceBundle ──uses──► ILogger (ECAssistantCore)
 - EcaServiceBundle ──uses──► ISessionBuilder (ECAssistantCore)
 - FileSystemAdapter ──implements──► IFileSystem (ECAssistantCore)
 - FirstRunOrchestrator ──uses──► ISetupUi (ECAssistantCore)
-- HtmlTextConverter ──implements──► IHtmlTextConverter (ECAssistantCore)
 - HttpClientAdapter ──implements──► IHttpClient (ECAssistantCore)
 - HttpEmbedder ──implements──► IVectorEmbedder (ECAssistantCore)
 - HttpStreamingEngine ──implements──► IInferenceEngine (ECAssistantCore)
@@ -75,7 +68,6 @@ Edges: 85  |  Packages: 2
 - NopKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
 - ParallelToolExecutor ──implements──► IParallelToolExecutor (ECAssistantCore)
 - ProcessRunner ──implements──► IProcessRunner (ECAssistantCore)
-- ReadableContentExtractor ──implements──► IReadableContentExtractor (ECAssistantCore)
 - RemoteKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
 - RemoteModelLoader ──implements──► IModelLoader (ECAssistantCore)
 - RemoteModelProbe ──implements──► IRemoteModelProbe (ECAssistantCore)

@@ -45,14 +45,14 @@ public class BuildCallSignatureTests
     {
         var a = new Dictionary<string, string?> { ["query"] = "test" };
         Assert.NotEqual(
-            AgentOrchestrator.BuildCallSignature("EWebSearch", a),
-            AgentOrchestrator.BuildCallSignature("EWebFetch", a));
+            AgentOrchestrator.BuildCallSignature("EShellAgent", a),
+            AgentOrchestrator.BuildCallSignature("EFileReader", a));
     }
 
     [Fact]
     public void NullArguments_AreHandled()
     {
-        var sig = AgentOrchestrator.BuildCallSignature("EWebSearch", null!);
-        Assert.Equal("EWebSearch|", sig);
+        var sig = AgentOrchestrator.BuildCallSignature("EShellAgent", null!);
+        Assert.Equal("EShellAgent|", sig);
     }
 }

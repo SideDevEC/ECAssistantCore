@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 328  |  LOC: 28153  |  ~15109 tokens
+Types: 317  |  LOC: 26898  |  ~14644 tokens
 
 ---
 
@@ -59,11 +59,6 @@ Methods:
   - void WriteFile(string path, string content)
   - bool DirectoryExists(string path)
   - void CreateDirectory(string path)
-
-### Interface: IHtmlTextConverter
-> Converts raw HTML into structured plain text, preserving block-level
-Methods:
-  - string Convert(string html)
 
 ### Interface: IHttpClient
 > HTTP client abstraction.
@@ -193,11 +188,6 @@ Methods:
 > Abstract process execution.
 Methods:
   - Task<ProcessResult> ExecuteAsync(string command, string? workDir = null, CancellationToken ct = default)
-
-### Interface: IReadableContentExtractor
-> Extracts the main readable content from an HTML page, discarding
-Methods:
-  - string Extract(string html)
 
 ### Interface: IRemoteModelProbe
 > A model advertised by a remote OpenAI-compatible /models endpoint.
@@ -454,9 +444,6 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Services
 ### Class: ConversationTranscriptTests
 Cross-package deps: ECAssistant.Core.Engine
 
-### Class: DebugProbeTests
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Web
-
 ### Class: DecisionResult
 
 ### Class: DecomposeConfig
@@ -647,26 +634,6 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.EVision, ECAssistant.Core.Vision, Moq
 
-### Class: EWebFetchTool
-> EWebFetch — fetch a URL, extract main readable content, convert to
-Implements: EToolBase
-Constructor:
-  - EWebFetchTool(IHttpClient httpClient, IReadableContentExtractor contentExtractor, IHtmlTextConverter htmlConverter, EAgentConfig config)
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
-
-### Class: EWebFetchToolTests
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Web
-
-### Class: EWebSearchTool
-> Web Search Tool — lets the LLM search the web using Bing search results.
-Implements: EToolBase
-Constructor:
-  - EWebSearchTool(IHttpClient httpClient, EAgentConfig config)
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
-
-### Class: EWebSearchToolTests
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Web
-
 ### Class: EcaCompositionRoot
 > Central composition root for ECAssistant services.
 Constructor:
@@ -779,14 +746,6 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistan
 
 ### Class: HomeController
 Cross-package deps: ECAssistant.Core.Analysis
-
-### Class: HtmlTextConverter
-> Converts HTML to plain text while preserving block-level structure.
-Implements: IHtmlTextConverter
-Cross-package deps: ECAssistant.Core.Interfaces
-
-### Class: HtmlTextConverterTests
-Cross-package deps: ECAssistant.Core.Services
 
 ### Class: HttpClientAdapter
 > Concrete HTTP client implementation with browser-like default headers
@@ -1055,14 +1014,6 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
 
 ### Class: ProjectRelationship
 
-### Class: ReadableContentExtractor
-> Extracts the main readable content from a full HTML page.
-Implements: IReadableContentExtractor
-Cross-package deps: ECAssistant.Core.Interfaces
-
-### Class: ReadableContentExtractorTests
-Cross-package deps: ECAssistant.Core.Services
-
 ### Class: RemoteKvCacheController
 > HTTP-based KV cache controller. Manages server-side sessions (prefill, rewind, save, reset)
 Implements: IKvCacheController
@@ -1188,7 +1139,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services.Http, Xun
 Implements: ISessionBuilder
 Constructor:
   - SessionBuilder(EAgentConfig config, string workingDir, string userConfigDir, ILogger? logger = null, BackgroundProcessManager? bgManager = null)
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Services, ECAssistant.Core.Session, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Background, ECAssistant.Core.Tools.Build, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Git, ECAssistant.Core.Tools.Reader, ECAssistant.Core.Tools.Research, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Web, ECAssistant.Core.Interfaces, ECAssistant.Core.Services.Http, ECAssistant.Core.Transport
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Services, ECAssistant.Core.Session, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Background, ECAssistant.Core.Tools.Build, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Git, ECAssistant.Core.Tools.Reader, ECAssistant.Core.Tools.Research, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Interfaces, ECAssistant.Core.Services.Http, ECAssistant.Core.Transport
 
 ### Class: SessionDiscovery
 > Discovers existing sessions on disk and determines which one to load as active.

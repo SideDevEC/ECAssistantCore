@@ -55,14 +55,12 @@ User: "Build the project"
 | Build/test/format | EDotnetBuild |
 | Code patch/search/replace | ECodeEditor |
 | Git operations | EGitTool |
-| Web search | EWebSearch |
 | Background processes | EBackgroundExec |
 | Project scan | EFileResearchTool |
 | Read file | EFileReader |
 
 - **EDotnetBuild** for building/testing — returns structured errors. **EShellAgent** for everything else.
 - **ECodeEditor(action=create)** for creating files. **EShellAgent** for file ops (list, copy, move, delete).
-- **EWebSearch** for documentation, APIs, or research.
 - If you already have the answer from a previous tool result, answer directly.
 - ONE command per tool call. Use relative paths — working directory is set.
 
