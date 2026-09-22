@@ -85,6 +85,8 @@ public class ConfigLoader : IConfigLoader
             if (userNode is System.Text.Json.Nodes.JsonObject userObj)
                 DeepMerge(root, userObj);
 
+            MigrateLegacyToolKeys(root);
+
             return root.Deserialize<EAgentConfig>(opts);
         }
         catch (Exception)
@@ -110,5 +112,37 @@ public class ConfigLoader : IConfigLoader
                 target[key] = value?.DeepClone();
             }
         }
+    }
+
+    /// <summary>
+    /// v14.10: one-time migration inside the merged JSON — renames legacy tool
+    /// config sections (DotnetBuild → EDotnetBuild, AskUser → EAskUser) and
+    /// prunes sections of removed tools (EWebSearch/EWebFetch). Migrated keys
+    /// never overwrite a newer explicit section. Runs before deserialization;
+    /// on-disk files are rewritten by the normal config persist path.
+    /// </summary>
+    private static void MigrateLegacyToolKeys(System.Text.Json.Nodes.JsonObject root)
+    {
+        var toolsObj = root["Tools"] as System.Text.Json.Nodes.JsonObject
+                       ?? root["tools"] as System.Text.Json.Nodes.JsonObject;
+        if (toolsObj is null)
+            return;
+
+        RenameToolSection(toolsObj, "DotnetBuild", "EDotnetBuild");
+        RenameToolSection(toolsObj, "AskUser", "EAskUser");
+
+        // Removed tools — drop their sections
+        foreach (var removed in new[] { "EWebSearch", "EWebFetch" })
+            toolsObj.Remove(removed);
+    }
+
+    private static void RenameToolSection(
+        System.Text.Json.Nodes.JsonObject toolsObj, string from, string to)
+    {
+        if (toolsObj[from] is null)
+            return;
+        if (toolsObj[to] is null)
+            toolsObj[to] = toolsObj[from]!.DeepClone(); // new section wins when already present
+        toolsObj.Remove(from); // legacy key always goes
     }
 }

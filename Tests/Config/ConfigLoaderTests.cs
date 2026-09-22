@@ -158,4 +158,58 @@ public class ConfigLoaderTests
         // Read threw, falls back to embedded config
         Assert.Equal("ECAssistant", config.RootPath);
     }
+
+    // ── v14.10 legacy tool section migration ──
+
+    [Fact]
+    public void Load_LegacyToolSections_RenamedAndRemoved()
+    {
+        var json = """
+        {
+          "tools": {
+            "DotnetBuild": { "enabled": true, "timeout": 120 },
+            "AskUser": { "enabled": true },
+            "EWebSearch": { "enabled": true },
+            "EWebFetch": { "enabled": true },
+            "EShellAgent": { "enabled": true }
+          }
+        }
+        """;
+        _mockFileSystem.Setup(fs => fs.FileExists(It.IsAny<string>())).Returns(true);
+        _mockFileSystem.Setup(fs => fs.ReadFile(It.IsAny<string>())).Returns(json);
+
+        var loader = new ConfigLoader(_mockFileSystem.Object);
+        var config = loader.Load("appsettings.json");
+
+        Assert.True(config.Tools.ContainsKey("EDotnetBuild"), "keys were: " + string.Join(",", config.Tools.Keys));
+        Assert.True(config.Tools.ContainsKey("EAskUser"));
+        Assert.False(config.Tools.ContainsKey("DotnetBuild"));
+        Assert.False(config.Tools.ContainsKey("AskUser"));
+        Assert.False(config.Tools.ContainsKey("EWebSearch"));
+        Assert.False(config.Tools.ContainsKey("EWebFetch"));
+        // untouched sections preserved
+        Assert.True(config.Tools.ContainsKey("EShellAgent"));
+    }
+
+    [Fact]
+    public void Load_LegacyToolSections_NewSectionWins()
+    {
+        var json = """
+        {
+          "tools": {
+            "DotnetBuild": { "enabled": true, "timeout": 120 },
+            "EDotnetBuild": { "enabled": true, "timeout": 300 }
+          }
+        }
+        """;
+        _mockFileSystem.Setup(fs => fs.FileExists(It.IsAny<string>())).Returns(true);
+        _mockFileSystem.Setup(fs => fs.ReadFile(It.IsAny<string>())).Returns(json);
+
+        var loader = new ConfigLoader(_mockFileSystem.Object);
+        var config = loader.Load("appsettings.json");
+
+        Assert.True(config.Tools.ContainsKey("EDotnetBuild"));
+        Assert.Equal(300, config.Tools["EDotnetBuild"].GetProperty("timeout").GetInt32());
+        Assert.False(config.Tools.ContainsKey("DotnetBuild"));
+    }
 }
