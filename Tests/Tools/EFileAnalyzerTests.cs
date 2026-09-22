@@ -30,6 +30,15 @@ public class EFileAnalyzerTests : IDisposable
     }
 
     [Fact]
+    public void ParameterSchema_IsTyped()
+    {
+        var tool = CreateTool();
+        var schema = tool.GetParameterSchema();
+        Assert.False(string.IsNullOrWhiteSpace(schema), "EFileAnalyzer must return a typed parameter schema (grammar coverage)");
+        Assert.Contains("\"type\": \"object\"", schema);
+    }
+
+    [Fact]
     public void Description_ContainsAnalyze()
     {
         var tool = CreateTool();

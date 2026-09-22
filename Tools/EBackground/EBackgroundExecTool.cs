@@ -47,6 +47,18 @@ public class EBackgroundExecTool : EToolBase
 
     public override object GetConfigSection() => new { enabled = true };
 
+    public override string GetParameterSchema() =>
+        """
+        {
+          "type": "object", "required": ["action"],
+          "properties": {
+            "action": { "type": "string", "enum": ["start", "status", "output", "kill"], "description": "Background process operation" },
+            "command": { "type": "string", "description": "Command to run (required for action=start)" },
+            "id": { "type": "string", "description": "Process id (required for action=output and action=kill)" }
+          }
+        }
+        """;
+
     public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         var action = arguments.GetValueOrDefault("action")?.ToLower().Trim();

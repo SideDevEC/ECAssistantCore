@@ -38,6 +38,20 @@ public class EGitTool : EToolBase
 
     public override object GetConfigSection() => new { enabled = true };
 
+    public override string GetParameterSchema() =>
+        """
+        {
+          "type": "object", "required": ["action"],
+          "properties": {
+            "action": { "type": "string", "enum": ["init", "status", "diff", "diff-staged", "add", "commit", "push", "pull", "log", "branch", "checkout"], "description": "Git operation" },
+            "files": { "type": "string", "description": "File paths for add (space-separated, or 'all'; default '.')" },
+            "message": { "type": "string", "description": "Commit message (required for commit)" },
+            "max_entries": { "type": "string", "description": "Entry count for log (default 10, max 1000)" },
+            "branch": { "type": "string", "description": "Branch name (required for checkout)" }
+          }
+        }
+        """;
+
     public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         var action = arguments.GetValueOrDefault("action")?.ToLower().Trim();

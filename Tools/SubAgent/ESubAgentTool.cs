@@ -51,6 +51,22 @@ public class ESubAgentTool : EToolBase
         "ESubAgent(task:Analyze the project structure and list all .cs files)\n" +
         "ESubAgent(task:Fix the bug, tools:EShellAgent,ECodeEditor, context_size:8192)";
 
+    public override string GetParameterSchema() =>
+        """
+        {
+          "type": "object", "required": ["task"],
+          "properties": {
+            "task": { "type": "string", "description": "Objective for the sub-agent" },
+            "working_dir": { "type": "string", "description": "Working directory (default: session's)" },
+            "tools": { "type": "string", "description": "Comma-separated tool names the sub-agent may use (default: none)" },
+            "context_size": { "type": "string", "description": "Context window size (default: manager default)" },
+            "max_turns": { "type": "string", "description": "Max agent turns (default: manager default)" },
+            "timeout": { "type": "string", "description": "Timeout in seconds (default: manager default)" },
+            "max_retries": { "type": "string", "description": "Max retries (default: manager default)" }
+          }
+        }
+        """;
+
     public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         var taskDesc = arguments.GetValueOrDefault("task")?.Trim();

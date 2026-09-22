@@ -24,6 +24,16 @@ public class EFileAnalyzer : EToolBase
     public override string UsageExample =>
         @"EFileAnalyzer.Analyze(filePath=""config.json"");";
 
+    public override string GetParameterSchema() =>
+        """
+        {
+          "type": "object", "required": ["filePath"],
+          "properties": {
+            "filePath": { "type": "string", "description": "Path to the file to analyze (relative to working directory)" }
+          }
+        }
+        """;
+
     public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         var filePath = arguments.GetValueOrDefault("filePath");
