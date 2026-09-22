@@ -31,6 +31,33 @@ public sealed class ToolRepeatTracker
     private readonly ConcurrentQueue<string> _history = new();
     private int _historyCount;
 
+    /// <summary>
+    /// v14.10.2: clears all recorded signatures and history. Called by the
+    /// orchestrator on Reset() so repeat guards never leak across goals.
+    /// </summary>
+    public void Reset()
+    {
+        _counts.Clear();
+        while (_history.TryDequeue(out _)) { }
+        _historyCount = 0;
+    }
+
+    /// <summary>
+    /// v14.10.2: rolls back a prior Record for a call that never executed
+    /// (denied/blocked). A user denial must not count toward loop detection —
+    /// otherwise the tool gets un-executable until the run dies.
+    /// </summary>
+    public void Unrecord(string signature)
+    {
+        if (_counts.TryGetValue(signature, out var c))
+        {
+            if (c <= 1) _counts.TryRemove(signature, out _);
+            else _counts[signature] = c - 1;
+        }
+        // History is a fixed-size window; leaving a stale entry only weakens
+        // alternation detection by one slot, never causes false stops.
+    }
+
     /// <summary>Records a call signature and returns the current repeat count (1 = first).</summary>
     public int Record(string signature)
     {

@@ -78,4 +78,34 @@ public class ToolRepeatTrackerTests
         Assert.Equal(1, t.CountOf("b"));
         Assert.Equal(0, t.CountOf("c"));
     }
+
+    // ── v14.10.2: Reset / Unrecord ──
+
+    [Fact]
+    public void Reset_ClearsCounts()
+    {
+        var tracker = new ToolRepeatTracker();
+        tracker.Record("a"); tracker.Record("a");
+        tracker.Reset();
+        Assert.Equal(1, tracker.Record("a")); // back to first occurrence
+    }
+
+    [Fact]
+    public void Unrecord_DeniedCall_DoesNotCountTowardStop()
+    {
+        var tracker = new ToolRepeatTracker();
+        tracker.Record("x"); tracker.Record("x"); // recorded but then DENIED
+        tracker.Unrecord("x");                     // denial rolled back → 1 executed
+        Assert.Equal(2, tracker.Record("x"));      // first retry: nudge, not stop
+        Assert.False(tracker.IsStopLevel(2));
+        // without Unrecord the same retry would have hit 3 = stop
+    }
+
+    [Fact]
+    public void Unrecord_UnknownSignature_IsNoop()
+    {
+        var tracker = new ToolRepeatTracker();
+        tracker.Unrecord("never-recorded");
+        Assert.Equal(1, tracker.Record("never-recorded"));
+    }
 }

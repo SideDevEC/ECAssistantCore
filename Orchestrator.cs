@@ -269,6 +269,17 @@ public sealed class AgentOrchestrator : IAsyncDisposable
               _out?.SetStatus("Thinking\u2026");
               var decision = await _engine.GenerateAsync(goal);
 
+              // v14.10.2: envelope-echo guard (defense in depth). If a direct answer
+              // somehow arrives as raw {"thinking","answer"} JSON (degraded fallback
+              // path), unwrap it so the user never sees wire-format JSON.
+              if (decision.WantsDirectAnswer && !string.IsNullOrWhiteSpace(decision.AnswerText)
+                  && decision.AnswerText.TrimStart().StartsWith('{'))
+              {
+                  var unwrapped = Engine.StructuredDecisionAdapter.TryExtractAnswer(decision.AnswerText);
+                  if (!string.IsNullOrWhiteSpace(unwrapped))
+                      decision = LLMDecision.FromEnvelope(decision.Reasoning ?? "", unwrapped, null);
+              }
+
               // v10.11.1: Check if generation was stopped by user (ESC) — bail out immediately,
               // don't attempt format retries on the stopped sentinel.
              if (decision.AnswerText == "(Stopped by user)" || _engine.IsExecutionStopped)
@@ -349,7 +360,8 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                          _engine,
                          _toolPolicy,
                         ExecuteTool,
-                        msg => _out?.WriteDim(msg));
+                        msg => _out?.WriteDim(msg),
+                        _out);
 
                      // Execute all tool calls with dependency-aware parallelism
                     _out?.SetStatus($"Running {decision.ToolCalls.Count} tools\u2026");
@@ -362,6 +374,15 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                     else
                          _out?.WriteWarning($"Batch: {consoleSummary}");
                     _logger?.Info("Orchestrator", $"Batch result: {consoleSummary}");
+
+                    // v14.10.2: a DENIED call was never executed — unrecord it so a user
+                    // denial doesn't push the signature toward the loop limit and block
+                    // legitimate retries of the same call after approval.
+                    foreach (var r in batchResult.Results)
+                    {
+                        if (!r.Succeeded && r.Error != null && r.Error.Contains("[DENIED]"))
+                            _repeatTracker.Unrecord(BuildCallSignature(r.ToolCall.ToolName ?? "(unknown)", r.ToolCall.Args));
+                    }
 
                      // Combine all results into one output block for the LLM
                     var combinedOutput = parallelExec.CombineResults(batchResult);
@@ -794,6 +815,9 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                     // of legitimately-different calls on the next run.
                     _failedCallSignatures.Clear();
                     _lastSuccessfulCallSignature = null;
+                    // v14.10.2: reset the repeat tracker per goal — denied/aborted calls
+                    // from a previous goal must not block legitimate retries in the next.
+                    _repeatTracker.Reset();
                     _maxTurns = _baseMaxTurns; // recompute on next decomposition
                     // v10.6: Reset sub-task state
                     _subTasks = null;
