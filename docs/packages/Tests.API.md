@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 98  |  LOC: 12236  |  ~3782 tokens
+Types: 99  |  LOC: 12278  |  ~3801 tokens
 
 ---
 
@@ -233,6 +233,9 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 > Project-context scan must exclude host runtime/config files — the model should
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine
+
+### Class: ProjectContextGateTests
+Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: ProjectContextManagerTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq

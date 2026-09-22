@@ -1020,7 +1020,43 @@ User: " + userRequest + "\n";
         return sb.Length > 0 ? sb.ToString().Trim() : null;
      }
 
-    private string? GetProjectContextInjection(string userRequest) => _projectContext?.GetProjectSummary();
+    private string? GetProjectContextInjection(string userRequest)
+     {
+        if (_projectContext == null) return null;
+        // v14.10: relevance gate — inject the project summary ONLY when the
+        // request actually touches the project. Injecting a 30-file listing
+        // into every conversational turn ("what day is today?") made the
+        // model fixate on the folder and over-explore (live-tested regression).
+        return IsProjectRelatedRequest(userRequest) ? _projectContext.GetProjectSummary() : null;
+     }
+
+    /// <summary>
+    /// Heuristic: does the user request plausibly touch the project/files?
+    /// Pure function, deterministic, no LLM call. Deliberately conservative —
+    /// false positives just restore the old behavior, false negatives hide a
+    /// summary the model would have liked. Verified against live regressions.
+    /// </summary>
+    // Stateless utility — no mutable state, no external dependencies.
+    private static bool IsProjectRelatedRequest(string? userRequest)
+    {
+        if (string.IsNullOrWhiteSpace(userRequest)) return false;
+
+        // File names / extensions are the strongest signal
+        var extensions = new[] { ".cs", ".json", ".py", ".md", ".xml", ".sql", ".js", ".ts", ".html", ".css", ".csproj", ".sln", ".yaml", ".yml", ".sh" };
+        if (extensions.Any(e => userRequest.Contains(e, StringComparison.OrdinalIgnoreCase)))
+            return true;
+
+        // Task-domain keywords
+        string[] signals =
+        {
+            "file", "folder", "directory", "project", "code", "class", "method", "function",
+            "build", "compile", "refactor", "implement", "test", "git", "commit", "branch",
+            "bug", "error", "exception", "debug", "fix", "patch", "script", "config",
+            "appsettings", "log", "line ", "read", "edit", "delete", "rename", "structure",
+            "dependencies", "package", "namespace", "solution", "src", "output", "run "
+        };
+        return signals.Any(s => userRequest.Contains(s, StringComparison.OrdinalIgnoreCase));
+    }
     private string? GetTaskProgressInjection() => null;
     private string? GetFailureInjection() => null;
 

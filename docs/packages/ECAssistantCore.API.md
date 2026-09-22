@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 318  |  LOC: 27074  |  ~14665 tokens
+Types: 319  |  LOC: 27136  |  ~14685 tokens
 
 ---
 
@@ -1001,6 +1001,9 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 > Project-context scan must exclude host runtime/config files — the model should
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine
+
+### Class: ProjectContextGateTests
+Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: ProjectContextManager
 > Project Context Manager — maintains persistent knowledge about the project structure,

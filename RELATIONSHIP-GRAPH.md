@@ -1,6 +1,6 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-22T08:08:29.319665+00:00
+Generated: 2026-09-22T08:12:57.544413+00:00
 Edges: 77  |  Packages: 2
 
 ---

@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-22T08:08:29.318975+00:00
-Packages: 2  |  Types: 416
+Generated: 2026-09-22T08:12:57.543695+00:00
+Packages: 2  |  Types: 418
 
 ---
 
-## ECAssistantCore (318 types, ~27074 LOC)
+## ECAssistantCore (319 types, ~27136 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -214,6 +214,7 @@ Packages: 2  |  Types: 416
 - 🟡 ProjectArchitecture  (ECAssistantCore)
 - 🟡 ProjectContext  (ECAssistantCore)
 - 🟡 ProjectContextExclusionTests : IDisposable  (ECAssistantCore)
+- 🟡 ProjectContextGateTests  (ECAssistantCore)
 - 🟡 ProjectContextManager : IDisposable  (ECAssistantCore)  deps: [string, ILogger? logger =]
 - 🟡 ProjectContextManagerTests  (ECAssistantCore)
 - 🟡 ProjectRelationship  (ECAssistantCore)
@@ -326,7 +327,7 @@ Packages: 2  |  Types: 416
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (98 types, ~12236 LOC)
+## Tests (99 types, ~12278 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -388,6 +389,7 @@ Packages: 2  |  Types: 416
 - 🟡 ProcessRunnerTests  (Tests)
 - 🟡 ProgramGuiCollection  (Tests)
 - 🟡 ProjectContextExclusionTests : IDisposable  (Tests)
+- 🟡 ProjectContextGateTests  (Tests)
 - 🟡 ProjectContextManagerTests  (Tests)
 - 🟡 RemoteModelProbePathTests  (Tests)
 - 🟡 RemoteProviderIntegrationTests  (Tests)
