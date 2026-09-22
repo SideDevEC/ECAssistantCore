@@ -59,7 +59,7 @@ await loop.ExecuteInteractiveLoop("Summarize the docs in this folder");
 
 - **Vision structure extraction (`EVisionStructure`)** — point the agent at a screenshot, UI image, or PDF page and get back a **fixed, versioned JSON schema** (schemaVersion 1.0): elements (headers, labels, buttons, inputs...) with approximate bounding boxes, label↔control associations, and semantic groups. Never-null design: unknown enums map to `Other`, missing fields get defaults, dangling refs are stripped — downstream code can consume it blind. Server-side GBNF grammar enforcement makes the shape physically guaranteed, and a deterministic validator normalizes semantics on top.
 - **Grammar-forced structured decisions** — the agent's act/answer/toolcall decisions are token-level constrained (GBNF), not prompt-asked. Valid tool calls with typed JSON Schema parameters, every time.
-- **Interactive checkpoints (`AskUser`)** — the model escalates genuine ambiguity to a real choice prompt instead of guessing; falls back to autonomous mode when unattended.
+- **Interactive checkpoints (`EAskUser`)** — the model escalates genuine ambiguity to a real choice prompt instead of guessing; falls back to autonomous mode when unattended.
 - **Self-correction with loop detection** — malformed outputs trigger error-feedback retries; long-range repeat loops are detected and stopped before they burn your budget.
 - **Thin by design** — 2.8 MB tool, server fetched on demand; local-first privacy with a remote escape hatch in the same code path.
 
