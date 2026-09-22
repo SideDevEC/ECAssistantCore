@@ -234,7 +234,8 @@ public sealed class HttpStreamingEngine : IInferenceEngine
             max_tokens = parameters.MaxTokens,
             repeat_penalty = parameters.RepeatPenalty,
             session_id = parameters.SessionId ?? _defaultSessionId,
-            stop = parameters.Stop
+            stop = parameters.Stop,
+            grammar = parameters.Grammar
         };
 
         return JsonSerializer.Serialize(req, JsonOptions);

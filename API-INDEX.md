@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-22T06:19:53.177691+00:00
-Packages: 2  |  Types: 429
+Generated: 2026-09-22T06:31:04.602650+00:00
+Packages: 2  |  Types: 430
 
 ---
 
-## ECAssistantCore (327 types, ~28131 LOC)
+## ECAssistantCore (328 types, ~28153 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -327,6 +327,7 @@ Packages: 2  |  Types: 429
 - 🟣 VisionElement  (ECAssistantCore)  deps: [string, VisionElementType, string, VisionBoundingBox, double, IReadOnlyList]
 - 🟣 VisionElementGroup  (ECAssistantCore)  deps: [string, VisionGroupRole, IReadOnlyList]
 - 🟣 VisionSourceInfo  (ECAssistantCore)  deps: [VisionSourceKind, int, int, int]
+- 🟡 VisionStructureGrammar  (ECAssistantCore)
 - 🟡 VisionStructureJsonParser  (ECAssistantCore)
 - 🟡 VisionStructureJsonParserTests  (ECAssistantCore)
 - 🟡 VisionStructurePromptBuilder  (ECAssistantCore)

@@ -59,6 +59,12 @@ public sealed class InferenceRequestParams
     public List<string> ImageDataUris { get; set; } = new();
 
     /// <summary>
+    /// v14.10: optional GBNF grammar for server-side structured decoding
+    /// (ECAssistantLLM `grammar` request field). Ignored by non-supporting backends.
+    /// </summary>
+    public string? Grammar { get; set; }
+
+    /// <summary>
     /// v13b: tool specs for remote native function calling (OpenAI `tools` parameter).
     /// Null/empty on local mode — the local server enforces the decision grammar instead.
     /// </summary>

@@ -127,7 +127,8 @@ public class EVisionStructureTool : EToolBase
                 MaxTokens = _maxTokens,
                 Temperature = _temperature,
                 Stream = false,
-                ImageDataUris = { dataUri }
+                ImageDataUris = { dataUri },
+                Grammar = VisionStructureGrammar.Gbnf
             }, cancellationToken);
         }
         catch (OperationCanceledException) { throw; }

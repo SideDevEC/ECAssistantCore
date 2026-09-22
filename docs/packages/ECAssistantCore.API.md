@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 327  |  LOC: 28131  |  ~15083 tokens
+Types: 328  |  LOC: 28153  |  ~15109 tokens
 
 ---
 
@@ -1433,6 +1433,9 @@ Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Memory, ECAssistant.Core.Services
 
 ### Class: VectorSearchResult
+
+### Class: VisionStructureGrammar
+> GBNF grammar that force-constrains the vision model's output to the
 
 ### Class: VisionStructureJsonParser
 > Parses and validates a model response into a VisionStructureResult.
