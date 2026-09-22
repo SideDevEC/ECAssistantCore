@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-21T23:05:32.039438+00:00
-Packages: 2  |  Types: 417
+Generated: 2026-09-22T06:19:53.177691+00:00
+Packages: 2  |  Types: 429
 
 ---
 
-## ECAssistantCore (317 types, ~27264 LOC)
+## ECAssistantCore (327 types, ~28131 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -27,6 +27,7 @@ Packages: 2  |  Types: 417
 - 🔵 IOutputListener  (ECAssistantCore)
 - 🔵 IOutputRenderer  (ECAssistantCore)
 - 🔵 IParallelToolExecutor  (ECAssistantCore)
+- 🔵 IPdfPageRenderer  (ECAssistantCore)
 - 🔵 IProcessRunner  (ECAssistantCore)
 - 🔵 IReadableContentExtractor  (ECAssistantCore)
 - 🔵 IRemoteModelProbe  (ECAssistantCore)
@@ -116,6 +117,8 @@ Packages: 2  |  Types: 417
 - 🟡 EToolResult  (ECAssistantCore)
 - 🟡 EUserAskTool : EToolBase  (ECAssistantCore)  deps: [ISessionOutput]
 - 🟡 EUserAskToolTests  (ECAssistantCore)
+- 🟡 EVisionStructureTool : EToolBase  (ECAssistantCore)  deps: [IInferenceEngine, IPdfPageRenderer, EAgentConfig]
+- 🟡 EVisionStructureToolTests : IDisposable  (ECAssistantCore)
 - 🟡 EWebFetchTool : EToolBase  (ECAssistantCore)  deps: [IHttpClient, IReadableContentExtractor, IHtmlTextConverter, EAgentConfig]
 - 🟡 EWebFetchToolTests  (ECAssistantCore)
 - 🟡 EWebSearchTool : EToolBase  (ECAssistantCore)  deps: [IHttpClient, EAgentConfig]
@@ -262,6 +265,7 @@ Packages: 2  |  Types: 417
 - 🟡 SessionQueueTests  (ECAssistantCore)
 - 🟡 SetupWizard  (ECAssistantCore)  deps: [ISetupUi]
 - 🟡 SingleToolResult  (ECAssistantCore)
+- 🟡 SipsPdfPageRenderer : IPdfPageRenderer  (ECAssistantCore)  deps: [IProcessRunner]
 - 🟡 SseParser  (ECAssistantCore)
 - 🟡 StartupTimeoutDefaultsTests  (ECAssistantCore)
 - 🟡 StepMapper : IStepMapper  (ECAssistantCore)  deps: [IEngineToolContext, ILogger? logger =]
@@ -320,12 +324,18 @@ Packages: 2  |  Types: 417
 - 🟡 VectorMemoryStoreTests : IDisposable  (ECAssistantCore)
 - 🟣 VectorResult  (ECAssistantCore)  deps: [string, string, float]
 - 🟡 VectorSearchResult  (ECAssistantCore)
+- 🟣 VisionElement  (ECAssistantCore)  deps: [string, VisionElementType, string, VisionBoundingBox, double, IReadOnlyList]
+- 🟣 VisionElementGroup  (ECAssistantCore)  deps: [string, VisionGroupRole, IReadOnlyList]
+- 🟣 VisionSourceInfo  (ECAssistantCore)  deps: [VisionSourceKind, int, int, int]
+- 🟡 VisionStructureJsonParser  (ECAssistantCore)
+- 🟡 VisionStructureJsonParserTests  (ECAssistantCore)
+- 🟡 VisionStructurePromptBuilder  (ECAssistantCore)
 - 🟡 WizardCatalogTests : IDisposable  (ECAssistantCore)
 - 🟡 WizardContext  (ECAssistantCore)
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (100 types, ~12619 LOC)
+## Tests (102 types, ~12938 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -356,6 +366,7 @@ Packages: 2  |  Types: 417
 - 🟡 EShellAgentTests  (Tests)
 - 🟡 EToolBaseTests  (Tests)
 - 🟡 EUserAskToolTests  (Tests)
+- 🟡 EVisionStructureToolTests : IDisposable  (Tests)
 - 🟡 EWebFetchToolTests  (Tests)
 - 🟡 EWebSearchToolTests  (Tests)
 - 🟡 EmbeddingRoutingTests  (Tests)
@@ -425,5 +436,6 @@ Packages: 2  |  Types: 417
 - 🟡 TranscriptIntegrationTests : IDisposable  (Tests)
 - 🟡 VectorMemorySetupWriterTests : IDisposable  (Tests)
 - 🟡 VectorMemoryStoreTests : IDisposable  (Tests)
+- 🟡 VisionStructureJsonParserTests  (Tests)
 - 🟡 WizardCatalogTests : IDisposable  (Tests)
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (Tests)

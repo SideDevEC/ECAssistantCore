@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-21T23:05:32.040069+00:00
-Edges: 80  |  Packages: 2
+Generated: 2026-09-22T06:19:53.179197+00:00
+Edges: 85  |  Packages: 2
 
 ---
 
@@ -44,6 +44,9 @@ Edges: 80  |  Packages: 2
 - ESubAgentTool ──implements──► EToolBase (ECAssistantCore)
 - EUserAskTool ──implements──► EToolBase (ECAssistantCore)
 - EUserAskTool ──uses──► ISessionOutput (ECAssistantCore)
+- EVisionStructureTool ──implements──► EToolBase (ECAssistantCore)
+- EVisionStructureTool ──uses──► IInferenceEngine (ECAssistantCore)
+- EVisionStructureTool ──uses──► IPdfPageRenderer (ECAssistantCore)
 - EWebFetchTool ──implements──► EToolBase (ECAssistantCore)
 - EWebFetchTool ──uses──► IHtmlTextConverter (ECAssistantCore)
 - EWebFetchTool ──uses──► IHttpClient (ECAssistantCore)
@@ -80,6 +83,8 @@ Edges: 80  |  Packages: 2
 - ServerInstallCoordinator ──uses──► ISetupUi (ECAssistantCore)
 - SessionBuilder ──implements──► ISessionBuilder (ECAssistantCore)
 - SetupWizard ──uses──► ISetupUi (ECAssistantCore)
+- SipsPdfPageRenderer ──implements──► IPdfPageRenderer (ECAssistantCore)
+- SipsPdfPageRenderer ──uses──► IProcessRunner (ECAssistantCore)
 - StepMapper ──implements──► IStepMapper (ECAssistantCore)
 - StepMapper ──uses──► IEngineToolContext (ECAssistantCore)
 - SubAgentManager ──uses──► ISubAgentEngineHost (ECAssistantCore)

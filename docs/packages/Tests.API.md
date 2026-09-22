@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 100  |  LOC: 12619  |  ~3830 tokens
+Types: 102  |  LOC: 12938  |  ~3900 tokens
 
 ---
 
@@ -106,6 +106,10 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Tools
 ### Class: EUserAskToolTests
 > v14.9 AskUser tool — model-driven ambiguity checkpoint: parses options,
 Cross-package deps: ECAssistant.Core.Session, ECAssistant.Core.Tools.User, Xunit
+
+### Class: EVisionStructureToolTests
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.EVision, ECAssistant.Core.Vision, Moq
 
 ### Class: EWebFetchToolTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Web
@@ -370,6 +374,9 @@ Cross-package deps: ECAssistant.Core.Setup
 ### Class: VectorMemoryStoreTests
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Memory, ECAssistant.Core.Services
+
+### Class: VisionStructureJsonParserTests
+Cross-package deps: ECAssistant.Core.Vision
 
 ### Class: WizardCatalogTests
 > Wizard rework units: remote catalog fetch fallback, local model discovery.

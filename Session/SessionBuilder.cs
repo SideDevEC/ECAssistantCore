@@ -244,6 +244,11 @@ public class SessionBuilder : ISessionBuilder
         var fileReader = new EFileReaderTool(fileSystem, _config);
         var webFetch = new EWebFetchTool(httpClient, contentExtractor, htmlConverter, _config);
         var fileResearch = new EFileResearchTool(fileSystem, _config);
+        // v14.10 vision structure tool — gated on vision-capable model (mmproj / vision flag)
+        Tools.EVision.EVisionStructureTool? visionStructure = null;
+        if (_config.SupportsVision && session.Engine.InferenceEngine is { } visionEngine)
+            visionStructure = new Tools.EVision.EVisionStructureTool(
+                visionEngine, new Vision.SipsPdfPageRenderer(processRunner), _config);
         // v14.9 ambiguity checkpoint — model-driven AskUser (gated: allow_user_ask)
         Tools.User.EUserAskTool? userAsk = _config?.Interaction.AllowUserAsk != false
             ? new Tools.User.EUserAskTool(session)
@@ -260,6 +265,8 @@ public class SessionBuilder : ISessionBuilder
         EnsureAndRegister(session, fileReader);
         EnsureAndRegister(session, webFetch);
         EnsureAndRegister(session, fileResearch);
+        if (visionStructure != null)
+            EnsureAndRegister(session, visionStructure);
         if (userAsk != null)
             EnsureAndRegister(session, userAsk);
     }

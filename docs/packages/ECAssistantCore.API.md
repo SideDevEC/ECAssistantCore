@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 317  |  LOC: 27264  |  ~14597 tokens
+Types: 327  |  LOC: 28131  |  ~15083 tokens
 
 ---
 
@@ -183,6 +183,11 @@ Methods:
   - string CombineResults(BatchToolResult batch)
   - string FormatConsoleSummary(BatchToolResult batch)
 Cross-package deps: ECAssistant.Core.Engine
+
+### Interface: IPdfPageRenderer
+> Renders one page of a PDF document to PNG bytes so it can be sent through
+Methods:
+  - Task<byte[]?> RenderPageToPngAsync(string pdfPath, int page, CancellationToken ct = default)
 
 ### Interface: IProcessRunner
 > Abstract process execution.
@@ -630,6 +635,17 @@ Cross-package deps: ECAssistant.Core.Session
 ### Class: EUserAskToolTests
 > v14.9 AskUser tool — model-driven ambiguity checkpoint: parses options,
 Cross-package deps: ECAssistant.Core.Session, ECAssistant.Core.Tools.User, Xunit
+
+### Class: EVisionStructureTool
+> EVisionStructure — analyze an image file or PDF page and return a fixed,
+Implements: EToolBase
+Constructor:
+  - EVisionStructureTool(IInferenceEngine inferenceEngine, IPdfPageRenderer pdfRenderer, EAgentConfig config)
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Vision
+
+### Class: EVisionStructureToolTests
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.EVision, ECAssistant.Core.Vision, Moq
 
 ### Class: EWebFetchTool
 > EWebFetch — fetch a URL, extract main readable content, convert to
@@ -1207,6 +1223,13 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup
 > Result of a single tool execution within a batch.
 Cross-package deps: ECAssistant.Core.Tools
 
+### Class: SipsPdfPageRenderer
+> macOS implementation of IPdfPageRenderer using the built-in `sips`
+Implements: IPdfPageRenderer
+Constructor:
+  - SipsPdfPageRenderer(IProcessRunner processRunner)
+Cross-package deps: ECAssistant.Core.Interfaces
+
 ### Class: SseParser
 > Parses SSE (Server-Sent Events) stream from OpenAI-compatible chat completions.
 
@@ -1411,6 +1434,15 @@ Cross-package deps: ECAssistant.Core.Memory, ECAssistant.Core.Services
 
 ### Class: VectorSearchResult
 
+### Class: VisionStructureJsonParser
+> Parses and validates a model response into a VisionStructureResult.
+
+### Class: VisionStructureJsonParserTests
+Cross-package deps: ECAssistant.Core.Vision
+
+### Class: VisionStructurePromptBuilder
+> Builds the analysis prompt sent with an image to the vision model.
+
 ### Class: WizardCatalogTests
 > Wizard rework units: remote catalog fetch fallback, local model discovery.
 Implements: IDisposable
@@ -1487,3 +1519,18 @@ Constructor:
 ### Record: VectorResult
 Constructor:
   - VectorResult(string Content, string Metadata, float Score)
+
+### Record: VisionElement
+> One detected element in a vision-structured analysis.
+Constructor:
+  - VisionElement(string Id, VisionElementType Type, string Text, VisionBoundingBox BoundingBox, double Confidence, IReadOnlyList<string> AssociatedWith)
+
+### Record: VisionElementGroup
+> A semantic group of related elements (e.g. a form, a toolbar, a section).
+Constructor:
+  - VisionElementGroup(string Id, VisionGroupRole Role, IReadOnlyList<string> MemberIds)
+
+### Record: VisionSourceInfo
+> Describes the analyzed source (screenshot or PDF page).
+Constructor:
+  - VisionSourceInfo(VisionSourceKind Kind, int Page, int Width, int Height)
