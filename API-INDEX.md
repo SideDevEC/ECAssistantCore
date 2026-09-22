@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-22T07:32:44.651802+00:00
-Packages: 2  |  Types: 414
+Generated: 2026-09-22T08:08:29.318975+00:00
+Packages: 2  |  Types: 416
 
 ---
 
-## ECAssistantCore (317 types, ~27036 LOC)
+## ECAssistantCore (318 types, ~27074 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -277,6 +277,7 @@ Packages: 2  |  Types: 414
 - 🟡 SummaryServiceTests  (ECAssistantCore)
 - 🟡 SupportsVisionTests  (ECAssistantCore)
 - 🟡 SystemPromptBuilder  (ECAssistantCore)
+- 🟡 SystemPromptDateSectionTests  (ECAssistantCore)
 - 🟡 SystemToolConfigEntry  (ECAssistantCore)
 - 🟡 TaskPlanner : ITaskPlanner  (ECAssistantCore)  deps: [ILogger? logger =]
 - 🟡 TaskPlannerTests  (ECAssistantCore)
@@ -325,7 +326,7 @@ Packages: 2  |  Types: 414
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (97 types, ~12208 LOC)
+## Tests (98 types, ~12236 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -408,6 +409,7 @@ Packages: 2  |  Types: 414
 - 🟡 SubAgentTaskTests  (Tests)
 - 🟡 SummaryServiceTests  (Tests)
 - 🟡 SupportsVisionTests  (Tests)
+- 🟡 SystemPromptDateSectionTests  (Tests)
 - 🟡 TaskPlannerTests  (Tests)
 - 🟡 Test  (Tests)
 - 🟡 Test  (Tests)

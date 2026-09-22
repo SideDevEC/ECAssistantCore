@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 97  |  LOC: 12208  |  ~3761 tokens
+Types: 98  |  LOC: 12236  |  ~3782 tokens
 
 ---
 
@@ -313,6 +313,9 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Engine
 ### Class: SupportsVisionTests
 > SupportsVision is the single, mode-independent capability answer for
 Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, Xunit
+
+### Class: SystemPromptDateSectionTests
+Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: TaskPlannerTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq

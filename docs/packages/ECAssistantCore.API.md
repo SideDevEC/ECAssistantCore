@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 317  |  LOC: 27036  |  ~14644 tokens
+Types: 318  |  LOC: 27074  |  ~14665 tokens
 
 ---
 
@@ -1260,6 +1260,9 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, Xunit
 
 ### Class: SystemPromptBuilder
 > Builds a system prompt for ECAssistant.Core that includes operating rules,
+
+### Class: SystemPromptDateSectionTests
+Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: SystemToolConfigEntry
 > Config entry for system-critical tools.

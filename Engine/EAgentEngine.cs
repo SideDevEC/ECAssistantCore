@@ -348,7 +348,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
              {
                 if (File.Exists(_systemPromptPathOverride))
                  {
-                    _systemPromptText = File.ReadAllText(_systemPromptPathOverride);
+                    _systemPromptText = AppendCurrentDateSection(File.ReadAllText(_systemPromptPathOverride));
                     _out?.WriteInfo($"[Config] System prompt loaded from: {_systemPromptPathOverride} ({_systemPromptText.Length} chars)");
                  }
                 else
@@ -366,7 +366,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
                 var embedded = ResourceLoader.Default.LoadTextWithFallback(promptResourceName, "SystemPrompt.Linux.md");
                 if (embedded != null)
                  {
-                    _systemPromptText = embedded;
+                    _systemPromptText = AppendCurrentDateSection(embedded);
                     _out?.WriteInfo($"[Config] System prompt loaded from embedded resource: {promptResourceName} ({_systemPromptText.Length} chars)");
                  }
                 else
@@ -381,7 +381,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
                      }
                     if (File.Exists(sysPromptPath))
                      {
-                        _systemPromptText = File.ReadAllText(sysPromptPath);
+                        _systemPromptText = AppendCurrentDateSection(File.ReadAllText(sysPromptPath));
                         _out?.WriteInfo($"[Config] System prompt loaded from: {promptResourceName} ({_systemPromptText.Length} chars)");
                      }
                     else
@@ -426,6 +426,23 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
             ?? new ECAssistant.Core.Engine.SelfCorrectionManager(workingDir, _logger);
     }
 
+    /// <summary>
+    /// v14.10: append the current local date/time to the system prompt so the
+    /// model can answer date/time questions directly — no tool call needed
+    /// (fixes the "dumps the project folder to answer 'what day is it'" class).
+    /// Refreshed on engine start; long-running sessions see the load-time date.
+    /// </summary>
+    private static string AppendCurrentDateSection(string prompt)
+    {
+        var now = DateTime.Now;
+        return prompt.TrimEnd() + Environment.NewLine + Environment.NewLine +
+            "## CURRENT DATE & TIME" + Environment.NewLine +
+            Environment.NewLine +
+            $"Today is {now:dddd}, {now:MMMM d, yyyy} — local time {now:HH:mm}. " +
+            "For date/time questions, answer directly from this line — do NOT run tools or explore the filesystem." +
+            Environment.NewLine;
+    }
+
     public async Task InitializeVectorMemoryAsync(string storeDir, ECAssistant.Core.Interfaces.IVectorEmbedder? embedder = null)
      {
         if (_vectorMemory == null)
@@ -436,6 +453,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
             // Real embedder (HTTP/local) — hand it to the store as the generator
             await _vectorMemory.InitializeAsync(text => System.Threading.Tasks.Task.FromResult(embedder.Embed(text)));
         }
+
         else
         {
             // No embedder configured — TF-IDF keyword hashing keeps vector memory functional
@@ -1706,5 +1724,5 @@ public class ExecutionState
     public string LastResponse { get; set; } = "";
     public string LastToolOutput { get; set; } = "";
     public List<string> History { get; set; } = new();
-}
 
+}
