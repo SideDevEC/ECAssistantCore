@@ -1694,8 +1694,14 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
             var envelope = await _inferenceEngine!.GenerateStructuredAsync(prompt, parameters, ct);
             if (envelope == null)
              {
-                // Older server without the structured endpoint — fall back permanently.
-                _useStructuredDecoding = false;
+                // v14.10.1: null is transient (provider hiccup, empty choices, one
+                // malformed reply) — fall back for THIS TURN only and retry the
+                // structured path next turn. Permanent fallback is reserved for the
+                // legacy-endpoint status codes (404/405/501) below. The old code
+                // flipped _useStructuredDecoding off forever on the first transient
+                // null, silently downgrading the whole session to raw streaming
+                // (live regression on local qwen3.5-4b).
+                _logger?.Warn("Engine", "Structured decoding returned null — text fallback for this turn.");
                 return null;
              }
             return StructuredDecisionAdapter.ParseDecision(envelope);

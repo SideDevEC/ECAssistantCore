@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 318  |  LOC: 27136  |  ~14684 tokens
+Types: 319  |  LOC: 27187  |  ~14747 tokens
 
 ---
 
@@ -1212,6 +1212,10 @@ Cross-package deps: ECAssistant.Core.Orchestration, ECAssistant.Core.Tools
 ### Class: StructuredDecisionAdapterTests
 > v14: grammar-forced decision envelope → LLMDecision (native JSON pipeline).
 Cross-package deps: ECAssistant.Core.Engine, Xunit
+
+### Class: StructuredFallbackResilienceTests
+> v14.10.1: a transient null from GenerateStructuredAsync (provider hiccup,
+Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Config, ECAssistant.Core.Orchestration
 
 ### Class: SubAgentConfig
 > Sub-agent configuration. GPU/thread params are server-side concerns

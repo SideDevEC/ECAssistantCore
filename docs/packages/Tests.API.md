@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 98  |  LOC: 12258  |  ~3800 tokens
+Types: 99  |  LOC: 12309  |  ~3863 tokens
 
 ---
 
@@ -296,6 +296,10 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools
 ### Class: StructuredDecisionAdapterTests
 > v14: grammar-forced decision envelope → LLMDecision (native JSON pipeline).
 Cross-package deps: ECAssistant.Core.Engine, Xunit
+
+### Class: StructuredFallbackResilienceTests
+> v14.10.1: a transient null from GenerateStructuredAsync (provider hiccup,
+Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Config, ECAssistant.Core.Orchestration
 
 ### Class: SubAgentErrorTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Orchestration

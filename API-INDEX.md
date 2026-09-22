@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-22T13:16:08.232725+00:00
-Packages: 2  |  Types: 416
+Generated: 2026-09-22T13:24:07.235043+00:00
+Packages: 2  |  Types: 418
 
 ---
 
-## ECAssistantCore (318 types, ~27136 LOC)
+## ECAssistantCore (319 types, ~27187 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -263,6 +263,7 @@ Packages: 2  |  Types: 416
 - 🟡 StringUtil  (ECAssistantCore)
 - 🟡 StructuredDecisionAdapter  (ECAssistantCore)
 - 🟡 StructuredDecisionAdapterTests  (ECAssistantCore)
+- 🟡 StructuredFallbackResilienceTests  (ECAssistantCore)
 - 🟡 SubAgentConfig  (ECAssistantCore)
 - 🟡 SubAgentError  (ECAssistantCore)
 - 🟡 SubAgentErrorTests  (ECAssistantCore)
@@ -326,7 +327,7 @@ Packages: 2  |  Types: 416
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (98 types, ~12258 LOC)
+## Tests (99 types, ~12309 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -404,6 +405,7 @@ Packages: 2  |  Types: 416
 - 🟡 StartupTimeoutDefaultsTests  (Tests)
 - 🟡 StepMapperTests  (Tests)
 - 🟡 StructuredDecisionAdapterTests  (Tests)
+- 🟡 StructuredFallbackResilienceTests  (Tests)
 - 🟡 SubAgentErrorTests  (Tests)
 - 🟡 SubAgentIntegrationTests : IDisposable  (Tests)
 - 🟡 SubAgentResultTests  (Tests)
