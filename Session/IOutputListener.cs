@@ -24,6 +24,14 @@ public interface IOutputListener
     bool OnRequestApproval(string message);
 
     /// <summary>
+    /// v14.10.2: scoped approval — AllowOnce / AllowSession / Deny.
+    /// Default: maps the classic bool approval to AllowOnce/Deny so existing
+    /// listeners keep compiling without changes.
+    /// </summary>
+    ApprovalScope OnRequestApprovalScoped(string message)
+        => OnRequestApproval(message) ? ApprovalScope.AllowOnce : ApprovalScope.Deny;
+
+    /// <summary>
     /// v14.9: display the prompt and options, collect a choice (1-based index).
     /// Default: null (no choice) — existing listeners keep compiling and the
     /// orchestrator proceeds autonomously when null is returned.

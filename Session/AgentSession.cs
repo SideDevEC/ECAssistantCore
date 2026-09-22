@@ -552,6 +552,56 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     /// Async approval polling: Task.Delay instead of Thread.Sleep keeps the waiting
     /// thread-pool thread free while polling for a listener.
     /// </summary>
+    /// <summary>
+    /// v14.10.2: scoped approval — forwards to the first listener's tri-state
+    /// handler (y = AllowOnce, a = AllowSession, n = Deny in the TUI). Mirrors
+    /// RequestApprovalAsync's listener/timeout semantics.
+    /// </summary>
+    public ApprovalScope RequestApprovalScoped(string message)
+        => RequestApprovalScopedAsync(message).GetAwaiter().GetResult();
+
+    public async Task<ApprovalScope> RequestApprovalScopedAsync(string message)
+    {
+        WriteLine(message, OutputState.Warning);
+
+        lock (_uiLock)
+        {
+            if (_listeners.Count > 0)
+            {
+                try
+                {
+                    return _listeners[0].OnRequestApprovalScoped(message);
+                }
+                catch
+                {
+                    return ApprovalScope.Deny;
+                }
+            }
+        }
+
+        var waited = 0;
+        while (waited < 30000)
+        {
+            await Task.Delay(100);
+            waited += 100;
+            lock (_uiLock)
+            {
+                if (_listeners.Count > 0)
+                {
+                    try
+                    {
+                        return _listeners[0].OnRequestApprovalScoped(message);
+                    }
+                    catch
+                    {
+                        return ApprovalScope.Deny;
+                    }
+                }
+            }
+        }
+        return ApprovalScope.Deny; // no listener within timeout — auto-deny
+    }
+
     public async Task<bool> RequestApprovalAsync(string message)
     {
         // Write the approval request as an output line first

@@ -41,6 +41,25 @@ public class ToolPolicy
             _requiresApproval.Remove(toolName);
     }
 
+    // v14.10.2: session-scoped pattern approvals ("remember this decision").
+    // Key format: "ToolName:pattern" — e.g. "ECodeEditor:create" or "EShellAgent:git".
+    private readonly HashSet<string> _sessionApprovals = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// v14.10.2: remember an approval for the rest of the session (Emre's
+    /// Claude-Code-style remember-decision). Cleared when the process exits —
+    /// nothing is persisted, so a fresh start is always fully gated again.
+    /// </summary>
+    public void ApproveSessionPattern(string toolName, string pattern)
+    {
+        if (!string.IsNullOrWhiteSpace(toolName) && !string.IsNullOrWhiteSpace(pattern))
+            _sessionApprovals.Add($"{toolName.Trim()}:{pattern.Trim()}");
+    }
+
+    /// <summary>True when the tool+pattern was approved for this session.</summary>
+    public bool IsSessionApproved(string toolName, string pattern)
+        => _sessionApprovals.Contains($"{toolName.Trim()}:{pattern.Trim()}");
+
     public bool RequiresApproval(string toolName) => _requiresApproval.Contains(toolName);
     public bool IsAllowed(string toolName) => !RequiresApproval(toolName);
 
@@ -50,6 +69,10 @@ public class ToolPolicy
     {
         if (RequiresApproval(toolName))
         {
+            // v14.10.2: session-scoped remember-decision check (before any prompting).
+            var sessionPattern = BuildSessionPattern(toolName, args);
+            if (!string.IsNullOrEmpty(sessionPattern) && IsSessionApproved(toolName, sessionPattern))
+                return new ToolPolicyDecision { CanExecute = true, NeedsApproval = false, Message = $"Allowed by session approval ({sessionPattern})." };
             // EShellAgent: inspect the command to decide if approval is truly needed.
             // Read-only commands (ls, cat, date, echo, grep, etc.) are auto-approved.
             // Only commands that modify/delete/create files or change system state need approval.
@@ -266,4 +289,31 @@ public class ToolPolicy
         foreach (var entry in entries)
             SetPermission(entry.ToolName, entry.ApprovalRequired, entry.Reason ?? "System-critical tool");
     }
+
+
+    /// <summary>
+    /// v14.10.2: coarse per-call pattern for remember-decision approvals.
+    /// EShellAgent → first token of the command (e.g. "git", "dotnet", "ls");
+    /// ECodeEditor → the action argument; otherwise the first present arg value
+    /// (truncated). Deliberately coarser than full signatures: the point is to
+    /// stop re-asking for the same KIND of action, not to whitelist exact calls.
+    /// Stateless utility — no mutable state.
+    /// </summary>
+    public static string BuildSessionPattern(string toolName, Dictionary<string, string?> args)
+    {
+        if (toolName == "EShellAgent" && args.TryGetValue("command", out var cmd) && !string.IsNullOrWhiteSpace(cmd))
+        {
+            var token = cmd.TrimStart().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            return token.Length > 0 ? token[0].ToLowerInvariant() : "";
+        }
+        if (args.TryGetValue("action", out var action) && !string.IsNullOrWhiteSpace(action))
+            return action.ToLowerInvariant().Trim();
+        foreach (var kv in args)
+        {
+            if (!string.IsNullOrWhiteSpace(kv.Value))
+                return kv.Value.Length > 40 ? kv.Value[..40] : kv.Value;
+        }
+        return "";
+    }
+
 }

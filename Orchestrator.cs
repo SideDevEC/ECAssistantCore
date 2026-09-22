@@ -468,7 +468,11 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                     _out?.WriteLine($"[Policy] {policyDecision.Message}");
                      // In console mode, ask the user directly
                     _out?.WriteLine($"[Policy] Approve execution of {decision.ToolName} with args: {string.Join(", ", argsDict.Select(kvp => kvp.Key + "=" + (kvp.Value ?? "(null)")))}?");
-                    var approved = _out?.RequestApproval($"[Policy] Approve execution of {decision.ToolName} with args: {string.Join(", ", argsDict.Select(kvp => kvp.Key + "=" + (kvp.Value ?? "(null)")))}?") ?? false;
+                    var scope = _out?.RequestApprovalScoped($"[Policy] Approve execution of {decision.ToolName} with args: {string.Join(", ", argsDict.Select(kvp => kvp.Key + "=" + (kvp.Value ?? "(null)")))}?") ?? Session.ApprovalScope.Deny;
+                    var approved = scope != Session.ApprovalScope.Deny;
+                    // v14.10.2: remember-decision — 'a' allows this tool+pattern for the rest of the session.
+                    if (scope == Session.ApprovalScope.AllowSession)
+                        _toolPolicy.ApproveSessionPattern(decision.ToolName!, Tools.ToolPolicy.BuildSessionPattern(decision.ToolName!, argsDict));
                     if (!approved)
                      {
                         _out?.WriteLine($"[Policy] Tool execution DENIED by user: {decision.ToolName}");

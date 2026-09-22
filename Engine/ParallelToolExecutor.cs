@@ -97,10 +97,13 @@ public class ParallelToolExecutor : IParallelToolExecutor
                         if (policy.NeedsApproval)
                         {
                             _log($"[Policy] {tc}: {policy.Message}");
-                            var isApproved = _out?.RequestApproval($"[Policy] Approve {tc.ToolName}#{tc.Index} ({string.Join(", ", tc.Args.Select(kvp => kvp.Key + "=" + StringUtil.Default.Truncate(kvp.Value ?? "", 60)))})?") ?? false;
-                            if (isApproved)
+                            var scope = _out?.RequestApprovalScoped($"[Policy] Approve {tc.ToolName}#{tc.Index} ({string.Join(", ", tc.Args.Select(kvp => kvp.Key + "=" + StringUtil.Default.Truncate(kvp.Value ?? "", 60)))})?") ?? Session.ApprovalScope.Deny;
+                            // v14.10.2: remember-decision — 'a' approves this tool+pattern for the session.
+                            if (scope == Session.ApprovalScope.AllowSession)
+                                _toolPolicy.ApproveSessionPattern(tc.ToolName!, Tools.ToolPolicy.BuildSessionPattern(tc.ToolName!, tc.Args));
+                            if (scope != Session.ApprovalScope.Deny)
                             {
-                                _log($"[Policy] Approved: {tc}");
+                                _log($"[Policy] Approved{(scope == Session.ApprovalScope.AllowSession ? " (session)" : "")}: {tc}");
                                 approved.Add(tc);
                             }
                             else

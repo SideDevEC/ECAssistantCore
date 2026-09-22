@@ -77,6 +77,13 @@ public interface ISessionOutput
     bool RequestApproval(string message);
 
     /// <summary>
+    /// v14.10.2: scoped approval (AllowOnce / AllowSession / Deny). Default maps
+    /// onto the bool RequestApproval so existing implementations keep compiling.
+    /// </summary>
+    ApprovalScope RequestApprovalScoped(string message)
+        => RequestApproval(message) ? ApprovalScope.AllowOnce : ApprovalScope.Deny;
+
+    /// <summary>
     /// v14.9: ask the user to pick from explicit options at a decision checkpoint
     /// (see InteractionConfig). Blocks until the attached listener responds.
     /// Returns the 1-based index of the chosen option, or null if no listener is
