@@ -62,6 +62,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     // ── Output buffer + Listeners ─────────────────────
     private readonly List<OutputEntry> _outputBuffer = new();
     private readonly List<IOutputListener> _listeners = new();
+    private readonly object _listenerLock = new();
     private readonly object _uiLock = new();
 
     // ── Prompt Queue ───────────────────────────────────
@@ -488,6 +489,20 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     /// <summary>v14.9: blocking choice request — see RequestChoiceAsync.</summary>
     public int? RequestChoice(string prompt, IReadOnlyList<string> options)
         => RequestChoiceAsync(prompt, options).GetAwaiter().GetResult();
+
+    /// <summary>v14.10.1: publish an activity-status hint to all listeners
+    /// (spinner label in the TUI). Fire-and-forget; null/empty clears.</summary>
+    public void SetStatus(string? status)
+    {
+        List<IOutputListener> snapshot;
+        lock (_listenerLock)
+            snapshot = _listeners.ToList();
+        foreach (var l in snapshot)
+        {
+            try { l.OnStatus(status); }
+            catch (Exception ex) { _logger?.Debug("Session", $"Status dispatch ignored: {ex.Message}"); }
+        }
+    }
 
     /// <summary>
     /// v14.9: interactive checkpoint — present prompt + numbered options and block

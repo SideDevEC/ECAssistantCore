@@ -33,6 +33,12 @@ public interface ISessionOutput
     /// <summary>Write a blank line.</summary>
     void BlankLine();
 
+    /// <summary>
+    /// v14.10.1: transient activity status for the UI (spinner label).
+    /// Null/empty clears it. Default: no-op — existing implementers keep compiling.
+    /// </summary>
+    void SetStatus(string? status) { }
+
     // ── Convenience methods ──
 
     /// <summary>Write an info message.</summary>

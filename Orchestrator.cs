@@ -266,6 +266,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
             _logger?.Info("Orchestrator", $"Turn {_turnCount + 1}/{_maxTurns}");
 
                   // v12.0: chat-classified goals answer directly — no toolcall demanded
+              _out?.SetStatus("Thinking\u2026");
               var decision = await _engine.GenerateAsync(goal);
 
               // v10.11.1: Check if generation was stopped by user (ESC) — bail out immediately,
@@ -351,6 +352,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                         msg => _out?.WriteDim(msg));
 
                      // Execute all tool calls with dependency-aware parallelism
+                    _out?.SetStatus($"Running {decision.ToolCalls.Count} tools\u2026");
                     var batchResult = await parallelExec.ExecuteAsync(decision.ToolCalls, _engine.ExecutionToken);
 
                      // Display summary
@@ -541,6 +543,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                             _turnCount++;
                             continue;
                          }
+                        _out?.SetStatus($"Running {decision.ToolName}\u2026");
                         var result = await ExecuteTool(decision.ToolName!, argsDict);
                         var elapsedMs = (long)((DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - startMs);
 

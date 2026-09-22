@@ -29,4 +29,11 @@ public interface IOutputListener
     /// orchestrator proceeds autonomously when null is returned.
     /// </summary>
     int? OnRequestChoice(string prompt, IReadOnlyList<string> options) => null;
+
+    /// <summary>
+    /// v14.10.1: processing-status hint (spinner label): "Thinking…",
+    /// "Running EShellAgent…". Null/empty = clear (output is arriving).
+    /// Default: no-op — existing listeners keep compiling.
+    /// </summary>
+    void OnStatus(string? status) { }
 }
