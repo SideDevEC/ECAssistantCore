@@ -1,6 +1,6 @@
 # PACKAGE-MAP.md — ECAssistantCore
 
-Generated: 2026-09-22T06:31:04.604466+00:00
+Generated: 2026-09-22T06:50:09.201770+00:00
 
 ---
 

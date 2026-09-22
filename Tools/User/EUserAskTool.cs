@@ -19,12 +19,12 @@ public sealed class EUserAskTool : EToolBase
 
     public EUserAskTool(ISessionOutput? sessionOutput) => _out = sessionOutput;
 
-    public override string Name => "AskUser";
+    public override string Name => "EAskUser";
     public override string Description =>
         "Ask the user a clarifying question with 2-4 options. Use ONLY when you are genuinely " +
         "uncertain how to proceed (multiple valid approaches, ambiguous request, irreversible " +
         "action). Not for trivial choices. The user's selection is returned as the result.";
-    public override string UsageExample => "AskUser(question: \"Refactor in place or new module?\", options: \"[\\\"In place\\\", \\\"New module\\\"]\")";
+    public override string UsageExample => "EAskUser(question: \"Refactor in place or new module?\", options: \"[\\\"In place\\\", \\\"New module\\\"]\")";
 
     public override string GetParameterSchema() =>
         """

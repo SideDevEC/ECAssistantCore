@@ -532,7 +532,7 @@ delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-dri
   system prompt (VERIFIER rule) — act → observe → verify loop.
 - **P4 — Typed tool schemas**: `EToolBase.GetParameterSchema()` (virtual, JSON
   Schema string) implemented on Shell/CodeEditor/FileReader/WebSearch/WebFetch/
-  DotnetBuild/FileResearch; `ToolSpec.ParameterSchema` carries it into the
+  EDotnetBuild/FileResearch; `ToolSpec.ParameterSchema` carries it into the
   native function-calling request (tools without a schema fall back permissive).
 - **P5 — Staged compaction**: `ContextWindow.TrimStaleToolOutputs()` drops stale
   tool outputs (keeps the last) — zero-LLM-cost stage 1 before the full

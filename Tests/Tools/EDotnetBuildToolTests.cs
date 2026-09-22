@@ -24,7 +24,7 @@ public class EDotnetBuildToolTests
     public void Name_ReturnsDotnetBuild()
     {
         var tool = CreateTool();
-        Assert.Equal("DotnetBuild", tool.Name);
+        Assert.Equal("EDotnetBuild", tool.Name);
     }
 
     [Fact]
