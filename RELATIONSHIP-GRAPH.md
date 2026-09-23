@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-23T11:59:05.191421+00:00
-Edges: 87  |  Packages: 2
+Generated: 2026-09-23T13:20:41.712788+00:00
+Edges: 92  |  Packages: 2
 
 ---
 
@@ -41,6 +41,7 @@ Edges: 87  |  Packages: 2
 - EGitTool ──implements──► EToolBase (ECAssistantCore)
 - EGitTool ──uses──► IFileSystem (ECAssistantCore)
 - EGitTool ──uses──► IProcessRunner (ECAssistantCore)
+- EHandoffTool ──implements──► EToolBase (ECAssistantCore)
 - EShellAgent ──implements──► EToolBase (ECAssistantCore)
 - EShellAgent ──uses──► IProcessRunner (ECAssistantCore)
 - ESubAgentTool ──implements──► EToolBase (ECAssistantCore)
@@ -54,6 +55,8 @@ Edges: 87  |  Packages: 2
 - ExactMatchStrategy ──implements──► ITextMatchStrategy (ECAssistantCore)
 - FileSystemAdapter ──implements──► IFileSystem (ECAssistantCore)
 - FirstRunOrchestrator ──uses──► ISetupUi (ECAssistantCore)
+- HandoffExecutor ──uses──► ILogger (ECAssistantCore)
+- HandoffExecutor ──uses──► ISubAgentEngineHost (ECAssistantCore)
 - HttpClientAdapter ──implements──► IHttpClient (ECAssistantCore)
 - HttpEmbedder ──implements──► IVectorEmbedder (ECAssistantCore)
 - HttpStreamingEngine ──implements──► IInferenceEngine (ECAssistantCore)
@@ -68,6 +71,7 @@ Edges: 87  |  Packages: 2
 - MemoryService ──uses──► IFileSystem (ECAssistantCore)
 - MemoryService ──uses──► IVectorEmbedder (ECAssistantCore)
 - MemoryService ──uses──► IVectorStore (ECAssistantCore)
+- MockProbeTool ──implements──► EToolBase (ECAssistantCore)
 - MockSubAgentTool ──implements──► EToolBase (ECAssistantCore)
 - ModelParamValidator ──implements──► IModelParamValidator (ECAssistantCore)
 - NopKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
@@ -96,4 +100,5 @@ Edges: 87  |  Packages: 2
 
 ## Tests
 
+- MockProbeTool ──implements──► EToolBase (ECAssistantCore) ← CROSS-PKG
 - MockSubAgentTool ──implements──► EToolBase (ECAssistantCore) ← CROSS-PKG

@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 123  |  LOC: 14766  |  ~5346 tokens
+Types: 127  |  LOC: 15112  |  ~5649 tokens
 
 ---
 
@@ -94,6 +94,10 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 > Tests for EGuiTestHarness — verifies it captures output correctly.
 Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.UI
 
+### Class: EHandoffToolTests
+> Unit tests for EHandoffTool — the model-facing handoff tool.
+Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Handoff
+
 ### Class: EMemoryManagerTests
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Memory
@@ -149,13 +153,26 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Setup
 
+### Class: HandoffE2E
+> v15 ephemeral handoff — end-to-end against a REAL ECAssistantLLM server with
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.TestSupport
+
+### Class: HandoffIntegrationTests
+> Integration tests for the v15 ephemeral handoff: EHandoff tool registration,
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.UI
+
+### Class: HandoffRequestTests
+> Unit tests for HandoffRequest — the ephemeral handoff data record.
+Cross-package deps: ECAssistant.Core.Engine
+
 ### Class: HardwareProfileTests
 > HardwareProfile tuning rules: GPU layers / context / batch adapt to the machine.
 Cross-package deps: ECAssistant.Core.Setup, Xunit
 
 ### Class: HarnessE2E
 > Harness end-to-end: drives the REAL product stack (AgentSession →
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Session, ECAssistant.Core.Transport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Build, ECAssistant.Core.Services, ECAssistant.TestSupport
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Session, ECAssistant.Core.Transport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Build, ECAssistant.TestSupport
 
 ### Class: HarnessE2EFeatures
 > v14.13–v14.16 feature E2E against a REAL server + real local model
@@ -164,7 +181,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 ### Class: HarnessOptimizationTests
 > Tests for the 2026-09-21 harness optimizations (P1-P6): tool-result truncation
 Implements: IDisposable
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.TestSupport
 
 ### Class: HomeController
 Cross-package deps: ECAssistant.Core.Analysis
@@ -214,6 +231,11 @@ Cross-package deps: ECAssistant.Core.Memory, ECAssistant.Core.Services
 ### Class: MemoryServiceTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, Moq
 
+### Class: MockProbeTool
+> Integration tests for the v15 ephemeral handoff: EHandoff tool registration,
+Implements: EToolBase
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.UI
+
 ### Class: MockSubAgentTool
 > Integration tests for sub-agent spawning through the orchestrator.
 Implements: EToolBase
@@ -252,7 +274,7 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.
 
 ### Class: Order
 > Harness end-to-end: drives the REAL product stack (AgentSession →
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Session, ECAssistant.Core.Transport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Build, ECAssistant.Core.Services, ECAssistant.TestSupport
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Session, ECAssistant.Core.Transport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Build, ECAssistant.TestSupport
 
 ### Class: ParallelToolExecutorIntegrationTests
 > Integration tests for ParallelToolExecutor — dependency analysis and parallel

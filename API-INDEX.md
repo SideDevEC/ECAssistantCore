@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T11:59:05.190743+00:00
-Packages: 2  |  Types: 494
+Generated: 2026-09-23T13:20:41.712105+00:00
+Packages: 2  |  Types: 502
 
 ---
 
-## ECAssistantCore (371 types, ~31104 LOC)
+## ECAssistantCore (375 types, ~31790 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -113,6 +113,8 @@ Packages: 2  |  Types: 494
 - 🟡 EGitToolTests  (ECAssistantCore)
 - 🟡 EGuiBase  (ECAssistantCore)
 - 🟡 EGuiTestHarnessTests  (ECAssistantCore)
+- 🟡 EHandoffTool : EToolBase  (ECAssistantCore)  deps: [Func]
+- 🟡 EHandoffToolTests  (ECAssistantCore)
 - 🟡 EMemoryManager : IDisposable  (ECAssistantCore)  deps: [string? dataPath =]
 - 🟡 EMemoryManagerTests : IDisposable  (ECAssistantCore)
 - 🟡 EShellAgent : EToolBase  (ECAssistantCore)  deps: [IProcessRunner, EAgentConfig, string]
@@ -156,6 +158,10 @@ Packages: 2  |  Types: 494
 - 🟡 FirstRunOrchestrator  (ECAssistantCore)  deps: [string, ISetupUi]
 - 🟡 FirstRunStatus  (ECAssistantCore)
 - 🟣 GenerationParams  (ECAssistantCore)  deps: [int, float, float, int, float]
+- 🟡 HandoffE2E  (ECAssistantCore)
+- 🟡 HandoffExecutor : IAsyncDisposable  (ECAssistantCore)  deps: [ISubAgentEngineHost, EAgentConfig, InferenceRequestParams, string, ILogger, ISessionOutput? sessionOutput =, IProcessRunner? processRunner =, IFileSystem? fileSystem =, BackgroundProcessManager? bgManager =]
+- 🟡 HandoffIntegrationTests : IDisposable  (ECAssistantCore)
+- 🟡 HandoffRequestTests  (ECAssistantCore)
 - 🟡 HardwareProfile  (ECAssistantCore)
 - 🟡 HardwareProfileTests  (ECAssistantCore)
 - 🟡 HarnessE2E  (ECAssistantCore)
@@ -202,6 +208,7 @@ Packages: 2  |  Types: 494
 - 🟡 MemoryIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 MemoryService : IMemoryService  (ECAssistantCore)  deps: [IFileSystem, IVectorStore, IConfigProvider, IVectorEmbedder]
 - 🟡 MemoryServiceTests  (ECAssistantCore)
+- 🟡 MockProbeTool : EToolBase  (ECAssistantCore)
 - 🟡 MockSubAgentTool : EToolBase  (ECAssistantCore)
 - 🟡 ModelCatalogDocument  (ECAssistantCore)
 - 🟡 ModelCatalogEntry  (ECAssistantCore)
@@ -376,7 +383,7 @@ Packages: 2  |  Types: 494
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (123 types, ~14766 LOC)
+## Tests (127 types, ~15112 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -403,6 +410,7 @@ Packages: 2  |  Types: 494
 - 🟡 EFileResearchToolTests : IDisposable  (Tests)
 - 🟡 EGitToolTests  (Tests)
 - 🟡 EGuiTestHarnessTests  (Tests)
+- 🟡 EHandoffToolTests  (Tests)
 - 🟡 EMemoryManagerTests : IDisposable  (Tests)
 - 🟡 EShellAgentTests  (Tests)
 - 🟡 EToolBaseTests  (Tests)
@@ -417,6 +425,9 @@ Packages: 2  |  Types: 494
 - 🟡 FakeLlmServer : IDisposable  (Tests)
 - 🟡 FileSystemAdapterTests : IDisposable  (Tests)
 - 🟡 FirstRunDetectorTests : IDisposable  (Tests)
+- 🟡 HandoffE2E  (Tests)
+- 🟡 HandoffIntegrationTests : IDisposable  (Tests)
+- 🟡 HandoffRequestTests  (Tests)
 - 🟡 HardwareProfileTests  (Tests)
 - 🟡 HarnessE2E  (Tests)
 - 🟡 HarnessE2EFeatures  (Tests)
@@ -433,6 +444,7 @@ Packages: 2  |  Types: 494
 - 🟡 LoggerTests : IDisposable  (Tests)
 - 🟡 MemoryIntegrationTests : IDisposable  (Tests)
 - 🟡 MemoryServiceTests  (Tests)
+- 🟡 MockProbeTool : EToolBase  (Tests)
 - 🟡 MockSubAgentTool : EToolBase  (Tests)
 - 🟡 ModelCatalogTests : IDisposable  (Tests)
 - 🟡 ModelInstallerConfigTests : IDisposable  (Tests)
