@@ -97,12 +97,12 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
     /// <summary>v14.17: tier-tuned request params — small tier gets tighter sampling.</summary>
     private InferenceRequestParams CreateTieredParams(AppConfig cfg)
     {
-        return InferenceParamsFactory.Default.CreateTiered(cfg, cfg.ModelTier?.IsLargeRuntime() ?? false);
+        return InferenceParamsFactory.Default.CreateTiered(cfg, cfg.ModelTier?.IsLargeRuntime(cfg.LlmProvider?.ModelId) ?? false);
     }
 
     private bool IsLargeModelTier()
     {
-        return _config?.ModelTier?.IsLargeRuntime() ?? false;
+        return _config?.ModelTier?.IsLargeRuntime(_config?.LlmProvider?.ModelId) ?? false;
     }
 
     private ECAssistant.Core.Engine.SelfCorrectionManager? _injectedSelfCorrection;

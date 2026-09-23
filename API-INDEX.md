@@ -1,7 +1,7 @@
 # API-INDEX.md — ECAssistant
 
-Generated: 2026-09-23T22:20:19.539039+00:00
-Packages: 8  |  Types: 591
+Generated: 2026-09-23T22:26:40.254713+00:00
+Packages: 8  |  Types: 592
 
 ---
 
@@ -39,7 +39,7 @@ Packages: 8  |  Types: 591
 ## TestModelLoad (0 types, ~43 LOC)
 
 
-## ECAssistantCore (412 types, ~34577 LOC)
+## ECAssistantCore (413 types, ~34625 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -276,6 +276,7 @@ Packages: 8  |  Types: 591
 - 🟡 ModelInstallerService  (ECAssistantCore)  deps: [HttpClient, string, string, string? appsettingsPath =]
 - 🟡 ModelLoadException : Exception  (ECAssistantCore)  deps: [ModelLoadPhase, string, int, uint, string, Exception? inner =]
 - 🟡 ModelParamValidator : IModelParamValidator  (ECAssistantCore)  deps: [ILogger? logger =]
+- 🟡 ModelTierAutoResolver  (ECAssistantCore)
 - 🟡 ModelTierConfig  (ECAssistantCore)
 - 🟡 ModelTierConfigTests  (ECAssistantCore)
 - 🟡 MultiLlmProvidersConfig  (ECAssistantCore)

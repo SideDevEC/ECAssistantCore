@@ -8,13 +8,14 @@ namespace ECAssistant.Core.Config;
 /// need the full scaffolding; large models get a slim profile so the harness does
 /// not hinder them.
 /// 
-/// Config-driven only — no transport heuristic. The user sets mode explicitly:
-/// "small", "large", or absent (defaults to "small" — safe default, extra
-/// scaffolding doesn't hurt large models but missing scaffolding hurts small ones).
+/// Tier is derived from the MODEL, not transport (Emre, 2026-09-24):
+/// - "small" / "large" → explicit config wins
+/// - "auto"/null → parsed from the model id: ≤14B parameter markers or
+///   instruct-type models are small; larger or unparsable models default small (safe).
 /// </summary>
 public class ModelTierConfig
 {
-    /// <summary>Tier mode: "small", "large", or null/absent (defaults to small — safe).</summary>
+    /// <summary>Tier mode: "small", "large", "auto", or null (auto = derive from model id).</summary>
     [JsonPropertyName("mode")]
     public string? Mode { get; init; }
 
@@ -36,14 +37,20 @@ public class ModelTierConfig
 
     /// <summary>
     /// Resolve whether the active model should get the large-model (slim) profile.
-    /// Pure resolution from immutable config — no transport heuristic, no isLocal.
-    /// Explicit mode wins; absent config defaults to small (safe).
+    /// Pure resolution from immutable config + model id — no transport heuristic.
+    /// Explicit mode wins; auto/null derives from the model id via
+    /// <see cref="ModelTierAutoResolver"/> (≤14B or instruct → small, else large).
     /// </summary>
     // Stateless utility — no mutable state
-    public bool IsLargeRuntime()
+    public bool IsLargeRuntime(string? modelId)
     {
         var mode = Mode?.Trim().ToLowerInvariant();
-        return string.Equals(mode, "large", StringComparison.OrdinalIgnoreCase);
+        return mode switch
+        {
+            "small" => false,
+            "large" => true,
+            _ => !ModelTierAutoResolver.IsSmallModel(modelId) // auto: derive from the model
+        };
     }
 }
 

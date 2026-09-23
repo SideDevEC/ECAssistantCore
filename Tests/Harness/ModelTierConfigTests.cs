@@ -13,17 +13,20 @@ public sealed class ModelTierConfigTests
     // ── IsLargeRuntime: explicit modes ──
 
     [Fact]
-    public void IsLargeRuntime_ModeSmall_ReturnsFalse()
+    public void IsLargeRuntime_ModeSmall_ReturnsFalse_RegardlessOfModel()
     {
         var tier = new ModelTierConfig { Mode = "small" };
-        Assert.False(tier.IsLargeRuntime());
+        Assert.False(tier.IsLargeRuntime("llama-70b"));
+        Assert.False(tier.IsLargeRuntime("qwen3-4b"));
+        Assert.False(tier.IsLargeRuntime(null));
     }
 
     [Fact]
-    public void IsLargeRuntime_ModeLarge_ReturnsTrue()
+    public void IsLargeRuntime_ModeLarge_ReturnsTrue_RegardlessOfModel()
     {
         var tier = new ModelTierConfig { Mode = "large" };
-        Assert.True(tier.IsLargeRuntime());
+        Assert.True(tier.IsLargeRuntime("qwen3-4b"));
+        Assert.True(tier.IsLargeRuntime(null));
     }
 
     [Theory]
@@ -33,7 +36,7 @@ public sealed class ModelTierConfigTests
     public void IsLargeRuntime_ModeCaseInsensitiveAndTrimmed_ReturnsTrue(string mode)
     {
         var tier = new ModelTierConfig { Mode = mode };
-        Assert.True(tier.IsLargeRuntime());
+        Assert.True(tier.IsLargeRuntime("qwen3-4b"));
     }
 
     [Theory]
@@ -42,28 +45,44 @@ public sealed class ModelTierConfigTests
     public void IsLargeRuntime_ModeSmallCaseInsensitiveAndTrimmed_ReturnsFalse(string mode)
     {
         var tier = new ModelTierConfig { Mode = mode };
-        Assert.False(tier.IsLargeRuntime());
+        Assert.False(tier.IsLargeRuntime("llama-70b"));
     }
 
-    // ── IsLargeRuntime: absent/default config defaults to small (safe) ──
+    // ── IsLargeRuntime: auto derives from the MODEL (Emre, 2026-09-24) ──
+    // ≤14B or instruct-type → small; >14B → large; unparsable → small (safe).
 
-    [Fact]
-    public void IsLargeRuntime_NullMode_DefaultsToFalse()
+    [Theory]
+    [InlineData("qwen3-4b")]
+    [InlineData("qwen3-4b-instruct")]
+    [InlineData("Llama-3.3-14B")]
+    [InlineData("ministral-8b-instruct-2410")]
+    [InlineData("glm-4.5-instruct")]
+    public void IsLargeRuntime_Auto_SmallModels_ReturnsFalse(string modelId)
     {
-        var tier = new ModelTierConfig { Mode = null };
-        Assert.False(tier.IsLargeRuntime());
+        var tier = new ModelTierConfig { Mode = "auto" };
+        Assert.False(tier.IsLargeRuntime(modelId));
     }
 
     [Theory]
-    [InlineData("auto")]
-    [InlineData("AUTO")]
-    [InlineData("")]
-    [InlineData("  ")]
-    [InlineData("bogus-mode")]
-    public void IsLargeRuntime_UnknownMode_DefaultsToFalse(string mode)
+    [InlineData("llama-3.3-70b")]
+    [InlineData("qwen2.5-32b-instruct")]
+    [InlineData("Llama-3.3-70B-Instruct")]
+    public void IsLargeRuntime_Auto_LargeModels_ReturnsTrue(string modelId)
     {
-        var tier = new ModelTierConfig { Mode = mode };
-        Assert.False(tier.IsLargeRuntime());
+        var tier = new ModelTierConfig { Mode = "auto" };
+        Assert.True(tier.IsLargeRuntime(modelId));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("main")]
+    [InlineData("gpt-4o")]
+    [InlineData("claude-sonnet-4.6")]
+    public void IsLargeRuntime_Auto_UnparsableModelId_DefaultsSmall(string? modelId)
+    {
+        var tier = new ModelTierConfig { Mode = null };
+        Assert.False(tier.IsLargeRuntime(modelId));
     }
 
     // ── Config wiring ──
@@ -75,7 +94,7 @@ public sealed class ModelTierConfigTests
             """{"model_tier": {"mode": "small"}}""");
         Assert.NotNull(config!.ModelTier);
         Assert.Equal("small", config.ModelTier!.Mode);
-        Assert.False(config.ModelTier.IsLargeRuntime());
+        Assert.False(config.ModelTier.IsLargeRuntime("llama-70b")); // explicit small beats model size
     }
 
     [Fact]
