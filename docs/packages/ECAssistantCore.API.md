@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 348  |  LOC: 29360  |  ~16360 tokens
+Types: 354  |  LOC: 29629  |  ~16662 tokens
 
 ---
 
@@ -34,6 +34,14 @@ Methods:
   - Task<string> SummarizeAsync()
   - bool NeedsShift()
   - void Shift()
+
+### Interface: IContextPinner
+> One pinned fact surfaced to the model after compaction.
+Methods:
+  - void SetGoal(string userRequest)
+  - void ObserveUserMessage(string content)
+  - void ObserveToolOutput(string toolName, string output)
+  - string? BuildPinnedBlock(bool isLargeTier, int maxChars)
 
 ### Interface: IEngine
 > Engine interface for testing/abstraction.
@@ -463,6 +471,23 @@ Cross-package deps: ECAssistant.Core.Interfaces
 ### Class: ContextManagerTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, Moq
 
+### Class: ContextPinner
+> v14.16: deterministic context pinner. Small tier → file map + decisions + goal
+Implements: IContextPinner
+Constructor:
+  - ContextPinner(ContextPinningConfig? config = null)
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
+
+### Class: ContextPinningConfig
+> v14.16: tier-aware proactive context pinning. Critical state (original user
+
+### Class: ContextPinningMatchers
+> v14.16: pure-function matchers for proactive context pinning. Static methods
+
+### Class: ContextPinningTests
+> v14.16: tier-aware proactive context pinning — pure logic only (no LLM, no
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.ContextPinning, ECAssistant.Core.Interfaces
+
 ### Class: ContextWindow
 > Manages the LLM conversation context window.
 Constructor:
@@ -513,7 +538,7 @@ Cross-package deps: ECAssistant.Core.Config
 Implements: IEngine, IEngineToolContext, ISubAgentEngineHost
 Constructor:
   - EAgentEngine(string sessionId, IInferenceEngine inferenceEngine, IKvCacheController kvCacheController, RemoteTokenizer? tokenizer = null, InferenceRequestParams? inferenceParams = null, uint contextSize = 8192, string modelPath = "", EAgentConfig? config = null, string? workingDir = null, ILogger? logger = null, EMemoryManager? memoryManager = null, ECAssistant.Core.Engine.SelfCorrectionManager? selfCorrection = null, ECAssistant.Core.Playbooks.IPlaybookStore? playbookStore = null, ECAssistant.Core.Engine.ProjectContextManager? projectContext = null, ITaskPlanner? taskPlanner = null)
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.ContextPinning, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
 
 ### Class: EBackgroundExecTool
 > Background Exec Tool — lets the LLM start long-running processes
@@ -710,7 +735,7 @@ Implements: ITextMatchStrategy
 
 ### Class: ExecutionState
 > v10.30: Core engine. All inference + KV cache control is HTTP-based via the
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.ContextPinning, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
 
 ### Class: FailureAnalysis
 
@@ -1593,6 +1618,11 @@ Constructor:
 ### Record: MemoryEntry
 Constructor:
   - MemoryEntry(string Content, string Metadata, float[]? Embedding = null)
+
+### Record: PinnedFact
+> One pinned fact surfaced to the model after compaction.
+Constructor:
+  - PinnedFact(string Kind, string Text)
 
 ### Record: ProcessResult
 Constructor:

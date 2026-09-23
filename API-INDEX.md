@@ -1,16 +1,17 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T08:24:25.575189+00:00
-Packages: 2  |  Types: 455
+Generated: 2026-09-23T08:49:00.734426+00:00
+Packages: 2  |  Types: 462
 
 ---
 
-## ECAssistantCore (348 types, ~29360 LOC)
+## ECAssistantCore (354 types, ~29629 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
 - 🔵 IConfigProvider  (ECAssistantCore)
 - 🔵 IContextManager  (ECAssistantCore)
+- 🔵 IContextPinner  (ECAssistantCore)
 - 🔵 IEngine  (ECAssistantCore)
 - 🔵 IEngineToolContext  (ECAssistantCore)
 - 🔵 IFileSystem  (ECAssistantCore)
@@ -76,6 +77,10 @@ Packages: 2  |  Types: 455
 - 🟡 ContextManagementConfig  (ECAssistantCore)
 - 🟡 ContextManager : IContextManager  (ECAssistantCore)  deps: [IInferenceEngine, IConfigProvider]
 - 🟡 ContextManagerTests  (ECAssistantCore)
+- 🟡 ContextPinner : IContextPinner  (ECAssistantCore)  deps: [ContextPinningConfig? config =]
+- 🟡 ContextPinningConfig  (ECAssistantCore)
+- 🟡 ContextPinningMatchers  (ECAssistantCore)
+- 🟡 ContextPinningTests  (ECAssistantCore)
 - 🟡 ContextWindow  (ECAssistantCore)  deps: [uint, TokenCounter? tokenCounter =, uint, SummaryService, TokenCounter? tokenCounter =]
 - 🟡 ContextWindowIntegrationTests  (ECAssistantCore)
 - 🟡 ContextWindowTests  (ECAssistantCore)
@@ -219,6 +224,7 @@ Packages: 2  |  Types: 455
 - 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 ParallelToolExecutorTests  (ECAssistantCore)
 - 🟡 PathExpander  (ECAssistantCore)
+- 🟣 PinnedFact  (ECAssistantCore)  deps: [string, string]
 - 🟡 PlannedToolCall  (ECAssistantCore)
 - 🟡 Playbook  (ECAssistantCore)
 - 🟡 PlaybookExtractor : IPlaybookExtractor  (ECAssistantCore)
@@ -356,7 +362,7 @@ Packages: 2  |  Types: 455
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (107 types, ~13454 LOC)
+## Tests (108 types, ~13572 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -367,6 +373,7 @@ Packages: 2  |  Types: 455
 - 🟡 ConfigLoaderTests  (Tests)
 - 🟡 ConfigProviderTests  (Tests)
 - 🟡 ContextManagerTests  (Tests)
+- 🟡 ContextPinningTests  (Tests)
 - 🟡 ContextWindowIntegrationTests  (Tests)
 - 🟡 ContextWindowTests  (Tests)
 - 🟡 ConversationTranscriptTests  (Tests)

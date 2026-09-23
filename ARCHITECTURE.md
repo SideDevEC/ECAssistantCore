@@ -639,3 +639,24 @@ delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-dri
   no-guessing, ambiguity error, indentation restoration incl. delta-0, fuzzy=false,
   tier description flavor incl. remote-auto; Mock IFileSystem, pure logic).
   Combined CodeEditor+MatchStrategy+Playbook+EngineTierBehavior filter: 94/94.
+
+## Addendum — v14.16 tier-aware proactive context pinning (2026-09-23)
+
+- **New ContextPinning/ package:** `IContextPinner` (Interfaces/) + `ContextPinner`
+  (in-memory, thread-safe) + `PinnedFact` record + pure-function `ContextPinningMatchers`
+  (path extraction, narrow decision verbs "use X / go with X / stick with X / switch to X /
+  keep X" — no LLM, no imperative crawl). Pinned facts: original user request (first
+  non-empty request wins, durable), explicit user decisions (deduped), touched-file map
+  (distinct paths, most-recent-first, cap `max_files`=15).
+- **Engine seams:** `_contextPinner` (null when `context_pinning.enabled=false`) created
+  via `InitializeContextPinning()`; `AddToolResult` observes tool output → file map;
+  user prompt path (`effectivePrompt`) feeds `SetGoal` + `ObserveUserMessage`. On
+  KV-cache compaction the `[PINNED CONTEXT]` block is re-injected right after the
+  summary re-injection (`AddSystemMessage`), before last-tool/user re-add.
+- **Tier behavior:** small → goal + decisions + file-map line, ≤ `max_chars` (default
+  1200); large → goal only, ≤ ~300 chars. One `[PINNED CONTEXT]` prefix per line.
+- **Config:** `context_pinning` (enabled true, max_files 15, max_chars 1200) in
+  `EAgentConfig`/appsettings.json following existing patterns.
+- **Tests:** ContextPinningTests ×20 (path extraction, decision positive/negative,
+  dedup, eviction, tier caps, simulated compaction survival with real ContextWindow).
+  Filter ContextPinn|Pinned|EngineTierBehavior|Playbook: 28/28.

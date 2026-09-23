@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 107  |  LOC: 13454  |  ~4333 tokens
+Types: 108  |  LOC: 13572  |  ~4386 tokens
 
 ---
 
@@ -36,6 +36,10 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, Moq
 
 ### Class: ContextManagerTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, Moq
+
+### Class: ContextPinningTests
+> v14.16: tier-aware proactive context pinning — pure logic only (no LLM, no
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.ContextPinning, ECAssistant.Core.Interfaces
 
 ### Class: ContextWindowIntegrationTests
 > Integration tests for ContextWindow with a real TokenCounter —

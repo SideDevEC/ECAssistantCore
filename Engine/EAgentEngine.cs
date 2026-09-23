@@ -1,5 +1,6 @@
 using System.Text;
 using ECAssistant.Core.Config;
+using ECAssistant.Core.ContextPinning;
 using ECAssistant.Core.Interfaces;
 using ECAssistant.Core.Memory;
 using ECAssistant.Core.Engine;
@@ -139,6 +140,12 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
     // v14.14: persistent success playbooks (tier-aware injection into turn-1 input)
     private ECAssistant.Core.Playbooks.IPlaybookStore? _injectedPlaybookStore;
     private ECAssistant.Core.Playbooks.IPlaybookStore? _playbookStore;
+
+    /// <summary>v14.16: deterministic pinned-context store (null when disabled).</summary>
+    private IContextPinner? _contextPinner;
+
+    /// <summary>v14.16: test/dependency-injection seam for the pinner.</summary>
+    public IContextPinner? InjectedContextPinner { get; set; }
     /// <summary>v14.14: success-procedure memory store (null until initialized).</summary>
     public ECAssistant.Core.Playbooks.IPlaybookStore? PlaybookStore => _playbookStore;
     private ECAssistant.Core.Engine.ProjectContextManager? _projectContext;
@@ -457,6 +464,15 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
     {
         _playbookStore = _injectedPlaybookStore
             ?? new ECAssistant.Core.Playbooks.PlaybookStore(workingDir, _logger);
+    }
+
+    /// <summary>v14.16: initialize proactive context pinning when enabled in config.</summary>
+    public void InitializeContextPinning()
+    {
+        // Assigned only if not already resolved (test doubles may be set pre-init).
+        if (_contextPinner != null) return;
+        if (_config?.ContextPinning?.Enabled == true)
+            _contextPinner = InjectedContextPinner ?? new ContextPinner(_config.ContextPinning);
     }
 
 
@@ -1079,6 +1095,7 @@ User: " + userRequest + "\n";
         var safeOutput = EscapeToolOutput(TruncateToolOutput(output, toolName));
         _transcript.AddToolOutput(safeOutput, toolName);
         _contextWindow.AddToolOutput(safeOutput, toolName);
+        _contextPinner?.ObserveToolOutput(toolName, safeOutput);
 
         try
          {
@@ -1224,6 +1241,11 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
 
         var effectivePrompt = cleanPrompt.Length > 0 ? cleanPrompt : userPrompt;
 
+        // v14.16: pin the original user request + any explicit decisions so compaction
+        // can never lose them (first request stays the durable goal in the pinner).
+        _contextPinner?.SetGoal(effectivePrompt);
+        _contextPinner?.ObserveUserMessage(effectivePrompt);
+
         _logger?.Debug("Context", $"Turn {_lifecycle.TurnCount} | Budget: {_contextWindow.GetTotalTokens()}/{_contextWindow.MaxTokens} tokens");
 
          // KV cache overflow handling — rebuild with summarized conversation
@@ -1289,6 +1311,19 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                 _contextWindow.AddSystemMessage($"[Previous conversation summary: {summaryText.Trim()}]");
                 _out?.WriteInfo($"[KVCache] Re-injected summary: {summaryText.Length} chars");
              }
+
+            // v14.16: re-inject the tier-aware pinned block after the summarize rebuild
+            // so critical state (goal, decisions, file map) survives compaction.
+            if (_contextPinner != null)
+            {
+                var pinned = _contextPinner.BuildPinnedBlock(
+                    IsLargeModelTier(), _config?.ContextPinning?.MaxChars ?? 1200);
+                if (pinned != null)
+                {
+                    _contextWindow.AddSystemMessage(pinned);
+                    _out?.WriteInfo($"[Context] Re-injected pinned block: {pinned.Length} chars");
+                }
+            }
 
             if (_lifecycle.TurnCount > 1)
              {

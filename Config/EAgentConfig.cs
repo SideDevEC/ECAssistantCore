@@ -52,6 +52,10 @@ public class EAgentConfig
     [JsonPropertyName("context_management")]
     public ContextManagementConfig ContextManagement { get; set; } = new();
 
+    /// <summary>v14.16: tier-aware proactive context pinning.</summary>
+    [JsonPropertyName("context_pinning")]
+    public ContextPinningConfig ContextPinning { get; set; } = new();
+
     [JsonPropertyName("sampling")]
     public SamplingConfig Sampling { get; set; } = new();
 

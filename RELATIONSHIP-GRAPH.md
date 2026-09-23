@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-23T08:24:25.575837+00:00
-Edges: 86  |  Packages: 2
+Generated: 2026-09-23T08:49:00.735095+00:00
+Edges: 87  |  Packages: 2
 
 ---
 
@@ -19,6 +19,7 @@ Edges: 86  |  Packages: 2
 - ContextManager ──implements──► IContextManager (ECAssistantCore)
 - ContextManager ──uses──► IConfigProvider (ECAssistantCore)
 - ContextManager ──uses──► IInferenceEngine (ECAssistantCore)
+- ContextPinner ──implements──► IContextPinner (ECAssistantCore)
 - DotnetVerificationRunner ──implements──► IVerificationRunner (ECAssistantCore)
 - DotnetVerificationRunner ──uses──► IProcessRunner (ECAssistantCore)
 - EAgentEngine ──implements──► IEngine (ECAssistantCore)
