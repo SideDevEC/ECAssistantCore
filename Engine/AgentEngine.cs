@@ -786,6 +786,11 @@ User: " + userRequest + "\n";
         sb.AppendLine("- Verify your work when practical (build, run, test) before claiming success.");
         sb.AppendLine("- Think before acting on ambiguous requests; state your interpretation briefly if you deviate from the obvious path.");
         sb.AppendLine("- Do not over-report. Final answers: concise, factual, with evidence (command output, file state).");
+        sb.AppendLine();
+        sb.AppendLine("Response format reminder — same envelope, looser guidance:");
+        sb.AppendLine("Answer:    {\"thinking\": \"...\", \"answer\": \"final reply as plain text\"}");
+        sb.AppendLine("Tool call: {\"thinking\": \"...\", \"toolcalls\": [{\"name\": \"EShellAgent\", \"args\": {\"command\": \"git status\"}}]}");
+        sb.AppendLine("Never put JSON inside `answer` — `answer` is always plain prose. `thinking` stays one short sentence; the real reasoning happens before you emit the envelope.");
         return sb.ToString();
      }
 
