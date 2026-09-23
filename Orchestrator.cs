@@ -713,7 +713,10 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                                  // v10.15.1: Log the failure for streak detection
                                  _toolCallLog.Add($"Tool:{decision.ToolName} \u2192 FAIL: {result.Error}");
 
-                                 // v10.15.1: Feed the error back to the LLM so it knows the tool failed
+                                 // v10.15.1: Feed the error back to the LLM so it knows the tool failed.
+                                 // v14.20: AddToolResult renders via the tool's own projection — for
+                                 // build failures the embedded raw log compacts to parsed errors here.
+                                 // Render exactly ONCE (double render re-parses compacted text).
                                  _engine.AddToolResult(decision.ToolName!, $"[ERROR] Tool failed: {result.Error}");
 
                                 if (IsFailureStreak(_maxFailuresBeforeStop))

@@ -379,7 +379,8 @@ public class ParallelToolExecutor : IParallelToolExecutor
             var r = batch.Results[0];
             if (r.Succeeded)
                 return _engine?.RenderOutput(r.ToolCall.ToolName ?? "", r.Output) ?? r.Output;
-            return $"[FAILED] {r.ToolCall.ToolName}: {r.Error}";
+            var failName = r.ToolCall.ToolName ?? "";
+            return $"[FAILED] {failName}: {_engine?.RenderOutput(failName, r.Error) ?? r.Error}";
         }
 
         var sb = new StringBuilder();
@@ -393,7 +394,10 @@ public class ParallelToolExecutor : IParallelToolExecutor
             if (r.Succeeded)
                 sb.AppendLine(_engine?.RenderOutput(r.ToolCall.ToolName ?? "", r.Output) ?? r.Output);
             else
-                sb.AppendLine($"ERROR: {r.Error}");
+            {
+                var errName = r.ToolCall.ToolName ?? "";
+                sb.AppendLine($"ERROR: {_engine?.RenderOutput(errName, r.Error) ?? r.Error}");
+            }
         }
 
         sb.AppendLine();
