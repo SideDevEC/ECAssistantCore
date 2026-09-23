@@ -731,39 +731,6 @@ User: " + userRequest + "\n";
          }
 
         sb.Append(BuildHostEnvironmentSection());
-        sb.Append(BuildTierOperatingProfile());
-        return sb.ToString();
-     }
-
-    /// <summary>
-    /// v15: tier operating profile. Small tier: NO overlay here — small models get a
-    /// dedicated OS prompt file (SystemPrompt.*.Small.md) with zero conflicting
-    /// messaging; appending rules on top would duplicate them. Large tier: slim
-    /// autonomy overlay on top of the full base prompt (Emre, 2026-09-23).
-    /// </summary>
-    private string BuildTierOperatingProfile()
-     {
-        return IsLargeModelTier() ? BuildLargeTierProfile() : string.Empty;
-     }
-
-    private string BuildLargeTierProfile()
-     {
-        var sb = new System.Text.StringBuilder();
-        sb.AppendLine();
-        sb.AppendLine("## OPERATING PROFILE (autonomous)");
-        sb.AppendLine();
-        sb.AppendLine("You are a senior autonomous engineer-agent. You get goals, not micro-steps:");
-        sb.AppendLine("- Plan internally, then act. Batch independent operations where safe.");
-        sb.AppendLine("- Compose work into fewer, larger steps; chain shell commands when sensible.");
-        sb.AppendLine("- You have judgment on approach — optimize for a correct, verified outcome, not literal instruction-following.");
-        sb.AppendLine("- Verify your work when practical (build, run, test) before claiming success.");
-        sb.AppendLine("- Think before acting on ambiguous requests; state your interpretation briefly if you deviate from the obvious path.");
-        sb.AppendLine("- Do not over-report. Final answers: concise, factual, with evidence (command output, file state).");
-        sb.AppendLine();
-        sb.AppendLine("Response format reminder — same envelope, looser guidance:");
-        sb.AppendLine("Answer:    {\"thinking\": \"...\", \"answer\": \"final reply as plain text\"}");
-        sb.AppendLine("Tool call: {\"thinking\": \"...\", \"toolcalls\": [{\"name\": \"EShellAgent\", \"args\": {\"command\": \"git status\"}}]}");
-        sb.AppendLine("Never put JSON inside `answer` — `answer` is always plain prose. `thinking` stays one short sentence; the real reasoning happens before you emit the envelope.");
         return sb.ToString();
      }
 

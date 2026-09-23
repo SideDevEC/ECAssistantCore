@@ -177,13 +177,14 @@ public sealed class EngineTierBehaviorTests : IDisposable
     }
 
     [Fact]
-    public void SystemPrompt_LargeTier_HasAutonomyOverlay()
+    public void SystemPrompt_LargeTier_BaseTone_AutonomousNoOverlay()
     {
+        // Base prompt is retuned FOR large models; no overlay appended anymore.
         var engine = CreateEngine(BuildConfig("large", isLocal: true));
         var prompt = InvokeBuildSystemToolsPrompt(engine);
-        Assert.Contains("autonomous engineer-agent", prompt);
+        Assert.Contains("autonomous local engineer-agent", prompt);
         Assert.Contains("MULTIPLE tool calls", prompt);
-        Assert.DoesNotContain("ONE tool call per turn", prompt);
+        Assert.DoesNotContain("OPERATING PROFILE (autonomous)", prompt); // overlay gone
     }
 
     // ── v15: reasoning effort config → request params ──
@@ -223,11 +224,9 @@ public sealed class EngineTierBehaviorTests : IDisposable
     {
         var small = InvokeBuildSystemToolsPrompt(CreateEngine(BuildConfig("small", isLocal: true)));
         var large = InvokeBuildSystemToolsPrompt(CreateEngine(BuildConfig("large", isLocal: true)));
-        // Base prompt (restored) carries the multi-call line for both tiers;
-        // the small overlay explicitly overrides it.
+        // Base prompt (large-toned) carries the multi-call line;
+        // the small prompt file forbids multi-call — zero shared text.
         Assert.Contains("MULTIPLE tool calls", large);
-        // small prompt file (not engine overlay) forbids multi-call — engine prompt
-        // for small carries no overlay at all (dedicated file path).
     }
 
     public void Dispose()
