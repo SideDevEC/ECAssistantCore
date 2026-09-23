@@ -1,4 +1,5 @@
 using System.Text.Json;
+using ECAssistant.Core.Tools.Build;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
@@ -121,6 +122,16 @@ public class EShellAgent : EToolBase
         enabled = true,
         max_output_chars = 50000
     };
+
+    /// <summary>
+    /// v14.20: semantic render for known noisy command families. dotnet
+    /// build/test output collapses via BuildOutputRenderer; everything else is
+    /// passthrough (shell output is command-specific — no blanket guessing).
+    /// </summary>
+    public override string RenderForModel(string rawOutput)
+        => BuildOutputRenderer.IsDotnetOutput(rawOutput)
+            ? BuildOutputRenderer.Render(rawOutput)
+            : rawOutput;
 
     public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {

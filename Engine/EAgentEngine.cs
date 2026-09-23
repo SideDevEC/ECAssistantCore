@@ -1099,10 +1099,26 @@ User: " + userRequest + "\n";
         _out?.WriteInfo($"[Tool] Registered: {tool.Name}");
     }
 
-     /// <summary>Add tool result to both transcript and context window.</summary>
+        /// <summary>
+        /// v14.20: model-facing projection of a tool's raw output via its own
+        /// RenderForModel override. Unknown names (system injections like "[ERROR] ...",
+        /// "Batch") find no registered tool and pass through untouched. Shared by the
+        /// single-call path (AddToolResult) and the batch path (CombineResults).
+        /// </summary>
+    public string RenderOutput(string toolName, string rawOutput)
+         {
+        EToolBase? tool = null;
+        lock (_toolsLock) tool = _tools.FirstOrDefault(t => t.Name.Equals(toolName, StringComparison.OrdinalIgnoreCase));
+        return tool?.RenderForModel(rawOutput) ?? rawOutput;
+         }
+
+        /// <summary>Add tool result to both transcript and context window.</summary>
     public virtual void AddToolResult(string toolName, string output)
-     {
-        var safeOutput = EscapeToolOutput(TruncateToolOutput(output, toolName));
+       {
+          // v14.20: render via the tool's own projection before truncation — tools with
+           // structured semantics (builds, shell dotnet runs) send facts; unknown names pass through.
+        var rendered = RenderOutput(toolName, output);
+        var safeOutput = EscapeToolOutput(TruncateToolOutput(rendered, toolName));
         _transcript.AddToolOutput(safeOutput, toolName);
         _contextWindow.AddToolOutput(safeOutput, toolName);
         _contextPinner?.ObserveToolOutput(toolName, safeOutput);
@@ -1838,8 +1854,15 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
             "- You may write a brief plain-text progress note alongside a tool call (e.g. what you're checking and why); it is shown to the user. Keep it to one or two sentences.\n" +
             "\n## WORK COMPOSITION\n" +
             "- Prefer composing work into fewer, bigger tool calls over many small round-trips: chain shell steps with && or ; when they are safe together, batch independent reads in one decision.\n" +
-            "- After results arrive, synthesize the final answer from what you already have — never re-call a tool that already returned the data you need.\n";
+            "- After results arrive, synthesize the final answer from what you already have — never re-call a tool that already returned the data you need.\n" +
+            (IsLargeModelTier() ? DataflowChainsGuidance : "");
      }
+
+     /// <summary>v14.20: dataflow-chain guidance — large tier only (small models stay single-call).</summary>
+    private const string DataflowChainsGuidance =
+          "\n## DATAFLOW CHAINS\n" +
+          "- In one decision you may issue several tool calls where a LATER call's argument reuses an EARLIER call's output with the token {{0}} ({{1}} = second call, 0-based). The calls then run in order, each receiving the prior output automatically — no need to wait between them.\n" +
+          "- Example: call 0 reads a file, call 1 patches that same file using {{0}} data. Use chains for linear steps; fall back to separate turns only when a later call's ARGUMENTS depend on reasoning about the results, not just the results themselves.\n";
 
     /// <summary>
     /// v14.10.2: conversation history for remote mode, mapped to OpenAI chat roles.

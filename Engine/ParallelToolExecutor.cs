@@ -51,6 +51,12 @@ public class ParallelToolExecutor : IParallelToolExecutor
     /// </summary>
     public async Task<BatchToolResult> ExecuteAsync(List<ToolCallRequest> toolCalls, CancellationToken ct = default)
     {
+        // v14.20: dataflow chains — {{N}} references in args force sequential
+        // execution in call order, each later call receiving earlier outputs.
+        // Approvals still apply per call (ExecuteSingleWithPolicy).
+        if (ToolCallChainSubstitution.AnyCallHasReferences(toolCalls))
+            return await ExecuteSequentialChain(toolCalls, ct);
+
         // Analyze dependencies
         var analyzer = new ToolDependencyAnalyzer(); var groups = analyzer.Analyze(toolCalls);
         var allResults = new List<SingleToolResult>();
@@ -324,6 +330,41 @@ public class ParallelToolExecutor : IParallelToolExecutor
     }
 
     /// <summary>
+    /// v14.20: dataflow chain execution — calls run strictly in decision order
+    /// and each call's args have {{N}} tokens substituted with call N's output
+    /// before execution. Failed calls yield null (later references see the
+    /// explicit unavailable marker from the substitution utility).
+    /// Policy/approval gates run per call, exactly like the normal paths.
+    /// </summary>
+    private async Task<BatchToolResult> ExecuteSequentialChain(List<ToolCallRequest> toolCalls, CancellationToken ct)
+    {
+        _log($"[Chain] Dataflow references detected — executing {toolCalls.Count} call(s) sequentially.");
+        var allResults = new List<SingleToolResult>();
+        var priorOutputs = new List<string?>();
+
+        foreach (var tc in toolCalls)
+        {
+            if (ct.IsCancellationRequested)
+            {
+                _log("[Chain] Cancelled before remaining calls.");
+                break;
+            }
+
+            var effectiveArgs = ToolCallChainSubstitution.Substitute(tc.Args, priorOutputs);
+            var effective = new ToolCallRequest { ToolName = tc.ToolName, Args = effectiveArgs, Index = tc.Index };
+            var result = await ExecuteSingleWithPolicy(effective, ct);
+            priorOutputs.Add(result.Succeeded ? result.Output : null);
+            allResults.Add(result);
+        }
+
+        return new BatchToolResult
+        {
+            Results = allResults,
+            Groups = new List<DependencyGroup> { new() { ToolCalls = toolCalls, GroupIndex = 0 } }
+        };
+    }
+
+    /// <summary>
     /// Combine all results from a batch into a single output string for the LLM.
     /// Format:
     /// <tooloutput>Batch<result>
@@ -337,7 +378,7 @@ public class ParallelToolExecutor : IParallelToolExecutor
         {
             var r = batch.Results[0];
             if (r.Succeeded)
-                return r.Output;
+                return _engine?.RenderOutput(r.ToolCall.ToolName ?? "", r.Output) ?? r.Output;
             return $"[FAILED] {r.ToolCall.ToolName}: {r.Error}";
         }
 
@@ -350,7 +391,7 @@ public class ParallelToolExecutor : IParallelToolExecutor
             sb.AppendLine($"--- Tool {r.ToolCall.Index}: {r.ToolCall.ToolName} ({(r.Succeeded ? "OK" : "FAIL")}, {r.ElapsedMs}ms) ---");
 
             if (r.Succeeded)
-                sb.AppendLine(r.Output);
+                sb.AppendLine(_engine?.RenderOutput(r.ToolCall.ToolName ?? "", r.Output) ?? r.Output);
             else
                 sb.AppendLine($"ERROR: {r.Error}");
         }

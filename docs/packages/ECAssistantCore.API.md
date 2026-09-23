@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 366  |  LOC: 30471  |  ~17328 tokens
+Types: 370  |  LOC: 30857  |  ~17493 tokens
 
 ---
 
@@ -413,6 +413,13 @@ Cross-package deps: ECAssistant.Core.Orchestration, Xunit
 ### Class: BuildErrorParser
 > Parser for .NET build output — extracts errors and warnings.
 
+### Class: BuildOutputRenderer
+> v14.20: semantic render of .NET build/test output for the model context.
+
+### Class: BuildOutputRendererTests
+> v14.20: BuildOutputRenderer — semantic render of dotnet build/test output.
+Cross-package deps: ECAssistant.Core.Tools.Build
+
 ### Class: CatalogFetcher
 > Fetches the model catalog from GitHub at wizard time so model links/availability
 Constructor:
@@ -423,6 +430,10 @@ Constructor:
 
 ### Class: CatalogSuggestedConfig
 > Model category — drives config generation and UI grouping.
+
+### Class: ChainExecutionTests
+> v14.20: chain execution through the real ParallelToolExecutor — {{N}}
+Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Session, ECAssistant.Core.Tools
 
 ### Class: ConfigDrivenParamsTests
 > "Every parameter from the config" (Emre, 2026-09-21): new config keys must
@@ -648,7 +659,7 @@ Cross-package deps: ECAssistant.Core.Memory
 Implements: EToolBase
 Constructor:
   - EShellAgent(IProcessRunner processRunner, EAgentConfig config, string workingDirectory)
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
+Cross-package deps: ECAssistant.Core.Tools.Build, ECAssistant.Core.Config, ECAssistant.Core.Interfaces
 
 ### Class: EShellAgentTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Shell
@@ -1482,6 +1493,10 @@ Constructor:
 Cross-package deps: ECAssistant.Core.Services.Http
 
 ### Class: TokenCounterTests
+Cross-package deps: ECAssistant.Core.Engine
+
+### Class: ToolCallChainSubstitutionTests
+> v14.20: dataflow toolchains — {{N}} reference substitution over prior call
 Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: ToolCallRequest

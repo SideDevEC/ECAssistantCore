@@ -56,6 +56,16 @@ public class EDotnetBuildTool : EToolBase
 
     public override object GetConfigSection() => new { enabled = true };
 
+    /// <summary>
+    /// v14.20: semantic render — build/test logs collapse to verdict + parsed
+    /// errors (file:line, code, message) + warning count + test summary.
+    /// The raw log stays on the console/UI; the model gets the facts.
+    /// </summary>
+    public override string RenderForModel(string rawOutput)
+        => BuildOutputRenderer.IsDotnetOutput(rawOutput)
+            ? BuildOutputRenderer.Render(rawOutput)
+            : rawOutput;
+
     public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         arguments ??= new Dictionary<string, string?>();

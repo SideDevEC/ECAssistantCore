@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-09-23 late — v14.18 live-E2E fixes (thinking-only envelope → format retry) + v14.19 verbose sessions (default) + user-experience E2E suite + v14.19.1 batch-path verification gate + first-sentence playbook titles + unit-gap closure. Full series today: v14.13 post-edit verification → v14.14 playbook memory → v14.15 fuzzy diff edits → v14.16 context pinning → v14.17 sub-agent briefs → v14.17.1 tier inference tuning → v14.18/19/19.1 above. All tier-aware (ModelTier.IsLargeRuntime seam).
+**Updated:** 2026-09-23 — v14.20 typed per-tool model-facing outputs (`RenderForModel` on `EToolBase`, shared `RenderOutput` helper, `BuildOutputRenderer` for dotnet/git) + dataflow toolchains (`{{N}}` arg references → sequential chain execution, large-tier-only guidance). Prior: v14.13–v14.19.1 series. Full series today: v14.13 post-edit verification → v14.14 playbook memory → v14.15 fuzzy diff edits → v14.16 context pinning → v14.17 sub-agent briefs → v14.17.1 tier inference tuning → v14.18/19/19.1 above. All tier-aware (ModelTier.IsLargeRuntime seam).
 Current state: model-tier-adaptive harness (`model_tier.mode` small/large/auto, tier-resolved preplanning,
 slim directives + envelope budget for large tier), grammar tool-name union (`tool_names` wire field,
 DecisionGrammar.BuildGbnf on all 3 structured paths), envelope commentary (remote native path, local grammar
@@ -733,3 +733,38 @@ delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-dri
 - **Known flagged issue (v14.20 candidate):** ECodeEditor resolves relative
   paths against the process CWD, not the session working dir — session working
   dir is not plumbed into the tool (needs a tool-signature change).
+
+## Addendum — v14.20 typed per-tool outputs + dataflow chains (2026-09-23)
+
+**Feature A — Typed per-tool model-facing outputs.** `EToolBase.RenderForModel(raw)`
+virtual (default passthrough). The engine projects each tool's output via its own
+override *before* truncation: `EAgentEngine.RenderOutput(name, raw)` is the shared
+helper used by both paths — single-call (`AddToolResult`) and batch
+(`ParallelToolExecutor.CombineResults`, which previously combined raw outputs under
+the "Batch" name that matches no tool). Overrides today: `EDotnetBuildTool` +
+`EShellAgent` (dotnet/git families) delegate to `Tools/Build/BuildOutputRenderer` —
+a pure renderer reusing the existing `BuildErrorParser`, emitting verdict + parsed
+errors (file:line, code, message, capped at 6) + warning count + test summary. The
+generic `ToolOutputProjector` stays as the oversize fallback for tools that don't
+override; raw output still reaches console/UI via the orchestrator's own writes.
+
+**Feature B — Dataflow toolchains.** A multi-toolcall decision may reference an
+earlier call's output in a later call's args with `{{N}}` (0-based position).
+`Engine/ToolCallChainSubstitution` (pure): `HasReferences`, `AnyCallHasReferences`,
+`Substitute(args, priorOutputs)` — caps each ref at 4000 chars, failed/unexecuted
+refs become an explicit `[reference {{N}} unavailable: ...]` marker. Any reference
+forces sequential execution in call order (`ParallelToolExecutor.ExecuteSequentialChain`)
+while still running per-call policy/approval gates via `ExecuteSingleWithPolicy`.
+Grammar untouched (args stay strings) — small models unaffected; the pattern is
+taught only to the large tier via a gated `DataflowChainsGuidance` block in
+`BuildRemoteSystemPrompt` (`IsLargeModelTier()`).
+
+**Tests:** BuildOutputRendererTests ×5, ToolCallChainSubstitutionTests ×5,
+ChainExecutionTests ×3 (sequential order + substitution + approval-preservation on
+the real executor with a stub executeToolFn). 185/186 targeted net green; the single
+red is `StructuredDecisionAdapterTests.EmptyEnvelope_FallsBackToThinkingAsAnswer` —
+a stale v14.18 unit test (behavior intentionally reversed at c70b897), fails on clean
+HEAD, unrelated to this work.
+
+**Known flagged issue:** ECodeEditor relative-path CWD bug carried from v14.19.1
+(needs a tool-signature change — out of scope here).

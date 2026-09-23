@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 118  |  LOC: 14330  |  ~4979 tokens
+Types: 121  |  LOC: 14530  |  ~5110 tokens
 
 ---
 
@@ -17,6 +17,14 @@ Cross-package deps: ECAssistant.Core.Services
 ### Class: BuildCallSignatureTests
 > v12.4/v12.5 regression: tool-call signatures must be deterministic and
 Cross-package deps: ECAssistant.Core.Orchestration, Xunit
+
+### Class: BuildOutputRendererTests
+> v14.20: BuildOutputRenderer — semantic render of dotnet build/test output.
+Cross-package deps: ECAssistant.Core.Tools.Build
+
+### Class: ChainExecutionTests
+> v14.20: chain execution through the real ParallelToolExecutor — {{N}}
+Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Session, ECAssistant.Core.Tools
 
 ### Class: ConfigDrivenParamsTests
 > "Every parameter from the config" (Emre, 2026-09-21): new config keys must
@@ -396,6 +404,10 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Services
 
 ### Class: TokenCounterTests
+Cross-package deps: ECAssistant.Core.Engine
+
+### Class: ToolCallChainSubstitutionTests
+> v14.20: dataflow toolchains — {{N}} reference substitution over prior call
 Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: ToolCallRequestTests

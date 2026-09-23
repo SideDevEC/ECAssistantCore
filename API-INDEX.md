@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T10:31:07.182861+00:00
-Packages: 2  |  Types: 484
+Generated: 2026-09-23T11:24:03.379033+00:00
+Packages: 2  |  Types: 491
 
 ---
 
-## ECAssistantCore (366 types, ~30471 LOC)
+## ECAssistantCore (370 types, ~30857 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -63,10 +63,13 @@ Packages: 2  |  Types: 484
 - 🟡 BuildCallSignatureTests  (ECAssistantCore)
 - 🟣 BuildError  (ECAssistantCore)  deps: [string, int, string, string]
 - 🟡 BuildErrorParser  (ECAssistantCore)
+- 🟡 BuildOutputRenderer  (ECAssistantCore)
+- 🟡 BuildOutputRendererTests  (ECAssistantCore)
 - 🟣 CapturedToolCall  (ECAssistantCore)  deps: [string, string]
 - 🟡 CatalogFetcher  (ECAssistantCore)  deps: [HttpClient, HttpClient, string]
 - 🟡 CatalogModelFile  (ECAssistantCore)
 - 🟡 CatalogSuggestedConfig  (ECAssistantCore)
+- 🟡 ChainExecutionTests  (ECAssistantCore)
 - 🟡 ConfigDrivenParamsTests : IDisposable  (ECAssistantCore)
 - 🟡 ConfigIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 ConfigLoader : IConfigLoader  (ECAssistantCore)  deps: [IFileSystem]
@@ -327,6 +330,7 @@ Packages: 2  |  Types: 484
 - 🟡 TierInferenceTunerTests  (ECAssistantCore)
 - 🟡 TokenCounter  (ECAssistantCore)  deps: [RemoteTokenizer? tokenizer =]
 - 🟡 TokenCounterTests  (ECAssistantCore)
+- 🟡 ToolCallChainSubstitutionTests  (ECAssistantCore)
 - 🟡 ToolCallRequest  (ECAssistantCore)
 - 🟡 ToolCallRequestTests  (ECAssistantCore)
 - 🟡 ToolCallResult  (ECAssistantCore)
@@ -374,12 +378,14 @@ Packages: 2  |  Types: 484
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (118 types, ~14330 LOC)
+## Tests (121 types, ~14530 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (Tests)
 - 🟡 BuildCallSignatureTests  (Tests)
+- 🟡 BuildOutputRendererTests  (Tests)
+- 🟡 ChainExecutionTests  (Tests)
 - 🟡 ConfigDrivenParamsTests : IDisposable  (Tests)
 - 🟡 ConfigIntegrationTests : IDisposable  (Tests)
 - 🟡 ConfigLoaderTests  (Tests)
@@ -478,6 +484,7 @@ Packages: 2  |  Types: 484
 - 🟡 TfidfEmbedderTests  (Tests)
 - 🟡 TierInferenceTunerTests  (Tests)
 - 🟡 TokenCounterTests  (Tests)
+- 🟡 ToolCallChainSubstitutionTests  (Tests)
 - 🟡 ToolCallRequestTests  (Tests)
 - 🟡 ToolDependencyAnalyzerTests  (Tests)
 - 🟡 ToolDescriptionScopeTests  (Tests)

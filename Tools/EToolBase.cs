@@ -33,6 +33,17 @@ public abstract class EToolBase
     /// </summary>
     public ISessionContext? Session { get; internal set; }
 
+    /// <summary>
+    /// v14.20: semantic model-facing projection of this tool's output. The tool
+    /// itself knows what its output means — it renders the facts the NEXT decision
+    /// needs (summary + top errors), not raw text. Default: passthrough.
+    /// Applied by EAgentEngine.AddToolResult before truncation; the raw output
+    /// still reaches the console/UI. Override where the tool has structured
+    /// semantics (builds, git, search); tools whose output IS the content
+    /// (e.g. file readers) keep the passthrough.
+    /// </summary>
+    public virtual string RenderForModel(string rawOutput) => rawOutput;
+
                 /// <summary>
                 /// Execute the tool with given arguments.
                  /// </summary>
