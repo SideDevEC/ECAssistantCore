@@ -241,13 +241,17 @@ public class EShellAgent : EToolBase
         var result = await _processRunner.ExecuteAsync(_sandbox.Wrap(command), workingDir, cancellationToken);
         return new ShellProcessResult(result.StdOut, result.StdErr, result.ExitCode);
     }
-        /// <summary>v15: dispose the persistent shell session (call at run end).</summary>
+        /// <summary>v15: dispose the persistent shell session + sandbox profile (run teardown).</summary>
     public async Task DisposeSessionAsync()
     {
         if (_session != null)
         {
             try { await _session.DisposeAsync(); } catch { /* best-effort */ }
             _session = null;
+        }
+        if (_sandbox is SeatbeltShellSandbox seatbelt)
+        {
+            try { seatbelt.Cleanup(); } catch { /* best-effort */ }
         }
     }
 

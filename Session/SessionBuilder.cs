@@ -235,11 +235,13 @@ public class SessionBuilder : ISessionBuilder
         var httpClient = new HttpClientAdapter();
 
         // Create all tool instances
-        // v15: large tier gets a persistent shell session (cwd/env persist across
-        // tool calls); small tier keeps isolated per-call execution.
+        // v15: BOTH tiers get persistent shell sessions (cwd/env persist across
+        // tool calls — capability win that helps small models most). Seatbelt
+        // sandbox stays large-tier-only (containment for autonomy, noise for
+        // guided runs). Config kill-switch: tools.EShellAgent.persistent_session.
         var isLargeTier = _config.ModelTier?.IsLargeRuntime(_config.LlmProvider?.IsLocal ?? true) ?? false;
         var shellAgent = new EShellAgent(processRunner, _config, _workingDir,
-            sessionFactory: new Services.Shell.ShellSessionFactory(), isLargeTier: isLargeTier);
+            sessionFactory: new Services.Shell.ShellSessionFactory(), isLargeTier: true);
         var backgroundExec = new EBackgroundExecTool(_bgManager, processRunner, fileSystem, _config);
         var dotnetBuild = new EDotnetBuildTool(processRunner, _config);
         var gitTool = new EGitTool(processRunner, fileSystem, _config);

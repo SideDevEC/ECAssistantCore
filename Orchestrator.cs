@@ -899,11 +899,14 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
 
 
-      /// <summary>v15: dispose persistent shell sessions when the run ends.</summary>
+      /// <summary>v15: run teardown — dispose persistent shell sessions + sandbox
+      /// profiles; kill tracked background processes so nothing outlives the run.</summary>
      public async Task DisposeRunShellSessionsAsync()
       {
         foreach (var shell in _engine.Tools.OfType<ECAssistant.Core.Tools.Shell.EShellAgent>())
             await shell.DisposeSessionAsync();
+        foreach (var bg in _engine.Tools.OfType<ECAssistant.Core.Tools.Background.EBackgroundExecTool>())
+            bg.DisposeProcesses();
       }
 
       // ─── Multi-Tool Parsing (v10.13) ────────────

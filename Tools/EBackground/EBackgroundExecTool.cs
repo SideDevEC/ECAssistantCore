@@ -134,4 +134,12 @@ public class EBackgroundExecTool : EToolBase
                    "- To check a job, use the status/check action — do not re-run the command.\n";
         }
 
+    /// <summary>v15: kill all tracked background processes (run teardown).</summary>
+    public void DisposeProcesses()
+    {
+        foreach (var id in _mgr.List().Select(p => p.Id))
+        {
+            try { _mgr.Kill(id); } catch { /* best-effort */ }
+        }
+    }
 }

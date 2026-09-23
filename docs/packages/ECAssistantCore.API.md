@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 393  |  LOC: 32791  |  ~19320 tokens
+Types: 394  |  LOC: 32828  |  ~19361 tokens
 
 ---
 
@@ -1444,6 +1444,10 @@ Implements: IShellSessionFactory
 Constructor:
   - ShellSessionFactory(ILogger? logger = null)
 Cross-package deps: ECAssistant.Core.Interfaces
+
+### Class: ShellTeardownSweepTests
+> v15: persistent shell session — working directory and exported env survive
+Cross-package deps: ECAssistant.Core.Services.Shell
 
 ### Class: SingleToolResult
 > Result of a single tool execution within a batch.

@@ -66,3 +66,20 @@ public sealed class PersistentShellSessionTests : IDisposable
         try { Directory.Delete(_dir, true); } catch { }
     }
 }
+
+/// <summary>v15: teardown sweep — session artifacts cleaned on dispose.</summary>
+public sealed class ShellTeardownSweepTests
+{
+    [Fact]
+    public async Task SessionDispose_RemovesTempErrorFiles()
+    {
+        var session = await PersistentShellSession.StartAsync(Directory.CreateTempSubdirectory("eca-sweep").FullName);
+        // simulate a leaked error file with the session's pid pattern
+        var leaked = Path.Combine(Path.GetTempPath(), $"eca_shell_err_{Environment.ProcessId}_9999");
+        await File.WriteAllTextAsync(leaked, "leftover");
+        Assert.True(File.Exists(leaked));
+
+        await session.DisposeAsync();
+        Assert.False(File.Exists(leaked)); // swept
+    }
+}

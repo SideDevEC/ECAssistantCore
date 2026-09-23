@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 132  |  LOC: 15670  |  ~5924 tokens
+Types: 133  |  LOC: 15683  |  ~5965 tokens
 
 ---
 
@@ -383,6 +383,10 @@ Cross-package deps: ECAssistant.Core.Session
 > v14.19 (Emre): sessions run VERBOSE by default — users see tool status,
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Session
+
+### Class: ShellTeardownSweepTests
+> v15: persistent shell session — working directory and exported env survive
+Cross-package deps: ECAssistant.Core.Services.Shell
 
 ### Class: StartupTimeoutDefaultsTests
 > v12.8 regression: the installer must detect models already on disk so

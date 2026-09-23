@@ -45,8 +45,15 @@ public sealed class SeatbeltShellSandbox : IShellSandbox
 
         // Write a per-process profile lazily; sandbox-exec reads it per invocation.
         var profilePath = EnsureProfile();
-        var esc = profilePath.Replace("\"", "\\\"");
         return $"sandbox-exec -f '{profilePath}' /bin/zsh -c {Quote(command)}";
+    }
+
+    /// <summary>Delete the generated profile file (call at run teardown).</summary>
+    public void Cleanup()
+    {
+        try { if (_profilePath != null && File.Exists(_profilePath)) File.Delete(_profilePath); }
+        catch { /* best-effort */ }
+        _profilePath = null;
     }
 
     private string Quote(string s) => "'" + s.Replace("'", "'\\''") + "'";

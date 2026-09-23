@@ -130,6 +130,14 @@ public sealed class PersistentShellSession : IShellSession
             _process.Dispose();
         }
         catch { /* best-effort teardown */ }
+        // Sweep orphaned temp error-replay files from this session (leak only when
+        // the process died mid-command — the script normally rm -f's them itself).
+        try
+        {
+            foreach (var f in Directory.GetFiles(Path.GetTempPath(), $"eca_shell_err_{Environment.ProcessId}_*"))
+                File.Delete(f);
+        }
+        catch { /* best-effort */ }
         GC.SuppressFinalize(this);
     }
 
