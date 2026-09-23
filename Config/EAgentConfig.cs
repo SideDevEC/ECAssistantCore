@@ -64,6 +64,10 @@ public class EAgentConfig
     [JsonPropertyName("llm_provider")]
     public LlmProviderConfig LlmProvider { get; set; } = new();
 
+    /// <summary>v14.12: model-tier profile gating harness scaffolding depth. Null = auto.</summary>
+    [JsonPropertyName("model_tier")]
+    public ModelTierConfig? ModelTier { get; init; }
+
     /// <summary>
     /// Multi-provider section (OpenClaw-style). When present with valid entries,
     /// remote mode resolves through the registry (default provider + optional fallback).

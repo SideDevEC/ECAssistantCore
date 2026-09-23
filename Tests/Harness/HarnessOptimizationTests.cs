@@ -48,11 +48,13 @@ public sealed class HarnessOptimizationTests : IDisposable
     // 2026-09-22: preplanning default REVERTED to true (in-loop planning regressed
     // live — model wandered without explicit step lists). See InterfaceConfig.
 
+    // v14.12: Preplanning is now bool? — null = auto (resolved from model tier in
+    // Orchestrator.UsePreplanning: large models skip, small models keep preplanning).
     [Fact]
-    public void Preplanning_DefaultsOn_AfterLiveRegression()
+    public void Preplanning_DefaultsNull_AutoResolution()
     {
         var config = JsonSerializer.Deserialize<EAgentConfig>("{}");
-        Assert.True(config!.Interface.Preplanning);
+        Assert.Null(config!.Interface.Preplanning);
     }
 
     [Fact]

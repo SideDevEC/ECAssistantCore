@@ -87,6 +87,13 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         get => _backgroundTasks;
         set => _backgroundTasks = value;
      }
+    /// <summary>v14.12: True when the active model runs the large-model (slim) profile.</summary>
+    private bool IsLargeModelTier()
+     {
+        var isLocal = _config?.LlmProvider?.IsLocal ?? true;
+        return _config?.ModelTier?.IsLargeRuntime(isLocal) ?? !isLocal;
+     }
+
     private ECAssistant.Core.Engine.SelfCorrectionManager? _injectedSelfCorrection;
     public ECAssistant.Core.Engine.SelfCorrectionManager? InjectedSelfCorrection
     {
@@ -972,9 +979,18 @@ User: " + userRequest + "\n";
                 sb.AppendLine("</result></tooloutput>");
                 sb.AppendLine();
              }
-            sb.AppendLine("Continue the task. First check: if the tool results above already fully answer the user's request, you MUST finish NOW with your final answer.");
-            sb.AppendLine("Do NOT repeat a tool call that already succeeded with the same arguments — repeating it adds nothing. Only call a tool again if you need DIFFERENT data.");
-            sb.AppendLine("If you truly need more data, call the next tool. Otherwise finish now with your final answer.");
+            // v14.12: large models get a one-line nudge — the repeated nag lines
+            // are scaffolding that hinders them.
+            if (IsLargeModelTier())
+             {
+                sb.AppendLine("Continue the task. If the results above already answer the user's request, give your final answer now; otherwise call the next tool.");
+             }
+            else
+             {
+                sb.AppendLine("Continue the task. First check: if the tool results above already fully answer the user's request, you MUST finish NOW with your final answer.");
+                sb.AppendLine("Do NOT repeat a tool call that already succeeded with the same arguments — repeating it adds nothing. Only call a tool again if you need DIFFERENT data.");
+                sb.AppendLine("If you truly need more data, call the next tool. Otherwise finish now with your final answer.");
+             }
          }
 
         return sb.ToString();
@@ -1709,6 +1725,8 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
             Description = string.IsNullOrEmpty(t.UsageExample)
                 ? t.Description
                 : t.Description + "\n\nExample: " + t.UsageExample,
+            // v14.12: remote native function-calling sends REAL parameter schemas.
+            ParameterSchema = t.GetParameterSchema(),
          }).ToList();
 
     /// <summary>
@@ -1776,7 +1794,11 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
             // invalid decision, so think+answer/toolcalls must fit. Floor AND cap:
             // config MaxTokens is a context budget (8192) that would take ~15 min
             // of CPU decode; the envelope needs far less.
-            parameters.MaxTokens = Math.Min(Math.Max(parameters.MaxTokens ?? 0, 768), 1024);
+            // v14.12: tier-aware envelope budget — small models get the tight cap
+            // (they ramble), large models get reasoning headroom.
+            parameters.MaxTokens = IsLargeModelTier()
+                ? Math.Min(Math.Max(parameters.MaxTokens ?? 0, 1024), 4096)
+                : Math.Min(Math.Max(parameters.MaxTokens ?? 0, 768), 1024);
             var envelope = await _inferenceEngine!.GenerateStructuredAsync(prompt, parameters, ct);
             if (envelope == null)
              {

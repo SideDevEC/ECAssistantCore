@@ -80,6 +80,17 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                    _toolWhitelist.Add(tool.Name);
               }
 
+      /// <summary>v14.12: True when the active model runs the large-model (slim) profile.</summary>
+     private bool IsLargeModelTier()
+      {
+         var isLocal = _config?.LlmProvider?.IsLocal ?? true;
+         return _config?.ModelTier?.IsLargeRuntime(isLocal) ?? !isLocal;
+      }
+
+      /// <summary>v14.12: Preplanning resolution — explicit config wins; else large models skip decomposition (in-loop planning), small models keep it (revert 2026-09-22 behavior).</summary>
+     private bool UsePreplanning() =>
+         _config?.Interface.Preplanning ?? !IsLargeModelTier();
+
       /// <summary>v10.18: Initialize sub-agent support. Creates SubAgentManager and registers ESubAgent tool.</summary>
      public void InitializeSubAgents(string defaultWorkingDir)
       {
@@ -117,7 +128,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
          // v10.6: Decompose the request into sub-tasks using TaskPlanner
          // v11.4: Gate — skip decomposition for conversational questions
          var planner = _engine.TaskPlanner;
-         var preplanning = _config?.Interface.Preplanning == true;
+         var preplanning = UsePreplanning();
          if (!preplanning)
          {
             // In-loop planning (default): skip the 2-3 pre-pass LLM calls; the
@@ -833,6 +844,14 @@ public sealed class AgentOrchestrator : IAsyncDisposable
       // This is injected after each tool result to guide the LLM through chained tasks.
     private string BuildStepDirective()
       {
+        // v14.12: large models get a one-line directive — the full checklist +
+        // mechanical progress tracker is scaffolding that hinders them.
+        if (IsLargeModelTier())
+        {
+            return "Tool result above. If it fully answers the user's request, give your final answer now. " +
+                   "Otherwise call the next tool with different arguments if you need different data.";
+        }
+
         var sb = new StringBuilder();
 
         sb.AppendLine("The tool has returned its result above. Now respond to the user.");
