@@ -40,7 +40,7 @@ public sealed class PersistentShellSession : IShellSession
         _logger = logger;
     }
 
-    public static bool IsSupported => !OperatingSystem.IsWindows();
+    public static bool IsSupported { get; } = !OperatingSystem.IsWindows(); // immutable OS fact, not mutable state
 
     public static async Task<PersistentShellSession> StartAsync(string initialWorkingDirectory, ILogger? logger = null)
     {

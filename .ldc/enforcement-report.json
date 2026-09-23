@@ -1,16 +1,9 @@
 {
   "project": "ECAssistantCore",
-  "timestamp": "2026-09-23T18:27:21.406626+00:00",
-  "total_violations": 1,
-  "errors": 1,
+  "timestamp": "2026-09-23T18:27:50.106745+00:00",
+  "total_violations": 0,
+  "errors": 0,
   "warnings": 0,
-  "violations": [
-    {
-      "rule": "no-statics",
-      "severity": "error",
-      "file": "Services/Shell/PersistentShellSession.cs",
-      "message": "Static mutable field found in PersistentShellSession: static bool IsSupported ="
-    }
-  ],
-  "passed": false
+  "violations": [],
+  "passed": true
 }
