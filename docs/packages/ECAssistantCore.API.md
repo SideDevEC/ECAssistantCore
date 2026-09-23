@@ -515,8 +515,6 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Services
 ### Class: ConversationTranscriptTests
 Cross-package deps: ECAssistant.Core.Engine
 
-### Class: DecisionResult
-
 ### Class: DecomposeConfig
 > Task decomposition settings. When use_llm is true, uses HTTP streaming
 
@@ -582,16 +580,6 @@ Cross-package deps: ECAssistant.Core
 ### Class: EContextAnalyzerTests
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Analysis
-
-### Class: EDecisionLoop
-> Interactive Decision Loop — lets the agent ask clarifying questions,
-Implements: IDisposable
-Constructor:
-  - EDecisionLoop(EAgentEngine engine, ISessionOutput? sessionOutput = null)
-Cross-package deps: ECAssistant.Core.Session
-
-### Class: EDecisionLoopTests
-Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
 
 ### Class: EDotnetBuildTool
 > .NET build/test tool.

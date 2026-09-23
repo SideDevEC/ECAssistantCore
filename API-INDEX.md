@@ -88,7 +88,6 @@ Packages: 2  |  Types: 494
 - 🟡 ContextWindowTests  (ECAssistantCore)
 - 🟡 ConversationTranscript  (ECAssistantCore)
 - 🟡 ConversationTranscriptTests  (ECAssistantCore)
-- 🟡 DecisionResult  (ECAssistantCore)
 - 🟡 DecomposeConfig  (ECAssistantCore)
 - 🟡 DependencyGroup  (ECAssistantCore)
 - 🟡 DependencyGroupTests  (ECAssistantCore)
@@ -104,8 +103,6 @@ Packages: 2  |  Types: 494
 - 🟡 EColor  (ECAssistantCore)
 - 🟡 EContextAnalyzer : IDisposable  (ECAssistantCore)  deps: [string]
 - 🟡 EContextAnalyzerTests : IDisposable  (ECAssistantCore)
-- 🟡 EDecisionLoop : IDisposable  (ECAssistantCore)  deps: [EAgentEngine, ISessionOutput? sessionOutput =]
-- 🟡 EDecisionLoopTests  (ECAssistantCore)
 - 🟡 EDotnetBuildTool : EToolBase  (ECAssistantCore)  deps: [IProcessRunner, EAgentConfig]
 - 🟡 EDotnetBuildToolTests  (ECAssistantCore)
 - 🟡 EFileReaderTool : EToolBase  (ECAssistantCore)  deps: [IFileSystem, EAgentConfig]
@@ -401,7 +398,6 @@ Packages: 2  |  Types: 494
 - 🟡 EBackgroundExecToolTests : IDisposable  (Tests)
 - 🟡 ECodeEditorToolTests  (Tests)
 - 🟡 EContextAnalyzerTests : IDisposable  (Tests)
-- 🟡 EDecisionLoopTests  (Tests)
 - 🟡 EDotnetBuildToolTests  (Tests)
 - 🟡 EFileReaderToolTests  (Tests)
 - 🟡 EFileResearchToolTests : IDisposable  (Tests)

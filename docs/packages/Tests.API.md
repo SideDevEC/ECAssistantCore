@@ -77,9 +77,6 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Analysis
 
-### Class: EDecisionLoopTests
-Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
-
 ### Class: EDotnetBuildToolTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Build
 
