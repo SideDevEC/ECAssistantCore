@@ -25,6 +25,8 @@ public sealed class AgentOrchestrator : IAsyncDisposable
     private readonly AgentEngine _engine;
     private readonly ISessionOutput? _out;
     private int _turnCount = 0;
+    // v15 fix: stale-answer guard — allows exactly one forced continuation per run.
+    private bool _staleAnswerContinuationUsed;
     private readonly List<string> _toolCallLog = new();
     private readonly List<string> _completedSteps = new();
     private int _formatRetries = 0;
@@ -816,6 +818,17 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                       }
             else if (decision.WantsDirectAnswer)
                        {
+                // v15 fix: stale-answer guard — see IsStaleFinalAnswer.
+                if (IsStaleFinalAnswer(decision.AnswerText))
+                 {
+                    _staleAnswerContinuationUsed = true;
+                    _out?.WriteWarning("[Orchestrator] Final answer is a stale pre-tool reply — forcing one synthesis turn.");
+                    _engine.InjectFormatRetry(
+                        "You called a tool, and its result has arrived. Do not stop without reporting it: " +
+                        "give your final answer now, using the tool result above.");
+                    _turnCount++;
+                    continue;
+                 }
                 _out?.WriteLine("[Orchestrator] LLM gave direct answer. Stopping.");
                     await TryCapturePlaybookAsync(goal);
                     return new OrchestratorResult
@@ -851,6 +864,16 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                      // deliver the model's last response (best effort) so ANY model can
                      // complete a conversation.
                      _logger?.Warn("Orchestrator", $"No decision after {MaxFormatRetries} retries — delivering best-effort response.");
+                    if (IsStaleFinalAnswer(decision.AnswerText))
+                     {
+                        _staleAnswerContinuationUsed = true;
+                        _out?.WriteWarning("[Orchestrator] Best-effort answer is stale (pre-tool) — forcing one synthesis turn.");
+                        _engine.InjectFormatRetry(
+                            "You called a tool, and its result has arrived. Do not stop without reporting it: " +
+                            "give your final answer now, using the tool result above.");
+                        _turnCount++;
+                        continue;
+                     }
                     await TryCapturePlaybookAsync(goal);
                     return new OrchestratorResult
                              {
@@ -1047,7 +1070,55 @@ public sealed class AgentOrchestrator : IAsyncDisposable
        /// <summary>v14.14: capture a success playbook after a goal achieved with at least one successful tool call. Never kills the agent loop.
      /// v14.18: the store resolves LAZILY — the session ctor creates the orchestrator before
      /// InitializePlaybooks, so a ctor-time snapshot captured a null store forever.</summary>
-     private async Task TryCapturePlaybookAsync(string goal)
+     /// <summary>
+    /// v15: stale-answer guard. True when the answer about to be delivered was
+    /// effectively written BEFORE the last tool result arrived:
+    /// (a) a tool_output is newer than the newest assistant message, (b) that tool
+    /// result was a success (a failed/denied tool makes the pre-tool answer the
+    /// legitimate final word), and (c) the new answer is empty or a verbatim repeat
+    /// of the pre-tool narration. Fires at most once per run (cap prevents loops
+    /// against a stubborn model). A genuinely fresh synthesis never trips this —
+    /// its text differs from anything the model said before the tool ran.
+    /// </summary>
+    private bool IsStaleFinalAnswer(string? answerText)
+     {
+        if (_staleAnswerContinuationUsed) return false;
+        try
+         {
+            var msgs = _engine.ContextWindow.GetWindowMessages();
+            var lastToolIdx = -1;
+            var lastAsstIdx = -1;
+            for (var i = 0; i < msgs.Count; i++)
+             {
+                if (msgs[i].Role == "tool_output") lastToolIdx = i;
+                else if (msgs[i].Role == "assistant") lastAsstIdx = i;
+             }
+            if (lastToolIdx < 0 || lastToolIdx <= lastAsstIdx) return false; // no pending tool result
+
+            var toolContent = msgs[lastToolIdx].Content ?? "";
+            // Failed/errored/denied tool → the pre-tool answer may be the honest final word.
+            if (toolContent.Contains("[EXCEPTION]", StringComparison.Ordinal) ||
+                toolContent.Contains("[VERIFY FAIL]", StringComparison.Ordinal) ||
+                toolContent.Contains("[DENIED]", StringComparison.Ordinal) ||
+                toolContent.Contains("(FAIL", StringComparison.Ordinal))
+                return false;
+
+            if (string.IsNullOrWhiteSpace(answerText)) return true; // nothing new to deliver
+            var priorNarration = lastAsstIdx >= 0 ? (msgs[lastAsstIdx].Content ?? "").Trim() : "";
+            if (priorNarration.Length == 0) return false;
+
+            var candidate = answerText.Trim();
+            return candidate.Equals(priorNarration, StringComparison.Ordinal) ||
+                   priorNarration.Contains(candidate, StringComparison.Ordinal);
+         }
+        catch (Exception ex)
+         {
+            _logger?.Debug("Orchestrator", $"Stale-answer check failed: {ex.Message}");
+            return false;
+         }
+     }
+
+    private async Task TryCapturePlaybookAsync(string goal)
           {
         var store = _playbookStore ?? _engine.PlaybookStore;
         if (store == null || _successfulCalls.Count == 0) return;

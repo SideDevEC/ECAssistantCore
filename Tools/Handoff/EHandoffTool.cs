@@ -131,10 +131,16 @@ public sealed class EHandoffTool : EToolBase
                        "- Hand off genuinely isolated sub-problems; keep coherent threads yourself.\n" +
                        "- Write the specialist prompt as a complete standalone task brief (context, constraints, expected output).\n";
             }
+            // v15 small-tier rules: anti-narration lines. Small models drift with
+            // recency bias — rules stated long ago lose attention, so they announce
+            // ("I will call EHandoff...") instead of acting, or stop before relaying
+            // the specialist's result. State both failure modes as hard do-nots.
             return "Rules:\n" +
                    "- Use EHandoff ONLY when the user asks for a specialist handoff or the task needs a fully separate agent.\n" +
                    "- Do NOT use EHandoff for sub-tasks you can do yourself with one tool call.\n" +
                    "- The specialist prompt MUST be a full standalone instruction (what to do + what to return). Never 'see above'.\n" +
+                   "- NEVER describe or announce a handoff (e.g. 'I will call EHandoff...'). If a handoff is needed, emit the EHandoff tool call in THIS turn.\n" +
+                   "- Answering the delegated task yourself instead of calling EHandoff is a failure.\n" +
                    "- After the specialist returns, report ITS result to the user — do not re-do the task yourself.\n";
         }
 
