@@ -1,9 +1,13 @@
-# RELATIONSHIP-GRAPH.md — ECAssistantCore
+# RELATIONSHIP-GRAPH.md — ECAssistant
 
-Generated: 2026-09-23T21:33:04.086830+00:00
-Edges: 101  |  Packages: 2
+Generated: 2026-09-23T21:57:07.414873+00:00
+Edges: 159  |  Packages: 8
 
 ---
+
+## ECAssistantConsole
+
+- (no outgoing edges)
 
 ## ECAssistantCore
 
@@ -50,14 +54,14 @@ Edges: 101  |  Packages: 2
 - EVisionStructureTool ──implements──► EToolBase (ECAssistantCore)
 - EVisionStructureTool ──uses──► IInferenceEngine (ECAssistantCore)
 - EVisionStructureTool ──uses──► IPdfPageRenderer (ECAssistantCore)
-- EcaServiceBundle ──uses──► ILogger (ECAssistantCore)
+- EcaServiceBundle ──uses──► ILogger (ECAssistantLLM) ← CROSS-PKG
 - EcaServiceBundle ──uses──► ISessionBuilder (ECAssistantCore)
 - ExactMatchStrategy ──implements──► ITextMatchStrategy (ECAssistantCore)
 - FileSystemAdapter ──implements──► IFileSystem (ECAssistantCore)
 - FirstRunOrchestrator ──implements──► IFirstRunOrchestrator (ECAssistantCore)
 - FirstRunOrchestrator ──uses──► ISetupUi (ECAssistantCore)
 - FirstRunOrchestrator ──uses──► ISetupUi (ECAssistantCore)
-- HandoffExecutor ──uses──► ILogger (ECAssistantCore)
+- HandoffExecutor ──uses──► ILogger (ECAssistantLLM) ← CROSS-PKG
 - HandoffExecutor ──uses──► ISubAgentEngineHost (ECAssistantCore)
 - HttpClientAdapter ──implements──► IHttpClient (ECAssistantCore)
 - HttpEmbedder ──implements──► IVectorEmbedder (ECAssistantCore)
@@ -67,7 +71,13 @@ Edges: 101  |  Packages: 2
 - LineMatchStrategyBase ──implements──► ITextMatchStrategy (ECAssistantCore)
 - LlmProviderRegistry ──implements──► ILlmProviderRegistry (ECAssistantCore)
 - LlmServerClient ──implements──► ILlmServerClient (ECAssistantCore)
-- Logger ──implements──► ILogger (ECAssistantCore)
+- Logger ──implements──► ILogger (ECAssistantLLM) ← CROSS-PKG
+- McpHttpSseClient ──implements──► IMcpClient (ECAssistantCore)
+- McpHttpSseClient ──uses──► ILogger (ECAssistantLLM) ← CROSS-PKG
+- McpStdioClient ──implements──► IMcpClient (ECAssistantCore)
+- McpStdioClient ──uses──► ILogger (ECAssistantLLM) ← CROSS-PKG
+- McpToolAdapter ──implements──► EToolBase (ECAssistantCore)
+- McpToolAdapter ──uses──► IMcpClient (ECAssistantCore)
 - MemoryService ──implements──► IMemoryService (ECAssistantCore)
 - MemoryService ──uses──► IConfigProvider (ECAssistantCore)
 - MemoryService ──uses──► IFileSystem (ECAssistantCore)
@@ -107,7 +117,77 @@ Edges: 101  |  Packages: 2
 - TfidfEmbedder ──implements──► IVectorEmbedder (ECAssistantCore)
 - WhitespaceTolerantMatchStrategy ──implements──► LineMatchStrategyBase (ECAssistantCore)
 
+## ECAssistantLLM
+
+- ClientManager ──implements──► IClientManager (ECAssistantLLM)
+- ClientManager ──uses──► ILogger (ECAssistantLLM)
+- ClientManager ──uses──► ILogger (ECAssistantLLM)
+- InferenceScheduler ──implements──► IInferenceScheduler (ECAssistantLLM)
+- InferenceScheduler ──uses──► ILogger (ECAssistantLLM)
+- LlmHttpServer ──uses──► IClientManager (ECAssistantLLM)
+- LlmHttpServer ──uses──► IInferenceScheduler (ECAssistantLLM)
+- LlmHttpServer ──uses──► ILogger (ECAssistantLLM)
+- ModelSlot ──uses──► ILogger (ECAssistantLLM)
+- MultiModelHost ──uses──► ILogger (ECAssistantLLM)
+- ProcessModelHost ──implements──► IProcessModelHost (ECAssistantLLM)
+- ProcessModelHost ──uses──► ILogger (ECAssistantLLM)
+- ProcessModelInstance ──uses──► ILogger (ECAssistantLLM)
+- ProcessSession ──uses──► ILogger (ECAssistantLLM)
+- ProcessSession ──uses──► IProcessModelHost (ECAssistantLLM)
+- ProcessSessionRegistry ──uses──► ILogger (ECAssistantLLM)
+- ProcessSessionRegistry ──uses──► IProcessModelHost (ECAssistantLLM)
+- RequestRouter ──implements──► IRequestRouter (ECAssistantLLM)
+- RequestRouter ──uses──► IClientManager (ECAssistantLLM)
+- RequestRouter ──uses──► IInferenceScheduler (ECAssistantLLM)
+- RequestRouter ──uses──► ILogger (ECAssistantLLM)
+- ServerLogger ──implements──► ILogger (ECAssistantLLM)
+- SessionContext ──uses──► ILogger (ECAssistantLLM)
+- SessionRegistry ──uses──► IInferenceScheduler (ECAssistantLLM)
+- SessionRegistry ──uses──► IInferenceScheduler (ECAssistantLLM)
+- SessionRegistry ──uses──► ILogger (ECAssistantLLM)
+- SessionRegistry ──uses──► ILogger (ECAssistantLLM)
+
+## ECAssistantTUI
+
+- AppController ──implements──► IAppController (ECAssistantTUI)
+- AppController ──uses──► IGuiConsole (ECAssistantTUI)
+- AppController ──uses──► IGuiConsole (ECAssistantTUI)
+- AppController ──uses──► IGuiConsole (ECAssistantTUI)
+- AppController ──uses──► ILogger (ECAssistantLLM) ← CROSS-PKG
+- AppController ──uses──► ILogger (ECAssistantLLM) ← CROSS-PKG
+- AppController ──uses──► ILogger (ECAssistantLLM) ← CROSS-PKG
+- ConfigLayer ──implements──► BaseLayer (ECAssistantTUI)
+- ConsoleTerminalOutput ──implements──► ITerminalOutput (ECAssistantTUI)
+- ConsoleUiRenderer ──implements──► IOutputListener (ECAssistantCore) ← CROSS-PKG
+- GuiConsole ──implements──► GuiBase (ECAssistantCore) ← CROSS-PKG
+- GuiConsole ──implements──► IGuiConsole (ECAssistantTUI)
+- GuiConsole ──uses──► ITerminalOutput (ECAssistantTUI)
+- HelpLayer ──implements──► BaseLayer (ECAssistantTUI)
+- LoadingIndicator ──uses──► IGuiConsole (ECAssistantTUI)
+- SessionLayer ──implements──► BaseLayer (ECAssistantTUI)
+- StartupLayer ──implements──► BaseLayer (ECAssistantTUI)
+- StatusIndicator ──uses──► IGuiConsole (ECAssistantTUI)
+- TuiSetupUi ──implements──► ISetupUi (ECAssistantCore) ← CROSS-PKG
+- TuiSetupUi ──uses──► IGuiConsole (ECAssistantTUI)
+
+## ECAssistantTestSupport
+
+- GuiTestHarness ──implements──► GuiBase (ECAssistantCore) ← CROSS-PKG
+- InferenceEngineNoop ──implements──► IInferenceEngine (ECAssistantCore) ← CROSS-PKG
+- KvCacheNoop ──implements──► IKvCacheController (ECAssistantCore) ← CROSS-PKG
+- MockEngine ──implements──► AgentEngine (ECAssistantCore) ← CROSS-PKG
+- ProbeTestTool ──implements──► EToolBase (ECAssistantCore) ← CROSS-PKG
+- TestSessionOutput ──implements──► ISessionOutput (ECAssistantCore) ← CROSS-PKG
+- UserExperienceHarness ──implements──► IOutputListener (ECAssistantCore) ← CROSS-PKG
+
+## TestModelLoad
+
+- (no outgoing edges)
+
 ## Tests
 
-- MockProbeTool ──implements──► EToolBase (ECAssistantCore) ← CROSS-PKG
-- MockSubAgentTool ──implements──► EToolBase (ECAssistantCore) ← CROSS-PKG
+- (no outgoing edges)
+
+## grammar-decision
+
+- (no outgoing edges)

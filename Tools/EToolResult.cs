@@ -21,12 +21,24 @@ public class EToolResult
     /// <summary>Additional metadata (null if not applicable)</summary>
     public Dictionary<string, string>? Metadata { get; init; }
 
+    /// <summary>
+    /// Images returned by the tool (e.g. MCP image content, vision tools).
+    /// Empty for tools that don't produce images. Fed into the vision pipeline
+    /// via AgentEngine.AddToolResult.
+    /// </summary>
+    public List<ToolImageRef> Images { get; init; } = new();
+
     public EToolResult() { }
 
     /// <summary>Create a successful tool result</summary>
     // Stateless factory — immutable data class
     public static EToolResult Success(string toolName, string output, Dictionary<string, string>? metadata = null)
         => new() { ToolName = toolName, Succeeded = true, Output = output, Metadata = metadata };
+
+    /// <summary>Create a successful tool result with images</summary>
+    // Stateless factory — immutable data class
+    public static EToolResult Success(string toolName, string output, List<ToolImageRef> images, Dictionary<string, string>? metadata = null)
+        => new() { ToolName = toolName, Succeeded = true, Output = output, Images = images, Metadata = metadata };
 
     /// <summary>Create a failed tool result with error message</summary>
     // Stateless factory — immutable data class

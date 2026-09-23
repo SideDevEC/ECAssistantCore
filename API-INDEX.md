@@ -1,11 +1,45 @@
-# API-INDEX.md — ECAssistantCore
+# API-INDEX.md — ECAssistant
 
-Generated: 2026-09-23T21:33:04.085211+00:00
-Packages: 2  |  Types: 530
+Generated: 2026-09-23T21:57:07.413091+00:00
+Packages: 8  |  Types: 591
 
 ---
 
-## ECAssistantCore (396 types, ~33200 LOC)
+## ECAssistantConsole (2 types, ~356 LOC)
+
+- 🟡 RemoteModelProbeTests  (ECAssistantConsole)
+- 🟡 SetupWizardPickTests  (ECAssistantConsole)
+
+## Tests (7 types, ~852 LOC)
+
+- 🟡 AnsiInputParserCursorPasteTests  (Tests)
+- 🟡 AnsiInputParserTests  (Tests)
+- 🟡 BaseLayerAnsiTests  (Tests)
+- 🟡 BaseLayerBufferTests  (Tests)
+- 🟡 ConsoleUiRendererTests  (Tests)
+- 🟡 GuiConsoleTerminalRestoreTests  (Tests)
+- 🟡 LayerTests  (Tests)
+
+## ECAssistantTestSupport (13 types, ~1713 LOC)
+
+- 🟡 EcaTestSuite  (ECAssistantTestSupport)
+- 🟡 GuiTestHarness : GuiBase  (ECAssistantTestSupport)
+- 🟡 HarnessE2ESessionFactory  (ECAssistantTestSupport)
+- 🟡 InferenceEngineNoop : IInferenceEngine  (ECAssistantTestSupport)
+- 🟡 KvCacheNoop : IKvCacheController  (ECAssistantTestSupport)
+- 🟡 MockEngine : AgentEngine  (ECAssistantTestSupport)  deps: [Queue, int maxIterations =, bool stopAfterFirstTool =, string? workingDir =, ISessionOutput? sessionOutput =, string? workingDir =, ISessionOutput? sessionOutput =, bool cycleResponses =, AppConfig? config =]
+- 🟡 ProbeTestTool : EToolBase  (ECAssistantTestSupport)
+- 🟡 TestContext  (ECAssistantTestSupport)
+- 🟡 TestResult  (ECAssistantTestSupport)
+- 🟡 TestRunner : IAsyncDisposable  (ECAssistantTestSupport)  deps: [string, string? testRootDir =, ILogger? logger =]
+- 🟡 TestScenario  (ECAssistantTestSupport)
+- 🟡 TestSessionOutput : ISessionOutput  (ECAssistantTestSupport)  deps: [GuiTestHarness]
+- 🟡 UserExperienceHarness : IOutputListener  (ECAssistantTestSupport)
+
+## TestModelLoad (0 types, ~43 LOC)
+
+
+## ECAssistantCore (412 types, ~34599 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -22,6 +56,7 @@ Packages: 2  |  Types: 530
 - 🔵 ILlmProviderRegistry  (ECAssistantCore)
 - 🔵 ILlmServerClient : IAsyncDisposable  (ECAssistantCore)
 - 🔵 ILogger  (ECAssistantCore)
+- 🔵 IMcpClient : IAsyncDisposable  (ECAssistantCore)
 - 🔵 IMemoryService  (ECAssistantCore)
 - 🔵 IModelLoader  (ECAssistantCore)
 - 🔵 IModelParamValidator  (ECAssistantCore)
@@ -129,6 +164,7 @@ Packages: 2  |  Types: 530
 - 🟡 EToolBaseTests  (ECAssistantCore)
 - 🟡 EToolBaseTierPromptsTests  (ECAssistantCore)
 - 🟡 EToolResult  (ECAssistantCore)
+- 🟡 EToolResultImagesTests  (ECAssistantCore)
 - 🟡 EUserAskTool : EToolBase  (ECAssistantCore)  deps: [ISessionOutput]
 - 🟡 EUserAskToolTests  (ECAssistantCore)
 - 🟡 EVisionStructureTool : EToolBase  (ECAssistantCore)  deps: [IInferenceEngine, IPdfPageRenderer, AppConfig]
@@ -211,6 +247,19 @@ Packages: 2  |  Types: 530
 - 🟡 LlmServerEndpointConfig  (ECAssistantCore)
 - 🟡 Logger : ILogger  (ECAssistantCore)  deps: [string, LogLevel minLevel =]
 - 🟡 LoggerTests : IDisposable  (ECAssistantCore)
+- 🟡 McpConfig  (ECAssistantCore)
+- 🟡 McpConfigTests  (ECAssistantCore)
+- 🟣 McpContentItem  (ECAssistantCore)  deps: [string, string, string, string]
+- 🟡 McpHttpSseClient : IMcpClient  (ECAssistantCore)  deps: [string, McpServerConfig, ILogger, Dictionary]
+- 🟡 McpServerConfig  (ECAssistantCore)
+- 🟣 McpServerInfo  (ECAssistantCore)  deps: [string, string]
+- 🟡 McpServerRegistrar : IAsyncDisposable  (ECAssistantCore)
+- 🟡 McpServerRegistrarTests : IDisposable  (ECAssistantCore)
+- 🟡 McpStdioClient : IMcpClient  (ECAssistantCore)  deps: [string, McpServerConfig, ILogger, Dictionary]
+- 🟡 McpToolAdapter : EToolBase  (ECAssistantCore)  deps: [IMcpClient, McpToolDescriptor]
+- 🟡 McpToolAdapterTests  (ECAssistantCore)
+- 🟣 McpToolDescriptor  (ECAssistantCore)  deps: [string, string, string]
+- 🟣 McpToolResult  (ECAssistantCore)  deps: [bool, IReadOnlyList]
 - 🟡 MemoryConfig  (ECAssistantCore)
 - 🟡 MemoryEntry  (ECAssistantCore)
 - 🟣 MemoryEntry  (ECAssistantCore)  deps: [string, string, float[]? Embedding =]
@@ -362,6 +411,7 @@ Packages: 2  |  Types: 530
 - 🟡 ToolDependencyAnalyzer  (ECAssistantCore)
 - 🟡 ToolDependencyAnalyzerTests  (ECAssistantCore)
 - 🟡 ToolDescriptionScopeTests  (ECAssistantCore)
+- 🟡 ToolImageRefTests  (ECAssistantCore)
 - 🟡 ToolOutputLimitsConfig  (ECAssistantCore)
 - 🟡 ToolOutputProjector  (ECAssistantCore)
 - 🟡 ToolOutputProjectorTests  (ECAssistantCore)
@@ -404,139 +454,168 @@ Packages: 2  |  Types: 530
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (134 types, ~15820 LOC)
+## grammar-decision (0 types, ~61 LOC)
 
-- 🟡 AiSetupResetterTests  (Tests)
-- 🟡 AllToolsTierPromptsTests  (Tests)
-- 🟡 ApiUserController  (Tests)
-- 🟡 BackgroundProcessManagerTests : IDisposable  (Tests)
-- 🟡 BuildCallSignatureTests  (Tests)
-- 🟡 BuildOutputRendererTests  (Tests)
-- 🟡 ChainExecutionTests  (Tests)
-- 🟡 ConfigDrivenParamsTests : IDisposable  (Tests)
-- 🟡 ConfigIntegrationTests : IDisposable  (Tests)
-- 🟡 ConfigLoaderTests  (Tests)
-- 🟡 ConfigProviderTests  (Tests)
-- 🟡 ContextManagerTests  (Tests)
-- 🟡 ContextPinningTests  (Tests)
-- 🟡 ContextWindowIntegrationTests  (Tests)
-- 🟡 ContextWindowTests  (Tests)
-- 🟡 ConversationTranscriptTests  (Tests)
-- 🟡 DependencyGroupTests  (Tests)
-- 🟡 EAgentConfigTests : IDisposable  (Tests)
-- 🟡 EBackgroundExecToolTests : IDisposable  (Tests)
-- 🟡 ECodeEditorToolTests  (Tests)
-- 🟡 EContextAnalyzerTests : IDisposable  (Tests)
-- 🟡 EDotnetBuildToolTests  (Tests)
-- 🟡 EFileReaderToolTests  (Tests)
-- 🟡 EFileResearchToolTests : IDisposable  (Tests)
-- 🟡 EGitToolTests  (Tests)
-- 🟡 EHandoffToolTests  (Tests)
-- 🟡 EMemoryManagerTests : IDisposable  (Tests)
-- 🟡 EShellAgentTests  (Tests)
-- 🟡 EToolBaseTests  (Tests)
-- 🟡 EToolBaseTierPromptsTests  (Tests)
-- 🟡 EUserAskToolTests  (Tests)
-- 🟡 EVisionStructureToolTests : IDisposable  (Tests)
-- 🟡 EmbeddingRoutingTests  (Tests)
-- 🟡 EndpointNormalizerTests  (Tests)
-- 🟡 EngineTierBehaviorTests : IDisposable  (Tests)
-- 🟡 FailureAnalysisTests  (Tests)
-- 🟡 FailureEntryTests  (Tests)
-- 🟡 FailurePatternTests  (Tests)
-- 🟡 FakeLlmServer : IDisposable  (Tests)
-- 🟡 FileSystemAdapterTests : IDisposable  (Tests)
-- 🟡 FirstRunDetectorTests : IDisposable  (Tests)
-- 🟡 GuiTestHarnessTests  (Tests)
-- 🟡 HandoffE2E  (Tests)
-- 🟡 HandoffIntegrationTests : IDisposable  (Tests)
-- 🟡 HandoffRequestTests  (Tests)
-- 🟡 HardwareProfileTests  (Tests)
-- 🟡 HarnessE2E  (Tests)
-- 🟡 HarnessE2EFeatures  (Tests)
-- 🟡 HarnessOptimizationTests : IDisposable  (Tests)
-- 🟡 HomeController  (Tests)
-- 🟡 HttpClientAdapterTests : IDisposable  (Tests)
-- 🟡 ImageAttachmentParserTests : IDisposable  (Tests)
-- 🟡 InMemoryVectorStoreTests  (Tests)
-- 🟡 InstallerVisionEmbeddingTests : IDisposable  (Tests)
-- 🟡 JourneySuiteE2E  (Tests)
-- 🟡 JsonEnvelopeFallbackTests  (Tests)
-- 🟡 LLMDecisionEnvelopeTests  (Tests)
-- 🟡 LlmProviderRegistryTests : IDisposable  (Tests)
-- 🟡 LlmServerClientReconnectTests  (Tests)
-- 🟡 LoggerTests : IDisposable  (Tests)
-- 🟡 MemoryIntegrationTests : IDisposable  (Tests)
-- 🟡 MemoryServiceTests  (Tests)
-- 🟡 MockProbeTool : EToolBase  (Tests)
-- 🟡 MockSubAgentTool : EToolBase  (Tests)
-- 🟡 ModelCatalogTests : IDisposable  (Tests)
-- 🟡 ModelInstallerConfigTests : IDisposable  (Tests)
-- 🟡 ModelTierConfigTests  (Tests)
-- 🟡 MyTests  (Tests)
-- 🟡 NativeToolCallsAdapterTests  (Tests)
-- 🟡 OrchestratorIntegrationTests : IDisposable  (Tests)
-- 🟡 OrchestratorV1419Tests : IDisposable  (Tests)
-- 🟡 Order  (Tests)
-- 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (Tests)
-- 🟡 ParallelToolExecutorTests  (Tests)
-- 🟡 PersistentShellSessionTests : IDisposable  (Tests)
-- 🟡 PlaybookTests : IDisposable  (Tests)
-- 🟡 PlaybookTitleTests  (Tests)
-- 🟡 PostEditVerifierTests : IDisposable  (Tests)
-- 🟡 ProcessRunnerTests  (Tests)
-- 🟡 ProgramGuiCollection  (Tests)
-- 🟡 ProjectContextExclusionTests : IDisposable  (Tests)
-- 🟡 ProjectContextManagerTests  (Tests)
-- 🟡 RemoteModelProbePathTests  (Tests)
-- 🟡 RemoteProviderIntegrationTests  (Tests)
-- 🟡 RemoteProviderSetupWriterTests  (Tests)
-- 🟡 RequestChoiceTests : IDisposable  (Tests)
-- 🟡 SeatbeltShellSandboxTests : IDisposable  (Tests)
-- 🟡 SecureKeyStoreTests  (Tests)
-- 🟡 SelfCorrectionManagerTests  (Tests)
-- 🟡 ServerConfigWriterTests : IDisposable  (Tests)
-- 🟡 ServerLauncherResolveTests : IDisposable  (Tests)
-- 🟡 SessionDiscoveryTests : IDisposable  (Tests)
-- 🟡 SessionManagementIntegrationTests : IDisposable  (Tests)
-- 🟡 SessionQueueTests  (Tests)
-- 🟡 SessionVerbosityDefaultTests : IDisposable  (Tests)
-- 🟡 ShellTeardownSweepTests  (Tests)
-- 🟡 ShellTierPromptOSTests  (Tests)
-- 🟡 StartupTimeoutDefaultsTests  (Tests)
-- 🟡 SteeringQueueTests  (Tests)
-- 🟡 StepMapperTests  (Tests)
-- 🟡 StructuredDecisionAdapterTests  (Tests)
-- 🟡 StructuredFallbackResilienceTests  (Tests)
-- 🟡 SubAgentBriefBuilderTests  (Tests)
-- 🟡 SubAgentErrorTests  (Tests)
-- 🟡 SubAgentIntegrationTests : IDisposable  (Tests)
-- 🟡 SubAgentResultTests  (Tests)
-- 🟡 SubAgentTaskTests  (Tests)
-- 🟡 SummaryServiceTests  (Tests)
-- 🟡 SupportsVisionTests  (Tests)
-- 🟡 TaskPlannerTests  (Tests)
-- 🟡 Test  (Tests)
-- 🟡 Test  (Tests)
-- 🟡 TextMatchStrategyTests  (Tests)
-- 🟡 TfidfEmbedderTests  (Tests)
-- 🟡 TierInferenceTunerTests  (Tests)
-- 🟡 TokenCounterTests  (Tests)
-- 🟡 ToolCallChainSubstitutionTests  (Tests)
-- 🟡 ToolCallRequestTests  (Tests)
-- 🟡 ToolDependencyAnalyzerTests  (Tests)
-- 🟡 ToolDescriptionScopeTests  (Tests)
-- 🟡 ToolOutputProjectorTests  (Tests)
-- 🟡 ToolPipelineIntegrationTests : IDisposable  (Tests)
-- 🟡 ToolPolicySessionApprovalTests  (Tests)
-- 🟡 ToolPolicyTests  (Tests)
-- 🟡 ToolRepeatTrackerTests  (Tests)
-- 🟡 TranscriptIntegrationTests : IDisposable  (Tests)
-- 🟡 TypedOutputAndChainIntegrationTests : IDisposable  (Tests)
-- 🟡 UserJourneyE2E  (Tests)
-- 🟡 UserJourneyExtendedE2E  (Tests)
-- 🟡 VectorMemorySetupWriterTests : IDisposable  (Tests)
-- 🟡 VectorMemoryStoreTests : IDisposable  (Tests)
-- 🟡 VisionStructureJsonParserTests  (Tests)
-- 🟡 WizardCatalogTests : IDisposable  (Tests)
-- 🟡 WizardOnDiskDetectionTests : IDisposable  (Tests)
+
+## ECAssistantLLM (134 types, ~9714 LOC)
+
+- 🔵 IClientManager  (ECAssistantLLM)
+- 🔵 IInferenceScheduler  (ECAssistantLLM)
+- 🔵 ILogger  (ECAssistantLLM)
+- 🔵 IProcessModelHost  (ECAssistantLLM)
+- 🔵 IRequestRouter  (ECAssistantLLM)
+- 🟡 BackendPortAllocator  (ECAssistantLLM)  deps: [BackendsSection, Random? random =]
+- 🟡 BackendPortAllocatorTests  (ECAssistantLLM)
+- 🟡 BackendSelector  (ECAssistantLLM)
+- 🟡 BackendSelectorTests  (ECAssistantLLM)
+- 🟡 BackendsSection  (ECAssistantLLM)
+- 🟡 ChatCompletionChunk  (ECAssistantLLM)
+- 🟡 ChatCompletionRequest  (ECAssistantLLM)
+- 🟡 ChatCompletionTests  (ECAssistantLLM)  deps: [TestServerFixture]
+- 🟡 ChatMessage  (ECAssistantLLM)
+- 🟡 ChatMessageContentConverter : JsonConverter<List<ChatMessage>>  (ECAssistantLLM)
+- 🟡 ChatMessageContentConverterTests  (ECAssistantLLM)
+- 🟡 ChunkChoice  (ECAssistantLLM)
+- 🟡 ChunkDelta  (ECAssistantLLM)
+- 🟡 ClientAuthTests  (ECAssistantLLM)
+- 🟡 ClientManagementTests  (ECAssistantLLM)  deps: [TestServerFixture]
+- 🟡 ClientManager : IClientManager, IDisposable  (ECAssistantLLM)  deps: [SessionRegistry, LlmServerConfig, ILogger, SessionRegistry, LlmServerConfig, ILogger, Action? onLastClientDisconnected =, ProcessSessionRegistry? processSessionRegistry =]
+- 🟡 ClientManagerAlwaysAliveTests  (ECAssistantLLM)
+- 🟡 ClientRegisterRequest  (ECAssistantLLM)
+- 🟡 ClientRegisterResponse  (ECAssistantLLM)
+- 🟡 CompletionChoice  (ECAssistantLLM)
+- 🟡 CompletionChunk  (ECAssistantLLM)
+- 🟡 CompletionChunkChoice  (ECAssistantLLM)
+- 🟡 CompletionRequest  (ECAssistantLLM)
+- 🟡 CompletionResponse  (ECAssistantLLM)
+- 🟡 ConcurrentRequestTests  (ECAssistantLLM)  deps: [TestServerFixture]
+- 🟡 CreateSessionRequest  (ECAssistantLLM)
+- 🟡 DecisionEnvelope  (ECAssistantLLM)
+- 🟡 DecisionGrammar  (ECAssistantLLM)
+- 🟡 DecisionGrammarBuildTests  (ECAssistantLLM)
+- 🟡 DecisionToolCall  (ECAssistantLLM)
+- 🟡 EmbeddingData  (ECAssistantLLM)
+- 🟡 EmbeddingRequest  (ECAssistantLLM)
+- 🟡 EmbeddingResponse  (ECAssistantLLM)
+- 🟡 EmbeddingsTests  (ECAssistantLLM)  deps: [TestServerFixture]
+- 🟡 ErrorDetail  (ECAssistantLLM)
+- 🟡 ErrorHandlingTests  (ECAssistantLLM)  deps: [TestServerFixture]
+- 🟡 ErrorResponse  (ECAssistantLLM)
+- 🟡 GgufArchitectureReader  (ECAssistantLLM)
+- 🟡 GgufArchitectureReaderTests  (ECAssistantLLM)
+- 🟣 GpuLayerDecision  (ECAssistantLLM)  deps: [int, bool, string]
+- 🟡 GpuLayerGuard  (ECAssistantLLM)
+- 🟡 GpuLayerGuardTests  (ECAssistantLLM)
+- 🟡 GrammarProbeTests  (ECAssistantLLM)
+- 🟡 HealthTests  (ECAssistantLLM)  deps: [TestServerFixture]
+- 🟡 HeartbeatTests  (ECAssistantLLM)  deps: [TestServerFixture]
+- 🟡 InferenceDefaults  (ECAssistantLLM)
+- 🟡 InferenceScheduler : IInferenceScheduler  (ECAssistantLLM)  deps: [ILogger]
+- 🟡 InvalidDecisionException : Exception  (ECAssistantLLM)  deps: [string]
+- 🟡 InvalidToolCallException : Exception  (ECAssistantLLM)  deps: [string]
+- 🟡 JsonSchemaGrammarConverter  (ECAssistantLLM)
+- 🟡 KvCacheTests  (ECAssistantLLM)  deps: [TestServerFixture]
+- 🟡 LlmHttpServer : IDisposable  (ECAssistantLLM)  deps: [LlmServerConfig, MultiModelHost, SessionRegistry, IInferenceScheduler, VramBudget, IClientManager, ILogger, CancellationTokenSource? externalCts =, IProcessModelHost? processModelHost =, ProcessSessionRegistry? processSessionRegistry =]
+- 🟡 LlmServerConfig  (ECAssistantLLM)
+- 🟡 LlmServerConfigTests : IDisposable  (ECAssistantLLM)
+- 🟡 LlmServerInfo  (ECAssistantLLM)
+- 🟡 LoadModelRequest  (ECAssistantLLM)
+- 🟡 LoggingSection  (ECAssistantLLM)
+- 🟡 MalformedRequestTests  (ECAssistantLLM)  deps: [TestServerFixture]
+- 🟡 ModelConfig  (ECAssistantLLM)
+- 🟣 ModelInfo  (ECAssistantLLM)  deps: [string, string, bool, bool, int, uint, int]
+- 🟡 ModelLoadTests  (ECAssistantLLM)  deps: [TestServerFixture]
+- 🟡 ModelPathPolicyTests  (ECAssistantLLM)
+- 🟡 ModelPathRestrictionTests : IDisposable  (ECAssistantLLM)
+- 🟡 ModelSlot : IDisposable  (ECAssistantLLM)  deps: [string, ModelConfig, ILogger, string]
+- 🟡 ModelSmokeE2E  (ECAssistantLLM)
+- 🟡 ModelsTests  (ECAssistantLLM)  deps: [TestServerFixture]
+- 🟡 MtmdMarkerResolver  (ECAssistantLLM)
+- 🟡 MultiModelHost : IDisposable  (ECAssistantLLM)  deps: [LlmServerConfig, ILogger, string, BackendSelector? backendSelector =]
+- 🟡 NativeToolsTests  (ECAssistantLLM)
+- 🟡 OpenAiFunctionSpec  (ECAssistantLLM)
+- 🟡 OpenAiToolSpec  (ECAssistantLLM)
+- 🟡 PlatformDetector  (ECAssistantLLM)
+- 🟡 PlatformRuntimeCatalog  (ECAssistantLLM)
+- 🟡 PrefillRequest  (ECAssistantLLM)
+- 🟡 PrefillResponse  (ECAssistantLLM)
+- 🟡 ProcessModelHost : IProcessModelHost, IDisposable  (ECAssistantLLM)  deps: [LlmServerConfig, ILogger, string, PlatformRuntimeCatalog? catalog =]
+- 🟡 ProcessModelInstance : IDisposable  (ECAssistantLLM)  deps: [ModelConfig, string, int, ILogger, string? pidFilePath =]
+- 🟡 ProcessOrphanReapTests : IDisposable  (ECAssistantLLM)
+- 🟡 ProcessSession : IDisposable  (ECAssistantLLM)  deps: [string, string, ModelConfig, IProcessModelHost, HttpClient, ILogger]
+- 🟡 ProcessSessionRegistry : IDisposable  (ECAssistantLLM)  deps: [IProcessModelHost, LlmServerConfig, ILogger, Func]
+- 🟡 ProcessSessionRegistryTests  (ECAssistantLLM)
+- 🟡 ProcessSessionStructuredTests  (ECAssistantLLM)
+- 🟡 ProcessStatelessClientTests  (ECAssistantLLM)
+- 🟡 ProxyRequestHandler  (ECAssistantLLM)
+- 🟡 RequestRouter : IRequestRouter  (ECAssistantLLM)  deps: [MultiModelHost, SessionRegistry, IInferenceScheduler, VramBudget, IClientManager, LlmServerConfig, ILogger, CancellationTokenSource, IProcessModelHost? processHost =, ProcessSessionRegistry? processSessions =]
+- 🟡 RewindResponse  (ECAssistantLLM)
+- 🟡 RootPathGuard  (ECAssistantLLM)
+- 🟡 RootPathGuardTests : IDisposable  (ECAssistantLLM)
+- 🟡 RouteMethodTests  (ECAssistantLLM)
+- 🟡 RoutingTests  (ECAssistantLLM)  deps: [TestServerFixture]
+- 🟣 RuntimeAsset  (ECAssistantLLM)  deps: [string, string]
+- 🟡 RuntimeLocator  (ECAssistantLLM)
+- 🟡 RuntimeLocatorTests  (ECAssistantLLM)
+- 🟡 SecurityHarness : IDisposable  (ECAssistantLLM)
+- 🟡 ServerCollection : TestServerFixture>  (ECAssistantLLM)
+- 🟡 ServerIdleShutdownTests  (ECAssistantLLM)
+- 🟡 ServerLogTests  (ECAssistantLLM)  deps: [TestServerFixture]
+- 🟡 ServerLogger : ILogger  (ECAssistantLLM)  deps: [LogLevel minLevel =, string? logFile =]
+- 🟡 ServerSection  (ECAssistantLLM)
+- 🟡 SessionContext : IDisposable  (ECAssistantLLM)  deps: [string, string, string, LLamaWeights, ModelParams, InferenceParams, ILogger, MtmdWeights? mtmd =]
+- 🟡 SessionLifecycleTests  (ECAssistantLLM)  deps: [TestServerFixture]
+- 🟡 SessionRegistry : IDisposable  (ECAssistantLLM)  deps: [MultiModelHost, IInferenceScheduler, LlmServerConfig, ILogger, MultiModelHost, IInferenceScheduler, LlmServerConfig, ILogger, VramBudget]
+- 🟣 SessionStatusInfo  (ECAssistantLLM)  deps: [string, string, string, bool, int, uint, double, DateTime, DateTime]
+- 🟡 ShutdownTests  (ECAssistantLLM)  deps: [TestServerFixture]
+- 🟡 SseStreamer  (ECAssistantLLM)
+- 🟡 SseStreamerTests : IDisposable  (ECAssistantLLM)
+- 🟡 StructuredDecoder  (ECAssistantLLM)
+- 🟡 StructuredDecoderTests  (ECAssistantLLM)
+- 🟡 SuccessResponse  (ECAssistantLLM)
+- 🟡 TernaryModelDetector  (ECAssistantLLM)
+- 🟡 TernaryModelDetectorTests  (ECAssistantLLM)
+- 🟡 TestServerFixture : IAsyncLifetime  (ECAssistantLLM)
+- 🟡 ThinkFilter  (ECAssistantLLM)
+- 🟡 ThinkFilterTests  (ECAssistantLLM)
+- 🟡 TokenizeRequest  (ECAssistantLLM)
+- 🟡 TokenizeResponse  (ECAssistantLLM)
+- 🟡 TokenizeTests  (ECAssistantLLM)  deps: [TestServerFixture]
+- 🟣 ToolCall  (ECAssistantLLM)  deps: [string, string]
+- 🟡 ToolCallDecoder  (ECAssistantLLM)
+- 🟡 ToolCallGrammarFactory  (ECAssistantLLM)
+- 🟡 ToolsetFingerprint  (ECAssistantLLM)
+- 🟡 ToolsetFingerprintTests  (ECAssistantLLM)
+- 🟡 UniqueRuleNames  (ECAssistantLLM)
+- 🟣 VisionImage  (ECAssistantLLM)  deps: [string, byte]
+- 🟡 VisionImageSuiteE2ETests : IAsyncLifetime  (ECAssistantLLM)
+- 🟡 VisionInferenceE2ETests  (ECAssistantLLM)
+- 🟡 VramBudget  (ECAssistantLLM)  deps: [LlmServerConfig]
+- 🟡 VramBudgetTests  (ECAssistantLLM)
+- 🟡 VulkanAvailabilityProbe  (ECAssistantLLM)
+
+## ECAssistantTUI (23 types, ~4018 LOC)
+
+- 🔵 IAppController  (ECAssistantTUI)
+- 🔵 IGuiConsole  (ECAssistantTUI)
+- 🔵 ITerminalOutput  (ECAssistantTUI)
+- 🟡 AnsiInputParser  (ECAssistantTUI)
+- 🟡 AnsiInputParserCursorPasteTests  (ECAssistantTUI)
+- 🟡 AnsiInputParserTests  (ECAssistantTUI)
+- 🟡 AppController : IAppController  (ECAssistantTUI)  deps: [IGuiConsole, AppConfig, string, string, string, ILogger, IGuiConsole, AppConfig, string, string, string, ILogger, List, IGuiConsole, AppConfig, string, string, string, ILogger, List, BackgroundProcessManager, FileWatcherService, IAiSetupResetter? setupResetter =]
+- 🟡 BaseLayer  (ECAssistantTUI)
+- 🟡 BaseLayerAnsiTests  (ECAssistantTUI)
+- 🟡 BaseLayerBufferTests  (ECAssistantTUI)
+- 🟡 ConfigLayer : BaseLayer  (ECAssistantTUI)  deps: [AnsiColor]
+- 🟡 ConsoleTerminalOutput : ITerminalOutput, IDisposable  (ECAssistantTUI)
+- 🟡 ConsoleUiRenderer : IOutputListener, IDisposable  (ECAssistantTUI)  deps: [SessionLayer, AnsiColor, Func, Func, ApprovalScope>? approvalPromptScoped =, IReadOnlyList, Action]
+- 🟡 ConsoleUiRendererTests  (ECAssistantTUI)
+- 🟡 GuiConsole : GuiBase, IGuiConsole  (ECAssistantTUI)  deps: [ITerminalOutput]
+- 🟡 GuiConsoleTerminalRestoreTests  (ECAssistantTUI)
+- 🟡 HelpLayer : BaseLayer  (ECAssistantTUI)  deps: [AnsiColor, string]
+- 🟡 LayerTests  (ECAssistantTUI)
+- 🟡 LoadingIndicator : IDisposable  (ECAssistantTUI)  deps: [IGuiConsole, AnsiColor]
+- 🟡 SessionLayer : BaseLayer  (ECAssistantTUI)  deps: [string, string label =]
+- 🟡 StartupLayer : BaseLayer  (ECAssistantTUI)  deps: [AnsiColor]
+- 🟡 StatusIndicator : IDisposable  (ECAssistantTUI)  deps: [IGuiConsole, AnsiColor]
+- 🟡 TuiSetupUi : ISetupUi  (ECAssistantTUI)  deps: [IGuiConsole]

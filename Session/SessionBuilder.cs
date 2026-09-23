@@ -11,6 +11,7 @@ using ECAssistant.Core.Tools.Git;
 using ECAssistant.Core.Tools.Reader;
 using ECAssistant.Core.Tools.Research;
 using ECAssistant.Core.Tools.Shell;
+using ECAssistant.Core.Tools.Mcp;
 using ECAssistant.Core.Interfaces;
 using ECAssistant.Core.Services.Http;
 using ECAssistant.Core.Transport;
@@ -181,6 +182,16 @@ public class SessionBuilder : ISessionBuilder
         if (RegisterBuiltInTools || (externalTools != null && externalTools.Count > 0))
         {
             RegisterBuiltInToolsAsync(session, externalTools);
+        }
+
+        // ── MCP servers (Model Context Protocol) ──
+        if (_config.Mcp is { Servers.Count: > 0 })
+        {
+            var keyStore = new SecureKeyStore(Path.Combine(_userConfigDir, "keys"));
+            var registrar = new McpServerRegistrar();
+            await registrar.RegisterAsync(session, _config.Mcp, _logger, keyStore, session.Policy);
+            // Registrar is disposed by the session on shutdown
+            session.RegisterMcpRegistrar(registrar);
         }
 
         // ── Background Tasks (decompose + summarize config) ──

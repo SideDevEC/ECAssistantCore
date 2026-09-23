@@ -1,7 +1,7 @@
 # ECAssistant — Architecture (as-is)
 
 **Updated:** 2026-09-23 · Naming convention: tool-family classes carry the `E` prefix (class name = wire name); everything else doesn't. `Eca*` types keep the product prefix.
-**Status:** ✅ builds 0 errors | 458/458 targeted test net (unit + integration) | LDC regenerated 2026-09-23, enforcement PASSED (506 types Core / 185 LLM / 30 TUI / 13 TestSupport / 4 Console)
+**Status:** ✅ builds 0 errors | 57/57 MCP tests passing | LDC regenerated 2026-09-23, enforcement PASSED (591 types Core+LLM+TUI+TestSupport+Console / 159 edges)
 **History:** git log — this file describes the CURRENT state only.
 
 ## Overview
@@ -57,7 +57,7 @@ DecisionEnvelope JSON (local: grammar-constrained via GBNF; remote: native OpenA
 8. **Context pinning**: important facts pinned to survive compaction, tier-capped eviction
 9. **Steering:** `SteeringQueue` + `AgentSession.Steer()` injects user input at any turn boundary
 
-## Tools (11 built-in)
+## Tools (11 built-in + MCP)
 
 | Tool | Purpose | Default permission |
 |---|---|---|
@@ -72,6 +72,16 @@ DecisionEnvelope JSON (local: grammar-constrained via GBNF; remote: native OpenA
 | EUserAskTool | Model-driven user clarification (gated: `allow_user_ask`) | n/a |
 | ESubAgentTool | Sub-agent spawn (result fed back, parent continues) | allowed |
 | EHandoffTool | **Ephemeral handoff** — specialist takeover | allowed |
+
+### MCP (Model Context Protocol) — v15
+
+External tool servers via the open MCP standard. Zero NuGet dependencies — pure JSON-RPC 2.0 over stdio (local subprocess) or HTTP/SSE (remote).
+
+**Config:** `mcp.servers.{name}` — each entry is either `command`+`args`+`env` (stdio) or `url`+`headers` (HTTP). `{{keychain:name}}` templates resolved via `SecureKeyStore`. Per-server tool whitelist/blacklist via `tools[]` + `exclude`.
+
+**Flow:** `McpServerRegistrar` → `IMcpClient` (stdio or HTTP) → `initialize` handshake → `tools/list` → filter → wrap each as `McpToolAdapter : EToolBase` → `session.RegisterTool()`. Orchestrator sees them as native tools. MCP image content → `ToolImageRef` → vision pipeline. Lifecycle: registrar disposed with session.
+
+**Files:** `Tools/Mcp/` — `IMcpClient`, `McpStdioClient`, `McpHttpSseClient`, `McpToolDescriptor`, `McpToolAdapter`, `McpServerRegistrar`. ~700 LOC total, zero external deps.
 
 **Naming convention (Emre, 2026-09-23):** tool-family classes keep the `E` prefix (EToolBase, EToolResult, EShellAgent, …) because the class name IS the wire name — grammar union, `tool_permissions` config keys, and stored playbooks all reference it. Non-tool classes are bare (AgentEngine, AppConfig, GuiConsole, AnsiColor, …). `Eca*` types keep the product prefix.
 
@@ -134,6 +144,7 @@ ECAssistantCore/
 ├── Tools/                  # EToolBase + tool family (E prefix = wire identity)
 │   ├── EBackground/ EBuild/ ECode/ EDotnet/ EGit/ EResearch/ EShell/ EVision/
 │   ├── Handoff/            # EHandoffTool
+│   ├── Mcp/               # MCP client (IMcpClient, McpStdioClient, McpHttpSseClient, McpToolAdapter, McpServerRegistrar)
 │   ├── Policy/             # ToolPolicy, ToolPermission, ToolPolicyDecision
 │   ├── Reader/ SubAgent/ User/
 │   ├── ECode/TextMatchPipeline (ITextMatchPipeline) — exact → whitespace-tolerant → line-anchored
@@ -183,6 +194,7 @@ ECAssistantConsole ←── TUI ONLY (Core flows transitively)
 | ITextMatchPipeline | TextMatchPipeline | Match strategy chain for code edits |
 | IHtmlTextConverter / IReadableContentExtractor | HtmlTextConverter / ReadableContentExtractor | Web content pipeline |
 | IProcessRunner / IFileSystem / IHttpClient | ProcessRunner / FileSystemAdapter / HttpClientAdapter | Infra abstractions |
+| IMcpClient | McpStdioClient / McpHttpSseClient | MCP server connection (JSON-RPC stdio or HTTP/SSE) |
 
 ## First-Run Setup
 
@@ -213,7 +225,7 @@ Enforcement: Blocked tools are NOT registered (LLM never sees them). ApprovalReq
 
 ## Config (as-is)
 
-- **AppConfig** (root doc) — `llm`, `memory`, `workspace`, `subagent`, `background_tasks`, `tools` (dynamic per-tool sections), `tool_output_limits`, `interaction`, `model_tier`, `context_management`, `verification`, `handoffs` (n/a — handoff is configless)
+- **AppConfig** (root doc) — `llm`, `memory`, `workspace`, `subagent`, `background_tasks`, `tools` (dynamic per-tool sections), `tool_output_limits`, `interaction`, `model_tier`, `context_management`, `verification`, `mcp` (MCP server connections), `handoffs` (n/a — handoff is configless)
 - **LlmProviderConfig** — `mode` (local/remote), `host:localhost`, `port:8420`, `endpoint`, `api_key`, `model_id`, `embedding_model_id`, `auto_start`, …; `ResolvedEndpoint` computed (`http://{host}:{port}` local / endpoint remote)
 - **`llm_providers`** — multiple remote providers: `providers[]` (name/endpoint/api_key/model_id/is_default), `default_provider`, `fallback_enabled` (opt-in health-probe failover at session start only). Local mode ignores it.
 - **API key schemes** — literal | `file:<path>` | `keyfile:<name>` (SecureKeyStore: self-encrypting DPAPI keyring, atomic writes, name-only references)

@@ -93,10 +93,11 @@ public sealed class JourneySuiteE2E
     /// production) and auto-approve every registered tool — there is no user to
     /// approve in an e2e run, so ApprovalRequired tools would be silently DENIED.
     /// </summary>
-    private static async Task WireSessionParityAsync(AgentSession session)
+    private static async Task WireSessionParityAsync(AgentSession session, bool withSubAgents = true)
     {
         await session.InitializeHandoffAsync();
-        await session.Orchestrator.InitializeSubAgentsAsync(session.Engine.WorkingDir);
+        if (withSubAgents)
+            await session.Orchestrator.InitializeSubAgentsAsync(session.Engine.WorkingDir);
         foreach (var tool in session.Engine.Tools.ToList())
             session.Orchestrator.Policy.SetPermission(tool.Name, approvalRequired: false, "e2e journey");
     }
@@ -318,7 +319,7 @@ public sealed class JourneySuiteE2E
              // register here so EDotnetBuildTool captures it at construction.
             engine.RegisterTool(new ECodeEditorTool(new FileSystemAdapter(), cfg));
             engine.RegisterTool(new EDotnetBuildTool(new ProcessRunner(), cfg));
-          }, verifyCommand: "dotnet build");
+          }, verifyCommand: "dotnet build", withSubAgents: false);
         if (session == null) return;
         try
          {
@@ -397,7 +398,7 @@ public sealed class JourneySuiteE2E
     private async Task<(AgentSession?, string)> CreateAnyTierSession(
         Action<AgentEngine, AppConfig>? configure = null,
         int? compactPct = null, string? verifyCommand = null,
-        int? llmContextSize = null)
+        int? llmContextSize = null, bool withSubAgents = true)
     {
         if (!string.IsNullOrEmpty(ServerUrl))
         {
@@ -407,7 +408,7 @@ public sealed class JourneySuiteE2E
             var (session, dir) = await factory.CreateAsync(ServerUrl!, cfg,
                 configure: engine => configure?.Invoke(engine, cfg),
                 prepareWorkingDir: dir => cfg.AgentSettings.WorkingDirectory = dir);
-            await WireSessionParityAsync(session);
+            await WireSessionParityAsync(session, withSubAgents);
             return (session, "local");
         }
 
@@ -416,7 +417,7 @@ public sealed class JourneySuiteE2E
             var cfg = RemoteConfig(compactPct: compactPct, llmContextSize: llmContextSize);
             var session = TryCreateRemoteSession(cfg, engine => configure?.Invoke(engine, cfg));
             if (session != null)
-                await WireSessionParityAsync(session);
+                await WireSessionParityAsync(session, withSubAgents);
             return (session, "remote");
         }
 

@@ -85,6 +85,13 @@ public class AppConfig
     public MultiLlmProvidersConfig? LlmProviders { get; set; }
 
     /// <summary>
+    /// MCP (Model Context Protocol) server connections. Stdio subprocess or HTTP/SSE.
+    /// Empty = no MCP tools registered. See McpConfig for schema.
+    /// </summary>
+    [JsonPropertyName("mcp")]
+    public McpConfig? Mcp { get; set; }
+
+    /// <summary>
     /// THE integration answer: "can ECAssistant handle vision (image input)?"
     /// Mode-independent — true for a local install with an mmproj-wired model,
     /// or a remote provider declared vision-capable at setup.

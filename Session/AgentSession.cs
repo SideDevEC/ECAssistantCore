@@ -9,6 +9,7 @@ using ECAssistant.Core.Services.Http;
 using ECAssistant.Core.Transport;
 using ECAssistant.Core.Interfaces;
 using ECAssistant.Core.Tools;
+using ECAssistant.Core.Tools.Mcp;
 
 namespace ECAssistant.Core.Session;
 
@@ -101,6 +102,12 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     /// <summary>Change UI verbosity at runtime (/verbose, /silent).</summary>
     public void SetVerbosity(SessionVerbosity verbosity) => _verbosity = verbosity;
     private readonly ILogger _logger;
+
+    /// <summary>
+    /// MCP server registrar — disposed when the session is disposed.
+    /// Null when no MCP servers are configured.
+    /// </summary>
+    private McpServerRegistrar? _mcpRegistrar;
 
     /// <summary>
     /// Create a new fully isolated session.
@@ -1002,6 +1009,12 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         _engine.RegisterTool(tool);
     }
 
+    /// <summary>Attach an MCP server registrar for lifecycle disposal. Called by SessionBuilder.</summary>
+    public void RegisterMcpRegistrar(McpServerRegistrar registrar)
+    {
+        _mcpRegistrar = registrar;
+    }
+
     /// <summary>Initialize vector memory for this session.</summary>
     public async Task InitializeVectorMemoryAsync(string storeDir, IVectorEmbedder? embedder = null)
     {
@@ -1098,5 +1111,11 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
 
         await _engine.DisposeAsync();
         await _orchestrator.DisposeAsync();
+
+        // Dispose MCP server subprocesses and HTTP connections
+        if (_mcpRegistrar != null)
+        {
+            try { await _mcpRegistrar.DisposeAsync(); } catch (Exception ex) { _logger?.Debug("Session", $"MCP dispose error ignored: {ex.Message}"); }
+        }
     }
 }

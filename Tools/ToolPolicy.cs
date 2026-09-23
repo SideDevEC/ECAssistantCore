@@ -29,6 +29,11 @@ public class ToolPolicy
         SetPermission("EGitTool", approvalRequired: true, "Git operations can push/commit");
         SetPermission("ECodeEditor", approvalRequired: true, "File modification");
         SetPermission("EBackgroundExec", approvalRequired: true, "Background process execution");
+
+        // ── MCP tools: allowed by default (read-only assumption; specific tools
+        //     can be elevated via tool_permissions config if needed) ──
+        // MCP tool names are dynamic (from servers), so they're handled per-name
+        // at registration time. This is a fallback for names not explicitly configured.
     }
 
     public void SetPermission(string toolName, bool approvalRequired, string? reason = null)
@@ -61,6 +66,10 @@ public class ToolPolicy
 
     public bool RequiresApproval(string toolName) => _requiresApproval.Contains(toolName);
     public bool IsAllowed(string toolName) => !RequiresApproval(toolName);
+
+    /// <summary>True when this tool name has an explicit permission entry (from config or SetPermission).</summary>
+    public bool HasExplicitPermission(string toolName)
+        => _permissions.ContainsKey(toolName);
 
     public List<ToolPermission> GetAllPermissions() => _permissions.Values.ToList();
 
