@@ -1799,6 +1799,10 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
             parameters.MaxTokens = IsLargeModelTier()
                 ? Math.Min(Math.Max(parameters.MaxTokens ?? 0, 1024), 4096)
                 : Math.Min(Math.Max(parameters.MaxTokens ?? 0, 768), 1024);
+            // v14.12.1: constrain the decision grammar's toolcall.name to the registered
+            // tools — small models physically cannot hallucinate a tool name. The remote
+            // native-tools path never reads this field (server without support ignores it).
+            parameters.ToolNames = _tools.Select(t => t.Name).ToList();
             var envelope = await _inferenceEngine!.GenerateStructuredAsync(prompt, parameters, ct);
             if (envelope == null)
              {

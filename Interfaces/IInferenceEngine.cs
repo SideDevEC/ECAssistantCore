@@ -59,6 +59,13 @@ public sealed class InferenceRequestParams
     public List<string> ImageDataUris { get; set; } = new();
 
     /// <summary>
+    /// v14.12.1: registered tool names for the structured decision request — the server
+    /// constrains the decision grammar's toolcall.name to this union (small models cannot
+    /// hallucinate tool names). Local grammar path only; null → permissive grammar.
+    /// </summary>
+    public List<string>? ToolNames { get; set; }
+
+    /// <summary>
     /// v14.10: optional GBNF grammar for server-side structured decoding
     /// (ECAssistantLLM `grammar` request field). Ignored by non-supporting backends.
     /// </summary>

@@ -558,3 +558,4 @@ delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-dri
 - **Tier-aware envelope budget** (structured decoding): small 768–1024, large 1024–4096 tokens.
 - **ToolSpec.ParameterSchema** now copied from `GetParameterSchema()` — remote native
   function-calling sends real parameter schemas (local behavior unchanged).
+- **Tool-name grammar union (v14.12.1):** `TryGenerateStructuredAsync` sends `tool_names` on the structured request; the server builds `DecisionGrammar.BuildGbnf(...)` so toolcall.name is constrained to the registered tools. Absent → permissive grammar (back-compat both directions).
