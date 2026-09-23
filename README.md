@@ -47,6 +47,10 @@ var result = await session.Orchestrator.ExecuteMultiStep("Summarize the docs in 
 | Capability | What it means for your app |
 |---|---|
 | **Agent engine** | Multi-session orchestration, sub-agents, self-correction, task planning |
+| **Model-tier adaptive harness** | One harness, every model size: small models get step-by-step scaffolding, tighter sampling and strict recipes; large models get a slim profile with more headroom — automatic via `model_tier.mode` |
+| **Post-edit verification** | Every file-modifying edit is followed by a build/test gate (tier-aware depth); failures are fed back to the model to fix, before you ever see the result |
+| **Playbook memory** | Successful multi-step goals are captured as reusable playbooks and replayed on similar future tasks |
+| **Context pinning** | Goals, decisions and the touched-file map survive compaction — long sessions don't lose the plot |
 | **10 built-in tools** | Shell, file I/O, code editing, git, dotnet, sub-agents, vision structure — permission-gated (approve once / always this session / deny — session-scoped, never persisted) |
 | **Custom tools** | Implement one interface, register it. That's the whole API. |
 | **Memory** | Vector memory (embeddings) + daily notes + curated long-term memory |
@@ -60,6 +64,8 @@ var result = await session.Orchestrator.ExecuteMultiStep("Summarize the docs in 
 - **Grammar-forced structured decisions** — the agent's act/answer/toolcall decisions are token-level constrained (GBNF), not prompt-asked. Valid tool calls with typed JSON Schema parameters, every time.
 - **Interactive checkpoints (`EAskUser`)** — the model escalates genuine ambiguity to a real choice prompt instead of guessing; falls back to autonomous mode when unattended.
 - **Self-correction with loop detection** — malformed outputs trigger error-feedback retries; long-range repeat loops are detected and stopped before they burn your budget.
+- **Fuzzy tool edits** — the code editor tolerates imperfect match text: exact → whitespace-tolerant → line-anchored matching with indentation restoration, and a structured ambiguity error instead of guessing.
+- **Thinking never leaks** — empty or malformed model turns are retried with corrective feedback instead of surfacing the model's internal reasoning to your users.
 - **Thin by design** — 2.8 MB tool, server fetched on demand; local-first privacy with a remote escape hatch in the same code path.
 
 ## Architecture boundary (by design)

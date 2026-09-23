@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 358  |  LOC: 29804  |  ~16836 tokens
+Types: 366  |  LOC: 30471  |  ~17328 tokens
 
 ---
 
@@ -811,6 +811,10 @@ Cross-package deps: ECAssistant.Core.Setup, Xunit
 > Harness end-to-end: drives the REAL product stack (AgentSession →
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Session, ECAssistant.Core.Transport, ECAssistant.Core.Tools, ECAssistant.TestSupport
 
+### Class: HarnessE2EFeatures
+> v14.13–v14.16 feature E2E against a REAL server + real local model
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Verification, ECAssistant.TestSupport
+
 ### Class: HarnessOptimizationTests
 > Tests for the 2026-09-21 harness optimizations (P1-P6): tool-result truncation
 Implements: IDisposable
@@ -899,6 +903,10 @@ Cross-package deps: ECAssistant.Core.Engine
 Constructor:
   - LLMDecision(bool wantsToolCall, string? toolName, Dictionary<string, string?> args, string? answerText = null, string? reasoning = null, List<ToolCallRequest> toolCalls, string? reasoning = null, string? commentary = null)
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools
+
+### Class: LLMDecisionEnvelopeTests
+> v14.18: thinking-only decision envelopes (answer empty, no tool calls) must
+Cross-package deps: ECAssistant.Core.Orchestration
 
 ### Class: LineAnchoredMatchStrategy
 > Priority 3: line-anchored match on significant content only — ALL whitespace
@@ -1049,6 +1057,11 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.
 ### Class: OrchestratorResult
 > Result from the orchestrator after execution completes.
 
+### Class: OrchestratorV1419Tests
+> v14.19.1 unit coverage for the gaps found in the feature audit:
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Interfaces, ECAssistant.TestSupport, Moq
+
 ### Class: OutputEntry
 > "stream" (accumulated tokens) or "line" (a discrete line)
 
@@ -1094,6 +1107,10 @@ Cross-package deps: ECAssistant.Core.Interfaces
 > v14.14: tier-aware playbook memory. Pure-logic tests — JSON persistence in
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Orchestration, ECAssistant.Core.Playbooks, ECAssistant.Core.Tools, ECAssistant.TestSupport
+
+### Class: PlaybookTitleTests
+> v14.19.1: playbook titles use the goal's FIRST SENTENCE only — prompts that
+Cross-package deps: ECAssistant.Core, ECAssistant.Core.Playbooks
 
 ### Class: PostEditVerifier
 > v14.13: Default post-edit verifier. Pure classification/gating logic plus an
@@ -1289,6 +1306,11 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistan
 > Tests for session prompt queue logic and run state transitions.
 Cross-package deps: ECAssistant.Core.Session
 
+### Class: SessionVerbosityDefaultTests
+> v14.19 (Emre): sessions run VERBOSE by default — users see tool status,
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Session
+
 ### Class: SetupWizard
 > Paths and services the wizard needs; assembled by the host.
 Constructor:
@@ -1478,6 +1500,10 @@ Cross-package deps: ECAssistant.Core.Tools
 ### Class: ToolDependencyAnalyzerTests
 Cross-package deps: ECAssistant.Core.Engine
 
+### Class: ToolDescriptionScopeTests
+> v14.19.1: every user-facing tool description carries an explicit scope —
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services, ECAssistant.Core.Tools.Background, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Build, ECAssistant.Core.Tools.Git, ECAssistant.Core.Tools.Research, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Reader
+
 ### Class: ToolOutputLimitsConfig
 > Tool-result truncation limits (2026-09-21 — previously hardcoded constants).
 
@@ -1528,6 +1554,14 @@ Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: TranscriptMessage
 > A single message in the conversation transcript.
+
+### Class: UserJourneyE2E
+> v14.19: USER-EXPERIENCE E2E — drives the session through AgentSession.Prompt
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Session, ECAssistant.TestSupport
+
+### Class: UserJourneyExtendedE2E
+> v14.19: extended user journeys — every remaining harness feature experienced
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.TestSupport
 
 ### Class: VectorEntry
 

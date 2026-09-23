@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T09:00:28.138915+00:00
-Packages: 2  |  Types: 468
+Generated: 2026-09-23T10:31:07.182861+00:00
+Packages: 2  |  Types: 484
 
 ---
 
-## ECAssistantCore (358 types, ~29804 LOC)
+## ECAssistantCore (366 types, ~30471 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -160,6 +160,7 @@ Packages: 2  |  Types: 468
 - 🟡 HardwareProfile  (ECAssistantCore)
 - 🟡 HardwareProfileTests  (ECAssistantCore)
 - 🟡 HarnessE2E  (ECAssistantCore)
+- 🟡 HarnessE2EFeatures  (ECAssistantCore)
 - 🟡 HarnessOptimizationTests : IDisposable  (ECAssistantCore)
 - 🟡 HomeController  (ECAssistantCore)
 - 🟡 HttpClientAdapter : IHttpClient, IDisposable  (ECAssistantCore)
@@ -184,6 +185,7 @@ Packages: 2  |  Types: 468
 - 🟡 JsonEnvelopeFallbackTests  (ECAssistantCore)
 - 🟡 KvCacheStatus  (ECAssistantCore)
 - 🟡 LLMDecision  (ECAssistantCore)  deps: [bool, string, Dictionary, string? answerText =, string? reasoning =, List, string? reasoning =, string? commentary =]
+- 🟡 LLMDecisionEnvelopeTests  (ECAssistantCore)
 - 🟡 LineAnchoredMatchStrategy : LineMatchStrategyBase  (ECAssistantCore)
 - 🟡 LineMatchStrategyBase : ITextMatchStrategy  (ECAssistantCore)
 - 🟡 LlmConfig  (ECAssistantCore)
@@ -219,6 +221,7 @@ Packages: 2  |  Types: 468
 - 🟡 OpenAIClient : IDisposable  (ECAssistantCore)  deps: [string, string? clientId =, string? apiKey =, TimeSpan? timeout =]
 - 🟡 OrchestratorIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 OrchestratorResult  (ECAssistantCore)
+- 🟡 OrchestratorV1419Tests : IDisposable  (ECAssistantCore)
 - 🟡 OutputEntry  (ECAssistantCore)
 - 🟡 ParallelToolExecutor : IParallelToolExecutor  (ECAssistantCore)  deps: [EAgentEngine, ToolPolicy, Func, Action, ISessionOutput? sessionOutput =]
 - 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (ECAssistantCore)
@@ -231,6 +234,7 @@ Packages: 2  |  Types: 468
 - 🟡 PlaybookMatcher  (ECAssistantCore)
 - 🟡 PlaybookStore : IPlaybookStore  (ECAssistantCore)  deps: [string, ILogger? logger =, int maxPlaybooks =]
 - 🟡 PlaybookTests : IDisposable  (ECAssistantCore)
+- 🟡 PlaybookTitleTests  (ECAssistantCore)
 - 🟡 PostEditVerifier : IPostEditVerifier  (ECAssistantCore)  deps: [IVerificationRunner, VerificationConfig]
 - 🟡 PostEditVerifierTests : IDisposable  (ECAssistantCore)
 - 🟣 ProcessResult  (ECAssistantCore)  deps: [int, string, string, bool]
@@ -278,6 +282,7 @@ Packages: 2  |  Types: 468
 - 🟡 SessionManagementIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 SessionManager : IAsyncDisposable  (ECAssistantCore)  deps: [EAgentConfig, string, string, ILogger? logger =, Func, Func, LlmServerClient? serverClient =, SecureKeyStore? keyStore =, ILlmProviderRegistry? providerRegistry =, IModelParamValidator? modelParamValidator =]
 - 🟡 SessionQueueTests  (ECAssistantCore)
+- 🟡 SessionVerbosityDefaultTests : IDisposable  (ECAssistantCore)
 - 🟡 SetupWizard  (ECAssistantCore)  deps: [ISetupUi]
 - 🟡 SingleToolResult  (ECAssistantCore)
 - 🟡 SipsPdfPageRenderer : IPdfPageRenderer  (ECAssistantCore)  deps: [IProcessRunner]
@@ -327,6 +332,7 @@ Packages: 2  |  Types: 468
 - 🟡 ToolCallResult  (ECAssistantCore)
 - 🟡 ToolDependencyAnalyzer  (ECAssistantCore)
 - 🟡 ToolDependencyAnalyzerTests  (ECAssistantCore)
+- 🟡 ToolDescriptionScopeTests  (ECAssistantCore)
 - 🟡 ToolOutputLimitsConfig  (ECAssistantCore)
 - 🟡 ToolOutputProjector  (ECAssistantCore)
 - 🟡 ToolOutputProjectorTests  (ECAssistantCore)
@@ -343,6 +349,8 @@ Packages: 2  |  Types: 468
 - 🟡 TranscriptIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 TranscriptMessage  (ECAssistantCore)
 - 🟣 TranscriptMessage  (ECAssistantCore)  deps: [string, string, string? ToolCallId =]
+- 🟡 UserJourneyE2E  (ECAssistantCore)
+- 🟡 UserJourneyExtendedE2E  (ECAssistantCore)
 - 🟡 VectorEntry  (ECAssistantCore)
 - 🟡 VectorMemoryConfig  (ECAssistantCore)
 - 🟡 VectorMemorySetupWriter  (ECAssistantCore)  deps: [string]
@@ -366,7 +374,7 @@ Packages: 2  |  Types: 468
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (110 types, ~13681 LOC)
+## Tests (118 types, ~14330 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -408,6 +416,7 @@ Packages: 2  |  Types: 468
 - 🟡 FirstRunDetectorTests : IDisposable  (Tests)
 - 🟡 HardwareProfileTests  (Tests)
 - 🟡 HarnessE2E  (Tests)
+- 🟡 HarnessE2EFeatures  (Tests)
 - 🟡 HarnessOptimizationTests : IDisposable  (Tests)
 - 🟡 HomeController  (Tests)
 - 🟡 HttpClientAdapterTests : IDisposable  (Tests)
@@ -415,6 +424,7 @@ Packages: 2  |  Types: 468
 - 🟡 InMemoryVectorStoreTests  (Tests)
 - 🟡 InstallerVisionEmbeddingTests : IDisposable  (Tests)
 - 🟡 JsonEnvelopeFallbackTests  (Tests)
+- 🟡 LLMDecisionEnvelopeTests  (Tests)
 - 🟡 LlmProviderRegistryTests : IDisposable  (Tests)
 - 🟡 LlmServerClientReconnectTests  (Tests)
 - 🟡 LoggerTests : IDisposable  (Tests)
@@ -427,9 +437,11 @@ Packages: 2  |  Types: 468
 - 🟡 MyTests  (Tests)
 - 🟡 NativeToolCallsAdapterTests  (Tests)
 - 🟡 OrchestratorIntegrationTests : IDisposable  (Tests)
+- 🟡 OrchestratorV1419Tests : IDisposable  (Tests)
 - 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (Tests)
 - 🟡 ParallelToolExecutorTests  (Tests)
 - 🟡 PlaybookTests : IDisposable  (Tests)
+- 🟡 PlaybookTitleTests  (Tests)
 - 🟡 PostEditVerifierTests : IDisposable  (Tests)
 - 🟡 ProcessRunnerTests  (Tests)
 - 🟡 ProgramGuiCollection  (Tests)
@@ -446,6 +458,7 @@ Packages: 2  |  Types: 468
 - 🟡 SessionDiscoveryTests : IDisposable  (Tests)
 - 🟡 SessionManagementIntegrationTests : IDisposable  (Tests)
 - 🟡 SessionQueueTests  (Tests)
+- 🟡 SessionVerbosityDefaultTests : IDisposable  (Tests)
 - 🟡 StartupTimeoutDefaultsTests  (Tests)
 - 🟡 SteeringQueueTests  (Tests)
 - 🟡 StepMapperTests  (Tests)
@@ -467,12 +480,15 @@ Packages: 2  |  Types: 468
 - 🟡 TokenCounterTests  (Tests)
 - 🟡 ToolCallRequestTests  (Tests)
 - 🟡 ToolDependencyAnalyzerTests  (Tests)
+- 🟡 ToolDescriptionScopeTests  (Tests)
 - 🟡 ToolOutputProjectorTests  (Tests)
 - 🟡 ToolPipelineIntegrationTests : IDisposable  (Tests)
 - 🟡 ToolPolicySessionApprovalTests  (Tests)
 - 🟡 ToolPolicyTests  (Tests)
 - 🟡 ToolRepeatTrackerTests  (Tests)
 - 🟡 TranscriptIntegrationTests : IDisposable  (Tests)
+- 🟡 UserJourneyE2E  (Tests)
+- 🟡 UserJourneyExtendedE2E  (Tests)
 - 🟡 VectorMemorySetupWriterTests : IDisposable  (Tests)
 - 🟡 VectorMemoryStoreTests : IDisposable  (Tests)
 - 🟡 VisionStructureJsonParserTests  (Tests)

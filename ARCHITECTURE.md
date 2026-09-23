@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-09-23 PM — v14.14 tier-aware playbook memory + v14.13 tier-aware post-edit verification loop + v14.12 harness chain complete + audit + TestSupport shared test infra.
+**Updated:** 2026-09-23 late — v14.18 live-E2E fixes (thinking-only envelope → format retry) + v14.19 verbose sessions (default) + user-experience E2E suite + v14.19.1 batch-path verification gate + first-sentence playbook titles + unit-gap closure. Full series today: v14.13 post-edit verification → v14.14 playbook memory → v14.15 fuzzy diff edits → v14.16 context pinning → v14.17 sub-agent briefs → v14.17.1 tier inference tuning → v14.18/19/19.1 above. All tier-aware (ModelTier.IsLargeRuntime seam).
 Current state: model-tier-adaptive harness (`model_tier.mode` small/large/auto, tier-resolved preplanning,
 slim directives + envelope budget for large tier), grammar tool-name union (`tool_names` wire field,
 DecisionGrammar.BuildGbnf on all 3 structured paths), envelope commentary (remote native path, local grammar
@@ -13,7 +13,7 @@ post-edit build/test gate fed back into the loop, tier-gated (small: every edit,
 (MockEngine config param, public noops, ProbeTestTool, HarnessE2ESessionFactory). Test net: 65/65 unit +
 2/2 real-model e2e (live server + qwen35-4b). Dated history: git log + Addenda below.
 
-**Status:** ✅ builds 0 errors | 116/116 harness-filtered unit net (98 Harness + 18 Playbook) | 2/2 harness e2e | LDC regenerated 2026-09-23
+**Status:** ✅ builds 0 errors | 152/152 targeted unit net | 13/13 live-model E2E + 9/9 user journeys (real server + qwen35-4b) | LDC regenerated 2026-09-23
 
 ## Overview
 
@@ -691,3 +691,45 @@ delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-dri
   Interfaces/, duplicate config property/field, replaced matchers). Reverted to
   the committed (verified) impl2 design; zombie-only files removed.
 - **Tests:** TierInferenceTunerTests ×7. Filter run: 59/59, build 0 errors.
+
+## Addendum — v14.18 live-E2E fixes (2026-09-23)
+
+- **FromEnvelope (LLMDecision):** a thinking-only envelope (empty answer, no
+  tool calls) no longer surfaces the thinking text as a direct answer — returns
+  a null-answer decision so the orchestrator format-retries; thinking stays in
+  Reasoning for the post-retry best-effort fallback. Found via live qwen3.5-4b
+  E2E (the model emitted `{"thinking": "...plan...", "answer": ""}` mid-task).
+- **Orchestrator best-effort:** after retries fail, Reasoning is the last resort
+  (never surfaced on the first pass).
+- **Engine:** public read-only `ContextPinner` accessor (tests/hosts).
+- **E2E:** `Tests/E2E/HarnessE2EFeatures.cs` — playbook capture, pinned context,
+  verification gate (retry loop for 4B flakiness); 13/13 E2E green live.
+
+## Addendum — v14.19 verbose sessions + user-experience E2E (2026-09-23)
+
+- **SessionManager.CreateSession sets `SessionVerbosity.Verbose`** (Emre
+  decision): users see tool status, `[Playbook]` captures, `[Verify]` lines,
+  policy flow. Silent remains available via the TUI `/verbosity` toggle.
+  Known consequence: Dim-state diagnostics stay hidden in Silent — features
+  that matter to users must NOT be announced via WriteDim (use WriteInfo/Success).
+- **Orchestrator max-turns exit captures partial-progress playbooks** —
+  successful tool calls no longer vanish when the run hits the turn cap.
+- **TestSupport:** `UserExperienceHarness` (IOutputListener over
+  `AgentSession.Prompt`) + `SessionBuilder.RegisterBuiltInToolsAsync` wiring —
+  E2E sessions have the real product tool set. `UserJourneyE2E` +
+  `UserJourneyExtendedE2E`: transcript-based journeys (greeting→direct answer,
+  file creation, multi-turn memory, policy denial, real verify gate, tool-error
+  recovery, large tier, playbook capture+replay).
+
+## Addendum — v14.19.1 batch verification + titles (2026-09-23)
+
+- **Orchestrator batch path** now runs the post-edit verification gate for every
+  successful file-modifying call (decomposed plans previously bypassed it).
+- **PlaybookExtractor.BuildTitle:** first sentence only; a terminator inside a
+  token ("note.txt") is not a boundary — must be followed by whitespace/end.
+- **Unit-test gap closure:** OrchestratorV1419Tests (batch gate ×2, max-turns
+  capture), PlaybookTitleTests ×5, ToolDescriptionScopeTests (7 tools carry
+  Use ONLY/Do NOT clauses), SessionVerbosityDefaultTests (verbose default).
+- **Known flagged issue (v14.20 candidate):** ECodeEditor resolves relative
+  paths against the process CWD, not the session working dir — session working
+  dir is not plumbed into the tool (needs a tool-signature change).

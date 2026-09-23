@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 110  |  LOC: 13681  |  ~4487 tokens
+Types: 118  |  LOC: 14330  |  ~4979 tokens
 
 ---
 
@@ -152,6 +152,10 @@ Cross-package deps: ECAssistant.Core.Setup, Xunit
 > Harness end-to-end: drives the REAL product stack (AgentSession →
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Session, ECAssistant.Core.Transport, ECAssistant.Core.Tools, ECAssistant.TestSupport
 
+### Class: HarnessE2EFeatures
+> v14.13–v14.16 feature E2E against a REAL server + real local model
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Verification, ECAssistant.TestSupport
+
 ### Class: HarnessOptimizationTests
 > Tests for the 2026-09-21 harness optimizations (P1-P6): tool-result truncation
 Implements: IDisposable
@@ -180,6 +184,10 @@ Cross-package deps: ECAssistant.Core.Setup
 ### Class: JsonEnvelopeFallbackTests
 > v14.10.1: when the structured path falls back to text streaming, the model
 Cross-package deps: ECAssistant.Core.Engine
+
+### Class: LLMDecisionEnvelopeTests
+> v14.18: thinking-only decision envelopes (answer empty, no tool calls) must
+Cross-package deps: ECAssistant.Core.Orchestration
 
 ### Class: LlmProviderRegistryTests
 Implements: IDisposable
@@ -232,6 +240,11 @@ Cross-package deps: ECAssistant.Core.Engine, Xunit
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
 
+### Class: OrchestratorV1419Tests
+> v14.19.1 unit coverage for the gaps found in the feature audit:
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Interfaces, ECAssistant.TestSupport, Moq
+
 ### Class: ParallelToolExecutorIntegrationTests
 > Integration tests for ParallelToolExecutor — dependency analysis and parallel
 Implements: IDisposable
@@ -244,6 +257,10 @@ Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.Engine, ECAssistan
 > v14.14: tier-aware playbook memory. Pure-logic tests — JSON persistence in
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Orchestration, ECAssistant.Core.Playbooks, ECAssistant.Core.Tools, ECAssistant.TestSupport
+
+### Class: PlaybookTitleTests
+> v14.19.1: playbook titles use the goal's FIRST SENTENCE only — prompts that
+Cross-package deps: ECAssistant.Core, ECAssistant.Core.Playbooks
 
 ### Class: PostEditVerifierTests
 > v14.13: tier-aware post-edit verification loop. Pure-logic tests — the build/test
@@ -308,6 +325,11 @@ Cross-package deps: ECAssistant.Core.Session
 ### Class: SessionQueueTests
 > Tests for session prompt queue logic and run state transitions.
 Cross-package deps: ECAssistant.Core.Session
+
+### Class: SessionVerbosityDefaultTests
+> v14.19 (Emre): sessions run VERBOSE by default — users see tool status,
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Session
 
 ### Class: StartupTimeoutDefaultsTests
 > v12.8 regression: the installer must detect models already on disk so
@@ -382,6 +404,10 @@ Cross-package deps: ECAssistant.Core.Engine
 ### Class: ToolDependencyAnalyzerTests
 Cross-package deps: ECAssistant.Core.Engine
 
+### Class: ToolDescriptionScopeTests
+> v14.19.1: every user-facing tool description carries an explicit scope —
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services, ECAssistant.Core.Tools.Background, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Build, ECAssistant.Core.Tools.Git, ECAssistant.Core.Tools.Research, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Reader
+
 ### Class: ToolOutputProjectorTests
 > v14.12.2: curated tool-output projection — key lines + head/tail instead of a
 Cross-package deps: ECAssistant.Core.Engine
@@ -405,6 +431,14 @@ Cross-package deps: ECAssistant.Core.Engine, Xunit
 > Integration tests for ConversationTranscript persistence —
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Engine
+
+### Class: UserJourneyE2E
+> v14.19: USER-EXPERIENCE E2E — drives the session through AgentSession.Prompt
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Session, ECAssistant.TestSupport
+
+### Class: UserJourneyExtendedE2E
+> v14.19: extended user journeys — every remaining harness feature experienced
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.TestSupport
 
 ### Class: VectorMemorySetupWriterTests
 Implements: IDisposable
