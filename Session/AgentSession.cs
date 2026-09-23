@@ -1018,6 +1018,12 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         }
     }
 
+    /// <summary>v15: Initialize handoff support for this session. Registers the EHandoff tool.</summary>
+    public async Task InitializeHandoffAsync()
+    {
+        await _orchestrator.InitializeHandoffAsync(_workingDir);
+    }
+
     /// <summary>Set background task config for this session.</summary>
     public void SetBackgroundTasks(BackgroundTasksConfig config)
     {

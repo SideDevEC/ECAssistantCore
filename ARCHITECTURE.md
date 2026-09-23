@@ -794,3 +794,51 @@ model from the semantic render alone (file + CS1061, raw log never in context).
 **TestSupport factory.** `HarnessE2ESessionFactory` gained `prepareWorkingDir` — pins
 `AgentSettings.WorkingDirectory` to the isolated session dir BEFORE tool construction;
 previously tools resolved paths against the test runner's current directory.
+
+## Addendum — v15 ephemeral handoff (2026-09-23)
+
+**Multi-agent handoff** — the orchestrator can delegate the ENTIRE remaining
+task to an ephemeral specialist agent whose answer becomes the final answer
+(the parent loop stops). Unlike sub-agents (result fed back, parent continues),
+a handoff is a takeover: OpenAI-Agents-SDK pattern, one hop, no recursion.
+
+**All-ephemeral design (Emre decision):** no config section, no specialist
+registry, NO system prompt injection — zero per-turn token cost. The model
+invents the specialist at call time (persona, tool subset, context) via the
+`EHandoff` tool. Specialists exist only for the duration of the handoff, then
+are disposed.
+
+**New files:**
+- `Engine/Handoff/HandoffRequest.cs` — sealed record: Name, SystemPrompt,
+  AllowedTools, Reason, ContextSummary, ModelOverride?, MaxTurns, TimeoutSeconds
+- `Engine/Handoff/HandoffExecutor.cs` — creates a child EAgentEngine (same
+  pattern as SubAgentManager.RunSingleAsync: HttpStreamingEngine +
+  RemoteKvCacheController, own session_id), injects the request's SystemPrompt
+  via `EAgentEngine.SystemPromptText`, registers a FILTERED tool subset
+  (EHandoff itself never registered on specialists — no recursive handoffs),
+  runs a child AgentOrchestrator, returns its OrchestratorResult directly.
+  Timeout via CancellationTokenSource(timeout) linked with parent token (ESC
+  propagation). No retry, no file snapshots — specialist either answers or fails.
+- `Tools/Handoff/EHandoffTool.cs` — the model-facing tool. Callback-shaped
+  (Func<HandoffRequest, ct, Task<OrchestratorResult>>) — the orchestrator
+  intercepts `EHandoff` calls BEFORE normal tool execution, so the callback is
+  a safety net only.
+
+**Orchestrator wiring:**
+- `InitializeHandoff(dir)` / `InitializeHandoffAsync(dir)` — creates executor,
+  registers EHandoff, whitelists it, ToolPolicy `approvalRequired: false`
+- Single-call path intercepts `decision.ToolName == "EHandoff"` BEFORE the
+  tool policy check → `ExecuteHandoffAsync(args, goal)` → specialist result
+  returned as the parent's OrchestratorResult (parent loop ends)
+- Context summary: model-provided `context` arg wins; else synthesized from
+  original goal + last 5 completed steps
+- Disposed with the orchestrator (DisposeAsync)
+
+**SessionBuilder:** handoff is ALWAYS initialized (zero-cost: one tool block
+in the system prompt, no list, no config). `AgentSession.InitializeHandoffAsync()`
+exposes it; `SessionBuilder.BuildAsync` calls it unconditionally.
+
+**Model story:** specialist uses the SAME endpoint — same local server (GGUF,
+MultiModelHost routes by model id; model_override picks a different loaded
+model) or same remote provider. No installer changes; same-model +
+different-prompt specialists cost nothing extra.

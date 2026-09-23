@@ -194,6 +194,9 @@ public class SessionBuilder : ISessionBuilder
         {
             await session.InitializeSubAgentsAsync();
         }
+
+        // ── Handoff (always enabled — zero system prompt cost, one tool) ──
+        await session.InitializeHandoffAsync();
     }
 
     /// <summary>

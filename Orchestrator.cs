@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using ECAssistant.Core.Engine;
 using ECAssistant.Core.Tools;
+using ECAssistant.Core.Tools.Handoff;
 using ECAssistant.Core.Services;
 using ECAssistant.Core.Session;
 using ECAssistant.Core.Interfaces;
@@ -58,6 +59,10 @@ public sealed class AgentOrchestrator : IAsyncDisposable
      // v10.18: Sub-agent manager (lazy-init, created when first sub-agent tool is registered)
     private SubAgentManager? _subAgentManager;
     public SubAgentManager? SubAgentManager => _subAgentManager;
+
+      // v15: Handoff executor — created lazily when EHandoff tool is registered
+    private HandoffExecutor? _handoffExecutor;
+    private string? _handoffWorkingDir;
 
       // v14.13: tier-aware post-edit verification loop
     private readonly IPostEditVerifier? _postEditVerifier;
@@ -132,6 +137,39 @@ public sealed class AgentOrchestrator : IAsyncDisposable
           _toolPolicy.SetPermission("ESubAgent", approvalRequired: false, "Sub-agent spawning");
          _out?.WriteInfo("Sub-agent system initialized and ESubAgent tool registered.");
       }
+
+      /// <summary>v15: Initialize handoff support. Creates HandoffExecutor and registers EHandoff tool.</summary>
+    public void InitializeHandoff(string defaultWorkingDir)
+     {
+         _handoffWorkingDir = defaultWorkingDir;
+         _handoffExecutor = new HandoffExecutor(
+             _engine, // ISubAgentEngineHost
+             _config ?? new Config.EAgentConfig(),
+             InferenceParamsFactory.Default.Create(_config ?? new Config.EAgentConfig()),
+             defaultWorkingDir,
+             _logger,
+             _out);
+
+         // The tool's callback delegates to the executor — the orchestrator
+         // intercepts EHandoff calls before normal tool execution, so this
+         // callback is only reached if interception is bypassed (safety net).
+         _engine.RegisterTool(new Tools.Handoff.EHandoffTool(async (req, ct) =>
+         {
+             if (_handoffExecutor == null)
+                 return new OrchestratorResult { FinalOutput = "[Handoff] Executor not initialized.", Status = OrchestratorStatus.Failed };
+             return await _handoffExecutor.RunAsync(req, ct);
+         }));
+         _toolWhitelist.Add("EHandoff");
+         _toolPolicy.SetPermission("EHandoff", approvalRequired: false, "Agent handoff");
+     }
+
+      /// <summary>v15: Initialize handoff AND rebuild KV cache to include EHandoff in system prompt.</summary>
+     public async Task InitializeHandoffAsync(string defaultWorkingDir)
+      {
+         InitializeHandoff(defaultWorkingDir);
+         _out?.WriteWarning("Rebuilding KV cache to include EHandoff...");
+         await _engine.ResetAndRebuildCacheAsync();
+     }
 
            /// <summary>v10.18: Initialize sub-agents AND rebuild KV cache to include ESubAgent in system prompt.</summary>
      public async Task InitializeSubAgentsAsync(string defaultWorkingDir)
@@ -528,6 +566,17 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                 _logger?.Info("Orchestrator", $"Tool call: {decision.ToolName}");
 
                 var argsDict = decision.Args;
+
+                // v15: Handoff interception — EHandoff is a special tool that
+                // delegates to a specialist agent. The specialist's answer
+                // becomes the final answer; the parent loop stops.
+                if (string.Equals(decision.ToolName, "EHandoff", StringComparison.OrdinalIgnoreCase))
+                {
+                    _out?.WriteInfo("[Handoff] Model requested specialist handoff.");
+                    var handoffResult = await ExecuteHandoffAsync(argsDict, goal);
+                    await TryCapturePlaybookAsync(goal);
+                    return handoffResult;
+                }
 
                  // ── Tool Policy Check ──
                 var policyDecision = _toolPolicy.Check(decision.ToolName!, argsDict);
@@ -1183,9 +1232,88 @@ public sealed class AgentOrchestrator : IAsyncDisposable
              _out?.WriteInfo($"Post-hoc matching: {matched} additional sub-task(s) completed by effect overlap.");
       }
 
+      // ─── v15: Handoff ──────────────────────
+
+    /// <summary>
+    /// Build a HandoffRequest from the model's tool-call arguments and run
+    /// the specialist executor. The specialist's result becomes the parent
+    /// orchestrator's final result — the parent loop stops.
+    /// </summary>
+    private async Task<OrchestratorResult> ExecuteHandoffAsync(Dictionary<string, string?> args, string originalGoal)
+    {
+        if (_handoffExecutor == null)
+        {
+            _out?.WriteError("[Handoff] Executor not initialized — cannot hand off.");
+            return new OrchestratorResult
+            {
+                FinalOutput = "[Handoff] Executor not initialized.",
+                Status = OrchestratorStatus.Failed
+            };
+        }
+
+        var prompt = args.GetValueOrDefault("prompt")?.Trim();
+        if (string.IsNullOrEmpty(prompt))
+        {
+            _out?.WriteError("[Handoff] Model called EHandoff without a prompt.");
+            return new OrchestratorResult
+            {
+                FinalOutput = "[Handoff] No specialist prompt provided.",
+                Status = OrchestratorStatus.Failed
+            };
+        }
+
+        // Build context summary: if the model provided one, use it; otherwise
+        // synthesize from the original goal + completed steps.
+        var contextSummary = args.GetValueOrDefault("context") ?? "";
+        if (string.IsNullOrEmpty(contextSummary) && _completedSteps.Count > 0)
+        {
+            contextSummary = $"Original task: {originalGoal}\nSteps completed so far:\n" +
+                             string.Join("\n", _completedSteps.TakeLast(5));
+        }
+        else if (string.IsNullOrEmpty(contextSummary))
+        {
+            contextSummary = $"Original task: {originalGoal}";
+        }
+
+        var request = new HandoffRequest
+        {
+            SystemPrompt = prompt,
+            AllowedTools = args.GetValueOrDefault("tools") ?? "",
+            Reason = args.GetValueOrDefault("reason") ?? "",
+            ContextSummary = contextSummary,
+            Name = args.GetValueOrDefault("name") ?? "specialist",
+            ModelOverride = args.GetValueOrDefault("model_override"),
+        };
+
+        if (int.TryParse(args.GetValueOrDefault("max_turns"), out var mt))
+            request = request with { MaxTurns = mt };
+        if (int.TryParse(args.GetValueOrDefault("timeout"), out var ts))
+            request = request with { TimeoutSeconds = ts };
+
+        try
+        {
+            _logger?.Info("Handoff", $"Handing off to specialist '{request.Name}' (prompt {request.SystemPrompt.Length} chars, tools: {request.AllowedTools})");
+            var result = await _handoffExecutor.RunAsync(request, _engine.ExecutionToken);
+
+            // The specialist's result IS the final answer.
+            _out?.WriteLine($"[Handoff] Specialist returned: {result.Status}");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger?.Error("Handoff", $"Specialist failed: {ex.Message}");
+            return new OrchestratorResult
+            {
+                FinalOutput = $"[Handoff] Specialist failed: {ex.Message}",
+                Status = OrchestratorStatus.Failed
+            };
+        }
+    }
+
     public async ValueTask DisposeAsync()
       {
         try { _subAgentManager?.Dispose(); } catch (Exception ex) { _logger?.Debug("Orchestrator", $"Non-critical error ignored: {ex.Message}"); }
+        try { if (_handoffExecutor != null) await _handoffExecutor.DisposeAsync(); } catch (Exception ex) { _logger?.Debug("Orchestrator", $"Non-critical error ignored: {ex.Message}"); }
         await Task.CompletedTask;
       }
 }
