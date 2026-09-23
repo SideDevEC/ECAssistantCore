@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 359  |  LOC: 29825  |  ~16861 tokens
+Types: 358  |  LOC: 29804  |  ~16836 tokens
 
 ---
 
@@ -1069,9 +1069,6 @@ Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.Engine, ECAssistan
 
 ### Class: PathExpander
 > String utility — truncation and text helpers.
-
-### Class: PinnedFact
-> v14.16: One pinned fact — a piece of critical conversation state held outside
 
 ### Class: PlannedToolCall
 > A single planned tool call — concrete mapping from a sub-task to a tool + args.

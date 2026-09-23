@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T08:56:14.784753+00:00
-Packages: 2  |  Types: 469
+Generated: 2026-09-23T09:00:28.138915+00:00
+Packages: 2  |  Types: 468
 
 ---
 
-## ECAssistantCore (359 types, ~29825 LOC)
+## ECAssistantCore (358 types, ~29804 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -224,7 +224,6 @@ Packages: 2  |  Types: 469
 - 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 ParallelToolExecutorTests  (ECAssistantCore)
 - 🟡 PathExpander  (ECAssistantCore)
-- 🟡 PinnedFact  (ECAssistantCore)
 - 🟣 PinnedFact  (ECAssistantCore)  deps: [string, string]
 - 🟡 PlannedToolCall  (ECAssistantCore)
 - 🟡 Playbook  (ECAssistantCore)
