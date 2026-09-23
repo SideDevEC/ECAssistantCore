@@ -261,10 +261,14 @@ public class EShellAgent : EToolBase
             if (isLargeTier)
             {
                 return "Rules:\n" +
+                       "- Your commands run in a PERSISTENT shell session: your working directory (cd) and exported environment variables survive between calls. Do NOT re-cd or re-export on every call — run pwd only if unsure where you are.\n" +
+                       "- Commands execute inside a Seatbelt sandbox: file WRITES are allowed only inside the agent workspace and /tmp. Writes elsewhere (e.g. your home directory) fail with 'Operation not permitted' — that is the sandbox working as intended, not a bug. Keep all writes inside the workspace.\n" +
+                       "- Network access is denied in the sandbox. If a command fails with connection or permission errors, report it — do not retry.\n" +
                        "- Combine related shell steps with && or ; when safe — fewer, larger calls beat many round-trips.\n" +
                        "- Prefer targeted output (head/tail/grep) over dumping unbounded streams.\n";
             }
             return "Rules:\n" +
+                   "- Your commands run in a PERSISTENT shell session: your working directory (cd) and exported environment variables survive between calls. Do NOT re-cd or re-export on every call.\n" +
                    "- ONE command per call. NEVER chain with && or ; — separate calls only.\n" +
                    "- NEVER use interactive commands (vim, top, sudo). They hang the agent.\n" +
                    "- NEVER redirect output to files the user did not ask for.\n" +
