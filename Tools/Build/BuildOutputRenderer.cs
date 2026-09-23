@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace ECAssistant.Core.Tools.Build;
 
@@ -12,7 +13,7 @@ namespace ECAssistant.Core.Tools.Build;
 /// slip past keyword heuristics.
 /// Stateless utility — no mutable state.
 /// </summary>
-public static class BuildOutputRenderer
+public static partial class BuildOutputRenderer
 {
     /// <summary>Maximum error lines kept in the model-facing render.</summary>
     public const int MaxErrors = 6;
@@ -61,7 +62,12 @@ public static class BuildOutputRenderer
             sb.Append("ERRORS:");
             foreach (var e in errors.Take(MaxErrors))
             {
-                sb.Append($"\n  {ShortenPath(e.File)}({e.Line}): {e.Code}: {e.Message}");
+                // MSBuild appends the project context as a bracketed absolute path
+                // ("... assembly reference?) [/abs/path.csproj]") — strip it and
+                // shorten any absolute path inside the message itself.
+                var msg = BracketedPathSuffix().Replace(e.Message, "").TrimEnd();
+                msg = AbsolutePathToken().Replace(msg, m => ShortenPath(m.Value));
+                sb.Append($"\n  {ShortenPath(e.File)}({e.Line}): {e.Code}: {msg}");
             }
         }
 
@@ -76,6 +82,12 @@ public static class BuildOutputRenderer
 
         return sb.ToString();
     }
+
+    [GeneratedRegex(@"\s+\[/[^\]]+\]$")]
+    private static partial Regex BracketedPathSuffix();
+
+    [GeneratedRegex(@"(?<=^|[\s\(])/[^\s\(\)\[\]]{2,}")]
+    private static partial Regex AbsolutePathToken();
 
     private static string ShortenPath(string file)
     {
