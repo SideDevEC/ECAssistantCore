@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 133  |  LOC: 15683  |  ~5965 tokens
+Types: 134  |  LOC: 15815  |  ~6013 tokens
 
 ---
 
@@ -387,6 +387,10 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Session
 ### Class: ShellTeardownSweepTests
 > v15: persistent shell session — working directory and exported env survive
 Cross-package deps: ECAssistant.Core.Services.Shell
+
+### Class: ShellTierPromptOSTests
+> v15: EShellAgent prompt matrix — 3 OSes × 2 tiers. The tool's rules are
+Cross-package deps: ECAssistant.Core.Services.Shell, ECAssistant.Core.Tools.Shell
 
 ### Class: StartupTimeoutDefaultsTests
 > v12.8 regression: the installer must detect models already on disk so

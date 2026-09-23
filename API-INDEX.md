@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T18:52:17.031205+00:00
-Packages: 2  |  Types: 528
+Generated: 2026-09-23T18:54:52.587372+00:00
+Packages: 2  |  Types: 530
 
 ---
 
-## ECAssistantCore (395 types, ~32989 LOC)
+## ECAssistantCore (396 types, ~33121 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -310,6 +310,7 @@ Packages: 2  |  Types: 528
 - 🟣 ShellSandboxOptions  (ECAssistantCore)  deps: [bool, string, bool AllowNetwork =]
 - 🟡 ShellSessionFactory : IShellSessionFactory  (ECAssistantCore)  deps: [ILogger? logger =]
 - 🟡 ShellTeardownSweepTests  (ECAssistantCore)
+- 🟡 ShellTierPromptOSTests  (ECAssistantCore)
 - 🟡 SingleToolResult  (ECAssistantCore)
 - 🟡 SipsPdfPageRenderer : IPdfPageRenderer  (ECAssistantCore)  deps: [IProcessRunner]
 - 🟡 SseParser  (ECAssistantCore)
@@ -403,7 +404,7 @@ Packages: 2  |  Types: 528
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (133 types, ~15683 LOC)
+## Tests (134 types, ~15815 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 AllToolsTierPromptsTests  (Tests)
@@ -501,6 +502,7 @@ Packages: 2  |  Types: 528
 - 🟡 SessionQueueTests  (Tests)
 - 🟡 SessionVerbosityDefaultTests : IDisposable  (Tests)
 - 🟡 ShellTeardownSweepTests  (Tests)
+- 🟡 ShellTierPromptOSTests  (Tests)
 - 🟡 StartupTimeoutDefaultsTests  (Tests)
 - 🟡 SteeringQueueTests  (Tests)
 - 🟡 StepMapperTests  (Tests)

@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 395  |  LOC: 32989  |  ~19404 tokens
+Types: 396  |  LOC: 33121  |  ~19452 tokens
 
 ---
 
@@ -1453,6 +1453,10 @@ Cross-package deps: ECAssistant.Core.Interfaces
 ### Class: ShellTeardownSweepTests
 > v15: persistent shell session — working directory and exported env survive
 Cross-package deps: ECAssistant.Core.Services.Shell
+
+### Class: ShellTierPromptOSTests
+> v15: EShellAgent prompt matrix — 3 OSes × 2 tiers. The tool's rules are
+Cross-package deps: ECAssistant.Core.Services.Shell, ECAssistant.Core.Tools.Shell
 
 ### Class: SingleToolResult
 > Result of a single tool execution within a batch.
