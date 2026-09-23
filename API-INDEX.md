@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T13:20:41.712105+00:00
-Packages: 2  |  Types: 502
+Generated: 2026-09-23T13:27:31.073421+00:00
+Packages: 2  |  Types: 506
 
 ---
 
-## ECAssistantCore (375 types, ~31790 LOC)
+## ECAssistantCore (379 types, ~31826 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -15,6 +15,7 @@ Packages: 2  |  Types: 502
 - 🔵 IEngine  (ECAssistantCore)
 - 🔵 IEngineToolContext  (ECAssistantCore)
 - 🔵 IFileSystem  (ECAssistantCore)
+- 🔵 IFirstRunOrchestrator  (ECAssistantCore)
 - 🔵 IHttpClient  (ECAssistantCore)
 - 🔵 IInferenceEngine  (ECAssistantCore)
 - 🔵 IKvCacheController  (ECAssistantCore)
@@ -34,14 +35,17 @@ Packages: 2  |  Types: 502
 - 🔵 IProcessRunner  (ECAssistantCore)
 - 🔵 IRemoteModelProbe  (ECAssistantCore)
 - 🔵 ISecureKeyStore  (ECAssistantCore)
+- 🔵 IServerInstallCoordinator  (ECAssistantCore)
 - 🔵 ISessionBuilder  (ECAssistantCore)
 - 🔵 ISessionContext  (ECAssistantCore)
 - 🔵 ISessionOutput  (ECAssistantCore)
 - 🔵 ISetupUi  (ECAssistantCore)
+- 🔵 ISetupWizard  (ECAssistantCore)
 - 🔵 IStepMapper  (ECAssistantCore)
 - 🔵 ISubAgentEngineHost  (ECAssistantCore)
 - 🔵 ITaskPlanner  (ECAssistantCore)
 - 🔵 ITerminal  (ECAssistantCore)
+- 🔵 ITextMatchPipeline  (ECAssistantCore)
 - 🔵 ITextMatchStrategy  (ECAssistantCore)
 - 🔵 IToolPolicyEvaluator  (ECAssistantCore)
 - 🔵 IVectorEmbedder  (ECAssistantCore)
@@ -155,7 +159,7 @@ Packages: 2  |  Types: 502
 - 🟡 FileWatcherService : IDisposable  (ECAssistantCore)  deps: [string, string filter =, ILogger? logger =]
 - 🟡 FirstRunDetector  (ECAssistantCore)  deps: [string, string, string, string, string, string? appsettingsPath =]
 - 🟡 FirstRunDetectorTests : IDisposable  (ECAssistantCore)
-- 🟡 FirstRunOrchestrator  (ECAssistantCore)  deps: [string, ISetupUi]
+- 🟡 FirstRunOrchestrator : IFirstRunOrchestrator  (ECAssistantCore)  deps: [string, ISetupUi, string, ISetupUi, Func, Func]
 - 🟡 FirstRunStatus  (ECAssistantCore)
 - 🟣 GenerationParams  (ECAssistantCore)  deps: [int, float, float, int, float]
 - 🟡 HandoffE2E  (ECAssistantCore)
@@ -280,7 +284,7 @@ Packages: 2  |  Types: 502
 - 🟡 ServerConfigWriter  (ECAssistantCore)
 - 🟡 ServerConfigWriterTests : IDisposable  (ECAssistantCore)
 - 🟡 ServerConnection  (ECAssistantCore)
-- 🟡 ServerInstallCoordinator  (ECAssistantCore)  deps: [string, ISetupUi]
+- 🟡 ServerInstallCoordinator : IServerInstallCoordinator  (ECAssistantCore)  deps: [string, ISetupUi]
 - 🟡 ServerLauncher  (ECAssistantCore)  deps: [LlmProviderConfig]
 - 🟡 ServerLauncherResolveTests : IDisposable  (ECAssistantCore)
 - 🟡 SessionBuilder : ISessionBuilder  (ECAssistantCore)  deps: [EAgentConfig, string, string, ILogger? logger =, BackgroundProcessManager? bgManager =]
@@ -290,7 +294,7 @@ Packages: 2  |  Types: 502
 - 🟡 SessionManager : IAsyncDisposable  (ECAssistantCore)  deps: [EAgentConfig, string, string, ILogger? logger =, Func, Func, LlmServerClient? serverClient =, SecureKeyStore? keyStore =, ILlmProviderRegistry? providerRegistry =, IModelParamValidator? modelParamValidator =]
 - 🟡 SessionQueueTests  (ECAssistantCore)
 - 🟡 SessionVerbosityDefaultTests : IDisposable  (ECAssistantCore)
-- 🟡 SetupWizard  (ECAssistantCore)  deps: [ISetupUi]
+- 🟡 SetupWizard : ISetupWizard  (ECAssistantCore)  deps: [ISetupUi]
 - 🟡 SingleToolResult  (ECAssistantCore)
 - 🟡 SipsPdfPageRenderer : IPdfPageRenderer  (ECAssistantCore)  deps: [IProcessRunner]
 - 🟡 SseParser  (ECAssistantCore)
@@ -325,7 +329,7 @@ Packages: 2  |  Types: 502
 - 🟡 TerminalAdapter : ITerminal  (ECAssistantCore)
 - 🟡 Test  (ECAssistantCore)
 - 🟡 Test  (ECAssistantCore)
-- 🟡 TextMatchPipeline  (ECAssistantCore)  deps: [IReadOnlyList]
+- 🟡 TextMatchPipeline : ITextMatchPipeline  (ECAssistantCore)  deps: [IReadOnlyList]
 - 🟡 TextMatchResult  (ECAssistantCore)
 - 🟡 TextMatchStrategyTests  (ECAssistantCore)
 - 🟡 TfidfEmbedder : IVectorEmbedder  (ECAssistantCore)

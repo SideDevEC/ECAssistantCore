@@ -16,7 +16,7 @@ public class ECodeEditorTool : EToolBase
     private readonly JsonElement? _toolConfig;
     private readonly string _workingDir;
     private readonly bool _largeTierRuntime;
-    private readonly TextMatchPipeline _matchPipeline = new();
+    private readonly ITextMatchPipeline _matchPipeline = new TextMatchPipeline();
 
     public override string Name => "ECodeEditor";
 

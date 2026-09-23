@@ -842,3 +842,22 @@ exposes it; `SessionBuilder.BuildAsync` calls it unconditionally.
 MultiModelHost routes by model id; model_override picks a different loaded
 model) or same remote provider. No installer changes; same-model +
 different-prompt specialists cost nothing extra.
+
+## Addendum — interface-first setup + match seams (2026-09-23 evening)
+
+- **New interfaces (4):** `Setup/IFirstRunOrchestrator.cs`,
+  `Setup/IServerInstallCoordinator.cs`, `Setup/ISetupWizard.cs`,
+  `Tools/ECode/ITextMatchPipeline.cs` — placed beside their sibling seams
+  (ISetupUi, IRemoteModelProbe) in their domain folders. Concrete classes
+  unchanged in behavior; consumers now program to the interfaces.
+- **Wiring:** `FirstRunOrchestrator` implements IFirstRunOrchestrator and gains
+  an optional test constructor (inject IServerInstallCoordinator / ISetupWizard
+  factories — defaults construct production components). `WizardContext.
+  ServerInstaller` is now `IServerInstallCoordinator?`. `ECodeEditorTool`'s
+  match pipeline field is interface-typed. Static pure utilities
+  (IsLocalModelUsable, IsRemoteProviderConfigured, ParsePicks,
+  RequiredServerVersion const) remain on the concrete classes — stateless
+  functions, no interface needed per the static-exception rule.
+- **Consumers:** ConsoleApplication + AppController (TUI) still construct
+  FirstRunOrchestrator directly (hosts own composition — no change needed).
+- **LDC enforcement:** fully silent — 0 interface-first warnings, PASSED.

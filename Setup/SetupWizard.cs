@@ -19,7 +19,7 @@ public sealed class WizardContext
     /// <summary>Interactive LLM-server installer (version checks, foreign-install prompts).
     /// Called by the wizard exactly when a local path is chosen (local chat model OR local
     /// embeddings) — pure remote users never trigger it and get zero LLM footprint.</summary>
-    public ServerInstallCoordinator? ServerInstaller { get; init; }
+    public IServerInstallCoordinator? ServerInstaller { get; init; }
 }
 
 /// <summary>
@@ -29,7 +29,7 @@ public sealed class WizardContext
 /// 2. Memory   — embeddings enabled? If yes: remote or local, configured and verified.
 /// The host then starts the LLM, connects and enters a session as usual.
 /// </summary>
-public sealed class SetupWizard
+public sealed class SetupWizard : ISetupWizard
 {
     private readonly ISetupUi _ui;
 

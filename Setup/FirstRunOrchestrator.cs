@@ -15,7 +15,7 @@ namespace ECAssistant.Core.Setup;
 /// model entries in llm-server.json, server binary presence. Crash-safe and
 /// resume-friendly by construction.
 /// </summary>
-public sealed class FirstRunOrchestrator
+public sealed class FirstRunOrchestrator : IFirstRunOrchestrator
 {
     private readonly string _userConfigDir;
     private readonly string _llmRoot;
@@ -23,6 +23,8 @@ public sealed class FirstRunOrchestrator
     private readonly string _llmServerConfigPath;
     private readonly string _llmServerBinaryPath;
     private readonly ISetupUi _ui;
+    private readonly Func<IServerInstallCoordinator> _serverInstallCoordinatorFactory;
+    private readonly Func<ISetupWizard> _wizardFactory;
 
     public FirstRunOrchestrator(string userConfigDir, ISetupUi ui)
     {
@@ -32,6 +34,22 @@ public sealed class FirstRunOrchestrator
         _llmModelsDir = Path.Combine(_llmRoot, "models");
         _llmServerConfigPath = Path.Combine(_llmRoot, "llm-server.json");
         _llmServerBinaryPath = Path.Combine(_llmRoot, "server", "ECAssistant.LLM.dll");
+        // Default composition: concrete setup components. Injectable for test doubles.
+        _serverInstallCoordinatorFactory = () => new ServerInstallCoordinator(_llmRoot, _ui);
+        _wizardFactory = () => new SetupWizard(_ui);
+    }
+
+    /// <summary>
+    /// Test/advanced-host constructor: supply factories for the server-install
+    /// coordinator and wizard. Defaults construct the production components.
+    /// </summary>
+    public FirstRunOrchestrator(string userConfigDir, ISetupUi ui,
+        Func<IServerInstallCoordinator>? serverInstallCoordinatorFactory,
+        Func<ISetupWizard>? wizardFactory)
+        : this(userConfigDir, ui)
+    {
+        _serverInstallCoordinatorFactory = serverInstallCoordinatorFactory ?? _serverInstallCoordinatorFactory;
+        _wizardFactory = wizardFactory ?? _wizardFactory;
     }
 
     /// <summary>Paths into the shared LLM root for hosts that need them.</summary>
@@ -134,8 +152,8 @@ public sealed class FirstRunOrchestrator
             _llmServerConfigPath,
             Path.Combine(_userConfigDir, "appsettings.json"));
 
-        var coordinator = new ServerInstallCoordinator(_llmRoot, _ui);
-        var wizard = new SetupWizard(_ui);
+        IServerInstallCoordinator coordinator = _serverInstallCoordinatorFactory();
+        ISetupWizard wizard = _wizardFactory();
         await wizard.RunAsync(new WizardContext
         {
             AppsettingsPath = appsettingsPath,

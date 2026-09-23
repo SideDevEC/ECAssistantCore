@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-23T13:20:41.712788+00:00
-Edges: 92  |  Packages: 2
+Generated: 2026-09-23T13:27:31.074095+00:00
+Edges: 97  |  Packages: 2
 
 ---
 
@@ -54,6 +54,8 @@ Edges: 92  |  Packages: 2
 - EcaServiceBundle ──uses──► ISessionBuilder (ECAssistantCore)
 - ExactMatchStrategy ──implements──► ITextMatchStrategy (ECAssistantCore)
 - FileSystemAdapter ──implements──► IFileSystem (ECAssistantCore)
+- FirstRunOrchestrator ──implements──► IFirstRunOrchestrator (ECAssistantCore)
+- FirstRunOrchestrator ──uses──► ISetupUi (ECAssistantCore)
 - FirstRunOrchestrator ──uses──► ISetupUi (ECAssistantCore)
 - HandoffExecutor ──uses──► ILogger (ECAssistantCore)
 - HandoffExecutor ──uses──► ISubAgentEngineHost (ECAssistantCore)
@@ -85,8 +87,10 @@ Edges: 92  |  Packages: 2
 - RemoteModelLoader ──implements──► IModelLoader (ECAssistantCore)
 - RemoteModelProbe ──implements──► IRemoteModelProbe (ECAssistantCore)
 - SecureKeyStore ──implements──► ISecureKeyStore (ECAssistantCore)
+- ServerInstallCoordinator ──implements──► IServerInstallCoordinator (ECAssistantCore)
 - ServerInstallCoordinator ──uses──► ISetupUi (ECAssistantCore)
 - SessionBuilder ──implements──► ISessionBuilder (ECAssistantCore)
+- SetupWizard ──implements──► ISetupWizard (ECAssistantCore)
 - SetupWizard ──uses──► ISetupUi (ECAssistantCore)
 - SipsPdfPageRenderer ──implements──► IPdfPageRenderer (ECAssistantCore)
 - SipsPdfPageRenderer ──uses──► IProcessRunner (ECAssistantCore)
@@ -95,6 +99,7 @@ Edges: 92  |  Packages: 2
 - SubAgentManager ──uses──► ISubAgentEngineHost (ECAssistantCore)
 - TaskPlanner ──implements──► ITaskPlanner (ECAssistantCore)
 - TerminalAdapter ──implements──► ITerminal (ECAssistantCore)
+- TextMatchPipeline ──implements──► ITextMatchPipeline (ECAssistantCore)
 - TfidfEmbedder ──implements──► IVectorEmbedder (ECAssistantCore)
 - WhitespaceTolerantMatchStrategy ──implements──► LineMatchStrategyBase (ECAssistantCore)
 

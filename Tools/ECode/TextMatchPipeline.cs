@@ -6,7 +6,7 @@ namespace ECAssistant.Core.Tools.Code;
 /// Ambiguity is resolved conservatively: the FIRST ambiguous result is returned
 /// immediately (never guessed through), so callers produce a structured error.
 /// </summary>
-public sealed class TextMatchPipeline
+public sealed class TextMatchPipeline : ITextMatchPipeline
 {
     public const string DefaultNotFoundStrategy = "pipeline";
 

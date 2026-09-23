@@ -24,7 +24,7 @@ public enum ServerInstallState
 /// Runs exclusively at wizard time (first-run, /reinstall, or local-provider start) —
 /// never during chat.
 /// </summary>
-public sealed class ServerInstallCoordinator
+public sealed class ServerInstallCoordinator : IServerInstallCoordinator
 {
     /// <summary>ECAssistant.LLM.Server version the application was built against.
     /// Keep in sync with the release pipeline (llm-server-v* tag).</summary>

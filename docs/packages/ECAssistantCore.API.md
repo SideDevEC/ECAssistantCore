@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 375  |  LOC: 31790  |  ~18183 tokens
+Types: 379  |  LOC: 31826  |  ~18459 tokens
 
 ---
 
@@ -67,6 +67,15 @@ Methods:
   - void WriteFile(string path, string content)
   - bool DirectoryExists(string path)
   - void CreateDirectory(string path)
+
+### Interface: IFirstRunOrchestrator
+> Unified first-run / reinstall orchestration seam, shared by ALL hosts
+Properties:
+  - string LlmRoot { get; set; }
+  - string ServerConfigPath { get; set; }
+  - string ServerBinaryPath { get; set; }
+Methods:
+  - Task RunIfNeededAsync()
 
 ### Interface: IHttpClient
 > HTTP client abstraction.
@@ -235,6 +244,12 @@ Methods:
   - string GetKey(string fileName)
   - void SetKey(string fileName, string plaintext)
 
+### Interface: IServerInstallCoordinator
+> Interactive LLM-server install seam. Decides WHEN the server runtime must be
+Methods:
+  - Task<bool> EnsureServerAsync(CancellationToken cancellationToken = default)
+  - ServerInstallState Inspect()
+
 ### Interface: ISessionBuilder
 > Interface for building and initializing AgentSessions with standard tools.
 Properties:
@@ -291,6 +306,11 @@ Methods:
   - string? ReadLine()
   - void WriteLineGreen(string text)
 
+### Interface: ISetupWizard
+> Staged first-run installation wizard seam. Each stage only shows what it needs:
+Methods:
+  - Task RunAsync(WizardContext ctx)
+
 ### Interface: IStepMapper
 > Interface for mapping sub-tasks to concrete tool calls.
 Methods:
@@ -325,6 +345,11 @@ Methods:
   - void Write(string text)
   - string ReadLine()
   - void Clear()
+
+### Interface: ITextMatchPipeline
+> Match pipeline seam: runs match strategies in order (exact →
+Methods:
+  - TextMatchResult Find(string content, string searchText)
 
 ### Interface: ITextMatchStrategy
 > A single text-matching strategy for patch search/replace. Implementations
@@ -800,8 +825,9 @@ Cross-package deps: ECAssistant.Core.Setup
 
 ### Class: FirstRunOrchestrator
 > Unified first-run / reinstall orchestration, shared by ALL hosts (Console, TUI):
+Implements: IFirstRunOrchestrator
 Constructor:
-  - FirstRunOrchestrator(string userConfigDir, ISetupUi ui)
+  - FirstRunOrchestrator(string userConfigDir, ISetupUi ui, string userConfigDir, ISetupUi ui, Func<IServerInstallCoordinator>? serverInstallCoordinatorFactory, Func<ISetupWizard>? wizardFactory)
 Cross-package deps: ECAssistant.Core, ECAssistant.Core.Setup
 
 ### Class: FirstRunStatus
@@ -1298,6 +1324,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services.Http, Xun
 
 ### Class: ServerInstallCoordinator
 > Inspection result for an existing server directory.
+Implements: IServerInstallCoordinator
 Constructor:
   - ServerInstallCoordinator(string llmRoot, ISetupUi ui)
 
@@ -1349,6 +1376,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Session
 
 ### Class: SetupWizard
 > Paths and services the wizard needs; assembled by the host.
+Implements: ISetupWizard
 Constructor:
   - SetupWizard(ISetupUi ui)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup
@@ -1485,6 +1513,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 
 ### Class: TextMatchPipeline
 > Runs match strategies in order (exact → whitespace-tolerant → line-anchored)
+Implements: ITextMatchPipeline
 Constructor:
   - TextMatchPipeline(IReadOnlyList<ITextMatchStrategy> strategies)
 
