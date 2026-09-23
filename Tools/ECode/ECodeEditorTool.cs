@@ -56,7 +56,7 @@ public class ECodeEditorTool : EToolBase
         _toolConfig = tc.ValueKind == JsonValueKind.Undefined ? null : tc;
         IsEnabled = ReadCfg(_toolConfig, "enabled", true);
         // v14.15: tier resolved like Engine/Orchestrator do (only coupling with tiers).
-        _largeTierRuntime = config?.ModelTier?.IsLargeRuntime(config.LlmProvider?.ModelId) ?? false;
+        _largeTierRuntime = config?.ModelTier?.IsLargeRuntime(config.LlmProvider?.ModelId, config.LlmProvider?.IsRemote ?? false) ?? false;
         _workingDir = config.AgentSettings.WorkingDirectory;
     }
 

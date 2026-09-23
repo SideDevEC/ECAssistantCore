@@ -7,7 +7,7 @@ namespace ECAssistant.Core.Config;
 /// - Parameter markers (e.g. "4b", "7.5b", "14b") ≤ 14 → small
 /// - Parameter markers > 14 → large (size wins over "instruct" markers)
 /// - "instruct" in the id (no size marker) → small (instruct-tuned chat models)
-/// - No parsable info → small (safe default — extra scaffolding never hurts)
+/// - No parsable info → remote: large (frontier API models), local: small (safe default)
 ///
 /// Stateless utility — no mutable state. Pure string analysis only.
 /// </summary>
@@ -24,12 +24,12 @@ public static class ModelTierAutoResolver
 
     /// <summary>
     /// True when the model id/name indicates a small model (≤14B or instruct-type).
-    /// Unknown ids default to small (safe).
+    /// Unparsable ids: remote providers → large (frontier APIs), local → small (safe).
     /// </summary>
-    public static bool IsSmallModel(string? modelId)
+    public static bool IsSmallModel(string? modelId, bool isRemoteProvider = false)
     {
         if (string.IsNullOrWhiteSpace(modelId))
-            return true; // no info → safe default
+            return !isRemoteProvider; // no info: remote → large, local → small
 
         var id = modelId.Trim().ToLowerInvariant();
 
@@ -39,15 +39,15 @@ public static class ModelTierAutoResolver
         {
             if (!double.TryParse(match.Groups["params"].Value,
                     System.Globalization.CultureInfo.InvariantCulture, out var paramsB))
-                return true;
+                return !isRemoteProvider;
             return paramsB <= SmallModelMaxB;
         }
 
-        // Instruct-tuned chat models without a size marker → small per Emre's rule
+        // Instruct-tuned chat models without a size marker → small
         if (id.Contains("instruct"))
             return true;
 
-        // No parsable info → safe default
-        return true;
+        // No parsable info: remote → large (frontier APIs), local → small (safe)
+        return !isRemoteProvider;
     }
 }

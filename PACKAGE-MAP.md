@@ -1,6 +1,6 @@
 # PACKAGE-MAP.md — ECAssistant
 
-Generated: 2026-09-23T22:26:40.259066+00:00
+Generated: 2026-09-23T22:33:14.131341+00:00
 
 ---
 
@@ -8,9 +8,9 @@ Generated: 2026-09-23T22:26:40.259066+00:00
 |---|---|---|---|---|
 | ECAssistantConsole | 2 | 356 | ~41 | — |
 | Tests | 7 | 852 | ~291 | — |
-| ECAssistantTestSupport | 13 | 1713 | ~759 | — |
+| ECAssistantTestSupport | 13 | 1714 | ~759 | — |
 | TestModelLoad | 0 | 43 | ~0 | — |
-| ECAssistantCore | 413 | 34625 | ~20259 | — |
+| ECAssistantCore | 413 | 34636 | ~20259 | — |
 | grammar-decision | 0 | 61 | ~0 | — |
 | ECAssistantLLM | 134 | 9714 | ~5679 | — |
 | ECAssistantTUI | 23 | 4018 | ~1721 | — |

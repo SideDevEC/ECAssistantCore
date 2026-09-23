@@ -17,7 +17,7 @@ Two provider modes (`LlmProviderConfig.mode`):
 ## Model-Tier Awareness
 
 One seam governs behavior for small vs large models: `ModelTier.IsLargeRuntime(modelId)`.
-Config: `model_tier.mode` = `small` | `large` | `auto`/absent. Tier is derived from the MODEL, not transport (Emre, 2026-09-24): explicit mode wins; `auto` parses the model id via `ModelTierAutoResolver` — ≤14B parameter markers or instruct-type (no size marker) → small, >14B → large, unparsable → small (safe default).
+Config: `model_tier.mode` = `small` | `large` | `auto`/absent. Tier is derived from the MODEL, not transport (Emre, 2026-09-24): explicit mode wins; `auto` parses the model id via `ModelTierAutoResolver` — ≤14B parameter markers or instruct-type (no size marker) → small, >14B → large; unparsable ids → remote provider: large (frontier APIs), local: small (safe default).
 
 Tier-resolved behaviors:
 - **Preplanning** (`InterfaceConfig.Preplanning`, null=auto): small models decompose the task up front (LLM plan + StepMapper); large models plan in-loop. Conversational questions skip decomposition via the verb gate.

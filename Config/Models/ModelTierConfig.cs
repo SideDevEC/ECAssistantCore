@@ -11,7 +11,8 @@ namespace ECAssistant.Core.Config;
 /// Tier is derived from the MODEL, not transport (Emre, 2026-09-24):
 /// - "small" / "large" → explicit config wins
 /// - "auto"/null → parsed from the model id: ≤14B parameter markers or
-///   instruct-type models are small; larger or unparsable models default small (safe).
+///   instruct-type models are small; larger → large; unparsable → remote: large,
+///   local: small (safe default).
 /// </summary>
 public class ModelTierConfig
 {
@@ -37,19 +38,19 @@ public class ModelTierConfig
 
     /// <summary>
     /// Resolve whether the active model should get the large-model (slim) profile.
-    /// Pure resolution from immutable config + model id — no transport heuristic.
-    /// Explicit mode wins; auto/null derives from the model id via
-    /// <see cref="ModelTierAutoResolver"/> (≤14B or instruct → small, else large).
+    /// Pure resolution from immutable config + model id — explicit mode wins;
+    /// auto/null derives from the model id via <see cref="ModelTierAutoResolver"/>
+    /// (≤14B or instruct → small; >14B → large; unparsable → remote: large, local: small).
     /// </summary>
     // Stateless utility — no mutable state
-    public bool IsLargeRuntime(string? modelId)
+    public bool IsLargeRuntime(string? modelId, bool isRemoteProvider)
     {
         var mode = Mode?.Trim().ToLowerInvariant();
         return mode switch
         {
             "small" => false,
             "large" => true,
-            _ => !ModelTierAutoResolver.IsSmallModel(modelId) // auto: derive from the model
+            _ => !ModelTierAutoResolver.IsSmallModel(modelId, isRemoteProvider) // auto: derive from the model
         };
     }
 }

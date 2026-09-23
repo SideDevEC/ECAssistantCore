@@ -176,7 +176,7 @@ public sealed class SubAgentManager : IDisposable
     /// </summary>
     private bool IsLargeTier()
     {
-        return _config?.ModelTier?.IsLargeRuntime(_config?.LlmProvider?.ModelId) ?? false;
+        return _config?.ModelTier?.IsLargeRuntime(_config?.LlmProvider?.ModelId, _config?.LlmProvider?.IsRemote ?? false) ?? false;
     }
 
     /// <summary>v10.18.1: Cancel ALL active sub-agents (called when main agent gets ESC).</summary>

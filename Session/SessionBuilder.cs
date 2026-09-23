@@ -250,7 +250,7 @@ public class SessionBuilder : ISessionBuilder
         // tool calls — capability win that helps small models most). Seatbelt
         // sandbox stays large-tier-only (containment for autonomy, noise for
         // guided runs). Config kill-switch: tools.EShellAgent.persistent_session.
-        var isLargeTier = _config.ModelTier?.IsLargeRuntime(_config.LlmProvider?.ModelId) ?? false;
+        var isLargeTier = _config.ModelTier?.IsLargeRuntime(_config.LlmProvider?.ModelId, _config.LlmProvider?.IsRemote ?? false) ?? false;
         var shellAgent = new EShellAgent(processRunner, _config, _workingDir,
             sessionFactory: new Services.Shell.ShellSessionFactory(), isLargeTier: true);
         var backgroundExec = new EBackgroundExecTool(_bgManager, processRunner, fileSystem, _config);

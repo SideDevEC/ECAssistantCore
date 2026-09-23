@@ -1,6 +1,6 @@
 # API-INDEX.md — ECAssistant
 
-Generated: 2026-09-23T22:26:40.254713+00:00
+Generated: 2026-09-23T22:33:14.127580+00:00
 Packages: 8  |  Types: 592
 
 ---
@@ -20,7 +20,7 @@ Packages: 8  |  Types: 592
 - 🟡 GuiConsoleTerminalRestoreTests  (Tests)
 - 🟡 LayerTests  (Tests)
 
-## ECAssistantTestSupport (13 types, ~1713 LOC)
+## ECAssistantTestSupport (13 types, ~1714 LOC)
 
 - 🟡 EcaTestSuite  (ECAssistantTestSupport)
 - 🟡 GuiTestHarness : GuiBase  (ECAssistantTestSupport)
@@ -39,7 +39,7 @@ Packages: 8  |  Types: 592
 ## TestModelLoad (0 types, ~43 LOC)
 
 
-## ECAssistantCore (413 types, ~34625 LOC)
+## ECAssistantCore (413 types, ~34636 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
