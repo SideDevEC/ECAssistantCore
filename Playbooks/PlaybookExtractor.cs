@@ -34,10 +34,15 @@ public sealed class PlaybookExtractor : IPlaybookExtractor
         };
     }
 
-    /// <summary>Title from the user goal, single-line and char-capped. Pure.</summary>
+    /// <summary>Title from the user goal: first sentence, single-line, char-capped. Pure.</summary>
     private static string BuildTitle(string goal)
     {
         var oneLine = goal.Replace("\r", " ").Replace("\n", " ").Trim();
+        // v14.19: first sentence only — prompts often append tool-call instructions
+        // ("Make EXACTLY this tool call: ...") that would otherwise become the title.
+        var sentenceEnd = oneLine.IndexOfAny(['.', '!', '?']);
+        if (sentenceEnd > 10 && sentenceEnd < oneLine.Length - 1)
+            oneLine = oneLine[..(sentenceEnd + 1)];
         return oneLine.Length <= 80 ? oneLine : oneLine[..80] + "…";
     }
 

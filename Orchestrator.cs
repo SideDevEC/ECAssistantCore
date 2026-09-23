@@ -493,6 +493,13 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                      // Add combined result to conversation history (one block)
                      _engine.AddToolResult("Batch", combinedOutput);
 
+                    // v14.19: verification gate for the BATCH path — the single-call path
+                    // gates after every file-modifying edit; batched edits (decomposed
+                    // plans) previously bypassed verification entirely. Verify each
+                    // successful mutating call (typically one per batch).
+                    foreach (var r in batchResult.Results.Where(r => r.Succeeded))
+                        await RunPostEditVerificationAsync(r.ToolCall.ToolName!, r.ToolCall.Args, goal);
+
                      // Check for failure streak — one batch = one turn in streak detection
                     if (failCount > 0)
                      {

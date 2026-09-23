@@ -26,6 +26,40 @@ public sealed class UserJourneyExtendedE2E
             }
             """)!;
 
+    // ── J9: verification on the BATCH/decomposed path (the v14.19 fix) ──
+    [Fact]
+    public async Task BatchFileEdits_VerificationRuns()
+    {
+        if (string.IsNullOrEmpty(ServerUrl)) return;
+
+        var sawVerify = false;
+        string? lastTranscript = null;
+        for (var attempt = 1; attempt <= 3 && !sawVerify; attempt++)
+        {
+            CleanCwdArtifacts();
+            var harness = await UserExperienceHarness.CreateAsync(ServerUrl!, BuildConfig(ModelId));
+            try
+            {
+                await harness.SendAndAwaitAsync(
+                    "Create two files: alpha.txt with content aaa, and beta.txt with content bbb. " +
+                    "Make EXACTLY these two tool calls now: " +
+                    "ECodeEditor(action=create, file=alpha.txt, content=aaa) and " +
+                    "ECodeEditor(action=create, file=beta.txt, content=bbb).");
+                lastTranscript = harness.TranscriptText;
+                if (lastTranscript.Contains("[Verify]", StringComparison.OrdinalIgnoreCase))
+                    sawVerify = true;
+            }
+            finally
+            {
+                await harness.DisposeAsync();
+            }
+        }
+
+        if (!sawVerify) DumpTranscript("batch-verify", lastTranscript ?? "");
+        Assert.True(sawVerify,
+            $"batch path never surfaced verification (dump: /tmp/eca-uj-dump-batch-verify.txt)");
+    }
+
     private static void CleanCwdArtifacts()
     {
         // ECodeEditor resolves relative paths against process CWD (known quirk) —
