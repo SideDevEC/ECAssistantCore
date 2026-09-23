@@ -8,7 +8,6 @@ using ECAssistant.Core.Session;
 using ECAssistant.Core.Transport;
 using ECAssistant.Core.Tools;
 using ECAssistant.Core.Tools.Build;
-using ECAssistant.Core.Services;
 using ECAssistant.TestSupport;
 
 namespace ECAssistant.Core.Tests.E2E;

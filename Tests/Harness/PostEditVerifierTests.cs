@@ -325,7 +325,10 @@ file sealed class FakeCodeEditorTool : EToolBase
     public override Task<EToolResult> ExecuteAsync(
         Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
-        var path = arguments.GetValueOrDefault("file_path") ?? Path.Combine(Path.GetTempPath(), "fake-edit.txt");
+        // Unique temp name: multiple verifier tests run headless and parallel —
+        // a fixed path would collide across tests and leak a shared mutable file.
+        var path = arguments.GetValueOrDefault("file_path")
+            ?? Path.Combine(Path.GetTempPath(), "fake-edit-" + Guid.NewGuid().ToString("N")[..8] + ".txt");
         File.WriteAllText(path, arguments.GetValueOrDefault("content") ?? "");
         return Task.FromResult(EToolResult.Success(Name, "created " + path));
     }

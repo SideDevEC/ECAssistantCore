@@ -383,8 +383,16 @@ public class SessionManager : IAsyncDisposable
         // the TUI /verbosity toggle for minimal output.
         session.SetVerbosity(SessionVerbosity.Verbose);
 
+        // Audit fix: re-check under the add lock — two concurrent CreateSession(key)
+        // calls could both pass the initial ContainsKey check. The loser would throw
+        // KeyExists on Add, but more importantly the orphan session's StreamWriter and
+        // engine would leak. Re-check and return the winner instead.
         lock (_sessionsLock)
+        {
+            if (_sessions.TryGetValue(key, out var existing))
+                return existing;
             _sessions.Add(key, session);
+        }
         Interlocked.Increment(ref _sessionCounter);
 
         // Wire mid-request connection recovery: when a chat request hits a
@@ -673,8 +681,20 @@ public class SessionManager : IAsyncDisposable
         // Stop idle watchdog
         _idleTimer?.Dispose();
 
-        // Stop all sessions
+        // Stop all sessions (signals execution halt)
         StopAll();
+
+        // Audit fix: dispose each session's resources (StreamWriter, engine, etc.)
+        // before tearing down the server — previously only StopAll() was called which
+        // signals halt but never disposes session-owned IDisposable resources.
+        List<AgentSession> sessionsToDispose;
+        lock (_sessionsLock)
+            sessionsToDispose = _sessions.Values.ToList();
+        foreach (var session in sessionsToDispose)
+        {
+            try { await session.DisposeAsync(); }
+            catch { /* best effort — continue disposing others */ }
+        }
 
         // Local mode: trigger graceful shutdown FIRST, while our client id is still
         // registered — /eca/shutdown requires a valid X-Client-Id and disconnects the

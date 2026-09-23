@@ -64,7 +64,7 @@ public sealed class UserJourneyExtendedE2E
     {
         // ECodeEditor resolves relative paths against process CWD (known quirk) —
         // keep the testhost dir clean between attempts/runs.
-        foreach (var f in new[] { "note.txt", "hello.txt", "bogus.txt" })
+        foreach (var f in new[] { "note.txt", "hello.txt", "bogus.txt", "alpha.txt", "beta.txt" })
             try { File.Delete(Path.Combine(Directory.GetCurrentDirectory(), f)); } catch { }
     }
 

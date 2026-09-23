@@ -41,9 +41,7 @@ public sealed class ToolDescriptionScopeTests
     public void Description_HasPositiveScope(string name, string description)
     {
         Assert.True(
-            description.Contains("Use ONLY", StringComparison.OrdinalIgnoreCase) ||
-            description.Contains("Use only", StringComparison.Ordinal) ||
-            description.Contains("Use ONLY", StringComparison.Ordinal),
+            description.Contains("Use ONLY", StringComparison.OrdinalIgnoreCase),
             $"{name}: description missing a positive 'Use ONLY' scope clause:\n{description}");
     }
 

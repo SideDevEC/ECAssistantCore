@@ -45,6 +45,9 @@ public sealed class SessionVerbosityDefaultTests : IDisposable
         finally
         {
             if (manager.Main != null) await manager.Main.DisposeAsync();
+            // SessionManager is IAsyncDisposable — dispose it too, otherwise the
+            // idle watchdog Timer and the OpenAIClient HTTP infra leak past the test.
+            await manager.DisposeAsync();
         }
     }
 }

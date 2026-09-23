@@ -31,7 +31,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
     private bool _useStructuredDecoding;
     protected readonly string _workingDir;
     protected readonly ILogger _logger = new Logger();
-    protected readonly ISessionOutput? _out;
+    protected ISessionOutput? _out;
     public bool MockMode { get; private set; }
 
     /// <summary>Explicit mock-mode toggle (write-only flag; kept for test harness).</summary>
@@ -167,7 +167,11 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
     public ISessionOutput? SessionOutput { get; private set; }
 
     /// <summary>Attach or replace the session output renderer.</summary>
-    public void SetSessionOutput(ISessionOutput? output) => SessionOutput = output;
+    public void SetSessionOutput(ISessionOutput? output)
+     {
+        SessionOutput = output;
+        _out = output; // engine internals write via _out — keep both in sync (audit fix: _out was never assigned, so all engine console output was silently dropped)
+     }
 
     /// <summary>
     /// Mid-request connection recovery hook (local mode only). When a chat request
@@ -181,6 +185,9 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
     public IKvCacheController? KvCacheController => _kvCacheController;
     public RemoteTokenizer? Tokenizer => _tokenizer;
     public string SessionId => _sessionId;
+
+    /// <summary>Engine working directory (public surface for hosts/sub-agents; replaces reflection access).</summary>
+    public string WorkingDir => _workingDir;
 
     /// <summary>
     /// Update HTTP client and client ID after server reconnection.
@@ -1289,9 +1296,19 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
             var convText = convSb.ToString();
 
             var summaryText = "";
-            if (_inferenceEngine != null && (_backgroundTasks?.Summarize.UseLlm ?? true))
+            // Staged compaction stage 1: trim stale tool outputs first (zero LLM cost).
+            // Only pay for the LLM summarize + rebuild when trimming isn't enough.
+            // Audit fix: previously the summarize call ran BEFORE the trim check, so a
+            // successful trim still burned an LLM call and injected a summary the
+            // warm-path incremental input never delivers (window/server desync).
+            var keepRecent = Math.Max(1, _config?.ContextManagement?.KeepRecentToolOutputs ?? 3);
+            bool rebuilt = false;
+            if (!_contextWindow.TrimStaleToolOutputs(keepRecent))
              {
-                var summarizeConfig = _backgroundTasks?.Summarize;
+                rebuilt = true;
+                if (_inferenceEngine != null && (_backgroundTasks?.Summarize.UseLlm ?? true))
+                {
+                    var summarizeConfig = _backgroundTasks?.Summarize;
                 var warmParams = BuildWarmSessionParams();
                 try
                  {
@@ -1321,16 +1338,11 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                     summaryText = System.Text.RegularExpressions.Regex.Replace(result.Trim(), @"<[^>]+>", "");
                  }
                 catch (OperationCanceledException) { }
-             }
+                }
 
-            // Staged compaction stage 1: trim stale tool outputs first (zero LLM cost).
-            // Only fall back to the full summarize-rebuild when trimming isn't enough.
-            var keepRecent = Math.Max(1, _config?.ContextManagement?.KeepRecentToolOutputs ?? 3);
-            if (!_contextWindow.TrimStaleToolOutputs(keepRecent))
-            {
                 _contextWindow.Clear();
                 await ResetAndRebuildCacheAsync();
-            }
+             }
 
             if (!string.IsNullOrWhiteSpace(summaryText))
              {
@@ -1366,6 +1378,46 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                 // Note: the user prompt is already in the transcript (added at the top of
                 // GenerateAsync when TurnCount == 1). Only re-add it to the cleared context.
                 _contextWindow.AddUserMessage(effectivePrompt, imageDataUris);
+             }
+
+            if (rebuilt && _kvCacheController != null)
+             {
+                // Audit fix: the rebuild path clears the window and resets the server
+                // cache to the static prefix only. The summary/pinned/recent messages
+                // re-added above must be re-fed into the rebuilt cache, otherwise the
+                // model loses all conversation state after compaction (the incremental
+                // input for turn N>1 only carries the last tool output).
+                try
+                 {
+                    var historySb = new StringBuilder();
+                    foreach (var msg in _contextWindow.GetWindowMessages())
+                     {
+                        switch (msg.Role)
+                         {
+                            case "user":
+                                historySb.AppendLine("<user>").AppendLine(msg.Content).AppendLine("</user>");
+                                break;
+                            case "assistant":
+                                historySb.AppendLine("<assistant>").AppendLine(msg.Content).AppendLine("</assistant>");
+                                break;
+                            case "tool_output":
+                                historySb.AppendLine($"<tooloutput>{msg.Source}<result>").AppendLine(msg.Content).AppendLine("</result></tooloutput>");
+                                break;
+                            case "system":
+                                historySb.AppendLine($"<system>{msg.Content}</system>");
+                                break;
+                         }
+                     }
+                    if (historySb.Length > 0)
+                     {
+                        await _kvCacheController.PrefillAsync(_sessionId, historySb.ToString());
+                        _out?.WriteInfo($"[KVCache] Re-fed rebuilt window ({historySb.Length} chars) into cache.");
+                     }
+                 }
+                catch (Exception ex)
+                 {
+                    _out?.WriteWarning($"[KVCache] Rebuilt-window re-feed failed: {ex.Message}");
+                 }
              }
          }
 

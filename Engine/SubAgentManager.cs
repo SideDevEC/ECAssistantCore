@@ -201,7 +201,9 @@ public sealed class SubAgentManager : IDisposable
         return _activeSubAgents.Values.Select(a =>
         {
             var elapsed = DateTime.UtcNow - a.StartedAt;
-            var workDir = GetField<string>(a.Engine ?? new object(), "_workingDir") ?? "?";
+            // Audit fix: reflection into EAgentEngine._workingDir replaced with the
+            // public WorkingDir surface the engine now exposes.
+            var workDir = (a.Engine as EAgentEngine)?.WorkingDir ?? "?";
             return (a.Id, a.Description, elapsed, workDir);
         }).ToList();
     }
@@ -274,16 +276,16 @@ public sealed class SubAgentManager : IDisposable
 
             // Fix #2: Start execution with the linked token so ESC + timeout both work
             childEngine.StartExecution();
-            // Override the engine's CTS with our linked one by stopping execution and restarting
-            // Actually, we can't inject the token directly, but we can wire cancellation:
-            // When linkedCts fires, it cancels the child engine via StopExecution
-            _ = Task.Run(() =>
-            {
-                try { linkedCts.Token.WaitHandle.WaitOne(); }
-                catch (Exception ex) { _logger?.Debug("SubAgent", $"Non-critical error ignored: {ex.Message}"); }
-                if (linkedCts.Token.IsCancellationRequested)
-                    childEngine.StopExecution();
-            });
+            // Audit fix: the previous fire-and-forget Task.Run watcher could still be
+            // waiting on the linked token after RunSingleAsync disposes both the CTS
+            // and the child engine, then call StopExecution() on the disposed engine
+            // outside its try block (unobserved exception). A token registration does
+            // the same job deterministically and is cleaned up with the scope.
+            using var cancelReg = linkedCts.Token.Register(() =>
+             {
+                try { childEngine.StopExecution(); }
+                catch (Exception ex) { _logger?.Debug("SubAgent", $"StopExecution after cancel failed: {ex.Message}"); }
+             });
 
             var orchResult = await orchestrator.ExecuteMultiStep(
                 SubAgentBriefBuilder.Build(task, IsLargeTier()));
@@ -500,12 +502,5 @@ public sealed class SubAgentManager : IDisposable
             }
             _childEngines.Clear();
         }
-    }
-
-    private T? GetField<T>(object obj, string fieldName)
-    {
-        var field = obj.GetType().GetField(fieldName,
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        return field?.GetValue(obj) is T value ? value : default;
     }
 }

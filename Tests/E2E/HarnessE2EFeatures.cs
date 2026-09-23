@@ -119,7 +119,7 @@ public sealed class HarnessE2EFeatures
                 lastOutput = r.FinalOutput + " | TOOL_OUT: " +
                     string.Join(" ; ", s2.Engine.ContextWindow.GetWindowMessages()
                         .Where(m => m.Role == "tool_output").Select(m => m.Source + ": " +
-                        (m.Content.Length > 300 ? m.Content[..200] + "…" : m.Content)));
+                        (m.Content.Length > 300 ? m.Content[..300] + "…" : m.Content)));
                 allAttempts.Add($"[attempt {attempt}] status={r.Status} calls={r.ToolCallsMade} out={lastOutput}");
                 if (v.VerifyCalls >= 1) gateRan = true;
             }
@@ -133,6 +133,10 @@ public sealed class HarnessE2EFeatures
         Assert.True(gateRan,
             $"no attempt drove a file edit through the verification gate. Attempts:\n" +
             string.Join("\n", allAttempts));
+
+        // Final attempt's file edit lands in the process CWD (known ECodeEditor quirk)
+        // — clean it so the testhost dir is left as we found it.
+        try { File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "hello.txt")); } catch { }
     }
 
     private async Task<(AgentSession session, string dir)> CreateSessionAsync(bool registerEditor = false)

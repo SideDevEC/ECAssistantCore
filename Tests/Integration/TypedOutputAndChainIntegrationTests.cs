@@ -53,7 +53,7 @@ public class TypedOutputAndChainIntegrationTests : IDisposable
             try { Directory.Delete(_tempDir, true); } catch { }
     }
 
-    private MockEngine NewEngine(Mock<ILogger> logger)
+    private MockEngine NewEngine()
     {
         var engine = new MockEngine(_tempDir);
         _engines.Add(engine);
@@ -91,7 +91,7 @@ public class TypedOutputAndChainIntegrationTests : IDisposable
 
         var config = new EAgentConfig();
         config.AgentSettings.WorkingDirectory = _tempDir;
-        var engine = NewEngine(logger);
+        var engine = NewEngine();
         engine.RegisterTool(new EDotnetBuildTool(processRunner.Object, config));
 
         engine.EnqueueToolCall("EDotnetBuild", new() { ["action"] = "build" });
@@ -120,7 +120,7 @@ public class TypedOutputAndChainIntegrationTests : IDisposable
 
         var config = new EAgentConfig();
         config.AgentSettings.WorkingDirectory = _tempDir;
-        var engine = NewEngine(logger);
+        var engine = NewEngine();
         engine.RegisterTool(new EDotnetBuildTool(processRunner.Object, config));
 
         engine.EnqueueToolCall("EDotnetBuild", new() { ["action"] = "build" });
@@ -146,7 +146,7 @@ public class TypedOutputAndChainIntegrationTests : IDisposable
 
         var config = new EAgentConfig();
         config.AgentSettings.WorkingDirectory = _tempDir;
-        var engine = NewEngine(logger);
+        var engine = NewEngine();
         engine.RegisterTool(new ProbeTestTool());
         engine.RegisterTool(new EShellAgent(processRunner.Object, config, _tempDir));
 
@@ -175,7 +175,7 @@ public class TypedOutputAndChainIntegrationTests : IDisposable
 
         var config = new EAgentConfig();
         config.AgentSettings.WorkingDirectory = _tempDir;
-        var engine = NewEngine(logger);
+        var engine = NewEngine();
         engine.RegisterTool(new EShellAgent(processRunner.Object, config, _tempDir));
 
         engine.EnqueueMultiToolCall(
@@ -203,7 +203,7 @@ public class TypedOutputAndChainIntegrationTests : IDisposable
 
         var config = new EAgentConfig();
         config.AgentSettings.WorkingDirectory = _tempDir;
-        var engine = NewEngine(logger);
+        var engine = NewEngine();
         engine.RegisterTool(new EDotnetBuildTool(processRunner.Object, config));
         engine.RegisterTool(new ProbeTestTool());
 

@@ -43,10 +43,11 @@ public sealed class UserJourneyE2E
             // The complaint that started v14.11: a greeting/knowledge question must
             // be answered directly, with NO file-research tool run in between.
             Assert.DoesNotContain("EFileResearch", visible, StringComparison.OrdinalIgnoreCase);
-            // The user must see an actual answer mentioning VBA or coding.
-            Assert.Contains(
-                visible.ToLowerInvariant().Contains("vba") ? "vba" : "code",
-                visible.ToLowerInvariant());
+            // The user must see an actual answer mentioning VBA or coding —
+            // either term counts, but at least one must appear.
+            var low = visible.ToLowerInvariant();
+            Assert.True(low.Contains("vba") || low.Contains("code"),
+                $"answer mentions neither VBA nor coding: {visible}");
         }
         finally
         {
@@ -78,6 +79,9 @@ public sealed class UserJourneyE2E
         finally
         {
             await harness.DisposeAsync();
+            // ECodeEditor resolves relative paths against process CWD (known quirk)
+            // — remove the created file so the testhost dir is left clean.
+            try { File.Delete(Path.Combine(Directory.GetCurrentDirectory(), "note.txt")); } catch { }
         }
     }
 

@@ -40,9 +40,12 @@ public sealed class HttpStreamingEngine : IInferenceEngine
     {
         var body = BuildRequestBody(prompt, parameters, stream: true);
         var response = await _client.PostStreamAsync("/v1/chat/completions", body, ct);
-        await using var stream = await response.Content.ReadAsStreamAsync(ct);
+        // Audit fix: dispose the response even if ReadAsStreamAsync throws
+        // (previously the gap between PostStreamAsync and the stream acquisition
+        // leaked the HttpResponseMessage/connection on failure).
         try
         {
+            await using var stream = await response.Content.ReadAsStreamAsync(ct);
             await foreach (var token in SseParser.ParseTokenStreamAsync(stream, ct))
                 yield return token;
         }
@@ -182,9 +185,20 @@ public sealed class HttpStreamingEngine : IInferenceEngine
                     {
                         if (raw.ValueKind == JsonValueKind.String)
                         {
-                            using var argsDoc = JsonDocument.Parse(raw.GetString() ?? "{}");
-                            foreach (var p in argsDoc.RootElement.EnumerateObject())
-                                args[p.Name] = p.Value.ValueKind == JsonValueKind.String ? p.Value.GetString() ?? "" : p.Value.GetRawText();
+                            // Audit fix: models emit malformed JSON arguments more often
+                            // than anyone would like — one bad call must not poison the
+                            // whole decision (it previously threw out of the parser and
+                            // forced a full text fallback for the turn).
+                            try
+                            {
+                                using var argsDoc = JsonDocument.Parse(raw.GetString() ?? "{}");
+                                foreach (var p in argsDoc.RootElement.EnumerateObject())
+                                    args[p.Name] = p.Value.ValueKind == JsonValueKind.String ? p.Value.GetString() ?? "" : p.Value.GetRawText();
+                            }
+                            catch (JsonException)
+                            {
+                                args["_raw_arguments"] = raw.GetString() ?? "";
+                            }
                         }
                         else if (raw.ValueKind == JsonValueKind.Object)
                         {

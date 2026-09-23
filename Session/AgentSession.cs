@@ -824,9 +824,10 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
 
         _engine.StartExecution();
 
+        var myCts = _executionCts;
         _runnerTask = Task.Run(async () =>
         {
-            await RunExecutionLoop(prompt, _executionCts.Token);
+            await RunExecutionLoop(prompt, myCts!);
         });
     }
 
@@ -834,8 +835,9 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     /// The runner loop — executes a prompt, then checks the queue for more.
     /// Continues until queue is empty, then goes idle.
     /// </summary>
-    private async Task RunExecutionLoop(string prompt, CancellationToken ct)
+    private async Task RunExecutionLoop(string prompt, CancellationTokenSource cts)
     {
+        CancellationToken ct = cts.Token;
         string currentPrompt = prompt;
 
         while (!ct.IsCancellationRequested)
@@ -901,13 +903,16 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
 
         SetRunState(SessionRunState.Idle);
 
-        // Dispose only the CTS we created — a concurrent Prompt() that saw Idle may have
-        // already replaced _executionCts with a fresh one for the next run.
+        // Dispose only the CTS this run created (captured in StartRunner). Audit fix:
+        // the old code re-read _executionCts here, so a concurrent Prompt() that saw
+        // Idle and installed a fresh CTS for the next run could have its CTS disposed
+        // by the finishing run (later Stop() would throw ObjectDisposedException and
+        // the new run's timeout would silently break).
+        cts.Dispose();
         lock (_stateLock)
         {
-            var cts = _executionCts;
-            _executionCts = null;
-            cts?.Dispose();
+            if (ReferenceEquals(_executionCts, cts))
+                _executionCts = null;
         }
     }
 

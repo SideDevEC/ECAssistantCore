@@ -2,6 +2,7 @@ using System.Text.Json;
 using ECAssistant.Core.Config;
 using ECAssistant.Core.Engine;
 using ECAssistant.Core.Interfaces;
+using ECAssistant.TestSupport;
 
 namespace ECAssistant.Core.Tests.Harness;
 
@@ -97,12 +98,14 @@ public sealed class HarnessOptimizationTests : IDisposable
     {
         // BuildToolSpecs must copy GetParameterSchema() into the ToolSpec so the
         // native function-calling path can send real schemas.
-        var engineType = typeof(EAgentEngine);
-        var method = engineType.GetMethod("BuildToolSpecs",
+        var engine = new MockEngine(workingDir: _dir);
+        engine.RegisterTool(new ProbeTestTool());
+        var method = typeof(EAgentEngine).GetMethod("BuildToolSpecs",
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
         Assert.NotNull(method);
-        // Instance construction is heavy; the important behavior (copy) is covered
-        // indirectly by the ToolSpec property + tool overrides. Existence asserted.
+        var specs = (List<ToolSpec>)method.Invoke(engine, null)!;
+        var spec = specs.Single(s => s.Name == "ProbeTool");
+        Assert.Contains("\"action\"", spec.ParameterSchema);
     }
 
     // ── P5: staged compaction ──
@@ -166,14 +169,22 @@ public sealed class HarnessOptimizationTests : IDisposable
     // ── P6: rules file ──
 
     [Fact]
-    public void AgentsMd_ExistsInWorkingDir_IsReadable()
+    public void AgentsMd_InWorkingDir_IsInjectedIntoSystemPrompt()
     {
-        // The engine injects AGENTS.md content into the system prompt; here we pin
-        // the contract that the file is read from the working directory root.
+        // The engine injects AGENTS.md content from the working directory into the
+        // system prompt (BuildSystemToolsPrompt → "## PROJECT RULES (AGENTS.md)").
+        // Pin the actual injection via a real engine, not just file readability.
         var rulesPath = Path.Combine(_dir, "AGENTS.md");
         File.WriteAllText(rulesPath, "Never touch config files.");
-        Assert.True(File.Exists(rulesPath));
-        Assert.Contains("Never touch", File.ReadAllText(rulesPath));
+
+        var engine = new MockEngine(workingDir: _dir);
+        var method = typeof(EAgentEngine).GetMethod("BuildSystemToolsPrompt",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        Assert.NotNull(method);
+        var prompt = (string)method.Invoke(engine, null)!;
+
+        Assert.Contains("## PROJECT RULES (AGENTS.md)", prompt);
+        Assert.Contains("Never touch config files.", prompt);
     }
 
     private static List<(string, ECAssistant.Core.Tools.EToolBase)> SchemaProviders()
