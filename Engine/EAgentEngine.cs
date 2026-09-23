@@ -1129,6 +1129,20 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
         truncated += $"\n\n[OUTPUT STORED: {text.Length} total chars. Full output saved as {storeKey}.]";
         truncated += $"\nTo see more, use: EShellAgent command=Get-Content tool_outputs/{storeKey}.txt -TotalCount N | Select-Object -Skip M";
         truncated += $"\nOr read a specific part: Get-Content tool_outputs/{storeKey}.txt | Select-Object -Skip {limit / 80} -First 50";
+
+        // v14.12.2: curated projection keeps key lines + head/tail instead of a
+        // blind head-truncate. Config off-switch restores the old behavior. The
+        // projector receives ONLY the store note — never the truncated head blob
+        // (it keeps its own head/tail; a second copy would duplicate content and
+        // defeat the token savings).
+        var storeNote =
+            $"\n\n[OUTPUT STORED: {text.Length} total chars. Full output saved as {storeKey}.]" +
+            $"\nTo see more, use: EShellAgent command=Get-Content tool_outputs/{storeKey}.txt -TotalCount N | Select-Object -Skip M" +
+            $"\nOr read a specific part: Get-Content tool_outputs/{storeKey}.txt | Select-Object -Skip {limit / 80} -First 50";
+        var curate = _config.ContextManagement?.CurateToolOutputs ?? true;
+        if (curate)
+            return ToolOutputProjector.Project(text, storeNote);
+
         return truncated;
     }
 
@@ -1742,7 +1756,11 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
             "\n## RESPONSE FORMAT (native tools mode)\n" +
             "You have native function-calling tools (provided in this request).\n" +
             "- To use a tool, emit a NATIVE tool call. Do NOT write JSON, envelopes, or code blocks in your reply text.\n" +
-            "- When you have the final response for the user, write it as PLAIN TEXT (no JSON, no envelope).\n";
+            "- When you have the final response for the user, write it as PLAIN TEXT (no JSON, no envelope).\n" +
+            "- You may write a brief plain-text progress note alongside a tool call (e.g. what you're checking and why); it is shown to the user. Keep it to one or two sentences.\n" +
+            "\n## WORK COMPOSITION\n" +
+            "- Prefer composing work into fewer, bigger tool calls over many small round-trips: chain shell steps with && or ; when they are safe together, batch independent reads in one decision.\n" +
+            "- After results arrive, synthesize the final answer from what you already have — never re-call a tool that already returned the data you need.\n";
      }
 
     /// <summary>

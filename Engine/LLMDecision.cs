@@ -23,6 +23,11 @@ public class LLMDecision
             // learn from prior reasoning on later turns (matches old tag system behavior).
     public string? Reasoning { get; }
 
+      /// <summary>v14.12.2: optional plain-text note the remote model wrote alongside its
+    /// tool calls (native protocol allows text + calls). Display-only; null on the local
+    /// grammar path (envelope stays strict answer-XOR-toolcalls there).</summary>
+    public string? Commentary { get; }
+
       /// <summary>Single tool call (backwards compat).</summary>
     public LLMDecision(
         bool wantsToolCall,
@@ -41,13 +46,14 @@ public class LLMDecision
                 }
 
       /// <summary>Multiple tool calls (v10.13).</summary>
-    public LLMDecision(List<ToolCallRequest> toolCalls, string? reasoning = null)
+    public LLMDecision(List<ToolCallRequest> toolCalls, string? reasoning = null, string? commentary = null)
       {
         WantsToolCall = toolCalls.Count > 0;
         ToolCalls = toolCalls;
         WantsDirectAnswer = false;
         AnswerText = null;
         Reasoning = reasoning;
+        Commentary = commentary;
       }
 
       /// <summary>Number of tool calls in this decision.</summary>
@@ -62,7 +68,8 @@ public class LLMDecision
     public static LLMDecision FromEnvelope(
         string thinking,
         string? answer,
-        List<(string Name, Dictionary<string, string> Args)>? toolCalls)
+        List<(string Name, Dictionary<string, string> Args)>? toolCalls,
+        string? commentary = null)
      {
         if (!string.IsNullOrEmpty(answer))
             return new LLMDecision(false, null, new Dictionary<string, string?>(), answer, thinking);
@@ -75,7 +82,7 @@ public class LLMDecision
                 Args = tc.Args.ToDictionary(kv => kv.Key, kv => (string?)kv.Value),
                 Index = i + 1
              }).ToList();
-            return new LLMDecision(requests, thinking);
+            return new LLMDecision(requests, thinking, commentary);
          }
 
         // Neither answer nor toolcalls — fall back to thinking text as the answer.

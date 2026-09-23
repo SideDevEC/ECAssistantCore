@@ -32,4 +32,10 @@ public class ContextManagementConfig
     /// </summary>
     [JsonPropertyName("keep_recent_tool_outputs")]
     public int KeepRecentToolOutputs { get; init; } = 3;
+
+    /// <summary>v14.12.2: curated truncation for oversized tool outputs — keep
+    /// error/warning/summary/diff lines plus head and tail instead of a blind
+    /// head-truncate. Default true; false restores blind head-truncate.</summary>
+    [JsonPropertyName("curate_tool_outputs")]
+    public bool CurateToolOutputs { get; init; } = true;
 }

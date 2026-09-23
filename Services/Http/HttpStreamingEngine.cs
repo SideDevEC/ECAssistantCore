@@ -196,7 +196,15 @@ public sealed class HttpStreamingEngine : IInferenceEngine
                 })
                 .ToList();
 
-            return JsonSerializer.Serialize(new { thinking, toolcalls = calls });
+            // v14.12.2: remote models may write a plain-text progress note alongside
+            // tool calls (native protocol allows text + calls). Carry it as commentary
+            // instead of discarding — the orchestrator shows it to the user.
+            var commentary = message.TryGetProperty("content", out var tc) && tc.ValueKind == JsonValueKind.String
+                ? tc.GetString()
+                : null;
+            if (string.IsNullOrWhiteSpace(commentary)) commentary = null;
+
+            return JsonSerializer.Serialize(new { thinking, commentary, toolcalls = calls });
         }
 
         // No tool calls — content is the answer, reasoning is the thinking.

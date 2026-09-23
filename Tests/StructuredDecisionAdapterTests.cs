@@ -98,4 +98,43 @@ public class StructuredDecisionAdapterTests
         Assert.Null(StructuredDecisionAdapter.TryExtractAnswer("{"));
         Assert.Null(StructuredDecisionAdapter.TryExtractAnswer("{\"not\":\"json\"}"));
     }
+
+    // ── v14.12.2 commentary alongside tool calls ──
+
+    [Fact]
+    public void ToolCallEnvelope_WithCommentary_CarriesCommentary()
+    {
+        var result = StructuredDecisionAdapter.ParseDecision(
+            """{"thinking":"t","commentary":"note","toolcalls":[{"name":"EShellAgent","args":{"command":"ls"}}]}""");
+        Assert.True(result.WantsToolCall);
+        Assert.Equal("note", result.Commentary);
+        Assert.Single(result.ToolCalls);
+    }
+
+    [Fact]
+    public void ToolCallEnvelope_NullCommentary_CommentaryIsNull()
+    {
+        var result = StructuredDecisionAdapter.ParseDecision(
+            """{"thinking":"t","commentary":null,"toolcalls":[{"name":"EShellAgent","args":{"command":"ls"}}]}""");
+        Assert.True(result.WantsToolCall);
+        Assert.Null(result.Commentary);
+    }
+
+    [Fact]
+    public void ToolCallEnvelope_NoCommentaryKey_CommentaryIsNull()
+    {
+        var result = StructuredDecisionAdapter.ParseDecision(
+            """{"thinking":"t","toolcalls":[{"name":"EShellAgent","args":{"command":"ls"}}]}""");
+        Assert.True(result.WantsToolCall);
+        Assert.Null(result.Commentary);
+    }
+
+    [Fact]
+    public void AnswerEnvelope_CommentaryIsNull()
+    {
+        var result = StructuredDecisionAdapter.ParseDecision(
+            """{"thinking":"t","answer":"done"}""");
+        Assert.True(result.WantsDirectAnswer);
+        Assert.Null(result.Commentary);
+    }
 }

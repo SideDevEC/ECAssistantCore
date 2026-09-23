@@ -48,7 +48,13 @@ public static class StructuredDecisionAdapter
                 toolCalls.Add((name, args));
              }
 
-            return LLMDecision.FromEnvelope(thinking, null, toolCalls);
+            // v14.12.2: optional commentary alongside tool calls (remote native path).
+            var commentary = root.TryGetProperty("commentary", out var com) && com.ValueKind == JsonValueKind.String
+                && !string.IsNullOrWhiteSpace(com.GetString())
+                ? com.GetString()
+                : null;
+
+            return LLMDecision.FromEnvelope(thinking, null, toolCalls, commentary);
          }
 
         return LLMDecision.FromEnvelope(thinking, null, null);

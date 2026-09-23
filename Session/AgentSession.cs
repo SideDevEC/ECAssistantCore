@@ -235,6 +235,11 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     /// <summary>The orchestrator managing multi-step execution.</summary>
     public AgentOrchestrator Orchestrator => _orchestrator;
 
+    /// <summary>v14.12.2: queue mid-run steering — drained by the orchestrator at the
+    /// next turn boundary and injected as fresh instructions. Safe when idle (drained
+    /// on the next run) and safe mid-run.</summary>
+    public void Steer(string message) => _orchestrator?.Steering.Steer(message);
+
     /// <summary>The tool policy for this session.</summary>
     public ECAssistant.Core.Tools.ToolPolicy Policy => _toolPolicy;
 

@@ -51,6 +51,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
       // ─── Tool Policy (permissions + approval) ─────
     private readonly ECAssistant.Core.Tools.ToolPolicy _toolPolicy;
+    private readonly Engine.SteeringQueue _steering = new();
     private readonly ECAssistant.Core.Interfaces.ILogger? _logger;
 
      // v10.18: Sub-agent manager (lazy-init, created when first sub-agent tool is registered)
@@ -86,6 +87,9 @@ public sealed class AgentOrchestrator : IAsyncDisposable
          var isLocal = _config?.LlmProvider?.IsLocal ?? true;
          return _config?.ModelTier?.IsLargeRuntime(isLocal) ?? !isLocal;
       }
+
+      /// <summary>v14.12.2: mid-run steering seam — hosts queue user input via AgentSession.Steer().</summary>
+     public SteeringQueue Steering => _steering;
 
       /// <summary>v14.12: Preplanning resolution — explicit config wins; else large models skip decomposition (in-loop planning), small models keep it (revert 2026-09-22 behavior).</summary>
      private bool UsePreplanning() =>
@@ -278,6 +282,16 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
                   // v12.0: chat-classified goals answer directly — no toolcall demanded
               _out?.SetStatus("Thinking\u2026");
+                // v14.12.2: steering — drain queued user input before the next decision.
+                var steer = _steering.Drain();
+                if (!string.IsNullOrEmpty(steer))
+                {
+                    _out?.WriteInfo($"[Steering] {steer}");
+                    _logger?.Info("Orchestrator", "Steering drained: " + steer[..Math.Min(80, steer.Length)]);
+                    _engine.InjectFormatRetry(
+                        "[USER STEERING] " + steer + "\n" +
+                        "Adjust the remaining work accordingly. The original goal still applies unless the steering says otherwise.");
+                }
               var decision = await _engine.GenerateAsync(goal);
 
               // v14.10.2: envelope-echo guard (defense in depth). If a direct answer
@@ -367,6 +381,10 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                      }
 
                      // Create parallel executor
+                    // v14.12.2: show the model's progress narration (remote path).
+                    if (!string.IsNullOrEmpty(decision.Commentary))
+                        _out?.WriteDim($"[Agent] {decision.Commentary}");
+
                     var parallelExec = new ParallelToolExecutor(
                          _engine,
                          _toolPolicy,
@@ -580,6 +598,9 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                             continue;
                          }
                         _out?.SetStatus($"Running {decision.ToolName}\u2026");
+                        // v14.12.2: show the model's progress narration (remote path).
+                        if (!string.IsNullOrEmpty(decision.Commentary))
+                            _out?.WriteDim($"[Agent] {decision.Commentary}");
                         var result = await ExecuteTool(decision.ToolName!, argsDict);
                         var elapsedMs = (long)((DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - startMs);
 
