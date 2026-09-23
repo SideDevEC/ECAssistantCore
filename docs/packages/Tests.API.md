@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 108  |  LOC: 13572  |  ~4386 tokens
+Types: 109  |  LOC: 13623  |  ~4433 tokens
 
 ---
 
@@ -39,7 +39,7 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, Moq
 
 ### Class: ContextPinningTests
 > v14.16: tier-aware proactive context pinning — pure logic only (no LLM, no
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.ContextPinning, ECAssistant.Core.Interfaces
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.ContextPinning, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces
 
 ### Class: ContextWindowIntegrationTests
 > Integration tests for ContextWindow with a real TokenCounter —
@@ -327,6 +327,10 @@ Cross-package deps: ECAssistant.Core.Engine, Xunit
 ### Class: StructuredFallbackResilienceTests
 > v14.10.1: a transient null from GenerateStructuredAsync (provider hiccup,
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Config, ECAssistant.Core.Orchestration
+
+### Class: SubAgentBriefBuilderTests
+> v14.17: tier-aware sub-agent brief — pure logic only (no LLM, no build, no DB).
+Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: SubAgentErrorTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Orchestration

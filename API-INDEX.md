@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T08:49:00.734426+00:00
-Packages: 2  |  Types: 462
+Generated: 2026-09-23T08:52:28.816988+00:00
+Packages: 2  |  Types: 466
 
 ---
 
-## ECAssistantCore (354 types, ~29629 LOC)
+## ECAssistantCore (357 types, ~29736 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -224,6 +224,7 @@ Packages: 2  |  Types: 462
 - 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 ParallelToolExecutorTests  (ECAssistantCore)
 - 🟡 PathExpander  (ECAssistantCore)
+- 🟡 PinnedFact  (ECAssistantCore)
 - 🟣 PinnedFact  (ECAssistantCore)  deps: [string, string]
 - 🟡 PlannedToolCall  (ECAssistantCore)
 - 🟡 Playbook  (ECAssistantCore)
@@ -291,6 +292,8 @@ Packages: 2  |  Types: 462
 - 🟡 StructuredDecisionAdapter  (ECAssistantCore)
 - 🟡 StructuredDecisionAdapterTests  (ECAssistantCore)
 - 🟡 StructuredFallbackResilienceTests  (ECAssistantCore)
+- 🟡 SubAgentBriefBuilder  (ECAssistantCore)
+- 🟡 SubAgentBriefBuilderTests  (ECAssistantCore)
 - 🟡 SubAgentConfig  (ECAssistantCore)
 - 🟡 SubAgentError  (ECAssistantCore)
 - 🟡 SubAgentErrorTests  (ECAssistantCore)
@@ -362,7 +365,7 @@ Packages: 2  |  Types: 462
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (108 types, ~13572 LOC)
+## Tests (109 types, ~13623 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -447,6 +450,7 @@ Packages: 2  |  Types: 462
 - 🟡 StepMapperTests  (Tests)
 - 🟡 StructuredDecisionAdapterTests  (Tests)
 - 🟡 StructuredFallbackResilienceTests  (Tests)
+- 🟡 SubAgentBriefBuilderTests  (Tests)
 - 🟡 SubAgentErrorTests  (Tests)
 - 🟡 SubAgentIntegrationTests : IDisposable  (Tests)
 - 🟡 SubAgentResultTests  (Tests)

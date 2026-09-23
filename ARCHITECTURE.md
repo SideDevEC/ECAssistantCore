@@ -660,3 +660,20 @@ delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-dri
 - **Tests:** ContextPinningTests ×20 (path extraction, decision positive/negative,
   dedup, eviction, tier caps, simulated compaction survival with real ContextWindow).
   Filter ContextPinn|Pinned|EngineTierBehavior|Playbook: 28/28.
+
+## Addendum — v14.17 tier-aware sub-agent briefs (2026-09-23)
+
+- **New:** `Engine/SubAgent/SubAgentBriefBuilder.cs` — stateless pure utility
+  (documented static-exception). Composes the child orchestrator's execution
+  prompt from a `SubAgentTask`: `<objective>` block + mandatory OUTPUT CONTRACT
+  (what you did / files created-modified / caveats) so the parent receives a
+  structured, usable result instead of free-form output.
+- **Tier behavior:** small-tier children additionally get GUIDANCE scaffolding
+  (step-by-step, tool discipline, stop-after-2-failures); large-tier children
+  get objective + contract only (slim profile).
+- **Wiring:** `SubAgentManager.RunSingleAsync` now executes
+  `SubAgentBriefBuilder.Build(task, IsLargeTier())` — tier resolved via the same
+  `ModelTier.IsLargeRuntime(isLocal)` seam as Engine/Orchestrator (auto:
+  local → small, remote → large). `ESubAgentTool` schema unchanged.
+- **Tests:** SubAgentBriefBuilderTests ×6 (objective passthrough, contract always
+  present, tier flavoring, empty-Description fallback). Filter run: 6/6.

@@ -164,6 +164,16 @@ public sealed class SubAgentManager : IDisposable
         return lastResult ?? new SubAgentResult { Succeeded = false, Error = new SubAgentError { Kind = SubAgentErrorKind.Exception, Message = "No result returned" } };
     }
 
+    /// <summary>
+    /// v14.17: tier resolution for sub-agent briefs — same seam as Engine/Orchestrator
+    /// (ModelTier.IsLargeRuntime over local/remote; absent config = auto).
+    /// </summary>
+    private bool IsLargeTier()
+     {
+        var isLocal = _config?.LlmProvider?.IsLocal ?? true;
+        return _config?.ModelTier?.IsLargeRuntime(isLocal) ?? !isLocal;
+     }
+
     /// <summary>v10.18.1: Cancel ALL active sub-agents (called when main agent gets ESC).</summary>
     public void CancelAll()
     {
@@ -275,7 +285,8 @@ public sealed class SubAgentManager : IDisposable
                     childEngine.StopExecution();
             });
 
-            var orchResult = await orchestrator.ExecuteMultiStep(task.Prompt);
+            var orchResult = await orchestrator.ExecuteMultiStep(
+                SubAgentBriefBuilder.Build(task, IsLargeTier()));
             childEngine.EndExecution();
 
             // #3: Partial results — snapshot working dir after execution

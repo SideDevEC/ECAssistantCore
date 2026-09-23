@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 354  |  LOC: 29629  |  ~16662 tokens
+Types: 357  |  LOC: 29736  |  ~16763 tokens
 
 ---
 
@@ -486,7 +486,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
 
 ### Class: ContextPinningTests
 > v14.16: tier-aware proactive context pinning — pure logic only (no LLM, no
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.ContextPinning, ECAssistant.Core.Interfaces
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.ContextPinning, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces
 
 ### Class: ContextWindow
 > Manages the LLM conversation context window.
@@ -1070,6 +1070,9 @@ Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.Engine, ECAssistan
 ### Class: PathExpander
 > String utility — truncation and text helpers.
 
+### Class: PinnedFact
+> v14.16: One pinned fact — a piece of critical conversation state held outside
+
 ### Class: PlannedToolCall
 > A single planned tool call — concrete mapping from a sub-task to a tool + args.
 
@@ -1344,6 +1347,13 @@ Cross-package deps: ECAssistant.Core.Engine, Xunit
 ### Class: StructuredFallbackResilienceTests
 > v14.10.1: a transient null from GenerateStructuredAsync (provider hiccup,
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Config, ECAssistant.Core.Orchestration
+
+### Class: SubAgentBriefBuilder
+> v14.17: tier-aware sub-agent brief. Builds the child orchestrator's execution
+
+### Class: SubAgentBriefBuilderTests
+> v14.17: tier-aware sub-agent brief — pure logic only (no LLM, no build, no DB).
+Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: SubAgentConfig
 > Sub-agent configuration. GPU/thread params are server-side concerns
