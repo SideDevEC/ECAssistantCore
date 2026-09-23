@@ -797,6 +797,9 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
                     // Max turns reached
         _out?.WriteLine("[Orchestrator] Max turns reached. Stopping.");
+        // v14.19: capture partial-progress playbooks on the max-turns exit too —
+        // successful tool calls still happened; they'd otherwise never persist.
+        await TryCapturePlaybookAsync(goal);
         var summaryText = FormatTurnLog();
         if (string.IsNullOrEmpty(summaryText)) summaryText = "(No useful output in the last turn.)";
             return new OrchestratorResult

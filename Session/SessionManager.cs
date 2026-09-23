@@ -378,6 +378,11 @@ public class SessionManager : IAsyncDisposable
             remoteTokenizer: _remoteTokenizer,
             isLocalMode: IsLocalMode);
 
+        // v14.19 (Emre): sessions run VERBOSE by default — users see tool status,
+        // playbook captures, verify lines, policy flow. Silent stays available via
+        // the TUI /verbosity toggle for minimal output.
+        session.SetVerbosity(SessionVerbosity.Verbose);
+
         lock (_sessionsLock)
             _sessions.Add(key, session);
         Interlocked.Increment(ref _sessionCounter);
