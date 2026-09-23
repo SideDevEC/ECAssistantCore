@@ -1,6 +1,6 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T13:49:45.375564+00:00
+Generated: 2026-09-23T13:57:41.766831+00:00
 Packages: 2  |  Types: 506
 
 ---
