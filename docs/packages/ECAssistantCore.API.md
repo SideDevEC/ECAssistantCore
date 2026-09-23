@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 381  |  LOC: 32265  |  ~18635 tokens
+Types: 382  |  LOC: 32409  |  ~18675 tokens
 
 ---
 
@@ -418,6 +418,10 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
 
 ### Class: AiSetupResetterTests
 Cross-package deps: ECAssistant.Core.Setup, ECAssistant.Core.Config
+
+### Class: AllToolsTierPromptsTests
+> v15: tier-aware tool prompt enforcement (Emre, 2026-09-23) — the abstract base
+Cross-package deps: ECAssistant.Core.Tools
 
 ### Class: AnsiColor
 > ANSI color codes. Used by ConsoleUiRenderer (the UI bridge) and the setup wizard UIs.

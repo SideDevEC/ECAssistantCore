@@ -128,4 +128,18 @@ public class EFileReaderTool : EToolBase
         if (Path.IsPathRooted(path)) return path;
         return Path.Combine(_workingDir, path);
     }
+        /// <summary>v15: small tier gets parameter discipline; large tier gets strategy.</summary>
+        public override string GetToolRulesForTier(bool isLargeTier)
+        {
+            if (isLargeTier)
+            {
+                return "Rules:\n" +
+                       "- Prefer ranged reads (offset/limit) on large files; do not re-read a file you already have in context.\n";
+            }
+            return "Rules:\n" +
+                   "- file MUST be a path that appeared in an earlier tool result or the user request — never guess.\n" +
+                   "- If the file was already read in this conversation, do NOT read it again — use what you have.\n" +
+                   "- Report file content verbatim when asked; never summarize unless asked.\n";
+        }
+
 }

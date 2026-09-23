@@ -119,4 +119,19 @@ public class EBackgroundExecTool : EToolBase
                 return EToolResult.Failure(Name, $"Unknown action: '{action}'. Use start, status, output, or kill.");
         }
     }
+        /// <summary>v15: small tier gets lifecycle discipline; large tier gets orchestration guidance.</summary>
+        public override string GetToolRulesForTier(bool isLargeTier)
+        {
+            if (isLargeTier)
+            {
+                return "Rules:\n" +
+                       "- Use for long-running work (servers, watchers, big builds); foreground the rest.\n" +
+                       "- Track what you started; stop processes you no longer need.\n";
+            }
+            return "Rules:\n" +
+                   "- Start a background job ONCE. NEVER start the same command again while it may still be running.\n" +
+                   "- After starting, report ONLY: started/not-started and the job id. Do not guess whether it finished.\n" +
+                   "- To check a job, use the status/check action — do not re-run the command.\n";
+        }
+
 }

@@ -87,3 +87,32 @@ public sealed class EToolBaseTierPromptsTests
             new ECAssistant.Core.Config.AppConfig(), "/tmp") { }
     }
 }
+
+/// <summary>v15: every shipped tool must have a tier-differentiated rules hook.</summary>
+public sealed class AllToolsTierPromptsTests
+{
+    public static System.Collections.Generic.IEnumerable<object[]> ToolFactories()
+    {
+        yield return new object[] { "EShellAgent", (Func<EToolBase>)(() => new ECAssistant.Core.Tools.Shell.EShellAgent(new ECAssistant.Core.Services.ProcessRunner(), new ECAssistant.Core.Config.AppConfig(), "/tmp")) };
+        yield return new object[] { "ECodeEditor", (Func<EToolBase>)(() => new ECAssistant.Core.Tools.Code.ECodeEditorTool(new ECAssistant.Core.Services.FileSystemAdapter(), new ECAssistant.Core.Config.AppConfig())) };
+        yield return new object[] { "EDotnetBuild", (Func<EToolBase>)(() => new ECAssistant.Core.Tools.Build.EDotnetBuildTool(new ECAssistant.Core.Services.ProcessRunner(), new ECAssistant.Core.Config.AppConfig())) };
+        yield return new object[] { "EFileReader", (Func<EToolBase>)(() => new ECAssistant.Core.Tools.Reader.EFileReaderTool(new ECAssistant.Core.Services.FileSystemAdapter(), new ECAssistant.Core.Config.AppConfig())) };
+        yield return new object[] { "EFileResearchTool", (Func<EToolBase>)(() => new ECAssistant.Core.Tools.Research.EFileResearchTool(new ECAssistant.Core.Services.FileSystemAdapter(), new ECAssistant.Core.Config.AppConfig())) };
+        yield return new object[] { "EGitTool", (Func<EToolBase>)(() => new ECAssistant.Core.Tools.Git.EGitTool(new ECAssistant.Core.Services.ProcessRunner(), new ECAssistant.Core.Services.FileSystemAdapter(), new ECAssistant.Core.Config.AppConfig())) };
+        yield return new object[] { "EHandoff", (Func<EToolBase>)(() => new ECAssistant.Core.Tools.Handoff.EHandoffTool((req, ct) => System.Threading.Tasks.Task.FromResult(new ECAssistant.Core.Orchestration.OrchestratorResult()))) };
+        yield return new object[] { "EAskUser", (Func<EToolBase>)(() => new ECAssistant.Core.Tools.User.EUserAskTool(null)) };
+    }
+
+    [Theory]
+    [MemberData(nameof(ToolFactories))]
+    public void EveryTool_SmallVsLarge_RulesDiffer(string name, Func<EToolBase> make)
+    {
+        var tool = make();
+        Assert.Equal(name, tool.Name);
+        var small = tool.GetToolRulesForTier(isLargeTier: false);
+        var large = tool.GetToolRulesForTier(isLargeTier: true);
+        Assert.False(string.IsNullOrWhiteSpace(small), $"{name}: small-tier rules empty");
+        Assert.False(string.IsNullOrWhiteSpace(large), $"{name}: large-tier rules empty");
+        Assert.NotEqual(small, large);
+    }
+}

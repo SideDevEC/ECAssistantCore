@@ -139,4 +139,20 @@ public class ESubAgentTool : EToolBase
             return new EToolResult { ToolName = Name, Succeeded = false, Error = $"Sub-agent execution failed: {ex.Message}" };
         }
     }
+        /// <summary>v15: small tier gets delegation do-nots; large tier gets parallelization guidance.</summary>
+        public override string GetToolRulesForTier(bool isLargeTier)
+        {
+            if (isLargeTier)
+            {
+                return "Rules:\n" +
+                       "- Delegate self-contained sub-tasks that would take multiple tool calls; keep single-call work yourself.\n" +
+                       "- Give each sub-agent a self-sufficient task description and its own working area when file writes are involved.\n";
+            }
+            return "Rules:\n" +
+                   "- Use ESubAgent ONLY for tasks that need MULTIPLE tool calls. One tool call = do it yourself.\n" +
+                   "- The task description MUST be complete and standalone: what to do, where, what to return. Never 'as discussed above'.\n" +
+                   "- NEVER delegate the same task twice.\n" +
+                   "- When the sub-agent returns a result, pass it on — do not redo the work.\n";
+        }
+
 }

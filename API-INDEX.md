@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T17:13:53.702047+00:00
-Packages: 2  |  Types: 510
+Generated: 2026-09-23T17:16:07.926064+00:00
+Packages: 2  |  Types: 512
 
 ---
 
-## ECAssistantCore (381 types, ~32265 LOC)
+## ECAssistantCore (382 types, ~32409 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -59,6 +59,7 @@ Packages: 2  |  Types: 510
 - 🟡 AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable  (ECAssistantCore)  deps: [string, string, string, string, InferenceRequestParams, string, SemaphoreSlim, SubAgentConfig? subAgentConfig =, string? label =, ILogger? logger =, AppConfig? config =, OpenAIClient? httpClient =, RemoteTokenizer? remoteTokenizer =, string? apiKey =, bool isLocalMode =]
 - 🟡 AiSetupResetter : IAiSetupResetter  (ECAssistantCore)
 - 🟡 AiSetupResetterTests  (ECAssistantCore)
+- 🟡 AllToolsTierPromptsTests  (ECAssistantCore)
 - 🟡 AnsiColor  (ECAssistantCore)
 - 🟡 ApiUserController  (ECAssistantCore)
 - 🟡 AppConfig  (ECAssistantCore)
@@ -389,9 +390,10 @@ Packages: 2  |  Types: 510
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (129 types, ~15514 LOC)
+## Tests (130 types, ~15540 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
+- 🟡 AllToolsTierPromptsTests  (Tests)
 - 🟡 ApiUserController  (Tests)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (Tests)
 - 🟡 BuildCallSignatureTests  (Tests)

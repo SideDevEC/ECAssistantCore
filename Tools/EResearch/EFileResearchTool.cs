@@ -179,4 +179,19 @@ public class EFileResearchTool : EToolBase
 
         return result;
     }
+        /// <summary>v15: small tier gets single-search discipline; large tier gets iteration guidance.</summary>
+        public override string GetToolRulesForTier(bool isLargeTier)
+        {
+            if (isLargeTier)
+            {
+                return "Rules:\n" +
+                       "- Iterate: refine the query based on results rather than repeating it.\n" +
+                       "- Stop searching once you can answer; extra searches add latency, not signal.\n";
+            }
+            return "Rules:\n" +
+                   "- Use the MOST specific query you can (include file names, symbols, error text).\n" +
+                   "- NEVER run the same search twice with the same query.\n" +
+                   "- If the first search returns nothing, change the query terms — do not repeat it.\n";
+        }
+
 }

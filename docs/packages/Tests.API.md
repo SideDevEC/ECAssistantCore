@@ -1,11 +1,15 @@
 # Tests.API.md
 
-Types: 129  |  LOC: 15514  |  ~5790 tokens
+Types: 130  |  LOC: 15540  |  ~5830 tokens
 
 ---
 
 ### Class: AiSetupResetterTests
 Cross-package deps: ECAssistant.Core.Setup, ECAssistant.Core.Config
+
+### Class: AllToolsTierPromptsTests
+> v15: tier-aware tool prompt enforcement (Emre, 2026-09-23) — the abstract base
+Cross-package deps: ECAssistant.Core.Tools
 
 ### Class: ApiUserController
 Cross-package deps: ECAssistant.Core.Analysis

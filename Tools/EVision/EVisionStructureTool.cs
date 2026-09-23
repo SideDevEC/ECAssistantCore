@@ -170,4 +170,17 @@ public class EVisionStructureTool : EToolBase
             return null;
         return int.TryParse(raw, out var page) ? page : null;
     }
+        /// <summary>v15: small tier gets output discipline; large tier gets analysis guidance.</summary>
+        public override string GetToolRulesForTier(bool isLargeTier)
+        {
+            if (isLargeTier)
+            {
+                return "Rules:\n" +
+                       "- Report structure decisions with rationale (names, layers, boundaries) — not just a file list.\n";
+            }
+            return "Rules:\n" +
+                   "- Report ONLY the structure that was asked for (classes, files, or folders) — no extra suggestions.\n" +
+                   "- Copy names EXACTLY as they appear in the output.\n";
+        }
+
 }

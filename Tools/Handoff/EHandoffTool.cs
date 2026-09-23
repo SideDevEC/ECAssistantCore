@@ -122,4 +122,20 @@ public sealed class EHandoffTool : EToolBase
             return EToolResult.Failure(Name, $"Handoff execution failed: {ex.Message}");
         }
     }
+        /// <summary>v15: small tier gets when-to-handoff do-nots; large tier gets judgment guidance.</summary>
+        public override string GetToolRulesForTier(bool isLargeTier)
+        {
+            if (isLargeTier)
+            {
+                return "Rules:\n" +
+                       "- Hand off genuinely isolated sub-problems; keep coherent threads yourself.\n" +
+                       "- Write the specialist prompt as a complete standalone task brief (context, constraints, expected output).\n";
+            }
+            return "Rules:\n" +
+                   "- Use EHandoff ONLY when the user asks for a specialist handoff or the task needs a fully separate agent.\n" +
+                   "- Do NOT use EHandoff for sub-tasks you can do yourself with one tool call.\n" +
+                   "- The specialist prompt MUST be a full standalone instruction (what to do + what to return). Never 'see above'.\n" +
+                   "- After the specialist returns, report ITS result to the user — do not re-do the task yourself.\n";
+        }
+
 }

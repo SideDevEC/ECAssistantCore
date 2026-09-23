@@ -212,4 +212,20 @@ public class EGitTool : EToolBase
 
         return sb.ToString();
     }
+        /// <summary>v15: small tier gets safety do-nots; large tier gets workflow guidance.</summary>
+        public override string GetToolRulesForTier(bool isLargeTier)
+        {
+            if (isLargeTier)
+            {
+                return "Rules:\n" +
+                       "- Check status/diff before committing; write commit messages that describe WHY, not just WHAT.\n" +
+                       "- Never force-push or rewrite history on shared branches.\n";
+            }
+            return "Rules:\n" +
+                   "- NEVER run: push --force, reset --hard, clean, checkout ., or branch -D unless the user EXPLICITLY asked for that exact command.\n" +
+                   "- ALWAYS run status before commit, push, or checkout.\n" +
+                   "- Commit messages: one line, describe what changed. No co-author lines, no attribution.\n" +
+                   "- NEVER commit files the user did not mention unless they asked to commit 'everything'.\n";
+        }
+
 }

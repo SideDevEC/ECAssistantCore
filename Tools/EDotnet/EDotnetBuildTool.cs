@@ -106,4 +106,20 @@ public class EDotnetBuildTool : EToolBase
             return EToolResult.Failure(Name, $"[Build Failed (Exit {result.ExitCode})] {errors.Count} error(s), {warnings.Count} warning(s).\n{allOutput}");
     }
 
+        /// <summary>v15: small tier gets literal do-nots; large tier gets diagnosis workflow.</summary>
+        public override string GetToolRulesForTier(bool isLargeTier)
+        {
+            if (isLargeTier)
+            {
+                return "Rules:\n" +
+                       "- Read the error output carefully before editing — fix the ROOT cause, not the first error line.\n" +
+                       "- Batch: one build after several related edits, not after each single edit.\n";
+            }
+            return "Rules:\n" +
+                   "- After the build result, report ONLY: success, or the first 1-2 errors verbatim.\n" +
+                   "- NEVER edit files to 'fix' a build error unless the user asked for a fix.\n" +
+                   "- NEVER run the build twice in a row with no changes in between.\n" +
+                   "- Copy error messages EXACTLY — do not paraphrase or shorten them.\n";
+        }
+
 }

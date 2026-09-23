@@ -85,4 +85,19 @@ public sealed class EUserAskTool : EToolBase
                 ? "No answer from the user — proceed with your best judgment."
                 : $"No answer from the user — proceeding with default: {fallback}");
     }
+        /// <summary>v15: small tier gets when-to-ask discipline; large tier gets judgment guidance.</summary>
+        public override string GetToolRulesForTier(bool isLargeTier)
+        {
+            if (isLargeTier)
+            {
+                return "Rules:\n" +
+                       "- Ask only when the answer changes what you do; otherwise state your interpretation and proceed.\n" +
+                       "- Batch questions — one ask with all open points, not one message per question.\n";
+            }
+            return "Rules:\n" +
+                   "- Ask the user ONLY when required information is missing and cannot be found with tools.\n" +
+                   "- NEVER ask when a tool call can answer the question — try tools first.\n" +
+                   "- One question per call, phrased so it can be answered briefly.\n";
+        }
+
 }
