@@ -15,6 +15,8 @@ public class ECodeEditorTool : EToolBase
     private readonly IFileSystem _fileSystem;
     private readonly JsonElement? _toolConfig;
     private readonly string _workingDir;
+    private readonly bool _largeTierRuntime;
+    private readonly TextMatchPipeline _matchPipeline = new();
 
     public override string Name => "ECodeEditor";
 
@@ -22,7 +24,11 @@ public class ECodeEditorTool : EToolBase
         "Surgical code editing: create files, multi-line patch, diff preview, cross-file search & replace, " +
         "line insertion/deletion. Better than shell echo for code changes. " +
         "Use ONLY when the user asks to create or modify actual project files. Do NOT use to write " +
-        "example code inside a chat answer — answer coding questions directly.";
+        "example code inside a chat answer — answer coding questions directly. " +
+        // v14.15 tier flavor: large = terse hint, small = explicit guidance.
+        (_largeTierRuntime
+            ? "Approximate matches tolerated."
+            : "Copy text exactly first; fuzzy fallback will rescue small mismatches.");
 
     public override string GetParameterSchema() =>
         """
@@ -33,7 +39,8 @@ public class ECodeEditorTool : EToolBase
             "file": { "type": "string", "description": "Target file path (relative to workspace)" },
             "content": { "type": "string", "description": "Full file content (action=create)" },
             "old_text": { "type": "string", "description": "Exact text to replace (action=patch)" },
-            "new_text": { "type": "string", "description": "Replacement text (action=patch)" }
+            "new_text": { "type": "string", "description": "Replacement text (action=patch)" },
+            "fuzzy": { "type": "boolean", "description": "Optional (default true). Set false to require exact matching only for action=patch." }
           }
         }
         """;
@@ -48,6 +55,9 @@ public class ECodeEditorTool : EToolBase
         config.Tools.TryGetValue(Name, out var tc);
         _toolConfig = tc.ValueKind == JsonValueKind.Undefined ? null : tc;
         IsEnabled = ReadCfg(_toolConfig, "enabled", true);
+        // v14.15: tier resolved like Engine/Orchestrator do (only coupling with tiers).
+        var isLocal = config?.LlmProvider?.IsLocal ?? true;
+        _largeTierRuntime = config?.ModelTier?.IsLargeRuntime(isLocal) ?? !isLocal;
         _workingDir = config.AgentSettings.WorkingDirectory;
     }
 
@@ -139,6 +149,20 @@ public class ECodeEditorTool : EToolBase
         if (oldText.Length == 0)
             return (false, "ECodeEditor: old_text must not be empty.");
 
+        // v14.15: fuzzy arg is optional and defaults to true; "false" disables layered matching.
+        var fuzzyArg = args.GetValueOrDefault("fuzzy");
+        var fuzzyEnabled = fuzzyArg == null || !string.Equals(fuzzyArg.Trim(), "false", StringComparison.OrdinalIgnoreCase);
+
+        if (!fuzzyEnabled)
+            return await PatchExact(fullPath, file, content, oldText, newText);
+
+        return await PatchFuzzy(fullPath, file, content, oldText, newText);
+    }
+
+    // ─── Patch — strict exact matching (fuzzy=false) ──────────────
+    private async Task<(bool Ok, string Message)> PatchExact(string fullPath, string file, string content, string oldText, string newText)
+    {
+        await Task.CompletedTask;
         if (!content.Contains(oldText))
         {
             var similar = FindSimilarLines(content, oldText);
@@ -160,7 +184,72 @@ public class ECodeEditorTool : EToolBase
 
         await Task.Run(() => _fileSystem.WriteFile(fullPath, newContent));
 
-        return (true, $"✅ Patched {file}\n\nDiff:\n{diff}");
+        return (true, $"✅ Patched {file} (match strategy: exact)\n\nDiff:\n{diff}");
+    }
+
+    // ─── Patch — layered fuzzy matching (v14.15) ───────────────────
+    private async Task<(bool Ok, string Message)> PatchFuzzy(string fullPath, string file, string content, string oldText, string newText)
+    {
+        var match = _matchPipeline.Find(content, oldText);
+        switch (match.Status)
+        {
+            case TextMatchStatus.NotFound:
+            {
+                var similar = FindSimilarLines(content, oldText);
+                var msg = $"old_text not found in {file} (exact, whitespace-tolerant, and line-anchored matching all failed).";
+                if (similar.Count > 0)
+                    msg += $"\nSimilar lines found:\n{string.Join("\n", similar.Take(3))}";
+                return (false, msg);
+            }
+            case TextMatchStatus.Ambiguous:
+            {
+                // Conservative: never guess among candidates — structured error.
+                var lines = string.Join(",", match.CandidateLines);
+                return (false, $"ambiguous match: {match.CandidateLines.Count} candidates at lines {lines} in {file}. " +
+                    $"Add more context to old_text to make it unique.");
+            }
+        }
+
+        var replacement = RestoreIndentation(match.MatchedText, oldText, newText);
+        var newContent = content.Remove(match.StartIndex, match.MatchedText.Length).Insert(match.StartIndex, replacement);
+        var patchDiff = GenerateDiff(content, newContent, file);
+
+        await Task.Run(() => _fileSystem.WriteFile(fullPath, newContent));
+
+        return (true, $"✅ Patched {file} (match strategy: {match.StrategyName})\n\nDiff:\n{patchDiff}");
+    }
+
+    /// <summary>
+    /// v14.15 indentation restoration: when a fuzzy strategy located the original block,
+    /// re-indent new_text by the indentation delta between the file's real block and the
+    /// model's old_text. Pure function — no mutable state.
+    /// </summary>
+    private static string RestoreIndentation(string matchedText, string oldText, string newText)
+    {
+        var matchFirst = matchedText.Replace("\r\n", "\n").Split('\n')[0];
+        var oldFirst = oldText.Replace("\r\n", "\n").Split('\n')[0];
+        var matchIndent = matchFirst.Length - matchFirst.TrimStart().Length;
+        var oldIndent = oldFirst.Length - oldFirst.TrimStart().Length;
+        var delta = matchIndent - oldIndent;
+        if (delta == 0)
+            return newText;
+
+        var nl = newText.Contains("\r\n") ? "\r\n" : "\n";
+        var lines = newText.Replace("\r\n", "\n").Split('\n');
+        for (var i = 0; i < lines.Length; i++)
+        {
+            if (lines[i].Trim().Length == 0)
+                continue; // keep blank lines blank
+            if (delta > 0)
+                lines[i] = new string(' ', delta) + lines[i];
+            else
+            {
+                var leading = lines[i].Length - lines[i].TrimStart().Length;
+                var remove = Math.Min(-delta, leading);
+                lines[i] = lines[i][remove..];
+            }
+        }
+        return string.Join(nl, lines);
     }
 
     // ─── Diff: show what would change ─────────────────────────────

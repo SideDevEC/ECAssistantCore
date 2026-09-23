@@ -614,3 +614,28 @@ delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-dri
 - **Tests:** PlaybookTests ×18 (persist/load roundtrip, title+trigger-set dedup, eviction of
   least-used/oldest, keyword matching, tier-flavored injection text, deterministic extractor,
   MockEngine orchestrator capture — no LLM, temp dirs only). Playbook net 18/18; Harness filter 98/98.
+
+## Addendum — v14.15 fuzzy diff-based edits (2026-09-23)
+
+- **New Tools/ECode matching types** (one per file): `ITextMatchStrategy` +
+  `ExactMatchStrategy` (strict ordinal, unique only), `WhitespaceTolerantMatchStrategy`
+  (whitespace-run normalization + indentation-insensitive; returns ORIGINAL block text),
+  `LineAnchoredMatchStrategy` (significant-line window match — whitespace stripped,
+  blank-line drift tolerated; original indentation preserved), `TextMatchPipeline` (ordered layered fallback, returns best match + winning
+  strategy name), plus `TextMatchStatus`/`TextMatchResult`.
+- **Ambiguity is conservative, never guessed:** multiple candidates → structured error
+  "ambiguous match: N candidates at lines X,Y,Z"; pipeline stops at the FIRST ambiguous
+  result (no guessing through to looser strategies).
+- **ECodeEditorTool patch:** layered matching by default; optional `fuzzy` arg (default
+  true, backward-compatible schema) → `false` restores strict exact-only behavior. Result
+  message states winning strategy ("match strategy: exact|whitespace-tolerant|line-anchored").
+  Fuzzy hits re-indent new_text by the indentation delta between the file's real block and
+  the model's old_text (indentation restoration).
+- **Tier coupling (only in tool description):** large tier → terse "Approximate matches
+  tolerated."; small tier → "Copy text exactly first; fuzzy fallback will rescue small
+  mismatches." Tier resolved via `ModelTier.IsLargeRuntime(LlmProvider.IsLocal)` like
+  Engine/Orchestrator.
+- **Tests:** TextMatchStrategyTests ×24 (per strategy, pipeline ordering incl. stub-based
+  no-guessing, ambiguity error, indentation restoration incl. delta-0, fuzzy=false,
+  tier description flavor incl. remote-auto; Mock IFileSystem, pure logic).
+  Combined CodeEditor+MatchStrategy+Playbook+EngineTierBehavior filter: 94/94.

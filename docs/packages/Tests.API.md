@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 106  |  LOC: 13168  |  ~4279 tokens
+Types: 107  |  LOC: 13454  |  ~4333 tokens
 
 ---
 
@@ -353,6 +353,10 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 
 ### Class: Test
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Research
+
+### Class: TextMatchStrategyTests
+> v14.15 fuzzy diff-based edits: layered match strategies, pipeline ordering,
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Code
 
 ### Class: TfidfEmbedderTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces

@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T07:53:57.989114+00:00
-Packages: 2  |  Types: 446
+Generated: 2026-09-23T08:24:25.575189+00:00
+Packages: 2  |  Types: 455
 
 ---
 
-## ECAssistantCore (340 types, ~28828 LOC)
+## ECAssistantCore (348 types, ~29360 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -41,6 +41,7 @@ Packages: 2  |  Types: 446
 - 🔵 ISubAgentEngineHost  (ECAssistantCore)
 - 🔵 ITaskPlanner  (ECAssistantCore)
 - 🔵 ITerminal  (ECAssistantCore)
+- 🔵 ITextMatchStrategy  (ECAssistantCore)
 - 🔵 IToolPolicyEvaluator  (ECAssistantCore)
 - 🔵 IVectorEmbedder  (ECAssistantCore)
 - 🔵 IVectorStore  (ECAssistantCore)
@@ -128,6 +129,7 @@ Packages: 2  |  Types: 446
 - 🟡 EndpointNormalizer  (ECAssistantCore)
 - 🟡 EndpointNormalizerTests  (ECAssistantCore)
 - 🟡 EngineTierBehaviorTests : IDisposable  (ECAssistantCore)
+- 🟡 ExactMatchStrategy : ITextMatchStrategy  (ECAssistantCore)
 - 🟡 ExecutionLifecycleState  (ECAssistantCore)
 - 🟡 ExecutionPlan  (ECAssistantCore)
 - 🟡 ExecutionState  (ECAssistantCore)
@@ -177,6 +179,8 @@ Packages: 2  |  Types: 446
 - 🟡 JsonEnvelopeFallbackTests  (ECAssistantCore)
 - 🟡 KvCacheStatus  (ECAssistantCore)
 - 🟡 LLMDecision  (ECAssistantCore)  deps: [bool, string, Dictionary, string? answerText =, string? reasoning =, List, string? reasoning =, string? commentary =]
+- 🟡 LineAnchoredMatchStrategy : LineMatchStrategyBase  (ECAssistantCore)
+- 🟡 LineMatchStrategyBase : ITextMatchStrategy  (ECAssistantCore)
 - 🟡 LlmConfig  (ECAssistantCore)
 - 🟡 LlmProviderConfig  (ECAssistantCore)
 - 🟡 LlmProviderRegistry : ILlmProviderRegistry  (ECAssistantCore)  deps: [MultiLlmProvidersConfig, ILogger? logger =, ISecureKeyStore? keyStore =]
@@ -301,6 +305,9 @@ Packages: 2  |  Types: 446
 - 🟡 TerminalAdapter : ITerminal  (ECAssistantCore)
 - 🟡 Test  (ECAssistantCore)
 - 🟡 Test  (ECAssistantCore)
+- 🟡 TextMatchPipeline  (ECAssistantCore)  deps: [IReadOnlyList]
+- 🟡 TextMatchResult  (ECAssistantCore)
+- 🟡 TextMatchStrategyTests  (ECAssistantCore)
 - 🟡 TfidfEmbedder : IVectorEmbedder  (ECAssistantCore)
 - 🟡 TfidfEmbedderTests  (ECAssistantCore)
 - 🟡 TokenCounter  (ECAssistantCore)  deps: [RemoteTokenizer? tokenizer =]
@@ -343,12 +350,13 @@ Packages: 2  |  Types: 446
 - 🟡 VisionStructureJsonParser  (ECAssistantCore)
 - 🟡 VisionStructureJsonParserTests  (ECAssistantCore)
 - 🟡 VisionStructurePromptBuilder  (ECAssistantCore)
+- 🟡 WhitespaceTolerantMatchStrategy : LineMatchStrategyBase  (ECAssistantCore)
 - 🟡 WizardCatalogTests : IDisposable  (ECAssistantCore)
 - 🟡 WizardContext  (ECAssistantCore)
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (106 types, ~13168 LOC)
+## Tests (107 types, ~13454 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -441,6 +449,7 @@ Packages: 2  |  Types: 446
 - 🟡 TaskPlannerTests  (Tests)
 - 🟡 Test  (Tests)
 - 🟡 Test  (Tests)
+- 🟡 TextMatchStrategyTests  (Tests)
 - 🟡 TfidfEmbedderTests  (Tests)
 - 🟡 TokenCounterTests  (Tests)
 - 🟡 ToolCallRequestTests  (Tests)

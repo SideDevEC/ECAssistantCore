@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 340  |  LOC: 28828  |  ~16035 tokens
+Types: 348  |  LOC: 29360  |  ~16360 tokens
 
 ---
 
@@ -317,6 +317,13 @@ Methods:
   - void Write(string text)
   - string ReadLine()
   - void Clear()
+
+### Interface: ITextMatchStrategy
+> A single text-matching strategy for patch search/replace. Implementations
+Properties:
+  - string Name { get; set; }
+Methods:
+  - TextMatchResult Find(string content, string searchText)
 
 ### Interface: IToolPolicyEvaluator
 > Evaluates tool permissions.
@@ -691,6 +698,10 @@ Cross-package deps: ECAssistant.Core.Setup, ECAssistant.Core.Transport
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools, ECAssistant.TestSupport
 
+### Class: ExactMatchStrategy
+> Priority 1: exact substring match — the pre-v14.15 behavior, unchanged.
+Implements: ITextMatchStrategy
+
 ### Class: ExecutionLifecycleState
 > Execution lifecycle state for the main agent loop (CTS, ESC flag, turn counter).
 
@@ -863,6 +874,14 @@ Cross-package deps: ECAssistant.Core.Engine
 Constructor:
   - LLMDecision(bool wantsToolCall, string? toolName, Dictionary<string, string?> args, string? answerText = null, string? reasoning = null, List<ToolCallRequest> toolCalls, string? reasoning = null, string? commentary = null)
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools
+
+### Class: LineAnchoredMatchStrategy
+> Priority 3: line-anchored match on significant content only — ALL whitespace
+Implements: LineMatchStrategyBase
+
+### Class: LineMatchStrategyBase
+> Shared machinery for line-based strategies: split content into lines while
+Implements: ITextMatchStrategy
 
 ### Class: LlmConfig
 > LLM configuration. Model loading params (gpu_layers, batch_size, threads) live in
@@ -1374,6 +1393,18 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 ### Class: Test
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Research
 
+### Class: TextMatchPipeline
+> Runs match strategies in order (exact → whitespace-tolerant → line-anchored)
+Constructor:
+  - TextMatchPipeline(IReadOnlyList<ITextMatchStrategy> strategies)
+
+### Class: TextMatchResult
+> Outcome of one match strategy scanning content for a search text:
+
+### Class: TextMatchStrategyTests
+> v14.15 fuzzy diff-based edits: layered match strategies, pipeline ordering,
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Code
+
 ### Class: TfidfEmbedder
 > TF-IDF text embedding implementation.
 Implements: IVectorEmbedder
@@ -1503,6 +1534,10 @@ Cross-package deps: ECAssistant.Core.Vision
 
 ### Class: VisionStructurePromptBuilder
 > Builds the analysis prompt sent with an image to the vision model.
+
+### Class: WhitespaceTolerantMatchStrategy
+> Priority 2: whitespace-tolerant match — indentation-insensitive anchoring.
+Implements: LineMatchStrategyBase
 
 ### Class: WizardCatalogTests
 > Wizard rework units: remote catalog fetch fallback, local model discovery.

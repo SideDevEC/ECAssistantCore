@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-23T07:53:57.989774+00:00
-Edges: 82  |  Packages: 2
+Generated: 2026-09-23T08:24:25.575837+00:00
+Edges: 86  |  Packages: 2
 
 ---
 
@@ -50,12 +50,15 @@ Edges: 82  |  Packages: 2
 - EVisionStructureTool ──uses──► IPdfPageRenderer (ECAssistantCore)
 - EcaServiceBundle ──uses──► ILogger (ECAssistantCore)
 - EcaServiceBundle ──uses──► ISessionBuilder (ECAssistantCore)
+- ExactMatchStrategy ──implements──► ITextMatchStrategy (ECAssistantCore)
 - FileSystemAdapter ──implements──► IFileSystem (ECAssistantCore)
 - FirstRunOrchestrator ──uses──► ISetupUi (ECAssistantCore)
 - HttpClientAdapter ──implements──► IHttpClient (ECAssistantCore)
 - HttpEmbedder ──implements──► IVectorEmbedder (ECAssistantCore)
 - HttpStreamingEngine ──implements──► IInferenceEngine (ECAssistantCore)
 - InMemoryVectorStore ──implements──► IVectorStore (ECAssistantCore)
+- LineAnchoredMatchStrategy ──implements──► LineMatchStrategyBase (ECAssistantCore)
+- LineMatchStrategyBase ──implements──► ITextMatchStrategy (ECAssistantCore)
 - LlmProviderRegistry ──implements──► ILlmProviderRegistry (ECAssistantCore)
 - LlmServerClient ──implements──► ILlmServerClient (ECAssistantCore)
 - Logger ──implements──► ILogger (ECAssistantCore)
@@ -88,6 +91,7 @@ Edges: 82  |  Packages: 2
 - TaskPlanner ──implements──► ITaskPlanner (ECAssistantCore)
 - TerminalAdapter ──implements──► ITerminal (ECAssistantCore)
 - TfidfEmbedder ──implements──► IVectorEmbedder (ECAssistantCore)
+- WhitespaceTolerantMatchStrategy ──implements──► LineMatchStrategyBase (ECAssistantCore)
 
 ## Tests
 

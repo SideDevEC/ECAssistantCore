@@ -1,10 +1,16 @@
 {
   "project": "ECAssistantCore",
-  "timestamp": "2026-09-23T07:53:57.991140+00:00",
-  "total_violations": 3,
+  "timestamp": "2026-09-23T08:24:25.577205+00:00",
+  "total_violations": 4,
   "errors": 0,
-  "warnings": 3,
+  "warnings": 4,
   "violations": [
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "Tools/ECode/TextMatchPipeline.cs",
+      "message": "Public class TextMatchPipeline in ECAssistantCore implements no interface \u2014 may be a boundary leak"
+    },
     {
       "rule": "interface-first",
       "severity": "warning",
