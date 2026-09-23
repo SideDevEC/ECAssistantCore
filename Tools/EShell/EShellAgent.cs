@@ -261,6 +261,25 @@ public class EShellAgent : EToolBase
     /// <summary>v15: small tier gets literal do-not rules; large tier gets judgment-based guidance.</summary>
         public override string GetToolRulesForTier(bool isLargeTier)
         {
+            if (OperatingSystem.IsWindows())
+            {
+                if (isLargeTier)
+                {
+                    return "Rules:\n" +
+                           "- Your commands run in a PERSISTENT PowerShell session: your location (Set-Location) and environment variables ($env:NAME = value) survive between calls. Do NOT re-Set-Location or re-set $env: on every call.\n" +
+                           "- Use PowerShell syntax ONLY: Get-ChildItem, Get-Content, Copy-Item. NEVER bash commands (ls, cat, export, head/tail) — they are not PowerShell.\n" +
+                           "- Combine independent steps with ; when safe — fewer, larger calls beat many round-trips.\n" +
+                           "- Prefer targeted output (Select-Object -First N) over dumping unbounded streams.\n";
+                }
+                return "Rules:\n" +
+                       "- Your commands run in a PERSISTENT PowerShell session: your location (Set-Location) and environment variables ($env:NAME = value) survive between calls. Do NOT re-Set-Location or re-set $env: on every call.\n" +
+                       "- Use PowerShell syntax ONLY: Get-ChildItem, Get-Content, Copy-Item. NEVER bash commands (ls, cat, export, head/tail).\n" +
+                       "- ONE command per call.\n" +
+                       "- NEVER run interactive programs (notepad, top-style watchers) — they hang the agent.\n" +
+                       "- If a command returns an error, do NOT repeat it unchanged. Fix the path/argument or report the error.\n" +
+                       "- Keep output small: Select-Object -First N instead of printing everything.\n";
+            }
+
             if (isLargeTier)
             {
                 return "Rules:\n" +
