@@ -782,7 +782,12 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                     await TryCapturePlaybookAsync(goal);
                     return new OrchestratorResult
                              {
-                            FinalOutput = decision.AnswerText ?? "(No response content)",
+                            // v14.18: after retries fail, thinking text is the last
+                            // resort (never surfaced on the first pass — see LLMDecision).
+                            FinalOutput = decision.AnswerText ??
+                                (string.IsNullOrWhiteSpace(decision.Reasoning)
+                                    ? "(No response content)"
+                                    : decision.Reasoning),
                             ToolCallsMade = _turnCount + 1,
                             Status = OrchestratorStatus.GoalAchieved
                              };
@@ -934,10 +939,12 @@ public sealed class AgentOrchestrator : IAsyncDisposable
         return summary.Length <= 120 ? summary : summary[..120] + "…";
           }
 
-       /// <summary>v14.14: capture a success playbook after a goal achieved with at least one successful tool call. Never kills the agent loop.</summary>
+       /// <summary>v14.14: capture a success playbook after a goal achieved with at least one successful tool call. Never kills the agent loop.
+     /// v14.18: the store resolves LAZILY — the session ctor creates the orchestrator before
+     /// InitializePlaybooks, so a ctor-time snapshot captured a null store forever.</summary>
      private async Task TryCapturePlaybookAsync(string goal)
           {
-        var store = _playbookStore;
+        var store = _playbookStore ?? _engine.PlaybookStore;
         if (store == null || _successfulCalls.Count == 0) return;
         try
          {

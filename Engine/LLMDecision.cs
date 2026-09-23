@@ -85,8 +85,13 @@ public class LLMDecision
             return new LLMDecision(requests, thinking, commentary);
          }
 
-        // Neither answer nor toolcalls — fall back to thinking text as the answer.
-        return new LLMDecision(false, null, new Dictionary<string, string?>(), thinking, thinking);
+        // Neither answer nor toolcalls — v14.18: do NOT surface the thinking text
+        // as the answer (live qwen3.5-4b E2E showed thinking-only envelopes getting
+        // delivered to the user as final output, bypassing the format-retry that
+        // gives the model a second chance). Return a null-answer decision — the
+        // orchestrator's format-retry path removes the empty turn and nudges the
+        // model; thinking stays in Reasoning for the post-retry best-effort path.
+        return new LLMDecision(false, null, new Dictionary<string, string?>(), null, thinking);
      }
 
       /// <summary>Is this a multi-call (parallel) decision?</summary>

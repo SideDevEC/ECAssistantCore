@@ -153,6 +153,9 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
 
     /// <summary>v14.16: test/dependency-injection seam for the pinner.</summary>
     public IContextPinner? InjectedContextPinner { get; set; }
+
+    /// <summary>v14.17: active pinned-context store (null when pinning disabled/uninitialized) — read-only surface for hosts/tests.</summary>
+    public IContextPinner? ContextPinner => _contextPinner;
     /// <summary>v14.14: success-procedure memory store (null until initialized).</summary>
     public ECAssistant.Core.Playbooks.IPlaybookStore? PlaybookStore => _playbookStore;
     private ECAssistant.Core.Engine.ProjectContextManager? _projectContext;
