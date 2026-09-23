@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T17:30:47.701211+00:00
-Packages: 2  |  Types: 512
+Generated: 2026-09-23T17:46:28.436238+00:00
+Packages: 2  |  Types: 513
 
 ---
 
-## ECAssistantCore (382 types, ~32394 LOC)
+## ECAssistantCore (383 types, ~32422 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -337,6 +337,7 @@ Packages: 2  |  Types: 512
 - 🟡 TextMatchStrategyTests  (ECAssistantCore)
 - 🟡 TfidfEmbedder : IVectorEmbedder  (ECAssistantCore)
 - 🟡 TfidfEmbedderTests  (ECAssistantCore)
+- 🟡 TierInferenceOverride  (ECAssistantCore)
 - 🟡 TierInferenceTuner  (ECAssistantCore)
 - 🟡 TierInferenceTunerTests  (ECAssistantCore)
 - 🟡 TokenCounter  (ECAssistantCore)  deps: [RemoteTokenizer? tokenizer =]
@@ -390,7 +391,7 @@ Packages: 2  |  Types: 512
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (130 types, ~15566 LOC)
+## Tests (130 types, ~15561 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 AllToolsTierPromptsTests  (Tests)

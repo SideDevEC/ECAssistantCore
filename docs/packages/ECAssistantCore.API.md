@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 382  |  LOC: 32394  |  ~18675 tokens
+Types: 383  |  LOC: 32422  |  ~18701 tokens
 
 ---
 
@@ -1545,12 +1545,15 @@ Cross-package deps: ECAssistant.Core.Interfaces
 ### Class: TfidfEmbedderTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 
+### Class: TierInferenceOverride
+> v14.12: Model-tier profile — gates how much harness scaffolding (hand-holding
+
 ### Class: TierInferenceTuner
-> v14.17: tier-aware inference parameter tuning. Small models need tighter
+> v15: tier-aware inference parameter tuning — values live in CONFIG
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
 
 ### Class: TierInferenceTunerTests
-> v14.17: tier-aware inference tuning — pure logic. Small tier tightens DEFAULT
+> v15: tier inference values are CONFIG-DRIVEN (model_tier.inference overrides
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Services
 
 ### Class: TokenCounter

@@ -32,12 +32,13 @@ public class InferenceParamsFactory
     }
 
     /// <summary>
-    /// v14.17: create params from config, then apply the tier profile (small tier
-    /// gets tighter sampling; large tier and customized sampling unchanged).
+    /// v15: tier-owned inference values — ModelTierConfig.Inference overrides global
+    /// sampling for the active tier. No tier = global config as-is.
     /// </summary>
     public InferenceRequestParams CreateTiered(AppConfig config, bool isLargeTier)
     {
-        return TierInferenceTuner.Apply(Create(config), isLargeTier, config?.Sampling);
+        var tierOverride = config?.ModelTier?.Inference;
+        return TierInferenceTuner.Apply(Create(config), isLargeTier, config?.Sampling, tierOverride);
     }
 
     /// <summary>

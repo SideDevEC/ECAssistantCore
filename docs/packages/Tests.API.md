@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 130  |  LOC: 15566  |  ~5830 tokens
+Types: 130  |  LOC: 15561  |  ~5830 tokens
 
 ---
 
@@ -435,7 +435,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 
 ### Class: TierInferenceTunerTests
-> v14.17: tier-aware inference tuning — pure logic. Small tier tightens DEFAULT
+> v15: tier inference values are CONFIG-DRIVEN (model_tier.inference overrides
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Services
 
 ### Class: TokenCounterTests

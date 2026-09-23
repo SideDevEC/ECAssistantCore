@@ -778,7 +778,9 @@ User: " + userRequest + "\n";
         }
         catch { /* non-critical — unreadable rules file must not break the prompt */ }
 
-        var verifyCommand = _config?.Interface.VerifyCommand;
+        // v15: verifier contract comes from verification.build_command (single source —
+        // interface.verify_command removed). The PostEditVerifier enforces it in the loop.
+        var verifyCommand = _config?.Verification?.BuildCommand;
         if (!string.IsNullOrWhiteSpace(verifyCommand))
         {
             sb.AppendLine();

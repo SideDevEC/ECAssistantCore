@@ -56,25 +56,4 @@ public class InterfaceConfig
     [JsonPropertyName("subtask_turn_buffer")]
     public int SubtaskTurnBuffer { get; init; } = 2;
 
-    /// <summary>
-    /// Run the LLM decomposition + step-mapping pre-planning pass before the main
-    /// loop (2-3 extra inference calls). v14.12: null = auto (resolve from model
-    /// tier — large models skip it, small models keep it, see Orchestrator.UsePreplanning);
-    /// true/false = explicit override. History: REVERTED to default true (2026-09-22,
-    /// Emre's call after live regression): in-loop planning left the model to
-    /// pick tools freestyle and it wandered (project-folder obsession, redundant
-    /// tool calls on trivial questions). The explicit step list constrains picking.
-    /// Conversational questions still skip decomposition via the verb gate.
-    /// </summary>
-    [JsonPropertyName("preplanning")]
-    public bool? Preplanning { get; init; } = null;
-
-    /// <summary>
-    /// Verifier contract: the command the agent runs to verify its work after code
-    /// edits (act → observe → verify loop). Injected into the system prompt and
-    /// surfaced by the orchestrator when edits happened but it was never run.
-    /// Empty = no verifier wiring. Example: "dotnet test --filter Fast".
-    /// </summary>
-    [JsonPropertyName("verify_command")]
-    public string VerifyCommand { get; init; } = "";
 }

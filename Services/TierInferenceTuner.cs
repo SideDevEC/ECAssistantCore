@@ -4,37 +4,29 @@ using ECAssistant.Core.Interfaces;
 namespace ECAssistant.Core.Services;
 
 /// <summary>
-/// v14.17: tier-aware inference parameter tuning. Small models need tighter
-/// sampling (lower temperature, stronger repeat penalty) to counter rambling
-/// and loops; frontier models are best left at configured values. Explicitly
-/// customized sampling always wins — the tuner only shifts DEFAULTS.
+/// v15: tier-aware inference parameter tuning — values live in CONFIG
+/// (model_tier.inference), applied here. No hardcoded tier defaults; global
+/// sampling config is the fallback for fields a tier doesn't set.
 /// </summary>
 // Stateless utility — no mutable state; pure function over its inputs
 public static class TierInferenceTuner
 {
-    /// <summary>Small-tier temperature when sampling is at defaults.</summary>
-    public const float SmallTierTemperature = 0.2f;
-
-    /// <summary>Small-tier repeat penalty when sampling is at defaults.</summary>
-    public const float SmallTierRepeatPenalty = 1.15f;
-
     /// <summary>
-    /// Apply the tier profile to inference params. Pure — returns the adjusted
-    /// instance (small tier) or the original (large tier / custom sampling).
-    /// Default-ness is detected against a fresh SamplingConfig so user
-    /// customizations are never overridden.
+    /// v15: apply tier-owned inference values from config (ModelTierConfig.Inference).
+    /// When a tier defines a value, it WINS — config is the single source of tier
+    /// shaping (Emre, 2026-09-23). Fields the tier doesn't set inherit global sampling.
     /// </summary>
     public static InferenceRequestParams Apply(
-        InferenceRequestParams parameters, bool isLargeTier, SamplingConfig? sampling = null)
+        InferenceRequestParams parameters, bool isLargeTier,
+        SamplingConfig? sampling = null, TierInferenceOverride? tierOverride = null)
     {
-        if (parameters == null || isLargeTier) return parameters;
-        var defaults = sampling ?? new SamplingConfig();
+        if (parameters == null || tierOverride == null) return parameters;
 
-        // Respect explicit user customization — only shift shipped defaults.
-        if ((parameters.Temperature ?? defaults.Temperature) == defaults.Temperature)
-            parameters.Temperature = SmallTierTemperature;
-        if ((parameters.RepeatPenalty ?? defaults.RepeatPenalty) == defaults.RepeatPenalty)
-            parameters.RepeatPenalty = SmallTierRepeatPenalty;
+        if (tierOverride.Temperature is { } t) parameters.Temperature = t;
+        if (tierOverride.TopP is { } tp) parameters.TopP = tp;
+        if (tierOverride.TopK is { } tk) parameters.TopK = tk;
+        if (tierOverride.RepeatPenalty is { } rp) parameters.RepeatPenalty = rp;
+        if (tierOverride.MaxTokens is { } mt) parameters.MaxTokens = mt;
         return parameters;
     }
 }

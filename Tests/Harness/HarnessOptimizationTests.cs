@@ -49,21 +49,15 @@ public sealed class HarnessOptimizationTests : IDisposable
     // 2026-09-22: preplanning default REVERTED to true (in-loop planning regressed
     // live — model wandered without explicit step lists). See InterfaceConfig.
 
-    // v14.12: Preplanning is now bool? — null = auto (resolved from model tier in
-    // Orchestrator.UsePreplanning: large models skip, small models keep preplanning).
+    // v15 (Emre 2026-09-23): preplanning + verify_command config removed — tier owns
+    // preplanning; verification.build_command is the single verifier contract.
     [Fact]
-    public void Preplanning_DefaultsNull_AutoResolution()
+    public void Preplanning_RemovedFromConfig_TierOwns()
     {
         var config = JsonSerializer.Deserialize<AppConfig>("{}");
-        Assert.Null(config!.Interface.Preplanning);
-    }
-
-    [Fact]
-    public void VerifyCommand_ParsesFromConfig()
-    {
-        var config = JsonSerializer.Deserialize<AppConfig>(
-            """{"interface": {"verify_command": "dotnet test --filter Fast"}}""");
-        Assert.Equal("dotnet test --filter Fast", config!.Interface.VerifyCommand);
+        // Unknown JSON keys are ignored by the serializer — surface proves removal.
+        Assert.DoesNotContain("Preplanning", typeof(InterfaceConfig).GetProperties().Select(p => p.Name));
+        Assert.DoesNotContain("VerifyCommand", typeof(InterfaceConfig).GetProperties().Select(p => p.Name));
     }
 
     // ── P4: typed tool schemas ──

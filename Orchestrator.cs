@@ -48,6 +48,18 @@ public sealed class AgentOrchestrator : IAsyncDisposable
     private readonly int _baseMaxTurns; // original maxTurns — _maxTurns is recomputed from this, never monotonically grown
     private readonly int _maxFailuresBeforeStop;
 
+    // v15 (Emre, 2026-09-23): large tier is TIME-limited, not turn-limited.
+    // model_tier.timeout_seconds set → turn cap disabled, wall-clock budget governs.
+    private readonly System.Diagnostics.Stopwatch _runClock = System.Diagnostics.Stopwatch.StartNew();
+    private readonly int? _timeBudgetSec;
+
+    /// <summary>Turn limit applies only when no time budget is configured (small tier).</summary>
+    private bool UseTurnLimit => _timeBudgetSec is null or <= 0;
+
+    private bool TimeBudgetExceeded => _timeBudgetSec is { } budget && _turnCount > 0 && _runStopwatch.Elapsed.TotalSeconds >= budget;
+
+    private readonly System.Diagnostics.Stopwatch _runStopwatch = System.Diagnostics.Stopwatch.StartNew();
+
       // ─── Whitelist of valid tool names ─────
     private readonly HashSet<string> _toolWhitelist = new(StringComparer.OrdinalIgnoreCase);
 
@@ -92,6 +104,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                   _out = sessionOutput;
                   _maxTurns = Math.Max(1, maxTurns);
                   _baseMaxTurns = _maxTurns;
+                  _timeBudgetSec = config?.ModelTier?.TimeoutSeconds;
                   _maxFailuresBeforeStop = maxFailures;
                   _toolPolicy = toolPolicy ?? new ECAssistant.Core.Tools.ToolPolicy();
                   _logger = logger ?? new Logger();
@@ -123,9 +136,9 @@ public sealed class AgentOrchestrator : IAsyncDisposable
       /// <summary>v14.12.2: mid-run steering seam — hosts queue user input via AgentSession.Steer().</summary>
      public SteeringQueue Steering => _steering;
 
-      /// <summary>v14.12: Preplanning resolution — explicit config wins; else large models skip decomposition (in-loop planning), small models keep it (revert 2026-09-22 behavior).</summary>
-     private bool UsePreplanning() =>
-         _config?.Interface.Preplanning ?? !IsLargeModelTier();
+      /// <summary>v15: preplanning is tier-owned (Emre, 2026-09-23) — large models
+      /// skip decomposition (in-loop planning), small models keep it. Config override removed.</summary>
+     private bool UsePreplanning() => !IsLargeModelTier();
 
       /// <summary>v10.18: Initialize sub-agent support. Creates SubAgentManager and registers ESubAgent tool.</summary>
      public void InitializeSubAgents(string defaultWorkingDir)
@@ -329,7 +342,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
         _out?.WriteLine($"[Orchestrator] Starting for: {goal}");
         _out?.WriteLine($"[Orchestrator] Max turns: {_maxTurns}, Failures limit: {_maxFailuresBeforeStop}");
 
-            while (_turnCount < _maxTurns)
+            while (TimeBudgetExceeded == false && (UseTurnLimit == false || _turnCount < _maxTurns))
                    {
                  // v10.9: Check for user cancellation before each turn
                 if (_engine.ExecutionToken.IsCancellationRequested)
@@ -854,7 +867,22 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                        }
                   }
 
-                    // Max turns reached
+                    // v15: exit reason depends on the active limiter — time budget
+                    // (large tier) or turn cap (small tier).
+        if (TimeBudgetExceeded)
+         {
+            var minutes = _runStopwatch.Elapsed.TotalMinutes.ToString("F1");
+            _out?.WriteLine($"[Orchestrator] Time budget ({_timeBudgetSec}s) exhausted. Stopping.");
+            await TryCapturePlaybookAsync(goal);
+            var timeSummary = FormatTurnLog();
+            if (string.IsNullOrEmpty(timeSummary)) timeSummary = "(No useful output in the last turn.)";
+            return new OrchestratorResult
+                     {
+                    FinalOutput = $"Reached the time budget ({_timeBudgetSec}s). Partial progress:\n\n{timeSummary}",
+                    ToolCallsMade = _turnCount,
+                    Status = OrchestratorStatus.TurnsExhausted // reuse: budget exhausted
+                     };
+         }
         _out?.WriteLine("[Orchestrator] Max turns reached. Stopping.");
         // v14.19: capture partial-progress playbooks on the max-turns exit too —
         // successful tool calls still happened; they'd otherwise never persist.
@@ -1041,6 +1069,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
     public void Reset()
                 {
                     _turnCount = 0;
+                    _runStopwatch.Restart(); // v15: time budget restarts per user request
                     _toolCallLog.Clear();
                     _formatRetries = 0;
                     // Reset failure-loop detection — stale signatures would suppress retries

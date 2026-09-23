@@ -97,25 +97,23 @@ public sealed class ModelTierConfigTests
         Assert.Null(config!.ModelTier);
     }
 
-    // ── Preplanning auto-resolution contract ──
-
+    // v15: preplanning config removed — tier decides. Contract test:
     [Fact]
-    public void Preplanning_DefaultIsNull_AutoResolution()
+    public void Preplanning_RemovedFromConfig_SurfaceIsClean()
     {
-        // v14.12: null = auto (large models skip preplanning, small models keep it).
         var config = JsonSerializer.Deserialize<AppConfig>("{}");
-        Assert.Null(config!.Interface.Preplanning);
+        Assert.DoesNotContain("Preplanning", typeof(InterfaceConfig).GetProperties().Select(p => p.Name));
+        // Tier timeout contract: null = turn-limited (small), value = time-limited (large).
+        Assert.Null(config!.ModelTier?.TimeoutSeconds);
     }
 
     [Fact]
-    public void Preplanning_ExplicitOverride_ParsesFromConfig()
+    public void TierInferenceOverride_ParsesFromConfig()
     {
         var config = JsonSerializer.Deserialize<AppConfig>(
-            """{"interface": {"preplanning": true}}""");
-        Assert.True(config!.Interface.Preplanning);
-
-        var off = JsonSerializer.Deserialize<AppConfig>(
-            """{"interface": {"preplanning": false}}""");
-        Assert.False(off!.Interface.Preplanning);
+            """{"model_tier": {"mode": "small", "inference": {"temperature": 0.1, "repeat_penalty": 1.2}, "timeout_seconds": 600}}""");
+        Assert.Equal(0.1f, config!.ModelTier!.Inference!.Temperature);
+        Assert.Equal(1.2f, config.ModelTier.Inference.RepeatPenalty);
+        Assert.Equal(600, config.ModelTier.TimeoutSeconds);
     }
 }
