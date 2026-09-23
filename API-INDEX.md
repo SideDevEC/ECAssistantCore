@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T17:22:52.222010+00:00
+Generated: 2026-09-23T17:25:03.243590+00:00
 Packages: 2  |  Types: 512
 
 ---
 
-## ECAssistantCore (382 types, ~32436 LOC)
+## ECAssistantCore (382 types, ~32435 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)

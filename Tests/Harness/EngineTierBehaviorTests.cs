@@ -201,12 +201,14 @@ public sealed class EngineTierBehaviorTests : IDisposable
     }
 
     [Fact]
-    public void SystemPrompt_MultiCallAllowedOnlyOnLargeTier()
+    public void SystemPrompt_MultiCall_InBaseBothTiers_SmallOverrides()
     {
         var small = InvokeBuildSystemToolsPrompt(CreateEngine(BuildConfig("small", isLocal: true)));
         var large = InvokeBuildSystemToolsPrompt(CreateEngine(BuildConfig("large", isLocal: true)));
-        Assert.DoesNotContain("MULTIPLE tool calls", small);
+        // Base prompt (restored) carries the multi-call line for both tiers;
+        // the small overlay explicitly overrides it.
         Assert.Contains("MULTIPLE tool calls", large);
+        Assert.Contains("overrides any earlier multi-call guidance", small);
     }
 
     public void Dispose()
