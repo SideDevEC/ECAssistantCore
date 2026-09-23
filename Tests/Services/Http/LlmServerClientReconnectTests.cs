@@ -150,15 +150,5 @@ public class LlmServerClientReconnectTests
         Assert.Equal("test-client-1", fake.LastDeletedClientId);
     }
 
-    [Fact]
-    public async Task Heartbeat_Success_ResetsFailureCounter()
-    {
-        using var fake = new FakeLlmServer();
-        var client = new LlmServerClient(fake.Url);
-        await client.ConnectAsync("hb-test", "1.0");
-
-        var ok = await client.HeartbeatAsync(activeSessions: 2);
-        Assert.True(ok);
-        Assert.Equal(0, client.ConsecutiveFailures);
-    }
+    // Heartbeat tests removed (2026-09-23): heartbeat retired server- and client-side.
 }

@@ -5,7 +5,8 @@ namespace ECAssistant.Core.Interfaces;
 
 /// <summary>
 /// Client lifecycle management for ECAssistantLLM server.
-/// Handles registration, heartbeat, and disconnection.
+/// Handles registration, and disconnection. (Heartbeat removed 2026-09-23 —
+/// the server keeps clients until explicit Disconnect.)
 /// </summary>
 public interface ILlmServerClient : IAsyncDisposable
 {
@@ -17,9 +18,6 @@ public interface ILlmServerClient : IAsyncDisposable
 
     /// <summary>Register with the server. Returns true on success.</summary>
     Task<bool> ConnectAsync(string clientName, string? version = null, CancellationToken ct = default);
-
-    /// <summary>Send heartbeat (keeps sessions alive).</summary>
-    Task<bool> HeartbeatAsync(int activeSessions = 0, CancellationToken ct = default);
 
     /// <summary>Disconnect from server (frees all sessions).</summary>
     Task<bool> DisconnectAsync(CancellationToken ct = default);

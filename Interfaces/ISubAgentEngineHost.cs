@@ -12,4 +12,14 @@ public interface ISubAgentEngineHost
 
     /// <summary>Cancellation token of the host execution (ESC propagation).</summary>
     CancellationToken ExecutionToken { get; }
+
+    /// <summary>
+    /// The host's shared OpenAI HTTP client (carries the Bearer api key in remote
+    /// mode and the X-Client-Id registration in local mode). Child engines MUST
+    /// reuse it — constructing a fresh client loses remote auth (401).
+    /// </summary>
+    Transport.OpenAIClient? SharedHttpClient { get; }
+
+    /// <summary>True when the host runs against a local ECAssistantLLM server (KV sessions available).</summary>
+    bool IsLocalMode { get; }
 }

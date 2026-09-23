@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 127  |  LOC: 15112  |  ~5648 tokens
+Types: 128  |  LOC: 15416  |  ~5743 tokens
 
 ---
 
@@ -202,6 +202,10 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 > Vision-capability + embeddings-mode wiring: mmproj pairing, vision_enabled flag,
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Setup
+
+### Class: JourneySuiteE2E
+> v15 rigorous journey E2E — long mixed conversations (chat → tools → chat → tools),
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Tools.Build, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Shell, ECAssistant.TestSupport
 
 ### Class: JsonEnvelopeFallbackTests
 > v14.10.1: when the structured path falls back to text streaming, the model

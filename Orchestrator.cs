@@ -131,7 +131,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
      public void InitializeSubAgents(string defaultWorkingDir)
       {
           // v10.23: Pass config to SubAgentManager (no more hardcoded disk reads)
-          _subAgentManager = new SubAgentManager(_engine, defaultWorkingDir, _logger, _out, _config);
+          _subAgentManager = new SubAgentManager(_engine, defaultWorkingDir, _logger, _out, _config, parentToolPolicy: _toolPolicy);
           _engine.RegisterTool(new Tools.SubAgent.ESubAgentTool(_subAgentManager, defaultWorkingDir));
           _toolWhitelist.Add("ESubAgent");
           _toolPolicy.SetPermission("ESubAgent", approvalRequired: false, "Sub-agent spawning");

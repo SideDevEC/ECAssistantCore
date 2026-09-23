@@ -92,12 +92,11 @@ The orchestrator can delegate the ENTIRE remaining task to an ephemeral speciali
 
 Each `AgentSession` owns: AgentEngine (own server-side KV cache session), orchestrator, tools, memory, output buffer, prompt queue, runner thread. Sessions share the same server (one model in VRAM) but are otherwise fully independent. `SessionBuilder` is the public embed API.
 
-`SessionManager` wires shared HTTP infra: `ServerLauncher`, `LlmServerClient`, `OpenAIClient`, `InferenceParamsFactory`, `RemoteTokenizer` (local mode). Remote mode: no launch/registration/heartbeat — per-request connection.
+`SessionManager` wires shared HTTP infra: `ServerLauncher`, `LlmServerClient`, `OpenAIClient`, `InferenceParamsFactory`, `RemoteTokenizer` (local mode). Remote mode: no launch/registration — per-request connection.
 
-- **Idle watchdog:** after 15 min inactivity → stop heartbeat, `/eca/shutdown`, free VRAM; input resets via `MarkUserActivity()`
+- **Idle watchdog:** after 15 min inactivity → `/eca/shutdown`, free VRAM; input resets via `MarkUserActivity()`
 - **Reconnection:** idle-disconnect + activity → ensure server, re-register, recreate HTTP client + KV sessions, re-prefill
 - **Connection recovery:** connection-refused/HTTP errors in local mode trigger `ConnectionRecovery` (restart server, re-register, retry once); HTTP 404 = stale session → restore KV sessions + retry. Proactive ping on user activity (30s throttle)
-- **Heartbeat auto-reconnect:** 3 consecutive heartbeat failures → reconnect; `OnReconnected` fires session restoration
 - **Shutdown:** `SessionManager.DisposeAsync()` → disconnect + POST `/eca/shutdown` (server winds down if last client)
 - **Idle watchdog / stateless background tasks:** decompose/summarize use `HttpStreamingEngine` stateless mode (no session_id), same server
 
@@ -168,7 +167,7 @@ ECAssistantConsole ←── TUI ONLY (Core flows transitively)
 | IEngine | AgentEngine | Engine lifecycle |
 | IInferenceEngine | HttpStreamingEngine | LLM generation over HTTP (stream/generate → LLMDecision) |
 | IKvCacheController | RemoteKvCacheController | Server-side KV cache: create/prefill/rewind/save/reset |
-| ILlmServerClient | LlmServerClient | Register/heartbeat/disconnect/reconnect |
+| ILlmServerClient | LlmServerClient | Register/disconnect/reconnect |
 | IModelLoader | RemoteModelLoader | Load/unload/list models (`/eca/models`) |
 | IVectorEmbedder | HttpEmbedder / TfidfEmbedder | Embeddings (HTTP or local TF-IDF) |
 | IToolPolicyEvaluator | ToolPolicy | Permission evaluation |
@@ -214,7 +213,7 @@ Enforcement: Blocked tools are NOT registered (LLM never sees them). ApprovalReq
 ## Config (as-is)
 
 - **AppConfig** (root doc) — `llm`, `memory`, `workspace`, `subagent`, `background_tasks`, `tools` (dynamic per-tool sections), `tool_output_limits`, `interaction`, `model_tier`, `context_management`, `verification`, `handoffs` (n/a — handoff is configless)
-- **LlmProviderConfig** — `mode` (local/remote), `host:localhost`, `port:8420`, `endpoint`, `api_key`, `model_id`, `embedding_model_id`, `auto_start`, `heartbeat_interval_sec`, …; `ResolvedEndpoint` computed (`http://{host}:{port}` local / endpoint remote)
+- **LlmProviderConfig** — `mode` (local/remote), `host:localhost`, `port:8420`, `endpoint`, `api_key`, `model_id`, `embedding_model_id`, `auto_start`, …; `ResolvedEndpoint` computed (`http://{host}:{port}` local / endpoint remote)
 - **`llm_providers`** — multiple remote providers: `providers[]` (name/endpoint/api_key/model_id/is_default), `default_provider`, `fallback_enabled` (opt-in health-probe failover at session start only). Local mode ignores it.
 - **API key schemes** — literal | `file:<path>` | `keyfile:<name>` (SecureKeyStore: self-encrypting DPAPI keyring, atomic writes, name-only references)
 - **`model_tier`** — `small|large|auto`; drives preplanning, envelope budgets, sampling, sub-agent briefs, verification cadence

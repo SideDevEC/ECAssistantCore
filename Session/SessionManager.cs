@@ -244,9 +244,6 @@ public class SessionManager : IAsyncDisposable
             // Setup tokenizer (ECA extension — remote APIs don't expose /eca/tokenize)
             _remoteTokenizer = new RemoteTokenizer(_httpClient, _config.LlmProvider.ModelId);
 
-            // Start heartbeat
-            _serverClient.StartHeartbeat(_config.LlmProvider.HeartbeatIntervalSec, () => _sessions.Count);
-
             _logger.Info("SessionManager", $"Connected to LLM server at {_config.LlmProvider.ResolvedEndpoint} [{_connection.Capabilities}]");
         }
         else
@@ -543,9 +540,6 @@ public class SessionManager : IAsyncDisposable
 
         try
         {
-            // Stop heartbeat
-            _serverClient?.StopHeartbeat();
-
             // Send shutdown WITH our registered client id (server 401s anonymous /eca/*).
             // HandleShutdownAsync disconnects the requesting client itself, so the
             // explicit DELETE below is only a best-effort fallback afterwards.
@@ -651,9 +645,6 @@ public class SessionManager : IAsyncDisposable
         _httpClient.Dispose();
         _httpClient = _newClient(_config.LlmProvider.ResolvedEndpoint, null, _serverClient.ClientId);
         _remoteTokenizer = new RemoteTokenizer(_httpClient, _config.LlmProvider.ModelId);
-
-        // Restart heartbeat
-        _serverClient.StartHeartbeat(_config.LlmProvider.HeartbeatIntervalSec, () => _sessions.Count);
 
         // Recreate KV cache sessions on the server and re-prefill
         await RestoreSessionsAsync();

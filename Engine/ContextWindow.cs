@@ -20,17 +20,19 @@ public class ContextWindow
     private SummaryService? _summaryService;
     private uint _autoSummarizeThreshold;
 
-    public ContextWindow(uint maxTokens, TokenCounter? tokenCounter = null)
+    public ContextWindow(uint maxTokens, TokenCounter? tokenCounter = null,
+        double autoSummarizeThresholdFraction = 0.50)
     {
         _maxTokens = maxTokens;
-        _autoSummarizeThreshold = (uint)(maxTokens * 0.50f);
+        _autoSummarizeThreshold = (uint)(maxTokens * autoSummarizeThresholdFraction);
         _tokenCounter = tokenCounter ?? new TokenCounter();
     }
 
-    public ContextWindow(uint maxTokens, SummaryService? summaryService, TokenCounter? tokenCounter = null)
+    public ContextWindow(uint maxTokens, SummaryService? summaryService, TokenCounter? tokenCounter = null,
+        double autoSummarizeThresholdFraction = 0.50)
     {
         _maxTokens = maxTokens;
-        _autoSummarizeThreshold = (uint)(maxTokens * 0.50f);
+        _autoSummarizeThreshold = (uint)(maxTokens * autoSummarizeThresholdFraction);
         _summaryService = summaryService;
         _tokenCounter = tokenCounter ?? new TokenCounter();
     }
@@ -103,7 +105,7 @@ public class ContextWindow
         }
 
         if (totalEst > (int)_maxTokens ||
-            (totalEst > (int)_autoSummarizeThreshold && MessageCount > 10))
+            (totalEst > (int)_autoSummarizeThreshold && MessageCount > 4))
         {
             SummarizeOldest(totalEst);
         }

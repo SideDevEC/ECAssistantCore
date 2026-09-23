@@ -50,6 +50,11 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
     protected readonly IFileSystem _fileSystem;
     protected readonly IHttpClient _httpClient;
 
+    /// <summary>v15: shared OpenAI client (auth + client-id) exposed to child engines via ISubAgentEngineHost.</summary>
+    protected Transport.OpenAIClient? _sharedHttpClient;
+    /// <summary>v15: true when running against the local ECAssistantLLM server (KV sessions available).</summary>
+    protected readonly bool _isLocalMode;
+
      // ── Core components ──
     protected TokenCounter _tokenCounter;
     protected MemoryManager _memoryManager;
@@ -194,9 +199,15 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
     /// Replaces the inference engine and KV cache controller with new instances
     /// bound to the new client ID.
     /// </summary>
+    /// <summary>v15: ISubAgentEngineHost — shared client for child engines (remote auth correctness).</summary>
+    public Transport.OpenAIClient? SharedHttpClient => _sharedHttpClient;
+    /// <summary>v15: local-server mode flag (KV sessions available to child engines).</summary>
+    public bool IsLocalMode => _isLocalMode;
+
     public void UpdateHttpClient(OpenAIClient newClient, string newClientId)
     {
         _clientId = newClientId;
+        _sharedHttpClient = newClient; // keep child-engine auth in sync after reconnect
         // Recreate KV cache controller with new client
         if (_kvCacheController is RemoteKvCacheController)
         {
@@ -290,7 +301,9 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         ECAssistant.Core.Engine.SelfCorrectionManager? selfCorrection = null,
         ECAssistant.Core.Playbooks.IPlaybookStore? playbookStore = null,
         ECAssistant.Core.Engine.ProjectContextManager? projectContext = null,
-        ITaskPlanner? taskPlanner = null)
+        ITaskPlanner? taskPlanner = null,
+        Transport.OpenAIClient? sharedHttpClient = null,
+        bool isLocalMode = true)
      {
         if (logger != null) _logger = logger;
         _injectedSelfCorrection = selfCorrection;
@@ -302,6 +315,8 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         _kvCacheController = kvCacheController;
         _tokenizer = tokenizer;
         _sessionId = sessionId;
+        _sharedHttpClient = sharedHttpClient;
+        _isLocalMode = isLocalMode;
         _requestParams = inferenceParams ?? CreateTieredParams(config ?? new AppConfig());
         _requestParams.SessionId = sessionId;
 
@@ -332,7 +347,9 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         var summarySvc = _inferenceEngine != null
              ? new SummaryService(p => _inferenceEngine.GenerateAsync(p, BuildStatelessParams(), CancellationToken.None))
              : null;
-        _contextWindow = new ContextWindow(contextSize, summarySvc);
+        _contextWindow = new ContextWindow(contextSize, summarySvc, tokenCounter: null,
+            // compact_threshold_percent now drives the summarize trigger too (was hardwired 0.50)
+            CompactThreshold());
         _transcript = new ConversationTranscript();
 
         // Load per-session transcript for session resumption (v13 fix: was loading shared root transcript)
@@ -695,8 +712,13 @@ User: " + userRequest + "\n";
     private string BuildSystemToolsPrompt()
      {
         var sb = new StringBuilder();
-        if (!string.IsNullOrEmpty(_systemPromptText))
-            sb.AppendLine(_systemPromptText);
+        // v15 fix: programmatic override (e.g. handoff specialist prompts) was stored
+        // but never consumed — prefer it over the file-based system prompt.
+        var effectivePrompt = !string.IsNullOrEmpty(_systemPromptTextOverride)
+            ? _systemPromptTextOverride
+            : _systemPromptText;
+        if (!string.IsNullOrEmpty(effectivePrompt))
+            sb.AppendLine(effectivePrompt);
 
         if (_tools.Count > 0)
          {

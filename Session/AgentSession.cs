@@ -51,6 +51,9 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     // ── Output Buffer (file-based JSONL) ─────────────
     private readonly string _outputFilePath;
     private readonly StreamWriter _outputFile;
+
+    /// <summary>Read-only path to this session's ui_output.jsonl (diagnostics/tests).</summary>
+    public string OutputFilePath => _outputFilePath;
     private readonly object _fileLock = new();
 
     // ── Stream buffer (for token-by-token streaming) ──
@@ -168,7 +171,9 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
             workingDir: workingDir,
             logger: _logger,
             tokenizer: remoteTokenizer,
-            config: _config);
+            config: _config,
+            sharedHttpClient: client,
+            isLocalMode: isLocalMode);
 
         _engine.LoadContext();
         _engine.WireSummaryService();

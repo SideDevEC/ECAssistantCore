@@ -26,6 +26,10 @@ public sealed class SubAgentManager : IDisposable
     private readonly ISessionOutput? _out;
     private readonly ILogger _logger;
 
+    /// <summary>v15: parent's tool policy — child orchestrators inherit it so sub-agent
+    /// tool calls don't hit the approval wall in headless contexts (journey J5).</summary>
+    private readonly Tools.ToolPolicy? _mainPolicy;
+
     // v10.25: Injected service dependencies — no more new-ing inside methods
     private readonly Services.BackgroundProcessManager _bgManager;
     private readonly ECAssistant.Core.Interfaces.IProcessRunner _processRunner;
@@ -58,12 +62,14 @@ public sealed class SubAgentManager : IDisposable
         ECAssistant.Core.Interfaces.IProcessRunner? processRunner = null,
         ECAssistant.Core.Interfaces.IFileSystem? fileSystem = null,
         ECAssistant.Core.Interfaces.IHttpClient? httpClient = null,
-        Services.BackgroundProcessManager? bgManager = null)
+        Services.BackgroundProcessManager? bgManager = null,
+        Tools.ToolPolicy? parentToolPolicy = null)
     {
         _mainEngine = mainEngine;
         _mainWorkingDir = mainWorkingDir;
         _logger = logger ?? new Logger();
         _out = sessionOutput;
+        _mainPolicy = parentToolPolicy;
 
         // v10.25: Injected dependencies — fall back to new instances if not provided
         _bgManager = bgManager ?? new Services.BackgroundProcessManager();
@@ -233,12 +239,18 @@ public sealed class SubAgentManager : IDisposable
             var dirBefore = SnapshotDirectory(workingDir);
 
             // Create engine
-            // Create HTTP-based inference for sub-agent
+            // v15 fix: reuse the host's shared client — a fresh client drops the
+            // Bearer api key in remote mode (401) and the registered client-id locally.
+            var isLocal = _mainEngine.IsLocalMode;
+            var subClient = _mainEngine.SharedHttpClient
+                ?? new Transport.OpenAIClient(_mainEngine.InferenceEngine?.Endpoint
+                    ?? throw new InvalidOperationException("Main engine has no inference engine — cannot spawn sub-agent."));
             var subSessionId = $"subagent-{Guid.NewGuid():N}";
-            var subClient = new Transport.OpenAIClient(_mainEngine.InferenceEngine?.Endpoint
-                ?? throw new InvalidOperationException("Main engine has no inference engine — cannot spawn sub-agent."));
-            var subInference = new Services.Http.HttpStreamingEngine(subClient, _config.LlmProvider.ModelId, subSessionId);
-            var subKvCache = new Services.Http.RemoteKvCacheController(subClient);
+            var subInference = new Services.Http.HttpStreamingEngine(subClient, _config.LlmProvider.ModelId,
+                isLocal ? subSessionId : null);
+            var subKvCache = isLocal
+                ? new Services.Http.RemoteKvCacheController(subClient)
+                : (IKvCacheController)new Services.Http.NopKvCacheController();
             childEngine = new AgentEngine(
                 sessionId: subSessionId,
                 inferenceEngine: subInference,
@@ -272,7 +284,8 @@ public sealed class SubAgentManager : IDisposable
                 _mainEngine.ExecutionToken);
             linkedCts.CancelAfter(TimeSpan.FromSeconds(task.TimeoutSeconds));
 
-            var orchestrator = new AgentOrchestrator(childEngine, sessionOutput: null, maxTurns: task.MaxTurns, maxFailures: 3, logger: _logger);
+            var orchestrator = new AgentOrchestrator(childEngine, sessionOutput: null, maxTurns: task.MaxTurns, maxFailures: 3,
+                toolPolicy: _mainPolicy, logger: _logger);
 
             // Fix #2: Start execution with the linked token so ESC + timeout both work
             childEngine.StartExecution();

@@ -24,9 +24,6 @@ public sealed class LlmServerEndpointConfig
     public int StartupTimeoutSec { get; set; } = 240;
 
     /// <summary>Heartbeat interval in seconds.</summary>
-    [JsonPropertyName("heartbeat_interval_sec")]
-    public int HeartbeatIntervalSec { get; set; } = 30;
-
     /// <summary>Model ID to use for chat completions (must match a model in llm-server.json).</summary>
     [JsonPropertyName("model_id")]
     public string ModelId { get; set; } = "main";

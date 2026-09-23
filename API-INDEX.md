@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T13:57:41.766831+00:00
-Packages: 2  |  Types: 506
+Generated: 2026-09-23T16:57:59.560222+00:00
+Packages: 2  |  Types: 508
 
 ---
 
-## ECAssistantCore (379 types, ~31826 LOC)
+## ECAssistantCore (380 types, ~32086 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -54,7 +54,7 @@ Packages: 2  |  Types: 506
 - 🟡 ActiveSubAgent  (ECAssistantCore)
 - 🟡 AgentConfig  (ECAssistantCore)
 - 🟡 AgentConfigBuilder  (ECAssistantCore)
-- 🟡 AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost  (ECAssistantCore)  deps: [string, IInferenceEngine, IKvCacheController, RemoteTokenizer? tokenizer =, InferenceRequestParams? inferenceParams =, uint contextSize =, string modelPath =, AppConfig? config =, string? workingDir =, ILogger? logger =, MemoryManager? memoryManager =, SelfCorrectionManager? selfCorrection =, IPlaybookStore? playbookStore =, ProjectContextManager? projectContext =, ITaskPlanner? taskPlanner =]
+- 🟡 AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost  (ECAssistantCore)  deps: [string, IInferenceEngine, IKvCacheController, RemoteTokenizer? tokenizer =, InferenceRequestParams? inferenceParams =, uint contextSize =, string modelPath =, AppConfig? config =, string? workingDir =, ILogger? logger =, MemoryManager? memoryManager =, SelfCorrectionManager? selfCorrection =, IPlaybookStore? playbookStore =, ProjectContextManager? projectContext =, ITaskPlanner? taskPlanner =, OpenAIClient? sharedHttpClient =, bool isLocalMode =]
 - 🟡 AgentOrchestrator : IAsyncDisposable  (ECAssistantCore)  deps: [AgentEngine, ISessionOutput? sessionOutput =, int maxTurns =, int maxFailures =, ToolPolicy? toolPolicy =, ILogger? logger =, AppConfig? config =, IPostEditVerifier? postEditVerifier =, IPlaybookStore? playbookStore =, IPlaybookExtractor? playbookExtractor =]
 - 🟡 AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable  (ECAssistantCore)  deps: [string, string, string, string, InferenceRequestParams, string, SemaphoreSlim, SubAgentConfig? subAgentConfig =, string? label =, ILogger? logger =, AppConfig? config =, OpenAIClient? httpClient =, RemoteTokenizer? remoteTokenizer =, string? apiKey =, bool isLocalMode =]
 - 🟡 AiSetupResetter : IAiSetupResetter  (ECAssistantCore)
@@ -91,7 +91,7 @@ Packages: 2  |  Types: 506
 - 🟡 ContextPinningConfig  (ECAssistantCore)
 - 🟡 ContextPinningMatchers  (ECAssistantCore)
 - 🟡 ContextPinningTests  (ECAssistantCore)
-- 🟡 ContextWindow  (ECAssistantCore)  deps: [uint, TokenCounter? tokenCounter =, uint, SummaryService, TokenCounter? tokenCounter =]
+- 🟡 ContextWindow  (ECAssistantCore)  deps: [uint, TokenCounter? tokenCounter =, double autoSummarizeThresholdFraction =, uint, SummaryService, TokenCounter? tokenCounter =, double autoSummarizeThresholdFraction =]
 - 🟡 ContextWindowIntegrationTests  (ECAssistantCore)
 - 🟡 ContextWindowTests  (ECAssistantCore)
 - 🟡 ConversationTranscript  (ECAssistantCore)
@@ -190,6 +190,7 @@ Packages: 2  |  Types: 506
 - 🟡 InstallerVisionEmbeddingTests : IDisposable  (ECAssistantCore)
 - 🟡 InteractionConfig  (ECAssistantCore)
 - 🟡 InterfaceConfig  (ECAssistantCore)
+- 🟡 JourneySuiteE2E  (ECAssistantCore)
 - 🟡 JsonEnvelopeFallbackTests  (ECAssistantCore)
 - 🟡 KvCacheStatus  (ECAssistantCore)
 - 🟡 LLMDecision  (ECAssistantCore)  deps: [bool, string, Dictionary, string? answerText =, string? reasoning =, List, string? reasoning =, string? commentary =]
@@ -313,7 +314,7 @@ Packages: 2  |  Types: 506
 - 🟡 SubAgentError  (ECAssistantCore)
 - 🟡 SubAgentErrorTests  (ECAssistantCore)
 - 🟡 SubAgentIntegrationTests : IDisposable  (ECAssistantCore)
-- 🟡 SubAgentManager : IDisposable  (ECAssistantCore)  deps: [ISubAgentEngineHost, string mainWorkingDir =, ILogger? logger =, ISessionOutput? sessionOutput =, AppConfig? config =, IProcessRunner? processRunner =, IFileSystem? fileSystem =, IHttpClient? httpClient =, BackgroundProcessManager? bgManager =]
+- 🟡 SubAgentManager : IDisposable  (ECAssistantCore)  deps: [ISubAgentEngineHost, string mainWorkingDir =, ILogger? logger =, ISessionOutput? sessionOutput =, AppConfig? config =, IProcessRunner? processRunner =, IFileSystem? fileSystem =, IHttpClient? httpClient =, BackgroundProcessManager? bgManager =, ToolPolicy? parentToolPolicy =]
 - 🟡 SubAgentResult  (ECAssistantCore)
 - 🟡 SubAgentResultTests  (ECAssistantCore)
 - 🟡 SubAgentTask  (ECAssistantCore)
@@ -387,7 +388,7 @@ Packages: 2  |  Types: 506
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (127 types, ~15112 LOC)
+## Tests (128 types, ~15416 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -441,6 +442,7 @@ Packages: 2  |  Types: 506
 - 🟡 ImageAttachmentParserTests : IDisposable  (Tests)
 - 🟡 InMemoryVectorStoreTests  (Tests)
 - 🟡 InstallerVisionEmbeddingTests : IDisposable  (Tests)
+- 🟡 JourneySuiteE2E  (Tests)
 - 🟡 JsonEnvelopeFallbackTests  (Tests)
 - 🟡 LLMDecisionEnvelopeTests  (Tests)
 - 🟡 LlmProviderRegistryTests : IDisposable  (Tests)

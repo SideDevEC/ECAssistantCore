@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 379  |  LOC: 31826  |  ~18439 tokens
+Types: 380  |  LOC: 32086  |  ~18588 tokens
 
 ---
 
@@ -128,7 +128,6 @@ Properties:
   - bool IsConnected { get; set; }
 Methods:
   - Task<bool> ConnectAsync(string clientName, string? version = null, CancellationToken ct = default)
-  - Task<bool> HeartbeatAsync(int activeSessions = 0, CancellationToken ct = default)
   - Task<bool> DisconnectAsync(CancellationToken ct = default)
 
 ### Interface: ILogger
@@ -322,6 +321,8 @@ Cross-package deps: ECAssistant.Core.Engine
 Properties:
   - IInferenceEngine? InferenceEngine { get; set; }
   - CancellationToken ExecutionToken { get; set; }
+  - Transport.OpenAIClient? SharedHttpClient { get; set; }
+  - bool IsLocalMode { get; set; }
 
 ### Interface: ITaskPlanner
 > Interface for decomposing user requests into sub-tasks.
@@ -393,7 +394,7 @@ Cross-package deps: ECAssistant.Core.Config
 > v10.30: Core engine. All inference + KV cache control is HTTP-based via the
 Implements: IEngine, IEngineToolContext, ISubAgentEngineHost
 Constructor:
-  - AgentEngine(string sessionId, IInferenceEngine inferenceEngine, IKvCacheController kvCacheController, RemoteTokenizer? tokenizer = null, InferenceRequestParams? inferenceParams = null, uint contextSize = 8192, string modelPath = "", AppConfig? config = null, string? workingDir = null, ILogger? logger = null, MemoryManager? memoryManager = null, ECAssistant.Core.Engine.SelfCorrectionManager? selfCorrection = null, ECAssistant.Core.Playbooks.IPlaybookStore? playbookStore = null, ECAssistant.Core.Engine.ProjectContextManager? projectContext = null, ITaskPlanner? taskPlanner = null)
+  - AgentEngine(string sessionId, IInferenceEngine inferenceEngine, IKvCacheController kvCacheController, RemoteTokenizer? tokenizer = null, InferenceRequestParams? inferenceParams = null, uint contextSize = 8192, string modelPath = "", AppConfig? config = null, string? workingDir = null, ILogger? logger = null, MemoryManager? memoryManager = null, ECAssistant.Core.Engine.SelfCorrectionManager? selfCorrection = null, ECAssistant.Core.Playbooks.IPlaybookStore? playbookStore = null, ECAssistant.Core.Engine.ProjectContextManager? projectContext = null, ITaskPlanner? taskPlanner = null, Transport.OpenAIClient? sharedHttpClient = null, bool isLocalMode = true)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.ContextPinning, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
 
 ### Class: AgentOrchestrator
@@ -545,7 +546,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.ContextPinning, EC
 ### Class: ContextWindow
 > Manages the LLM conversation context window.
 Constructor:
-  - ContextWindow(uint maxTokens, TokenCounter? tokenCounter = null, uint maxTokens, SummaryService? summaryService, TokenCounter? tokenCounter = null)
+  - ContextWindow(uint maxTokens, TokenCounter? tokenCounter = null, double autoSummarizeThresholdFraction = 0.50, uint maxTokens, SummaryService? summaryService, TokenCounter? tokenCounter = null, double autoSummarizeThresholdFraction = 0.50)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services
 
 ### Class: ContextWindowIntegrationTests
@@ -937,6 +938,10 @@ Cross-package deps: ECAssistant.Core.Setup
 
 ### Class: InterfaceConfig
 > UI and output configuration. Verbose/silent controls token stream visibility.
+
+### Class: JourneySuiteE2E
+> v15 rigorous journey E2E — long mixed conversations (chat → tools → chat → tools),
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Tools.Build, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Shell, ECAssistant.TestSupport
 
 ### Class: JsonEnvelopeFallbackTests
 > v14.10.1: when the structured path falls back to text streaming, the model
@@ -1456,7 +1461,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.
 > Sub-agent task definition — what the main agent wants a sub-agent to do.
 Implements: IDisposable
 Constructor:
-  - SubAgentManager(ISubAgentEngineHost mainEngine, string mainWorkingDir = "", ILogger? logger = null, ISessionOutput? sessionOutput = null, AppConfig? config = null, ECAssistant.Core.Interfaces.IProcessRunner? processRunner = null, ECAssistant.Core.Interfaces.IFileSystem? fileSystem = null, ECAssistant.Core.Interfaces.IHttpClient? httpClient = null, Services.BackgroundProcessManager? bgManager = null)
+  - SubAgentManager(ISubAgentEngineHost mainEngine, string mainWorkingDir = "", ILogger? logger = null, ISessionOutput? sessionOutput = null, AppConfig? config = null, ECAssistant.Core.Interfaces.IProcessRunner? processRunner = null, ECAssistant.Core.Interfaces.IFileSystem? fileSystem = null, ECAssistant.Core.Interfaces.IHttpClient? httpClient = null, Services.BackgroundProcessManager? bgManager = null, Tools.ToolPolicy? parentToolPolicy = null)
 Cross-package deps: ECAssistant.Core.Session, ECAssistant.Core.Config, ECAssistant.Core.Tools, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 
 ### Class: SubAgentResult

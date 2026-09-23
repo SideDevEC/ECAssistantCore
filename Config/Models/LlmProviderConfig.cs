@@ -97,9 +97,6 @@ public sealed class LlmProviderConfig
     public int StartupTimeoutSec { get; set; } = 240;
 
     /// <summary>Heartbeat interval in seconds (local mode only).</summary>
-    [JsonPropertyName("heartbeat_interval_sec")]
-    public int HeartbeatIntervalSec { get; set; } = 30;
-
     /// <summary>
     /// Root directory for the LLM server. If not set, defaults to ~/.ECAssistantLLM.
     /// The LLM server creates llm-server.json, logs, and models/ under this directory.

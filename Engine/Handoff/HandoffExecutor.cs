@@ -87,9 +87,15 @@ public sealed class HandoffExecutor : IAsyncDisposable
         try
         {
             // ── Create specialist engine ──
-            var client = new OpenAIClient(endpoint);
-            var inference = new HttpStreamingEngine(client, modelId, sessionId);
-            var kvCache = new RemoteKvCacheController(client);
+            // v15 fix: reuse the host's shared client (Bearer key in remote mode;
+            // registered client-id locally) and honor local/remote mode for KV sessions.
+            var isLocal = _mainEngine.IsLocalMode;
+            var client = _mainEngine.SharedHttpClient
+                ?? new OpenAIClient(endpoint);
+            var inference = new HttpStreamingEngine(client, modelId, isLocal ? sessionId : null);
+            var kvCache = isLocal
+                ? (IKvCacheController)new RemoteKvCacheController(client)
+                : new NopKvCacheController();
 
             _specialistEngine = new AgentEngine(
                 sessionId: sessionId,
