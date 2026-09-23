@@ -899,6 +899,13 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
 
 
+      /// <summary>v15: dispose persistent shell sessions when the run ends.</summary>
+     public async Task DisposeRunShellSessionsAsync()
+      {
+        foreach (var shell in _engine.Tools.OfType<ECAssistant.Core.Tools.Shell.EShellAgent>())
+            await shell.DisposeSessionAsync();
+      }
+
       // ─── Multi-Tool Parsing (v10.13) ────────────
 
      // v11.4: Fast conversational gate — action verb + step indicator heuristic
@@ -1341,6 +1348,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
       {
+        await DisposeRunShellSessionsAsync();
         try { _subAgentManager?.Dispose(); } catch (Exception ex) { _logger?.Debug("Orchestrator", $"Non-critical error ignored: {ex.Message}"); }
         try { if (_handoffExecutor != null) await _handoffExecutor.DisposeAsync(); } catch (Exception ex) { _logger?.Debug("Orchestrator", $"Non-critical error ignored: {ex.Message}"); }
         await Task.CompletedTask;

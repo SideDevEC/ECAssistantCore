@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 130  |  LOC: 15561  |  ~5830 tokens
+Types: 132  |  LOC: 15670  |  ~5924 tokens
 
 ---
 
@@ -296,6 +296,11 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.
 ### Class: ParallelToolExecutorTests
 Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.Engine, ECAssistant.Core.Tools, Moq
 
+### Class: PersistentShellSessionTests
+> v15: persistent shell session — working directory and exported env survive
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Services.Shell
+
 ### Class: PlaybookTests
 > v14.14: tier-aware playbook memory. Pure-logic tests — JSON persistence in
 Implements: IDisposable
@@ -339,6 +344,11 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup
 > v14.9 interactive checkpoint (RequestChoice): listener gets the prompt + options,
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Session, Xunit
+
+### Class: SeatbeltShellSandboxTests
+> v15: Seatbelt sandbox — profile generation, command wrapping, and LIVE
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Services.Shell
 
 ### Class: SecureKeyStoreTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services

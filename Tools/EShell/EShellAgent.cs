@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using ECAssistant.Core.Config;
+using ECAssistant.Core.Services.Shell;
 using ECAssistant.Core.Interfaces;
 
 namespace ECAssistant.Core.Tools.Shell;
@@ -17,6 +18,13 @@ public class EShellAgent : EToolBase
     private readonly string _workingDirectory;
     private readonly JsonElement? _toolConfig;
     private readonly int _maxOutputChars;
+
+    // v15: persistent shell session (large tier) — cwd/env survive across calls.
+    private readonly bool _usePersistentSession;
+    private IShellSession? _session;
+    private readonly IShellSessionFactory? _sessionFactory;
+    private readonly bool _isLargeTier;
+    private readonly IShellSandbox _sandbox;
 
     public override string Name => "EShellAgent";
 
@@ -107,7 +115,8 @@ public class EShellAgent : EToolBase
     public override bool IsEnabled { get; protected set; } = true;
     public override bool IsSystemCritical => true;
 
-    public EShellAgent(IProcessRunner processRunner, AppConfig config, string workingDirectory)
+    public EShellAgent(IProcessRunner processRunner, AppConfig config, string workingDirectory,
+        IShellSessionFactory? sessionFactory = null, bool isLargeTier = false, IShellSandbox? sandbox = null)
     {
         _processRunner = processRunner;
         _workingDirectory = Path.GetFullPath(workingDirectory);
@@ -115,6 +124,16 @@ public class EShellAgent : EToolBase
         _toolConfig = tc.ValueKind == JsonValueKind.Undefined ? null : tc;
         IsEnabled = ReadCfg(_toolConfig, "enabled", true);
         _maxOutputChars = ReadCfg(_toolConfig, "max_output_chars", 50000);
+        _sessionFactory = sessionFactory;
+        _isLargeTier = isLargeTier;
+        // v15: persistent session for the large tier (config still wins).
+        _usePersistentSession = isLargeTier
+            && ReadCfg(_toolConfig, "persistent_session", true)
+            && PersistentShellSession.IsSupported;
+        // v15: sandboxing enabled for the large tier by default (config can disable).
+        var sandboxEnabled = isLargeTier && ReadCfg(_toolConfig, "sandbox", true);
+        _sandbox = sandbox ?? new SeatbeltShellSandbox(
+            new ShellSandboxOptions(sandboxEnabled, _workingDirectory), null);
     }
 
     public override object GetConfigSection() => new
@@ -201,10 +220,38 @@ public class EShellAgent : EToolBase
     // EShellAgent passes the raw command — no double-wrapping.
     private async Task<ShellProcessResult> RunShellAsync(string command, string workingDir, CancellationToken cancellationToken = default)
     {
-        var result = await _processRunner.ExecuteAsync(command, workingDir, cancellationToken);
+        // v15: large tier + POSIX → persistent session (cwd/env persist across calls).
+        if (_usePersistentSession)
+        {
+            try
+            {
+                _session ??= await (_sessionFactory ?? new ShellSessionFactory()).CreateAsync(_workingDirectory, cancellationToken);
+                if (_session.IsDead) { _session = null; } // recreate once on crash
+                _session ??= await (_sessionFactory ?? new ShellSessionFactory()).CreateAsync(_workingDirectory, cancellationToken);
+                var r = await _session.RunAsync(command, cancellationToken);
+                return new ShellProcessResult(r.StdOut, r.StdErr, r.ExitCode);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _session = null; // next call falls back to isolated execution
+                return new ShellProcessResult("", $"[persistent shell unavailable: {ex.Message}; ran isolated]", -1);
+            }
+        }
+        // v15: large tier executes inside the Seatbelt sandbox (workspace-writes-only).
+        var result = await _processRunner.ExecuteAsync(_sandbox.Wrap(command), workingDir, cancellationToken);
         return new ShellProcessResult(result.StdOut, result.StdErr, result.ExitCode);
     }
-        /// <summary>v15: small tier gets literal do-not rules; large tier gets judgment-based guidance.</summary>
+        /// <summary>v15: dispose the persistent shell session (call at run end).</summary>
+    public async Task DisposeSessionAsync()
+    {
+        if (_session != null)
+        {
+            try { await _session.DisposeAsync(); } catch { /* best-effort */ }
+            _session = null;
+        }
+    }
+
+    /// <summary>v15: small tier gets literal do-not rules; large tier gets judgment-based guidance.</summary>
         public override string GetToolRulesForTier(bool isLargeTier)
         {
             if (isLargeTier)

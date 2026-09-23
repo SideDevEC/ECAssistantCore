@@ -192,9 +192,10 @@ public sealed class HarnessOptimizationTests : IDisposable
                 object? instance;
                 if (t.Name == "EShellAgent")
                 {
-                    // EShellAgent ctor needs (IProcessRunner, AppConfig, string).
+                    // EShellAgent ctor needs (IProcessRunner, AppConfig, string[, sessionFactory, isLargeTier]).
                     instance = Activator.CreateInstance(t,
-                        new StubProcessRunner(), new AppConfig(), Directory.GetCurrentDirectory());
+                        new StubProcessRunner(), new AppConfig(), Directory.GetCurrentDirectory(),
+                        null, false, null);
                 }
                 else
                 {

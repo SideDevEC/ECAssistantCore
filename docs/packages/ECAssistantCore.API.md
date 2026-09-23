@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 383  |  LOC: 32422  |  ~18701 tokens
+Types: 393  |  LOC: 32791  |  ~19320 tokens
 
 ---
 
@@ -309,6 +309,28 @@ Methods:
 > Staged first-run installation wizard seam. Each stage only shows what it needs:
 Methods:
   - Task RunAsync(WizardContext ctx)
+
+### Interface: IShellSandbox
+> macOS Seatbelt (sandbox-exec) wrapper: shell commands run under a generated
+Properties:
+  - bool IsEnabled { get; set; }
+Methods:
+  - string Wrap(string command)
+Cross-package deps: ECAssistant.Core.Interfaces
+
+### Interface: IShellSession
+> A persistent interactive shell session: working directory, environment variables,
+Implements: IAsyncDisposable
+Properties:
+  - string CurrentWorkingDirectory { get; set; }
+  - bool IsDead { get; set; }
+Methods:
+  - Task<ShellCommandResult> RunAsync(string command, CancellationToken ct = default)
+
+### Interface: IShellSessionFactory
+> A persistent interactive shell session: working directory, environment variables,
+Methods:
+  - Task<IShellSession> CreateAsync(string initialWorkingDirectory, CancellationToken ct = default)
 
 ### Interface: IStepMapper
 > Interface for mapping sub-tasks to concrete tool calls.
@@ -671,8 +693,8 @@ Cross-package deps: ECAssistant.Core.Memory
 > Shell Agent Tool — the primary tool for all file and system operations.
 Implements: EToolBase
 Constructor:
-  - EShellAgent(IProcessRunner processRunner, AppConfig config, string workingDirectory)
-Cross-package deps: ECAssistant.Core.Tools.Build, ECAssistant.Core.Config, ECAssistant.Core.Interfaces
+  - EShellAgent(IProcessRunner processRunner, AppConfig config, string workingDirectory, IShellSessionFactory? sessionFactory = null, bool isLargeTier = false, IShellSandbox? sandbox = null)
+Cross-package deps: ECAssistant.Core.Tools.Build, ECAssistant.Core.Config, ECAssistant.Core.Services.Shell, ECAssistant.Core.Interfaces
 
 ### Class: EShellAgentTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Shell
@@ -1158,6 +1180,16 @@ Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.Engine, ECAssistan
 ### Class: PathExpander
 > String utility — truncation and text helpers.
 
+### Class: PersistentShellSession
+> Persistent POSIX shell session via one long-lived zsh/bash process.
+Implements: IShellSession
+Cross-package deps: ECAssistant.Core.Interfaces
+
+### Class: PersistentShellSessionTests
+> v15: persistent shell session — working directory and exported env survive
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Services.Shell
+
 ### Class: PlannedToolCall
 > A single planned tool call — concrete mapping from a sub-task to a tool + args.
 
@@ -1293,6 +1325,18 @@ Cross-package deps: ECAssistant.Core.Session, Xunit
 
 ### Class: SamplingConfig
 
+### Class: SeatbeltShellSandbox
+> macOS Seatbelt (sandbox-exec) wrapper: shell commands run under a generated
+Implements: IShellSandbox
+Constructor:
+  - SeatbeltShellSandbox(ShellSandboxOptions options, ILogger? logger = null)
+Cross-package deps: ECAssistant.Core.Interfaces
+
+### Class: SeatbeltShellSandboxTests
+> v15: Seatbelt sandbox — profile generation, command wrapping, and LIVE
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Services.Shell
+
 ### Class: SecureKeyStore
 > Cross-platform encrypted-at-rest API key store.
 Implements: ISecureKeyStore
@@ -1393,6 +1437,13 @@ Implements: ISetupWizard
 Constructor:
   - SetupWizard(ISetupUi ui)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup
+
+### Class: ShellSessionFactory
+> Factory for per-run persistent shell sessions (injected; one store per agent run).
+Implements: IShellSessionFactory
+Constructor:
+  - ShellSessionFactory(ILogger? logger = null)
+Cross-package deps: ECAssistant.Core.Interfaces
 
 ### Class: SingleToolResult
 > Result of a single tool execution within a batch.
@@ -1781,6 +1832,17 @@ Constructor:
 > A fully-resolved remote provider ready for engine construction.
 Constructor:
   - RemoteProvider(string Name, string Endpoint, string? ApiKey, string ModelId, string? EmbeddingModelId)
+
+### Record: ShellCommandResult
+> A persistent interactive shell session: working directory, environment variables,
+Constructor:
+  - ShellCommandResult(int ExitCode, string StdOut, string StdErr)
+
+### Record: ShellSandboxOptions
+> macOS Seatbelt (sandbox-exec) wrapper: shell commands run under a generated
+Constructor:
+  - ShellSandboxOptions(bool Enabled, string WorkspaceRoot, bool AllowNetwork = false)
+Cross-package deps: ECAssistant.Core.Interfaces
 
 ### Record: TranscriptMessage
 Constructor:

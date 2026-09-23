@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-23T17:46:28.436950+00:00
-Edges: 97  |  Packages: 2
+Generated: 2026-09-23T18:27:21.405058+00:00
+Edges: 100  |  Packages: 2
 
 ---
 
@@ -78,6 +78,7 @@ Edges: 97  |  Packages: 2
 - ModelParamValidator ──implements──► IModelParamValidator (ECAssistantCore)
 - NopKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
 - ParallelToolExecutor ──implements──► IParallelToolExecutor (ECAssistantCore)
+- PersistentShellSession ──implements──► IShellSession (ECAssistantCore)
 - PlaybookExtractor ──implements──► IPlaybookExtractor (ECAssistantCore)
 - PlaybookStore ──implements──► IPlaybookStore (ECAssistantCore)
 - PostEditVerifier ──implements──► IPostEditVerifier (ECAssistantCore)
@@ -86,12 +87,14 @@ Edges: 97  |  Packages: 2
 - RemoteKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
 - RemoteModelLoader ──implements──► IModelLoader (ECAssistantCore)
 - RemoteModelProbe ──implements──► IRemoteModelProbe (ECAssistantCore)
+- SeatbeltShellSandbox ──implements──► IShellSandbox (ECAssistantCore)
 - SecureKeyStore ──implements──► ISecureKeyStore (ECAssistantCore)
 - ServerInstallCoordinator ──implements──► IServerInstallCoordinator (ECAssistantCore)
 - ServerInstallCoordinator ──uses──► ISetupUi (ECAssistantCore)
 - SessionBuilder ──implements──► ISessionBuilder (ECAssistantCore)
 - SetupWizard ──implements──► ISetupWizard (ECAssistantCore)
 - SetupWizard ──uses──► ISetupUi (ECAssistantCore)
+- ShellSessionFactory ──implements──► IShellSessionFactory (ECAssistantCore)
 - SipsPdfPageRenderer ──implements──► IPdfPageRenderer (ECAssistantCore)
 - SipsPdfPageRenderer ──uses──► IProcessRunner (ECAssistantCore)
 - StepMapper ──implements──► IStepMapper (ECAssistantCore)

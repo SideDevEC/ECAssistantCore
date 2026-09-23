@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T17:46:28.436238+00:00
-Packages: 2  |  Types: 513
+Generated: 2026-09-23T18:27:21.403612+00:00
+Packages: 2  |  Types: 525
 
 ---
 
-## ECAssistantCore (383 types, ~32422 LOC)
+## ECAssistantCore (393 types, ~32791 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -41,6 +41,9 @@ Packages: 2  |  Types: 513
 - 🔵 ISessionOutput  (ECAssistantCore)
 - 🔵 ISetupUi  (ECAssistantCore)
 - 🔵 ISetupWizard  (ECAssistantCore)
+- 🔵 IShellSandbox  (ECAssistantCore)
+- 🔵 IShellSession : IAsyncDisposable  (ECAssistantCore)
+- 🔵 IShellSessionFactory  (ECAssistantCore)
 - 🔵 IStepMapper  (ECAssistantCore)
 - 🔵 ISubAgentEngineHost  (ECAssistantCore)
 - 🔵 ITaskPlanner  (ECAssistantCore)
@@ -119,7 +122,7 @@ Packages: 2  |  Types: 513
 - 🟡 EHandoffTool : EToolBase  (ECAssistantCore)  deps: [Func]
 - 🟡 EHandoffToolTests  (ECAssistantCore)
 - 🟡 EMemoryManagerTests : IDisposable  (ECAssistantCore)
-- 🟡 EShellAgent : EToolBase  (ECAssistantCore)  deps: [IProcessRunner, AppConfig, string]
+- 🟡 EShellAgent : EToolBase  (ECAssistantCore)  deps: [IProcessRunner, AppConfig, string, IShellSessionFactory? sessionFactory =, bool isLargeTier =, IShellSandbox? sandbox =]
 - 🟡 EShellAgentTests  (ECAssistantCore)
 - 🟡 ESubAgentTool : EToolBase  (ECAssistantCore)  deps: [SubAgentManager, string]
 - 🟡 EToolBase  (ECAssistantCore)
@@ -241,6 +244,8 @@ Packages: 2  |  Types: 513
 - 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 ParallelToolExecutorTests  (ECAssistantCore)
 - 🟡 PathExpander  (ECAssistantCore)
+- 🟡 PersistentShellSession : IShellSession  (ECAssistantCore)
+- 🟡 PersistentShellSessionTests : IDisposable  (ECAssistantCore)
 - 🟣 PinnedFact  (ECAssistantCore)  deps: [string, string]
 - 🟡 PlannedToolCall  (ECAssistantCore)
 - 🟡 Playbook  (ECAssistantCore)
@@ -278,6 +283,8 @@ Packages: 2  |  Types: 513
 - 🟡 RequestChoiceTests : IDisposable  (ECAssistantCore)
 - 🟡 ResourceLoader  (ECAssistantCore)
 - 🟡 SamplingConfig  (ECAssistantCore)
+- 🟡 SeatbeltShellSandbox : IShellSandbox  (ECAssistantCore)  deps: [ShellSandboxOptions, ILogger? logger =]
+- 🟡 SeatbeltShellSandboxTests : IDisposable  (ECAssistantCore)
 - 🟡 SecureKeyStore : ISecureKeyStore  (ECAssistantCore)  deps: [string, ILogger? logger =]
 - 🟡 SecureKeyStoreTests  (ECAssistantCore)
 - 🟡 SelfCorrectionManager : IDisposable  (ECAssistantCore)  deps: [string, ILogger? logger =]
@@ -298,6 +305,9 @@ Packages: 2  |  Types: 513
 - 🟡 SessionQueueTests  (ECAssistantCore)
 - 🟡 SessionVerbosityDefaultTests : IDisposable  (ECAssistantCore)
 - 🟡 SetupWizard : ISetupWizard  (ECAssistantCore)  deps: [ISetupUi]
+- 🟣 ShellCommandResult  (ECAssistantCore)  deps: [int, string, string]
+- 🟣 ShellSandboxOptions  (ECAssistantCore)  deps: [bool, string, bool AllowNetwork =]
+- 🟡 ShellSessionFactory : IShellSessionFactory  (ECAssistantCore)  deps: [ILogger? logger =]
 - 🟡 SingleToolResult  (ECAssistantCore)
 - 🟡 SipsPdfPageRenderer : IPdfPageRenderer  (ECAssistantCore)  deps: [IProcessRunner]
 - 🟡 SseParser  (ECAssistantCore)
@@ -391,7 +401,7 @@ Packages: 2  |  Types: 513
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (130 types, ~15561 LOC)
+## Tests (132 types, ~15670 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 AllToolsTierPromptsTests  (Tests)
@@ -467,6 +477,7 @@ Packages: 2  |  Types: 513
 - 🟡 Order  (Tests)
 - 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (Tests)
 - 🟡 ParallelToolExecutorTests  (Tests)
+- 🟡 PersistentShellSessionTests : IDisposable  (Tests)
 - 🟡 PlaybookTests : IDisposable  (Tests)
 - 🟡 PlaybookTitleTests  (Tests)
 - 🟡 PostEditVerifierTests : IDisposable  (Tests)
@@ -478,6 +489,7 @@ Packages: 2  |  Types: 513
 - 🟡 RemoteProviderIntegrationTests  (Tests)
 - 🟡 RemoteProviderSetupWriterTests  (Tests)
 - 🟡 RequestChoiceTests : IDisposable  (Tests)
+- 🟡 SeatbeltShellSandboxTests : IDisposable  (Tests)
 - 🟡 SecureKeyStoreTests  (Tests)
 - 🟡 SelfCorrectionManagerTests  (Tests)
 - 🟡 ServerConfigWriterTests : IDisposable  (Tests)
