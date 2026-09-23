@@ -4,6 +4,7 @@ using ECAssistant.Core.Config;
 using ECAssistant.Core.Engine;
 using ECAssistant.Core.Interfaces;
 using ECAssistant.Core.Tools;
+using ECAssistant.TestSupport;
 
 namespace ECAssistant.Core.Tests.Harness;
 
@@ -20,11 +21,11 @@ public sealed class EngineTierBehaviorTests : IDisposable
     private readonly string _dir = Directory.CreateTempSubdirectory("eca-engine-tier").FullName;
     private readonly List<EAgentEngine> _engines = new();
 
-    private TierTestEngine CreateEngine(EAgentConfig config)
+    private MockEngine CreateEngine(EAgentConfig config)
     {
-        var engine = new TierTestEngine(config, _dir);
+        var engine = new MockEngine(workingDir: _dir, config: config);
         _engines.Add(engine);
-        engine.RegisterTool(new TierTestTool());
+        engine.RegisterTool(new ProbeTestTool());
         return engine;
     }
 
@@ -53,7 +54,7 @@ public sealed class EngineTierBehaviorTests : IDisposable
     {
         // Turn-2+ branch fires whenever TurnCount != 1; a fresh engine has 0, and a
         // tool output in the window supplies the <tooloutput> block the branch feeds.
-        engine.AddToolResult("TierTestTool", "some tool output");
+        engine.AddToolResult("ProbeTool", "some tool output");
         var m = typeof(EAgentEngine).GetMethod("BuildIncrementalInput",
             BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(m);
@@ -144,7 +145,7 @@ public sealed class EngineTierBehaviorTests : IDisposable
     {
         var engine = CreateEngine(BuildConfig(null, isLocal: true));
         var names = engine.Tools.Select(t => t.Name).ToList();
-        Assert.Contains("TierTestTool", names);
+        Assert.Contains("ProbeTool", names);
     }
 
     // ── BuildToolSpecs: ParameterSchema copy (the v14.12 fix) ──
@@ -157,7 +158,7 @@ public sealed class EngineTierBehaviorTests : IDisposable
             BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(m);
         var specs = (List<ToolSpec>)m.Invoke(engine, null)!;
-        var spec = specs.Single(s => s.Name == "TierTestTool");
+        var spec = specs.Single(s => s.Name == "ProbeTool");
         Assert.Contains("\"action\"", spec.ParameterSchema);
     }
 
@@ -167,82 +168,4 @@ public sealed class EngineTierBehaviorTests : IDisposable
             try { engine.Dispose(); } catch { }
         try { Directory.Delete(_dir, true); } catch { }
     }
-}
-
-/// <summary>
-/// Thin EAgentEngine subclass that flows a specific config through the real ctor —
-/// same pattern as TestSupport's MockEngine (which hard-codes config: null).
-/// </summary>
-internal sealed class TierTestEngine : EAgentEngine
-{
-    public TierTestEngine(EAgentConfig config, string workingDir)
-        : base("tier-" + Guid.NewGuid().ToString("N")[..8],
-            new NoopInferenceEngine(),
-            new NoopKvCacheController(),
-            tokenizer: null,
-            inferenceParams: new InferenceRequestParams(),
-            contextSize: 8192,
-            modelPath: "mock",
-            config: config,
-            workingDir: workingDir)
-    {
-    }
-}
-
-/// <summary>Inference test double — no HTTP, structured path unsupported (null).</summary>
-internal sealed class NoopInferenceEngine : IInferenceEngine
-{
-    public string Endpoint => "http://noop.test";
-
-    public IAsyncEnumerable<string> StreamAsync(
-        string prompt, InferenceRequestParams parameters, CancellationToken ct = default)
-        => EmptyStream();
-
-    public Task<string> GenerateAsync(
-        string prompt, InferenceRequestParams parameters, CancellationToken ct = default)
-        => Task.FromResult(string.Empty);
-
-    private static async IAsyncEnumerable<string> EmptyStream()
-    {
-        await Task.CompletedTask;
-        yield break;
-    }
-}
-
-/// <summary>KV cache test double — all operations succeed as no-ops.</summary>
-internal sealed class NoopKvCacheController : IKvCacheController
-{
-    public Task<bool> CreateSessionAsync(string sessionId, string? modelId = null, CancellationToken ct = default)
-        => Task.FromResult(true);
-    public Task<bool> DestroySessionAsync(string sessionId, CancellationToken ct = default)
-        => Task.FromResult(true);
-    public Task<bool> PrefillAsync(string sessionId, string text, CancellationToken ct = default)
-        => Task.FromResult(true);
-    public Task<bool> SaveStateAsync(string sessionId, CancellationToken ct = default)
-        => Task.FromResult(true);
-    public Task<bool> RewindAsync(string sessionId, CancellationToken ct = default)
-        => Task.FromResult(true);
-    public Task<bool> ResetAsync(string sessionId, CancellationToken ct = default)
-        => Task.FromResult(true);
-    public Task<KvCacheStatus?> GetStatusAsync(string sessionId, CancellationToken ct = default)
-        => Task.FromResult<KvCacheStatus?>(null);
-}
-
-/// <summary>
-/// Minimal registered tool for tier tests — real registration path, typed schema.
-/// </summary>
-public sealed class TierTestTool : EToolBase
-{
-    public override string Name => "TierTestTool";
-    public override string Description => "Tier test tool.";
-    public override string UsageExample => "<toolcall><tool>TierTestTool</tool><arg_name>action</arg_name></toolcall>";
-
-    public override string GetParameterSchema() =>
-        """
-        {"type":"object","required":["action"],"properties":{"action":{"type":"string","enum":["probe"]}}}
-        """;
-
-    public override Task<EToolResult> ExecuteAsync(
-        Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
-        => Task.FromResult(EToolResult.Success("TierTestTool", "probed"));
 }

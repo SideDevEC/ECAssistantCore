@@ -6,6 +6,7 @@ using ECAssistant.Core.Services.Http;
 using ECAssistant.Core.Session;
 using ECAssistant.Core.Transport;
 using ECAssistant.Core.Tools;
+using ECAssistant.TestSupport;
 
 namespace ECAssistant.Core.Tests.E2E;
 
@@ -40,30 +41,15 @@ public sealed class HarnessE2E
         return JsonSerializer.Deserialize<EAgentConfig>(json)!;
     }
 
-    private static async Task<AgentSession> CreateSessionAsync(string endpoint)
+    private static async Task<(AgentSession session, string dir)> CreateSessionAsync(string endpoint)
     {
-        // Server contract: register a client identity, then carry X-Client-Id on
-        // every request (the Console/TUI do the same via LlmServerClient).
-        var regClient = new OpenAIClient(endpoint);
-        var regBody = JsonSerializer.Serialize(new { client_name = "harness-e2e", version = "1.0" });
-        var regJson = await regClient.PostJsonAsync("/eca/clients", regBody);
-        var clientId = JsonDocument.Parse(regJson).RootElement.GetProperty("client_id").GetString()
-            ?? throw new InvalidOperationException("client registration returned no client_id");
-
-        var dir = Directory.CreateTempSubdirectory("eca-harness-e2e").FullName;
         var config = BuildConfig();
-        var session = new AgentSession(
-            key: "e2e-" + Guid.NewGuid().ToString("N")[..8],
-            sessionId: "e2e-sess-" + Guid.NewGuid().ToString("N")[..8],
-            endpoint: endpoint,
-            clientId: clientId,
-            inferenceParams: InferenceParamsFactory.Default.Create(config),
-            workingDir: dir,
-            inferenceLock: new SemaphoreSlim(1, 1),
-            config: config,
-            isLocalMode: true);
-        session.Engine.RegisterTool(new ProbeTool());
-        return session;
+        var factory = new HarnessE2ESessionFactory();
+        var (session, dir) = await factory.CreateAsync(
+            endpoint,
+            config,
+            configure: engine => engine.RegisterTool(new ProbeTestTool()));
+        return (session, dir);
     }
 
     [Fact]
@@ -71,7 +57,7 @@ public sealed class HarnessE2E
     {
         if (string.IsNullOrEmpty(ServerUrl)) return; // not enabled — needs a real server
 
-        var session = await CreateSessionAsync(ServerUrl);
+        var (session, dir) = await CreateSessionAsync(ServerUrl);
         try
         {
             var result = await session.Orchestrator.ExecuteMultiStep(
@@ -88,6 +74,7 @@ public sealed class HarnessE2E
         finally
         {
             await session.DisposeAsync();
+            try { Directory.Delete(dir, true); } catch { }
         }
     }
 
@@ -96,7 +83,7 @@ public sealed class HarnessE2E
     {
         if (string.IsNullOrEmpty(ServerUrl)) return; // not enabled — needs a real server
 
-        var session = await CreateSessionAsync(ServerUrl);
+        var (session, dir) = await CreateSessionAsync(ServerUrl);
         try
         {
             var result = await session.Orchestrator.ExecuteMultiStep(
@@ -117,24 +104,7 @@ public sealed class HarnessE2E
         finally
         {
             await session.DisposeAsync();
+            try { Directory.Delete(dir, true); } catch { }
         }
     }
-}
-
-/// <summary>Harmless registered tool for the harness e2e — typed schema, no side effects.</summary>
-public sealed class ProbeTool : EToolBase
-{
-    public override string Name => "ProbeTool";
-    public override string Description =>
-        "Runs a system probe and returns its status. Use when the user asks to probe or check something.";
-    public override string UsageExample => "ProbeTool(action=\"probe\");";
-
-    public override string GetParameterSchema() =>
-        """
-        {"type":"object","required":["action"],"properties":{"action":{"type":"string","enum":["probe"]}}}
-        """;
-
-    public override Task<EToolResult> ExecuteAsync(
-        Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
-        => Task.FromResult(EToolResult.Success("ProbeTool", "PROBE OK: all systems nominal"));
 }
