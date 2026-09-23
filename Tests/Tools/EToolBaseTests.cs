@@ -5,12 +5,12 @@ namespace ECAssistant.Core.Tests.Tools;
 
 public class EToolBaseTests
 {
-    // ── ToolResult.Success ──
+    // ── EToolResult.Success ──
 
     [Fact]
     public void Success_SetsPropertiesCorrectly()
     {
-        var result = ToolResult.Success("MyTool", "done");
+        var result = EToolResult.Success("MyTool", "done");
 
         Assert.Equal("MyTool", result.ToolName);
         Assert.True(result.Succeeded);
@@ -24,7 +24,7 @@ public class EToolBaseTests
     {
         var meta = new Dictionary<string, string> { ["key"] = "val" };
 
-        var result = ToolResult.Success("Tool", "ok", meta);
+        var result = EToolResult.Success("Tool", "ok", meta);
 
         Assert.NotNull(result.Metadata);
         Assert.Equal("val", result.Metadata!["key"]);
@@ -33,18 +33,18 @@ public class EToolBaseTests
     [Fact]
     public void Success_WithEmptyOutput_Succeeds()
     {
-        var result = ToolResult.Success("Tool", "");
+        var result = EToolResult.Success("Tool", "");
 
         Assert.True(result.Succeeded);
         Assert.Equal("", result.Output);
     }
 
-    // ── ToolResult.Failure ──
+    // ── EToolResult.Failure ──
 
     [Fact]
     public void Failure_SetsPropertiesCorrectly()
     {
-        var result = ToolResult.Failure("MyTool", "something broke");
+        var result = EToolResult.Failure("MyTool", "something broke");
 
         Assert.Equal("MyTool", result.ToolName);
         Assert.False(result.Succeeded);
@@ -58,18 +58,18 @@ public class EToolBaseTests
     {
         var meta = new Dictionary<string, string> { ["code"] = "500" };
 
-        var result = ToolResult.Failure("Tool", "err", meta);
+        var result = EToolResult.Failure("Tool", "err", meta);
 
         Assert.NotNull(result.Metadata);
         Assert.Equal("500", result.Metadata!["code"]);
     }
 
-    // ── ToolResult.ToString ──
+    // ── EToolResult.ToString ──
 
     [Fact]
     public void ToString_Succeeded_ReturnsSuccessFormat()
     {
-        var result = ToolResult.Success("MyTool", "all good");
+        var result = EToolResult.Success("MyTool", "all good");
 
         var s = result.ToString();
 
@@ -79,7 +79,7 @@ public class EToolBaseTests
     [Fact]
     public void ToString_Failed_ReturnsFailedFormat()
     {
-        var result = ToolResult.Failure("MyTool", "bad");
+        var result = EToolResult.Failure("MyTool", "bad");
 
         var s = result.ToString();
 
@@ -170,8 +170,8 @@ public class EToolBaseTests
         Assert.Equal(string.Empty, tool.GetToolRules());
     }
 
-    /// <summary>Concrete subclass for testing ToolBase abstract members.</summary>
-    private class TestTool : ToolBase
+    /// <summary>Concrete subclass for testing EToolBase abstract members.</summary>
+    private class TestTool : EToolBase
     {
         private readonly string _name;
         private readonly string _desc;
@@ -192,7 +192,7 @@ public class EToolBaseTests
         public override string GetToolRules() => _rules;
         public override string GetToolExample() => _example;
 
-        public override Task<ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
-            => Task.FromResult(ToolResult.Success(_name, "ok"));
+        public override Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
+            => Task.FromResult(EToolResult.Success(_name, "ok"));
     }
 }

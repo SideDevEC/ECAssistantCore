@@ -917,7 +917,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                 }
 
        /// <summary>Execute a tool call by name with args dictionary.</summary>
-    private async Task<ToolResult> ExecuteTool(string toolName, Dictionary<string, string?> args)
+    private async Task<EToolResult> ExecuteTool(string toolName, Dictionary<string, string?> args)
                {
         var tool = _engine.Tools.FirstOrDefault(t => t.Name.Equals(toolName, StringComparison.OrdinalIgnoreCase));
         if (tool == null)
@@ -926,7 +926,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
         if (!tool.IsEnabled)
          {
             _logger?.Info("Orchestrator", $"Tool blocked (disabled): {tool.Name}");
-            return ToolResult.Failure(toolName, "[BLOCKED] Tool is disabled by configuration.");
+            return EToolResult.Failure(toolName, "[BLOCKED] Tool is disabled by configuration.");
          }
          _logger?.Debug("Orchestrator", $"Executing: {tool.Name}");
           // v10.9.3: Pass execution cancellation token to tool

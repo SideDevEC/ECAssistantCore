@@ -139,7 +139,7 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
      }
 
      // ── Shared components (lazily created / injected) ──
-    private readonly List<ToolBase> _tools = new();
+    private readonly List<EToolBase> _tools = new();
     private readonly object _toolsLock = new();
     private SubAgentManager? _subAgentManager;
     private ECAssistant.Core.Engine.SelfCorrectionManager? _selfCorrection;
@@ -238,7 +238,7 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
     public ContextWindow ContextWindow => _contextWindow;
     public ConversationTranscript Transcript => _transcript;
     public MemoryManager Memory => _memoryManager;
-    public IReadOnlyList<ToolBase> Tools
+    public IReadOnlyList<EToolBase> Tools
      {
         get { lock (_toolsLock) return _tools.ToArray(); }
      }
@@ -1100,7 +1100,7 @@ User: " + userRequest + "\n";
 
      // ── Tool registration + results ────────────────────────────
 
-    public void RegisterTool(ToolBase tool)
+    public void RegisterTool(EToolBase tool)
      {
         lock (_toolsLock) _tools.Add(tool);
         _out?.WriteInfo($"[Tool] Registered: {tool.Name}");
@@ -1114,7 +1114,7 @@ User: " + userRequest + "\n";
         /// </summary>
     public string RenderOutput(string toolName, string rawOutput)
          {
-        ToolBase? tool = null;
+        EToolBase? tool = null;
         lock (_toolsLock) tool = _tools.FirstOrDefault(t => t.Name.Equals(toolName, StringComparison.OrdinalIgnoreCase));
         return tool?.RenderForModel(rawOutput) ?? rawOutput;
          }

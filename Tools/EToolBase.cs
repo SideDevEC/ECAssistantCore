@@ -9,7 +9,7 @@ namespace ECAssistant.Core.Tools;
 /// Each tool must extend this and implement ExecuteAsync().
 /// New tools are added by creating a subclass — no changes to Harness required.
 /// </summary>
-public abstract class ToolBase
+public abstract class EToolBase
 {
              /// <summary>Unique name of this tool (e.g., "EShellAgent")</summary>
     public abstract string Name { get; }
@@ -48,7 +48,7 @@ public abstract class ToolBase
                 /// Execute the tool with given arguments.
                  /// </summary>
              /// <param name="arguments">Dictionary of argument key/value pairs from the LLM</param>
-    public abstract Task<ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default);
+    public abstract Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// v10.24: Returns the default config section for this tool.

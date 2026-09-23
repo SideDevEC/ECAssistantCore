@@ -46,7 +46,7 @@ public class SessionBuilder : ISessionBuilder
     /// Set before calling BuildAsync(). These are registered first,
     /// before the native tools.
     /// </summary>
-    public List<ToolBase> ExternalTools { get; set; } = new();
+    public List<EToolBase> ExternalTools { get; set; } = new();
 
     /// <summary>
     /// Whether to register the built-in ECAssistant tools (shell, file reader, git, etc.).
@@ -156,7 +156,7 @@ public class SessionBuilder : ISessionBuilder
     /// Both get their config section written if missing.
     /// </summary>
     /// <param name="externalTools">Tools from the host to register alongside native tools</param>
-    public async Task BuildAsync(AgentSession session, List<ToolBase>? externalTools)
+    public async Task BuildAsync(AgentSession session, List<EToolBase>? externalTools)
     {
         // ── Vector Memory (semantic search) ──
         if (EnableVectorMemory ?? _config.VectorMemory.Enabled)
@@ -206,7 +206,7 @@ public class SessionBuilder : ISessionBuilder
     /// - Config section written if missing (via GetConfigSection())
     /// - Tool registered only if IsEnabled is true
     /// </summary>
-    public void RegisterBuiltInToolsAsync(AgentSession session, List<ToolBase>? externalTools = null)
+    public void RegisterBuiltInToolsAsync(AgentSession session, List<EToolBase>? externalTools = null)
     {
         // ── External tools first ──
         if (externalTools != null)
@@ -272,7 +272,7 @@ public class SessionBuilder : ISessionBuilder
     /// If not, writes the default from GetConfigSection() and persists to appsettings.json.
     /// Called for all tools — enabled or disabled — so config always has a section.
     /// </summary>
-    private void EnsureToolConfigSection(ToolBase tool)
+    private void EnsureToolConfigSection(EToolBase tool)
     {
         if (!_config.Tools.ContainsKey(tool.Name))
         {
@@ -288,7 +288,7 @@ public class SessionBuilder : ISessionBuilder
     /// System-critical tools (IsSystemCritical = true) always register regardless of config.
     /// System-critical tools also cannot be blocked by ToolPolicy.
     /// </summary>
-    private void EnsureAndRegister(AgentSession session, ToolBase tool)
+    private void EnsureAndRegister(AgentSession session, EToolBase tool)
     {
         EnsureToolConfigSection(tool);
         if (tool.IsSystemCritical)

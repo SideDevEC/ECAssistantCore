@@ -8,7 +8,7 @@ namespace ECAssistant.Core.Tools.Reader;
 /// <summary>
 /// EFileReader — read file contents with offset/limit/token-budget control.
 /// </summary>
-public class EFileReaderTool : ToolBase
+public class EFileReaderTool : EToolBase
 {
     private readonly IFileSystem _fileSystem;
     private readonly JsonElement? _toolConfig;
@@ -51,11 +51,11 @@ public class EFileReaderTool : ToolBase
 
     public override object GetConfigSection() => new { enabled = true };
 
-    public override Task<ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
+    public override Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         var filePath = arguments.GetValueOrDefault("file")?.Trim();
         if (string.IsNullOrEmpty(filePath))
-            return Task.FromResult(ToolResult.Failure(Name, "Missing required argument: file"));
+            return Task.FromResult(EToolResult.Failure(Name, "Missing required argument: file"));
 
         var offset = 1;
         if (arguments.TryGetValue("offset", out var offsetStr) && int.TryParse(offsetStr, out var o))
@@ -71,7 +71,7 @@ public class EFileReaderTool : ToolBase
 
         var fullPath = ResolvePath(filePath);
         if (!_fileSystem.FileExists(fullPath))
-            return Task.FromResult(ToolResult.Failure(Name, $"File not found: {filePath}"));
+            return Task.FromResult(EToolResult.Failure(Name, $"File not found: {filePath}"));
 
         try
         {
@@ -86,7 +86,7 @@ public class EFileReaderTool : ToolBase
 
             var startIndex = Math.Max(0, offset - 1);
             if (startIndex >= totalLines)
-                return Task.FromResult(ToolResult.Failure(Name, $"Offset {offset} is beyond end of file (total: {totalLines} lines)"));
+                return Task.FromResult(EToolResult.Failure(Name, $"Offset {offset} is beyond end of file (total: {totalLines} lines)"));
 
             var available = totalLines - startIndex;
             var take = Math.Min(limit, available);
@@ -115,11 +115,11 @@ public class EFileReaderTool : ToolBase
             if (offset + linesShown < totalLines)
                 sb.AppendLine($"\n[More available: {totalLines - offset - linesShown + 1} lines remaining. Use offset={offset + linesShown} to read more.]");
 
-            return Task.FromResult(ToolResult.Success(Name, sb.ToString()));
+            return Task.FromResult(EToolResult.Success(Name, sb.ToString()));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(ToolResult.Failure(Name, $"Error reading file: {ex.Message}"));
+            return Task.FromResult(EToolResult.Failure(Name, $"Error reading file: {ex.Message}"));
         }
     }
 

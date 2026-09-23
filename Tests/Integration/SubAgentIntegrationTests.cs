@@ -226,7 +226,7 @@ public class SubAgentIntegrationTests : IDisposable
 /// Mock ESubAgent tool for testing — returns a canned result without
 /// spawning a real AgentEngine that would load a 5GB GGUF model.
 /// </summary>
-public class MockSubAgentTool : ECAssistant.Core.Tools.ToolBase
+public class MockSubAgentTool : ECAssistant.Core.Tools.EToolBase
 {
     public override string Name => "ESubAgent";
     public override string Description => "Mock sub-agent tool for testing";
@@ -234,14 +234,14 @@ public class MockSubAgentTool : ECAssistant.Core.Tools.ToolBase
     public override string GetToolRules() => "<task>=description (required)";
     public override string GetToolExample() => "ESubAgent(task:test)";
 
-    public override async Task<ECAssistant.Core.Tools.ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
+    public override async Task<ECAssistant.Core.Tools.EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask;
         var taskDesc = arguments.GetValueOrDefault("task")?.Trim();
         if (string.IsNullOrEmpty(taskDesc))
-            return new ECAssistant.Core.Tools.ToolResult { ToolName = Name, Succeeded = false, Error = "Missing task argument." };
+            return new ECAssistant.Core.Tools.EToolResult { ToolName = Name, Succeeded = false, Error = "Missing task argument." };
 
-        return new ECAssistant.Core.Tools.ToolResult
+        return new ECAssistant.Core.Tools.EToolResult
         {
             ToolName = Name,
             Succeeded = true,

@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 379  |  LOC: 31826  |  ~18433 tokens
+Types: 379  |  LOC: 31826  |  ~18439 tokens
 
 ---
 
@@ -53,7 +53,7 @@ Methods:
 ### Interface: IEngineToolContext
 > Read-only view of the engine's tool surface used by planning components
 Properties:
-  - IReadOnlyList<ToolBase> Tools { get; set; }
+  - IReadOnlyList<EToolBase> Tools { get; set; }
 Methods:
   - Task<string?> GeneratePlanAsync(string userRequest)
 Cross-package deps: ECAssistant.Core.Tools
@@ -253,7 +253,7 @@ Methods:
 ### Interface: ISessionBuilder
 > Interface for building and initializing AgentSessions with standard tools.
 Properties:
-  - List<ToolBase> ExternalTools { get; set; }
+  - List<EToolBase> ExternalTools { get; set; }
   - bool RegisterBuiltInTools { get; set; }
   - bool? EnableVectorMemory { get; set; }
   - bool? EnableSubAgents { get; set; }
@@ -261,8 +261,8 @@ Properties:
   - BackgroundProcessManager BackgroundManager { get; set; }
 Methods:
   - Task BuildAsync(AgentSession session)
-  - Task BuildAsync(AgentSession session, List<ToolBase>? externalTools)
-  - void RegisterBuiltInToolsAsync(AgentSession session, List<ToolBase>? externalTools = null)
+  - Task BuildAsync(AgentSession session, List<EToolBase>? externalTools)
+  - void RegisterBuiltInToolsAsync(AgentSession session, List<EToolBase>? externalTools = null)
 Cross-package deps: ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Tools
 
 ### Interface: ISessionContext
@@ -583,7 +583,7 @@ Cross-package deps: ECAssistant.Core.Config
 
 ### Class: EBackgroundExecTool
 > Background Exec Tool — lets the LLM start long-running processes
-Implements: ToolBase
+Implements: EToolBase
 Constructor:
   - EBackgroundExecTool(BackgroundProcessManager mgr, IProcessRunner processRunner, IFileSystem fileSystem, AppConfig config)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Services
@@ -594,7 +594,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 
 ### Class: ECodeEditorTool
 > Code Editor Tool — surgical code edits with diff preview, multi-line replacement,
-Implements: ToolBase
+Implements: EToolBase
 Constructor:
   - ECodeEditorTool(IFileSystem fileSystem, AppConfig config)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
@@ -608,7 +608,7 @@ Cross-package deps: ECAssistant.Core.Analysis
 
 ### Class: EDotnetBuildTool
 > .NET build/test tool.
-Implements: ToolBase
+Implements: EToolBase
 Constructor:
   - EDotnetBuildTool(IProcessRunner processRunner, AppConfig config)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
@@ -618,7 +618,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 
 ### Class: EFileReaderTool
 > EFileReader — read file contents with offset/limit/token-budget control.
-Implements: ToolBase
+Implements: EToolBase
 Constructor:
   - EFileReaderTool(IFileSystem fileSystem, AppConfig config)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
@@ -628,7 +628,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 
 ### Class: EFileResearchTool
 > EFileResearchTool — scan project files, read content for LLM analysis.
-Implements: ToolBase
+Implements: EToolBase
 Constructor:
   - EFileResearchTool(IFileSystem fileSystem, AppConfig config)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
@@ -639,7 +639,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 
 ### Class: EGitTool
 > Git Integration Tool — wraps common git operations with structured output.
-Implements: ToolBase
+Implements: EToolBase
 Constructor:
   - EGitTool(IProcessRunner processRunner, IFileSystem fileSystem, AppConfig config)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
@@ -649,7 +649,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 
 ### Class: EHandoffTool
 > Handoff tool — allows the main agent to delegate the entire remaining task
-Implements: ToolBase
+Implements: EToolBase
 Constructor:
   - EHandoffTool(Func<HandoffRequest, CancellationToken, Task<OrchestratorResult>> executeHandoff)
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Orchestration
@@ -664,7 +664,7 @@ Cross-package deps: ECAssistant.Core.Memory
 
 ### Class: EShellAgent
 > Shell Agent Tool — the primary tool for all file and system operations.
-Implements: ToolBase
+Implements: EToolBase
 Constructor:
   - EShellAgent(IProcessRunner processRunner, AppConfig config, string workingDirectory)
 Cross-package deps: ECAssistant.Core.Tools.Build, ECAssistant.Core.Config, ECAssistant.Core.Interfaces
@@ -674,18 +674,25 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 
 ### Class: ESubAgentTool
 > Sub-Agent Spawn Tool — allows the main agent to spawn isolated sub-agents
-Implements: ToolBase
+Implements: EToolBase
 Constructor:
   - ESubAgentTool(SubAgentManager manager, string defaultWorkingDir)
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Orchestration
 
+### Class: EToolBase
+> Base class for all Tools.
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Session
+
 ### Class: EToolBaseTests
-> Concrete subclass for testing ToolBase abstract members.
+> Concrete subclass for testing EToolBase abstract members.
 Cross-package deps: ECAssistant.Core, ECAssistant.Core.Tools
+
+### Class: EToolResult
+> Standardized tool call result that flows from any Tool back to the Agent.
 
 ### Class: EUserAskTool
 > v14.9 ambiguity-triggered checkpoint: lets the MODEL declare uncertainty and ask
-Implements: ToolBase
+Implements: EToolBase
 Constructor:
   - EUserAskTool(ISessionOutput? sessionOutput)
 Cross-package deps: ECAssistant.Core.Session
@@ -696,7 +703,7 @@ Cross-package deps: ECAssistant.Core.Session, ECAssistant.Core.Tools.User, Xunit
 
 ### Class: EVisionStructureTool
 > EVisionStructure — analyze an image file or PDF page and return a fixed,
-Implements: ToolBase
+Implements: EToolBase
 Constructor:
   - EVisionStructureTool(IInferenceEngine inferenceEngine, IPdfPageRenderer pdfRenderer, AppConfig config)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Vision
@@ -1025,12 +1032,12 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, Moq
 
 ### Class: MockProbeTool
 > Integration tests for the v15 ephemeral handoff: EHandoff tool registration,
-Implements: ToolBase
+Implements: EToolBase
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.UI
 
 ### Class: MockSubAgentTool
 > Integration tests for sub-agent spawning through the orchestrator.
-Implements: ToolBase
+Implements: EToolBase
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.UI
 
 ### Class: ModelCatalogDocument
@@ -1124,7 +1131,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistan
 > Executes dependency-ordered tool call groups in parallel.
 Implements: IParallelToolExecutor
 Constructor:
-  - ParallelToolExecutor(AgentEngine engine, ECAssistant.Core.Tools.ToolPolicy toolPolicy, Func<string, Dictionary<string, string?>, Task<ToolResult>> executeToolFn, Action<string>? log = null, ISessionOutput? sessionOutput = null)
+  - ParallelToolExecutor(AgentEngine engine, ECAssistant.Core.Tools.ToolPolicy toolPolicy, Func<string, Dictionary<string, string?>, Task<EToolResult>> executeToolFn, Action<string>? log = null, ISessionOutput? sessionOutput = null)
 Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Tools, ECAssistant.Core.Session
 
 ### Class: ParallelToolExecutorIntegrationTests
@@ -1542,10 +1549,6 @@ Cross-package deps: ECAssistant.Core.Services.Http
 ### Class: TokenCounterTests
 Cross-package deps: ECAssistant.Core.Engine
 
-### Class: ToolBase
-> Base class for all Tools.
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Session
-
 ### Class: ToolCallChainSubstitutionTests
 > v14.20: dataflow toolchains — {{N}} reference substitution over prior call
 Cross-package deps: ECAssistant.Core.Engine
@@ -1609,9 +1612,6 @@ Cross-package deps: ECAssistant.Core.Tools
 ### Class: ToolRepeatTrackerTests
 > Unit tests for the v14.9 orchestrator loop detection (ToolRepeatTracker):
 Cross-package deps: ECAssistant.Core.Engine, Xunit
-
-### Class: ToolResult
-> Standardized tool call result that flows from any Tool back to the Agent.
 
 ### Class: ToolSpec
 > Abstracts LLM inference via HTTP (OpenAI-compatible endpoint).

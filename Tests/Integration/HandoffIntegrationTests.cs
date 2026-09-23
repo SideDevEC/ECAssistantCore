@@ -225,14 +225,14 @@ public class HandoffIntegrationTests : IDisposable
 }
 
 /// <summary>Minimal mock tool used to verify the non-handoff path still works.</summary>
-public class MockProbeTool : ECAssistant.Core.Tools.ToolBase
+public class MockProbeTool : ECAssistant.Core.Tools.EToolBase
 {
     public override string Name => "EProbe";
     public override string Description => "Mock probe tool";
     public override string UsageExample => "EProbe(action=\"probe\")";
 
-    public override Task<ECAssistant.Core.Tools.ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
-        => Task.FromResult(new ECAssistant.Core.Tools.ToolResult
+    public override Task<ECAssistant.Core.Tools.EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
+        => Task.FromResult(new ECAssistant.Core.Tools.EToolResult
         {
             ToolName = Name,
             Succeeded = true,

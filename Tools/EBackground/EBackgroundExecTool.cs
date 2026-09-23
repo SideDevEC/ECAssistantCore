@@ -10,7 +10,7 @@ namespace ECAssistant.Core.Tools.Background;
 /// Background Exec Tool — lets the LLM start long-running processes
 /// without blocking the agent loop.
 /// </summary>
-public class EBackgroundExecTool : ToolBase
+public class EBackgroundExecTool : EToolBase
 {
     private readonly BackgroundProcessManager _mgr;
     private readonly IProcessRunner _processRunner;
@@ -60,7 +60,7 @@ public class EBackgroundExecTool : ToolBase
         }
         """;
 
-    public override async Task<ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
+    public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         var action = arguments.GetValueOrDefault("action")?.ToLower().Trim();
 
@@ -70,53 +70,53 @@ public class EBackgroundExecTool : ToolBase
             {
                 var command = arguments.GetValueOrDefault("command");
                 if (string.IsNullOrWhiteSpace(command))
-                    return ToolResult.Failure(Name, "Missing 'command' argument for action=start.");
+                    return EToolResult.Failure(Name, "Missing 'command' argument for action=start.");
 
                 if (cancellationToken.IsCancellationRequested)
-                    return ToolResult.Failure(Name, "Background process start was cancelled by user.");
+                    return EToolResult.Failure(Name, "Background process start was cancelled by user.");
 
                 var id = await _mgr.StartAsync(command, _workingDir);
-                return ToolResult.Success(Name, $"Background process started: {id}\nCommand: {command}\nUse EBackgroundExec with action=output and id={id} to check results.");
+                return EToolResult.Success(Name, $"Background process started: {id}\nCommand: {command}\nUse EBackgroundExec with action=output and id={id} to check results.");
             }
 
             case "status":
             {
                 var list = _mgr.List();
                 if (list.Count == 0)
-                    return ToolResult.Success(Name, "No background processes running.");
+                    return EToolResult.Success(Name, "No background processes running.");
 
                 var sb = new StringBuilder();
                 sb.AppendLine($"Background processes ({list.Count}):");
                 foreach (var p in list)
                     sb.AppendLine($"  {p}");
-                return ToolResult.Success(Name, sb.ToString());
+                return EToolResult.Success(Name, sb.ToString());
             }
 
             case "output":
             {
                 var id = arguments.GetValueOrDefault("id");
                 if (string.IsNullOrWhiteSpace(id))
-                    return ToolResult.Failure(Name, "Missing 'id' argument for action=output.");
+                    return EToolResult.Failure(Name, "Missing 'id' argument for action=output.");
 
                 var status = _mgr.GetStatus(id);
                 var output = _mgr.GetOutput(id);
-                return ToolResult.Success(Name, $"Process {id} — Status: {status}\n\n{output}");
+                return EToolResult.Success(Name, $"Process {id} — Status: {status}\n\n{output}");
             }
 
             case "kill":
             {
                 var id = arguments.GetValueOrDefault("id");
                 if (string.IsNullOrWhiteSpace(id))
-                    return ToolResult.Failure(Name, "Missing 'id' argument for action=kill.");
+                    return EToolResult.Failure(Name, "Missing 'id' argument for action=kill.");
 
                 var killed = _mgr.Kill(id);
                 return killed
-                    ? ToolResult.Success(Name, $"Killed process: {id}")
-                    : ToolResult.Failure(Name, $"Failed to kill process: {id} (not running or not found)");
+                    ? EToolResult.Success(Name, $"Killed process: {id}")
+                    : EToolResult.Failure(Name, $"Failed to kill process: {id} (not running or not found)");
             }
 
             default:
-                return ToolResult.Failure(Name, $"Unknown action: '{action}'. Use start, status, output, or kill.");
+                return EToolResult.Failure(Name, $"Unknown action: '{action}'. Use start, status, output, or kill.");
         }
     }
 }

@@ -14,7 +14,7 @@ namespace ECAssistant.Core.Tools.EVision;
 /// (schemaVersion "1.0"); parsing always yields a fully-populated result.
 /// Requires a vision-capable model (SupportsVision).
 /// </summary>
-public class EVisionStructureTool : ToolBase
+public class EVisionStructureTool : EToolBase
 {
     private const string ToolName = "EVisionStructure";
 
@@ -79,15 +79,15 @@ public class EVisionStructureTool : ToolBase
         temperature = 0f
     };
 
-    public override async Task<ToolResult> ExecuteAsync(
+    public override async Task<EToolResult> ExecuteAsync(
         Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         var path = arguments.TryGetValue("path", out var p) ? p?.Trim() : null;
         if (string.IsNullOrEmpty(path))
-            return ToolResult.Failure(ToolName, "Missing required argument: path");
+            return EToolResult.Failure(ToolName, "Missing required argument: path");
 
         if (!File.Exists(path))
-            return ToolResult.Failure(ToolName, $"File not found: {path}");
+            return EToolResult.Failure(ToolName, $"File not found: {path}");
 
         var ext = Path.GetExtension(path);
         byte[] imageBytes;
@@ -98,11 +98,11 @@ public class EVisionStructureTool : ToolBase
         {
             page = ParsePage(arguments) ?? 1;
             if (page < 1)
-                return ToolResult.Failure(ToolName, "page must be >= 1");
+                return EToolResult.Failure(ToolName, "page must be >= 1");
 
             imageBytes = await _pdfRenderer.RenderPageToPngAsync(path, page, cancellationToken);
             if (imageBytes is null)
-                return ToolResult.Failure(ToolName,
+                return EToolResult.Failure(ToolName,
                     $"Could not render page {page} of '{path}'. Only page 1 is supported by the current renderer.");
             sourceKind = "pdf-page";
         }
@@ -113,7 +113,7 @@ public class EVisionStructureTool : ToolBase
         }
         else
         {
-            return ToolResult.Failure(ToolName,
+            return EToolResult.Failure(ToolName,
                 $"Unsupported file type '{ext}'. Supported: .png .jpg .jpeg .webp .gif .bmp .pdf");
         }
 
@@ -135,13 +135,13 @@ public class EVisionStructureTool : ToolBase
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
-            return ToolResult.Failure(ToolName, $"Vision inference failed: {ex.Message}");
+            return EToolResult.Failure(ToolName, $"Vision inference failed: {ex.Message}");
         }
 
         if (!VisionStructureJsonParser.TryParse(raw, out var result, out var errors) || result is null)
         {
             var detail = string.Join("; ", errors.Take(5));
-            return ToolResult.Failure(ToolName,
+            return EToolResult.Failure(ToolName,
                 $"Vision output did not produce a valid structure. Details: {detail}");
         }
 
@@ -152,7 +152,7 @@ public class EVisionStructureTool : ToolBase
             Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         });
 
-        return ToolResult.Success(
+        return EToolResult.Success(
             ToolName,
             json,
             new Dictionary<string, string>

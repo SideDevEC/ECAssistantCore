@@ -10,7 +10,7 @@ namespace ECAssistant.Core.Tools.Build;
 /// <summary>
 /// .NET build/test tool.
 /// </summary>
-public class EDotnetBuildTool : ToolBase
+public class EDotnetBuildTool : EToolBase
 {
     private readonly IProcessRunner _processRunner;
     private readonly JsonElement? _toolConfig;
@@ -66,7 +66,7 @@ public class EDotnetBuildTool : ToolBase
             ? BuildOutputRenderer.Render(rawOutput)
             : rawOutput;
 
-    public override async Task<ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
+    public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         arguments ??= new Dictionary<string, string?>();
         var action = arguments.GetValueOrDefault("action")?.Trim().ToLower() ?? "build";
@@ -75,21 +75,21 @@ public class EDotnetBuildTool : ToolBase
                        ?? "";
 
         if (!AllowedActions.Contains(action))
-            return ToolResult.Failure(Name,
+            return EToolResult.Failure(Name,
                 $"Invalid action '{action}'. Allowed: {string.Join(", ", AllowedActions.OrderBy(a => a))}");
 
         if (projectPath.Length > 0)
         {
             // Reject shell metacharacters — projectPath is interpolated into the command.
             if (projectPath.IndexOfAny(new[] { ';', '&', '|', '$', '`', '(', ')', '<', '>', '\n', '\r', '\"', '\'' }) >= 0)
-                return ToolResult.Failure(Name, $"Invalid projectPath '{projectPath}': shell metacharacters are not allowed.");
+                return EToolResult.Failure(Name, $"Invalid projectPath '{projectPath}': shell metacharacters are not allowed.");
         }
 
         var command = $"dotnet {action}{(string.IsNullOrEmpty(projectPath) ? "" : $" {projectPath}")}";
         var result = await _processRunner.ExecuteAsync(command, _workingDir, cancellationToken);
 
         if (result.TimedOut)
-            return ToolResult.Failure(Name, "Build exceeded time limit.");
+            return EToolResult.Failure(Name, "Build exceeded time limit.");
 
         var allOutput = result.StdOut + "\n" + result.StdErr;
         var errors = _errorParser.ParseErrors(allOutput);
@@ -98,12 +98,12 @@ public class EDotnetBuildTool : ToolBase
         // Exit code 0 with parsed errors is NOT a success — some actions (e.g. test)
         // can exit 0 while the log still reports compile errors.
         if (result.ExitCode == 0 && errors.Count > 0)
-            return ToolResult.Failure(Name,
+            return EToolResult.Failure(Name,
                 $"[Build Failed (Exit 0, {errors.Count} error(s) parsed)] {warnings.Count} warning(s).\n{allOutput}");
         else if (result.ExitCode == 0)
-            return ToolResult.Success(Name, $"[Build Success] {warnings.Count} warning(s).\n{result.StdOut}");
+            return EToolResult.Success(Name, $"[Build Success] {warnings.Count} warning(s).\n{result.StdOut}");
         else
-            return ToolResult.Failure(Name, $"[Build Failed (Exit {result.ExitCode})] {errors.Count} error(s), {warnings.Count} warning(s).\n{allOutput}");
+            return EToolResult.Failure(Name, $"[Build Failed (Exit {result.ExitCode})] {errors.Count} error(s), {warnings.Count} warning(s).\n{allOutput}");
     }
 
 }

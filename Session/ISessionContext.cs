@@ -8,7 +8,7 @@ namespace ECAssistant.Core.Session;
 /// <summary>
 /// Read-only session context exposed to tools.
 ///
-/// Tools receive this via ToolBase.Session when they are registered.
+/// Tools receive this via EToolBase.Session when they are registered.
 /// It provides access to session info, memory, and background task config —
 /// but NOT the main engine's inference.
 /// </summary>

@@ -50,11 +50,11 @@ ECAssistant is a local-first AI agent framework. It runs LLM inference on-device
 ## v11.3 Changes (2026-08-17 — OOP compliance refactor, complete)
 
 Full OOP compliance audit and refactor — all static methods removed except factory methods on immutable data classes:
-- **Split multi-type files:** `ToolBase.cs` → `ToolBase.cs` + `ToolResult.cs`; `BackgroundTasksConfig.cs` → 3 files
+- **Split multi-type files:** `EToolBase.cs` → `EToolBase.cs` + `EToolResult.cs`; `BackgroundTasksConfig.cs` → 3 files
 - **Removed static mutable state:** `_sForceMockMode` → protected mock-mode constructor on AgentEngine
 - **Deleted deprecated dead code:** `SecondaryModelLoader.cs` + `SecondaryModelConfig.cs` removed
 - **Converted static classes to instance:** `StringUtil`, `InferenceParamsFactory`, `ResourceLoader`, `AgentConfigBuilder` — now instance classes with `Default` shared instance
-- **ToolBase config helpers:** `ReadConfig<T>`, `ReadCfg<T>`, `IsToolEnabled` → protected instance methods (no more static)
+- **EToolBase config helpers:** `ReadConfig<T>`, `ReadCfg<T>`, `IsToolEnabled` → protected instance methods (no more static)
 - **AgentConfigBuilder.Update:** static → instance method with `Default` shared instance
 - **SubAgentManager:** service dependencies (IProcessRunner, IFileSystem, IHttpClient, BackgroundProcessManager) now injected via constructor
 - **AgentEngine:** optional constructor injection for MemoryManager, SelfCorrectionManager, ProjectContextManager, TaskPlanner
@@ -80,7 +80,7 @@ Full OOP compliance audit and refactor — all static methods removed except fac
 - **6 architectural refactoring batches:**
   - Split 15 multi-type files → 35 individual files (one type per file)
   - AgentEngine implements IEngine (unsealed)
-  - Consolidated 9 duplicate ReadCfg methods into ToolBase
+  - Consolidated 9 duplicate ReadCfg methods into EToolBase
   - 14 config/policy/analysis models → init-only (immutable)
   - EcaCompositionRoot — central service wiring point
   - ITerminalOutput abstraction — GuiConsole no longer calls Console.Write directly

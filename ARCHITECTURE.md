@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-09-23 — v14.20.1 integration/e2e-hardened typed per-tool outputs + dataflow chains (failure-path render, renderer path sanitization, isolated e2e working dir). Base: v14.20 typed per-tool model-facing outputs (`RenderForModel` on `ToolBase`, shared `RenderOutput` helper, `BuildOutputRenderer` for dotnet/git) + dataflow toolchains (`{{N}}` arg references → sequential chain execution, large-tier-only guidance). Prior: v14.13–v14.19.1 series. Full series today: v14.13 post-edit verification → v14.14 playbook memory → v14.15 fuzzy diff edits → v14.16 context pinning → v14.17 sub-agent briefs → v14.17.1 tier inference tuning → v14.18/19/19.1 above. All tier-aware (ModelTier.IsLargeRuntime seam).
+**Updated:** 2026-09-23 — v14.20.1 integration/e2e-hardened typed per-tool outputs + dataflow chains (failure-path render, renderer path sanitization, isolated e2e working dir). Base: v14.20 typed per-tool model-facing outputs (`RenderForModel` on `EToolBase`, shared `RenderOutput` helper, `BuildOutputRenderer` for dotnet/git) + dataflow toolchains (`{{N}}` arg references → sequential chain execution, large-tier-only guidance). Prior: v14.13–v14.19.1 series. Full series today: v14.13 post-edit verification → v14.14 playbook memory → v14.15 fuzzy diff edits → v14.16 context pinning → v14.17 sub-agent briefs → v14.17.1 tier inference tuning → v14.18/19/19.1 above. All tier-aware (ModelTier.IsLargeRuntime seam).
 Current state: model-tier-adaptive harness (`model_tier.mode` small/large/auto, tier-resolved preplanning,
 slim directives + envelope budget for large tier), grammar tool-name union (`tool_names` wire field,
 DecisionGrammar.BuildGbnf on all 3 structured paths), envelope commentary (remote native path, local grammar
@@ -28,7 +28,7 @@ Two provider modes (`LlmProviderConfig.mode`):
 ## OOP Principles
 
 - **Encapsulation:** Config models are init-only (immutable); 2 documented exceptions for builder-mutated properties
-- **No globals or statics:** Dependencies injected via constructors. No static classes, no static mutable state. Utility classes (StringUtil, InferenceParamsFactory, ResourceLoader, AgentConfigBuilder) are instance classes with `Default` shared instance. The only allowed static methods are factory methods on immutable data classes (ToolResult.Success, TranscriptMessage.User, ToolPermissionRecord construction, AgentConfigBuilder.Create, etc.) and pure protected instance helpers on ToolBase (ReadConfig, ReadCfg, IsToolEnabled)
+- **No globals or statics:** Dependencies injected via constructors. No static classes, no static mutable state. Utility classes (StringUtil, InferenceParamsFactory, ResourceLoader, AgentConfigBuilder) are instance classes with `Default` shared instance. The only allowed static methods are factory methods on immutable data classes (EToolResult.Success, TranscriptMessage.User, ToolPermissionRecord construction, AgentConfigBuilder.Create, etc.) and pure protected instance helpers on EToolBase (ReadConfig, ReadCfg, IsToolEnabled)
 - **No cross-dependencies:** Layers depend only on the layer below
 - **Single responsibility:** One type per file, one interface = one concern
 - **Modular & interchangeable:** Every service behind an interface, mockable via Moq
@@ -58,7 +58,7 @@ ECAssistantCore/            # Core engine, tools, sessions, memory (168 .cs file
 ├── Session/                # AgentSession, SessionManager, SessionBuilder, SessionDiscovery
 │    └── ISessionContext    # Exposes Memory/VectorMemory/BackgroundTasks (NOT SharedWeights/SharedModelParams)
 ├── Transport/              # OpenAIClient (HttpClient wrapper), SseParser (SSE token stream)
-└── Tools/                  # ToolBase + 10 built-in tools
+└── Tools/                  # EToolBase + 10 built-in tools
      ├── EBackground/       # Background process execution
      ├── Build/             # BuildErrorParser (extracted from EDotnetBuildTool)
      ├── ECode/             # Code editor (create, patch, diff, search, insert, delete)
@@ -70,7 +70,7 @@ ECAssistantCore/            # Core engine, tools, sessions, memory (168 .cs file
      ├── Policy/            # ToolPermission, ToolPolicyDecision
      ├── Reader/            # File reader
      ├── SubAgent/          # Sub-agent tool
-     └── ToolResult.cs     # Tool call result (split from ToolBase.cs)
+     └── EToolResult.cs     # Tool call result (split from EToolBase.cs)
 
 Services/Http/  (HTTP transport layer — talks to ECAssistantLLM / OpenAI-compatible API)
 ├── HttpStreamingEngine.cs    # IInferenceEngine — stream/generate via /v1/chat/completions (SSE)
@@ -396,12 +396,12 @@ EWebFetch was reworked to produce LLM-parseable output. The old tool returned a 
 
 - No static classes, no static mutable state
 - Utility classes use instance methods with `Default` shared instance (StringUtil, InferenceParamsFactory, ResourceLoader, AgentConfigBuilder)
-- Factory methods on immutable data classes are the only allowed static methods (ToolResult.Success, TranscriptMessage.User, ToolPermissionRecord construction, AgentConfigBuilder.Create, etc.)
-- ToolBase config helpers (ReadConfig, ReadCfg, IsToolEnabled) are protected instance methods
+- Factory methods on immutable data classes are the only allowed static methods (EToolResult.Success, TranscriptMessage.User, ToolPermissionRecord construction, AgentConfigBuilder.Create, etc.)
+- EToolBase config helpers (ReadConfig, ReadCfg, IsToolEnabled) are protected instance methods
 - Constructor injection throughout
 - One type per file
 - All config models init-only (2 documented exceptions)
-- All ReadCfg logic consolidated in ToolBase
+- All ReadCfg logic consolidated in EToolBase
 - AgentEngine implements IEngine (unsealed)
 - AgentEngine: optional constructor injection for MemoryManager, SelfCorrectionManager, ProjectContextManager, TaskPlanner
 - SubAgentManager: injects IProcessRunner, IFileSystem, IHttpClient, BackgroundProcessManager via constructor
@@ -540,7 +540,7 @@ delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-dri
   available via config for small models that want explicit step lists.
 - **P3 — Verifier contract** (`interface.verify_command`): injected into the
   system prompt (VERIFIER rule) — act → observe → verify loop.
-- **P4 — Typed tool schemas**: `ToolBase.GetParameterSchema()` (virtual, JSON
+- **P4 — Typed tool schemas**: `EToolBase.GetParameterSchema()` (virtual, JSON
   Schema string) implemented on Shell/CodeEditor/FileReader/WebSearch/WebFetch/
   EDotnetBuild/FileResearch; `ToolSpec.ParameterSchema` carries it into the
   native function-calling request (tools without a schema fall back permissive).
@@ -736,7 +736,7 @@ delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-dri
 
 ## Addendum — v14.20 typed per-tool outputs + dataflow chains (2026-09-23)
 
-**Feature A — Typed per-tool model-facing outputs.** `ToolBase.RenderForModel(raw)`
+**Feature A — Typed per-tool model-facing outputs.** `EToolBase.RenderForModel(raw)`
 virtual (default passthrough). The engine projects each tool's output via its own
 override *before* truncation: `AgentEngine.RenderOutput(name, raw)` is the shared
 helper used by both paths — single-call (`AddToolResult`) and batch
@@ -871,7 +871,7 @@ a protocol migration). Everything else loses the bare E. `Eca*` types
 
 **Renames (wire names untouched, config JSON keys untouched):**
 - EAgentEngine → AgentEngine · EAgentConfig → AppConfig (root config doc)
-- EToolBase → ToolBase · EToolResult → ToolResult (infrastructure, not tools)
+- EToolBase → EToolBase · EToolResult → EToolResult (infrastructure, not tools)
 - EMemoryManager → MemoryManager · EContextAnalyzer → ContextAnalyzer
 - EColor → AnsiColor (collision-avoidance vs future Avalonia/Drawing)
 - TUI: EGuiBase → GuiBase (lives in Core/UI) · EGuiConsole → GuiConsole

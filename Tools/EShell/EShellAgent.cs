@@ -11,7 +11,7 @@ namespace ECAssistant.Core.Tools.Shell;
 /// <summary>
 /// Shell Agent Tool — the primary tool for all file and system operations.
 /// </summary>
-public class EShellAgent : ToolBase
+public class EShellAgent : EToolBase
 {
     private readonly IProcessRunner _processRunner;
     private readonly string _workingDirectory;
@@ -133,12 +133,12 @@ public class EShellAgent : ToolBase
             ? BuildOutputRenderer.Render(rawOutput)
             : rawOutput;
 
-    public override async Task<ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
+    public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         arguments ??= new Dictionary<string, string?>();
         var command = arguments.GetValueOrDefault("command")?.Trim();
         if (string.IsNullOrWhiteSpace(command))
-            return ToolResult.Failure(Name, "Missing command argument.");
+            return EToolResult.Failure(Name, "Missing command argument.");
 
         try
         {
@@ -149,7 +149,7 @@ public class EShellAgent : ToolBase
             // instead of reporting SUCCESS on a silent no-op.
             if (command.Contains("<<") && !command.Contains('\n'))
             {
-                return ToolResult.Failure(Name,
+                return EToolResult.Failure(Name,
                     "Command contains a heredoc ('<<') but has no newlines — the heredoc body was lost when the arguments were produced, so this command would do nothing. " +
                     "Do NOT use shell heredocs to write files: use the ECodeEditor tool with action=create and pass the file content in the 'content' argument instead.");
             }
@@ -165,7 +165,7 @@ public class EShellAgent : ToolBase
                     : result.StandardOutput;
                 if (output.Length > _maxOutputChars)
                     output = output.Substring(0, _maxOutputChars) + "\n... [truncated]";
-                return ToolResult.Success(Name, output);
+                return EToolResult.Success(Name, output);
             }
             else if (result.ExitCode == 0 && hasStderrOutput)
             {
@@ -174,7 +174,7 @@ public class EShellAgent : ToolBase
                     : $"{result.StandardOutput}\n\nSTDERR: {result.StandardError}";
                 if (output.Length > _maxOutputChars)
                     output = output.Substring(0, _maxOutputChars) + "\n... [truncated]";
-                return ToolResult.Success(Name, output);
+                return EToolResult.Success(Name, output);
             }
             else
             {
@@ -188,12 +188,12 @@ public class EShellAgent : ToolBase
                               $"Command: {command}";
                 if (failMsg.Length > _maxOutputChars)
                     failMsg = failMsg.Substring(0, _maxOutputChars) + "\n... [truncated]";
-                return ToolResult.Failure(Name, failMsg);
+                return EToolResult.Failure(Name, failMsg);
             }
         }
         catch (Exception ex)
         {
-            return ToolResult.Failure(Name, $"Execution failed: {ex.GetType().Name}: {ex.Message}");
+            return EToolResult.Failure(Name, $"Execution failed: {ex.GetType().Name}: {ex.Message}");
         }
     }
 

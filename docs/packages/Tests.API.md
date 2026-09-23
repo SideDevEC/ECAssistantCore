@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 127  |  LOC: 15112  |  ~5647 tokens
+Types: 127  |  LOC: 15112  |  ~5648 tokens
 
 ---
 
@@ -102,7 +102,7 @@ Cross-package deps: ECAssistant.Core.Memory
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Shell
 
 ### Class: EToolBaseTests
-> Concrete subclass for testing ToolBase abstract members.
+> Concrete subclass for testing EToolBase abstract members.
 Cross-package deps: ECAssistant.Core, ECAssistant.Core.Tools
 
 ### Class: EUserAskToolTests
@@ -233,12 +233,12 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, Moq
 
 ### Class: MockProbeTool
 > Integration tests for the v15 ephemeral handoff: EHandoff tool registration,
-Implements: ToolBase
+Implements: EToolBase
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.UI
 
 ### Class: MockSubAgentTool
 > Integration tests for sub-agent spawning through the orchestrator.
-Implements: ToolBase
+Implements: EToolBase
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.UI
 
 ### Class: ModelCatalogTests

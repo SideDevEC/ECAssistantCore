@@ -10,7 +10,7 @@ namespace ECAssistant.Core.Interfaces;
 public interface IEngineToolContext
 {
     /// <summary>Registered tools (thread-safe snapshot).</summary>
-    IReadOnlyList<ToolBase> Tools { get; }
+    IReadOnlyList<EToolBase> Tools { get; }
 
     /// <summary>Generate a short execution plan using the main LLM (stateless).</summary>
     Task<string?> GeneratePlanAsync(string userRequest);

@@ -45,7 +45,7 @@ public sealed class ChainExecutionTests
             executeToolFn: (name, args) =>
             {
                 received.Add(new Dictionary<string, string?>(args));
-                return Task.FromResult(ToolResult.Success(name, $"OUT-{received.Count}"));
+                return Task.FromResult(EToolResult.Success(name, $"OUT-{received.Count}"));
             });
 
         var calls = new List<ToolCallRequest>
@@ -72,8 +72,8 @@ public sealed class ChainExecutionTests
             {
                 received.Add(new Dictionary<string, string?>(args));
                 return Task.FromResult(received.Count == 1
-                    ? ToolResult.Failure(name, "boom")
-                    : ToolResult.Success(name, "ok"));
+                    ? EToolResult.Failure(name, "boom")
+                    : EToolResult.Success(name, "ok"));
             });
 
         var calls = new List<ToolCallRequest>
@@ -97,7 +97,7 @@ public sealed class ChainExecutionTests
         var gatedExecutor = new ParallelToolExecutor(
             engine: null!,
             toolPolicy: policy,
-            executeToolFn: (name, args) => Task.FromResult(ToolResult.Success(name, "x")),
+            executeToolFn: (name, args) => Task.FromResult(EToolResult.Success(name, "x")),
             sessionOutput: sessionOutput);
 
         var calls = new List<ToolCallRequest>

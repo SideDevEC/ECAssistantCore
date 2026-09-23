@@ -978,7 +978,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     /// v10.24: If tool's config section is not in AppConfig.Tools, adds it via GetConfigSection()
     /// and calls AgentConfigBuilder.Default.Update() to persist to appsettings.json.
     /// </summary>
-    public void RegisterTool(ToolBase tool)
+    public void RegisterTool(EToolBase tool)
     {
         // Set session context before registration so tools can use it
         tool.Session = this;

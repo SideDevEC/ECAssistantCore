@@ -1,6 +1,6 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T13:46:58.293876+00:00
+Generated: 2026-09-23T13:49:45.375564+00:00
 Packages: 2  |  Types: 506
 
 ---
@@ -102,29 +102,31 @@ Packages: 2  |  Types: 506
 - 🟡 DotnetVerificationRunner : IVerificationRunner  (ECAssistantCore)  deps: [IProcessRunner]
 - 🟣 DownloadProgress  (ECAssistantCore)  deps: [string, long, long, double, double]
 - 🟡 EAgentConfigTests : IDisposable  (ECAssistantCore)
-- 🟡 EBackgroundExecTool : ToolBase  (ECAssistantCore)  deps: [BackgroundProcessManager, IProcessRunner, IFileSystem, AppConfig]
+- 🟡 EBackgroundExecTool : EToolBase  (ECAssistantCore)  deps: [BackgroundProcessManager, IProcessRunner, IFileSystem, AppConfig]
 - 🟡 EBackgroundExecToolTests : IDisposable  (ECAssistantCore)
-- 🟡 ECodeEditorTool : ToolBase  (ECAssistantCore)  deps: [IFileSystem, AppConfig]
+- 🟡 ECodeEditorTool : EToolBase  (ECAssistantCore)  deps: [IFileSystem, AppConfig]
 - 🟡 ECodeEditorToolTests  (ECAssistantCore)
 - 🟡 EContextAnalyzerTests : IDisposable  (ECAssistantCore)
-- 🟡 EDotnetBuildTool : ToolBase  (ECAssistantCore)  deps: [IProcessRunner, AppConfig]
+- 🟡 EDotnetBuildTool : EToolBase  (ECAssistantCore)  deps: [IProcessRunner, AppConfig]
 - 🟡 EDotnetBuildToolTests  (ECAssistantCore)
-- 🟡 EFileReaderTool : ToolBase  (ECAssistantCore)  deps: [IFileSystem, AppConfig]
+- 🟡 EFileReaderTool : EToolBase  (ECAssistantCore)  deps: [IFileSystem, AppConfig]
 - 🟡 EFileReaderToolTests  (ECAssistantCore)
-- 🟡 EFileResearchTool : ToolBase  (ECAssistantCore)  deps: [IFileSystem, AppConfig]
+- 🟡 EFileResearchTool : EToolBase  (ECAssistantCore)  deps: [IFileSystem, AppConfig]
 - 🟡 EFileResearchToolTests : IDisposable  (ECAssistantCore)
-- 🟡 EGitTool : ToolBase  (ECAssistantCore)  deps: [IProcessRunner, IFileSystem, AppConfig]
+- 🟡 EGitTool : EToolBase  (ECAssistantCore)  deps: [IProcessRunner, IFileSystem, AppConfig]
 - 🟡 EGitToolTests  (ECAssistantCore)
-- 🟡 EHandoffTool : ToolBase  (ECAssistantCore)  deps: [Func]
+- 🟡 EHandoffTool : EToolBase  (ECAssistantCore)  deps: [Func]
 - 🟡 EHandoffToolTests  (ECAssistantCore)
 - 🟡 EMemoryManagerTests : IDisposable  (ECAssistantCore)
-- 🟡 EShellAgent : ToolBase  (ECAssistantCore)  deps: [IProcessRunner, AppConfig, string]
+- 🟡 EShellAgent : EToolBase  (ECAssistantCore)  deps: [IProcessRunner, AppConfig, string]
 - 🟡 EShellAgentTests  (ECAssistantCore)
-- 🟡 ESubAgentTool : ToolBase  (ECAssistantCore)  deps: [SubAgentManager, string]
+- 🟡 ESubAgentTool : EToolBase  (ECAssistantCore)  deps: [SubAgentManager, string]
+- 🟡 EToolBase  (ECAssistantCore)
 - 🟡 EToolBaseTests  (ECAssistantCore)
-- 🟡 EUserAskTool : ToolBase  (ECAssistantCore)  deps: [ISessionOutput]
+- 🟡 EToolResult  (ECAssistantCore)
+- 🟡 EUserAskTool : EToolBase  (ECAssistantCore)  deps: [ISessionOutput]
 - 🟡 EUserAskToolTests  (ECAssistantCore)
-- 🟡 EVisionStructureTool : ToolBase  (ECAssistantCore)  deps: [IInferenceEngine, IPdfPageRenderer, AppConfig]
+- 🟡 EVisionStructureTool : EToolBase  (ECAssistantCore)  deps: [IInferenceEngine, IPdfPageRenderer, AppConfig]
 - 🟡 EVisionStructureToolTests : IDisposable  (ECAssistantCore)
 - 🟡 EcaCompositionRoot  (ECAssistantCore)  deps: [string, string]
 - 🟣 EcaServiceBundle  (ECAssistantCore)  deps: [AppConfig, string, string, string, ILogger, BackgroundProcessManager, FileWatcherService, ISessionBuilder]
@@ -210,8 +212,8 @@ Packages: 2  |  Types: 506
 - 🟡 MemoryManager : IDisposable  (ECAssistantCore)  deps: [string? dataPath =]
 - 🟡 MemoryService : IMemoryService  (ECAssistantCore)  deps: [IFileSystem, IVectorStore, IConfigProvider, IVectorEmbedder]
 - 🟡 MemoryServiceTests  (ECAssistantCore)
-- 🟡 MockProbeTool : ToolBase  (ECAssistantCore)
-- 🟡 MockSubAgentTool : ToolBase  (ECAssistantCore)
+- 🟡 MockProbeTool : EToolBase  (ECAssistantCore)
+- 🟡 MockSubAgentTool : EToolBase  (ECAssistantCore)
 - 🟡 ModelCatalogDocument  (ECAssistantCore)
 - 🟡 ModelCatalogEntry  (ECAssistantCore)
 - 🟡 ModelCatalogTests : IDisposable  (ECAssistantCore)
@@ -336,7 +338,6 @@ Packages: 2  |  Types: 506
 - 🟡 TierInferenceTunerTests  (ECAssistantCore)
 - 🟡 TokenCounter  (ECAssistantCore)  deps: [RemoteTokenizer? tokenizer =]
 - 🟡 TokenCounterTests  (ECAssistantCore)
-- 🟡 ToolBase  (ECAssistantCore)
 - 🟡 ToolCallChainSubstitutionTests  (ECAssistantCore)
 - 🟡 ToolCallRequest  (ECAssistantCore)
 - 🟡 ToolCallRequestTests  (ECAssistantCore)
@@ -356,7 +357,6 @@ Packages: 2  |  Types: 506
 - 🟡 ToolPolicyTests  (ECAssistantCore)
 - 🟡 ToolRepeatTracker  (ECAssistantCore)
 - 🟡 ToolRepeatTrackerTests  (ECAssistantCore)
-- 🟡 ToolResult  (ECAssistantCore)
 - 🟡 ToolSpec  (ECAssistantCore)
 - 🟡 TranscriptIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 TranscriptMessage  (ECAssistantCore)
@@ -448,8 +448,8 @@ Packages: 2  |  Types: 506
 - 🟡 LoggerTests : IDisposable  (Tests)
 - 🟡 MemoryIntegrationTests : IDisposable  (Tests)
 - 🟡 MemoryServiceTests  (Tests)
-- 🟡 MockProbeTool : ToolBase  (Tests)
-- 🟡 MockSubAgentTool : ToolBase  (Tests)
+- 🟡 MockProbeTool : EToolBase  (Tests)
+- 🟡 MockSubAgentTool : EToolBase  (Tests)
 - 🟡 ModelCatalogTests : IDisposable  (Tests)
 - 🟡 ModelInstallerConfigTests : IDisposable  (Tests)
 - 🟡 ModelTierConfigTests  (Tests)

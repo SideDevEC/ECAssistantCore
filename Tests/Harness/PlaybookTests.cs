@@ -271,13 +271,13 @@ public sealed class PlaybookTests : IDisposable
 }
 
 /// <summary>Trivial always-succeeding tool for orchestrator capture tests.</summary>
-file sealed class FakeEchoTool : ToolBase
+file sealed class FakeEchoTool : EToolBase
 {
     public override string Name => "EchoTool";
     public override string Description => "Test double that always succeeds.";
     public override string UsageExample => "EchoTool(command=\"x\")";
 
-    public override Task<ToolResult> ExecuteAsync(
+    public override Task<EToolResult> ExecuteAsync(
         Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
-        => Task.FromResult(ToolResult.Success(Name, "ok: " + (arguments.GetValueOrDefault("command") ?? "")));
+        => Task.FromResult(EToolResult.Success(Name, "ok: " + (arguments.GetValueOrDefault("command") ?? "")));
 }

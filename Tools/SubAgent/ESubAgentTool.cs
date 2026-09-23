@@ -15,7 +15,7 @@ namespace ECAssistant.Core.Tools.SubAgent;
 ///   ESubAgent(task:Fix the bug in line 42, working_dir:/path/to/project, tools:EShellAgent,ECodeEditor,EDotnetBuild)
 ///   ESubAgent(task:Write unit tests for the auth module, context_size:8192, max_turns:8)
 /// </summary>
-public class ESubAgentTool : ToolBase
+public class ESubAgentTool : EToolBase
 {
     private readonly SubAgentManager _manager;
     private readonly string _defaultWorkingDir;
@@ -68,11 +68,11 @@ public class ESubAgentTool : ToolBase
         }
         """;
 
-    public override async Task<ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
+    public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         var taskDesc = arguments.GetValueOrDefault("task")?.Trim();
         if (string.IsNullOrEmpty(taskDesc))
-            return new ToolResult { ToolName = Name, Succeeded = false, Error = "Missing task argument." };
+            return new EToolResult { ToolName = Name, Succeeded = false, Error = "Missing task argument." };
 
         // Parse optional arguments
         var workingDir = arguments.GetValueOrDefault("working_dir") ?? _defaultWorkingDir;
@@ -131,12 +131,12 @@ public class ESubAgentTool : ToolBase
             }
 
             return result.Succeeded
-                ? new ToolResult { ToolName = Name, Succeeded = true, Output = output, Metadata = metadata }
-                : new ToolResult { ToolName = Name, Succeeded = false, Error = output, Metadata = metadata };
+                ? new EToolResult { ToolName = Name, Succeeded = true, Output = output, Metadata = metadata }
+                : new EToolResult { ToolName = Name, Succeeded = false, Error = output, Metadata = metadata };
         }
         catch (Exception ex)
         {
-            return new ToolResult { ToolName = Name, Succeeded = false, Error = $"Sub-agent execution failed: {ex.Message}" };
+            return new EToolResult { ToolName = Name, Succeeded = false, Error = $"Sub-agent execution failed: {ex.Message}" };
         }
     }
 }

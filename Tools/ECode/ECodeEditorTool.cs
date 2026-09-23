@@ -10,7 +10,7 @@ namespace ECAssistant.Core.Tools.Code;
 /// Code Editor Tool — surgical code edits with diff preview, multi-line replacement,
 /// cross-file search & replace, and syntax-aware editing.
 /// </summary>
-public class ECodeEditorTool : ToolBase
+public class ECodeEditorTool : EToolBase
 {
     private readonly IFileSystem _fileSystem;
     private readonly JsonElement? _toolConfig;
@@ -63,11 +63,11 @@ public class ECodeEditorTool : ToolBase
 
     public override object GetConfigSection() => new { enabled = true };
 
-    public override async Task<ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
+    public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         var action = arguments.GetValueOrDefault("action")?.ToLower().Trim();
         if (string.IsNullOrEmpty(action))
-            return ToolResult.Failure(Name, "Missing 'action' argument.");
+            return EToolResult.Failure(Name, "Missing 'action' argument.");
 
         // (success, message) tuples — result classification must not be guessed from
         // message text (that marked real failures like "old_text found 5 times" as Success).
@@ -83,7 +83,7 @@ public class ECodeEditorTool : ToolBase
             _ => (false, $"ECodeEditor: Unknown action: {action}")
         };
 
-        return ok ? ToolResult.Success(Name, result) : ToolResult.Failure(Name, result);
+        return ok ? EToolResult.Success(Name, result) : EToolResult.Failure(Name, result);
     }
 
     // ─── Create: create a new file with content ───────────────

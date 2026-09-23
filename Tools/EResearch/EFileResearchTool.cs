@@ -10,7 +10,7 @@ namespace ECAssistant.Core.Tools.Research;
 /// <summary>
 /// EFileResearchTool — scan project files, read content for LLM analysis.
 /// </summary>
-public class EFileResearchTool : ToolBase
+public class EFileResearchTool : EToolBase
 {
     private readonly IFileSystem _fileSystem;
     private readonly JsonElement? _toolConfig;
@@ -64,7 +64,7 @@ public class EFileResearchTool : ToolBase
         query_limit = 20
     };
 
-    public override async Task<ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
+    public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -75,7 +75,7 @@ public class EFileResearchTool : ToolBase
                 : _defaultExtensions;
 
             if (cancellationToken.IsCancellationRequested)
-                return ToolResult.Failure(Name, "File research was cancelled by user.");
+                return EToolResult.Failure(Name, "File research was cancelled by user.");
 
             var allFiles = ListFilesRecursive(_searchRoot);
             var filtered = allFiles.Where(f =>
@@ -150,15 +150,15 @@ public class EFileResearchTool : ToolBase
                 }
             }
 
-            return ToolResult.Success(Name, $"Research results for: {query}\n{sb}\nFiles scanned: {selected.Count}");
+            return EToolResult.Success(Name, $"Research results for: {query}\n{sb}\nFiles scanned: {selected.Count}");
         }
         catch (UnauthorizedAccessException ex)
         {
-            return ToolResult.Failure(Name, $"Access denied: {ex.Message}");
+            return EToolResult.Failure(Name, $"Access denied: {ex.Message}");
         }
         catch (Exception ex)
         {
-            return ToolResult.Failure(Name, $"Error: {ex.Message}");
+            return EToolResult.Failure(Name, $"Error: {ex.Message}");
         }
     }
 

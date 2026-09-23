@@ -1,6 +1,6 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-23T13:46:58.294548+00:00
+Generated: 2026-09-23T13:49:45.376232+00:00
 Edges: 97  |  Packages: 2
 
 ---
@@ -27,27 +27,27 @@ Edges: 97  |  Packages: 2
 - ContextPinner ──implements──► IContextPinner (ECAssistantCore)
 - DotnetVerificationRunner ──implements──► IVerificationRunner (ECAssistantCore)
 - DotnetVerificationRunner ──uses──► IProcessRunner (ECAssistantCore)
-- EBackgroundExecTool ──implements──► ToolBase (ECAssistantCore)
+- EBackgroundExecTool ──implements──► EToolBase (ECAssistantCore)
 - EBackgroundExecTool ──uses──► IFileSystem (ECAssistantCore)
 - EBackgroundExecTool ──uses──► IProcessRunner (ECAssistantCore)
-- ECodeEditorTool ──implements──► ToolBase (ECAssistantCore)
+- ECodeEditorTool ──implements──► EToolBase (ECAssistantCore)
 - ECodeEditorTool ──uses──► IFileSystem (ECAssistantCore)
-- EDotnetBuildTool ──implements──► ToolBase (ECAssistantCore)
+- EDotnetBuildTool ──implements──► EToolBase (ECAssistantCore)
 - EDotnetBuildTool ──uses──► IProcessRunner (ECAssistantCore)
-- EFileReaderTool ──implements──► ToolBase (ECAssistantCore)
+- EFileReaderTool ──implements──► EToolBase (ECAssistantCore)
 - EFileReaderTool ──uses──► IFileSystem (ECAssistantCore)
-- EFileResearchTool ──implements──► ToolBase (ECAssistantCore)
+- EFileResearchTool ──implements──► EToolBase (ECAssistantCore)
 - EFileResearchTool ──uses──► IFileSystem (ECAssistantCore)
-- EGitTool ──implements──► ToolBase (ECAssistantCore)
+- EGitTool ──implements──► EToolBase (ECAssistantCore)
 - EGitTool ──uses──► IFileSystem (ECAssistantCore)
 - EGitTool ──uses──► IProcessRunner (ECAssistantCore)
-- EHandoffTool ──implements──► ToolBase (ECAssistantCore)
-- EShellAgent ──implements──► ToolBase (ECAssistantCore)
+- EHandoffTool ──implements──► EToolBase (ECAssistantCore)
+- EShellAgent ──implements──► EToolBase (ECAssistantCore)
 - EShellAgent ──uses──► IProcessRunner (ECAssistantCore)
-- ESubAgentTool ──implements──► ToolBase (ECAssistantCore)
-- EUserAskTool ──implements──► ToolBase (ECAssistantCore)
+- ESubAgentTool ──implements──► EToolBase (ECAssistantCore)
+- EUserAskTool ──implements──► EToolBase (ECAssistantCore)
 - EUserAskTool ──uses──► ISessionOutput (ECAssistantCore)
-- EVisionStructureTool ──implements──► ToolBase (ECAssistantCore)
+- EVisionStructureTool ──implements──► EToolBase (ECAssistantCore)
 - EVisionStructureTool ──uses──► IInferenceEngine (ECAssistantCore)
 - EVisionStructureTool ──uses──► IPdfPageRenderer (ECAssistantCore)
 - EcaServiceBundle ──uses──► ILogger (ECAssistantCore)
@@ -73,8 +73,8 @@ Edges: 97  |  Packages: 2
 - MemoryService ──uses──► IFileSystem (ECAssistantCore)
 - MemoryService ──uses──► IVectorEmbedder (ECAssistantCore)
 - MemoryService ──uses──► IVectorStore (ECAssistantCore)
-- MockProbeTool ──implements──► ToolBase (ECAssistantCore)
-- MockSubAgentTool ──implements──► ToolBase (ECAssistantCore)
+- MockProbeTool ──implements──► EToolBase (ECAssistantCore)
+- MockSubAgentTool ──implements──► EToolBase (ECAssistantCore)
 - ModelParamValidator ──implements──► IModelParamValidator (ECAssistantCore)
 - NopKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
 - ParallelToolExecutor ──implements──► IParallelToolExecutor (ECAssistantCore)
@@ -105,5 +105,5 @@ Edges: 97  |  Packages: 2
 
 ## Tests
 
-- MockProbeTool ──implements──► ToolBase (ECAssistantCore) ← CROSS-PKG
-- MockSubAgentTool ──implements──► ToolBase (ECAssistantCore) ← CROSS-PKG
+- MockProbeTool ──implements──► EToolBase (ECAssistantCore) ← CROSS-PKG
+- MockSubAgentTool ──implements──► EToolBase (ECAssistantCore) ← CROSS-PKG

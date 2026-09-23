@@ -18,7 +18,7 @@ public class ParallelToolExecutorTests
         return new ParallelToolExecutor(
             engine,
             new ECAssistant.Core.Tools.ToolPolicy(),
-            (name, args) => Task.FromResult(ToolResult.Success(name, "mock")));
+            (name, args) => Task.FromResult(EToolResult.Success(name, "mock")));
     }
 
     private static ToolCallRequest MakeTool(string name, int index, Dictionary<string, string?>? args = null)

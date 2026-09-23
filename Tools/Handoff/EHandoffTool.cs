@@ -18,7 +18,7 @@ namespace ECAssistant.Core.Tools.Handoff;
 /// Usage:
 ///   EHandoff(prompt:"You are a SQL optimization specialist. Schema: Users, Orders…", tools:"EShellAgent,EFileReader", reason:"Deep SQL focus needed", context:"The user wants to optimize a 5-table join query")
 /// </summary>
-public sealed class EHandoffTool : ToolBase
+public sealed class EHandoffTool : EToolBase
 {
     /// <summary>
     /// Callback the orchestrator hooks into. When the tool executes, it builds
@@ -76,11 +76,11 @@ public sealed class EHandoffTool : ToolBase
         }
         """;
 
-    public override async Task<ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
+    public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         var prompt = arguments.GetValueOrDefault("prompt")?.Trim();
         if (string.IsNullOrEmpty(prompt))
-            return ToolResult.Failure(Name, "Missing required 'prompt' argument.");
+            return EToolResult.Failure(Name, "Missing required 'prompt' argument.");
 
         var request = new HandoffRequest
         {
@@ -105,13 +105,13 @@ public sealed class EHandoffTool : ToolBase
             // (e.g. the orchestrator didn't intercept), return the specialist's
             // output as the tool result so it flows back normally.
             return result.Status == OrchestratorStatus.GoalAchieved
-                ? ToolResult.Success(Name, result.FinalOutput, new Dictionary<string, string>
+                ? EToolResult.Success(Name, result.FinalOutput, new Dictionary<string, string>
                 {
                     ["handoff"] = "true",
                     ["status"] = "GoalAchieved",
                     ["tool_calls"] = result.ToolCallsMade.ToString(),
                 })
-                : ToolResult.Failure(Name, result.FinalOutput, new Dictionary<string, string>
+                : EToolResult.Failure(Name, result.FinalOutput, new Dictionary<string, string>
                 {
                     ["handoff"] = "true",
                     ["status"] = result.Status.ToString(),
@@ -119,7 +119,7 @@ public sealed class EHandoffTool : ToolBase
         }
         catch (Exception ex)
         {
-            return ToolResult.Failure(Name, $"Handoff execution failed: {ex.Message}");
+            return EToolResult.Failure(Name, $"Handoff execution failed: {ex.Message}");
         }
     }
 }

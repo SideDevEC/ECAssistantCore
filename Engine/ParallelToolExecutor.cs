@@ -19,7 +19,7 @@ public class ParallelToolExecutor : IParallelToolExecutor
 {
     private readonly AgentEngine _engine;
     private readonly ECAssistant.Core.Tools.ToolPolicy _toolPolicy;
-    private readonly Func<string, Dictionary<string, string?>, Task<ToolResult>> _executeToolFn;
+    private readonly Func<string, Dictionary<string, string?>, Task<EToolResult>> _executeToolFn;
     private readonly Action<string> _log;
     private readonly ISessionOutput? _out;
 
@@ -34,7 +34,7 @@ public class ParallelToolExecutor : IParallelToolExecutor
     public ParallelToolExecutor(
         AgentEngine engine,
         ECAssistant.Core.Tools.ToolPolicy toolPolicy,
-        Func<string, Dictionary<string, string?>, Task<ToolResult>> executeToolFn,
+        Func<string, Dictionary<string, string?>, Task<EToolResult>> executeToolFn,
         Action<string>? log = null,
         ISessionOutput? sessionOutput = null)
     {

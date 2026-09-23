@@ -187,11 +187,11 @@ public sealed class HarnessOptimizationTests : IDisposable
         Assert.Contains("Never touch config files.", prompt);
     }
 
-    private static List<(string, ECAssistant.Core.Tools.ToolBase)> SchemaProviders()
+    private static List<(string, ECAssistant.Core.Tools.EToolBase)> SchemaProviders()
     {
-        var found = new List<(string, ECAssistant.Core.Tools.ToolBase)>();
+        var found = new List<(string, ECAssistant.Core.Tools.EToolBase)>();
         foreach (var t in typeof(AgentEngine).Assembly.GetTypes()
-                     .Where(t => t.IsSubclassOf(typeof(ECAssistant.Core.Tools.ToolBase)) && !t.IsAbstract))
+                     .Where(t => t.IsSubclassOf(typeof(ECAssistant.Core.Tools.EToolBase)) && !t.IsAbstract))
         {
             try
             {
@@ -206,7 +206,7 @@ public sealed class HarnessOptimizationTests : IDisposable
                 {
                     instance = Activator.CreateInstance(t);
                 }
-                if (instance is ECAssistant.Core.Tools.ToolBase tool) found.Add((t.Name, tool));
+                if (instance is ECAssistant.Core.Tools.EToolBase tool) found.Add((t.Name, tool));
             }
             catch { /* constructors needing other deps are skipped */ }
         }

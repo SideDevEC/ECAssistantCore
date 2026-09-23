@@ -316,13 +316,13 @@ file sealed class StubRunner : IVerificationRunner
 }
 
 /// <summary>Stand-in for ECodeEditorTool — verifies by NAME + args, so no concrete tool dependency is needed.</summary>
-file sealed class FakeCodeEditorTool : ToolBase
+file sealed class FakeCodeEditorTool : EToolBase
 {
     public override string Name => "ECodeEditor";
     public override string Description => "Test double for the code editor (write path only).";
     public override string UsageExample => "ECodeEditor(action=\"create\")";
 
-    public override Task<ToolResult> ExecuteAsync(
+    public override Task<EToolResult> ExecuteAsync(
         Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         // Unique temp name: multiple verifier tests run headless and parallel —
@@ -330,6 +330,6 @@ file sealed class FakeCodeEditorTool : ToolBase
         var path = arguments.GetValueOrDefault("file_path")
             ?? Path.Combine(Path.GetTempPath(), "fake-edit-" + Guid.NewGuid().ToString("N")[..8] + ".txt");
         File.WriteAllText(path, arguments.GetValueOrDefault("content") ?? "");
-        return Task.FromResult(ToolResult.Success(Name, "created " + path));
+        return Task.FromResult(EToolResult.Success(Name, "created " + path));
     }
 }
