@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 121  |  LOC: 14532  |  ~5110 tokens
+Types: 123  |  LOC: 14766  |  ~5346 tokens
 
 ---
 
@@ -158,7 +158,7 @@ Cross-package deps: ECAssistant.Core.Setup, Xunit
 
 ### Class: HarnessE2E
 > Harness end-to-end: drives the REAL product stack (AgentSession →
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Session, ECAssistant.Core.Transport, ECAssistant.Core.Tools, ECAssistant.TestSupport
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Session, ECAssistant.Core.Transport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Build, ECAssistant.Core.Services, ECAssistant.TestSupport
 
 ### Class: HarnessE2EFeatures
 > v14.13–v14.16 feature E2E against a REAL server + real local model
@@ -252,6 +252,10 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.
 > v14.19.1 unit coverage for the gaps found in the feature audit:
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Interfaces, ECAssistant.TestSupport, Moq
+
+### Class: Order
+> Harness end-to-end: drives the REAL product stack (AgentSession →
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Session, ECAssistant.Core.Transport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Build, ECAssistant.Core.Services, ECAssistant.TestSupport
 
 ### Class: ParallelToolExecutorIntegrationTests
 > Integration tests for ParallelToolExecutor — dependency analysis and parallel
@@ -443,6 +447,11 @@ Cross-package deps: ECAssistant.Core.Engine, Xunit
 > Integration tests for ConversationTranscript persistence —
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Engine
+
+### Class: TypedOutputAndChainIntegrationTests
+> v14.20 integration: typed per-tool outputs (RenderForModel) and dataflow
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Build, ECAssistant.Core.UI, Moq
 
 ### Class: UserJourneyE2E
 > v14.19: USER-EXPERIENCE E2E — drives the session through AgentSession.Prompt

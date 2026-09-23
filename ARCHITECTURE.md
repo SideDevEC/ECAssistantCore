@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-09-23 — v14.20 typed per-tool model-facing outputs (`RenderForModel` on `EToolBase`, shared `RenderOutput` helper, `BuildOutputRenderer` for dotnet/git) + dataflow toolchains (`{{N}}` arg references → sequential chain execution, large-tier-only guidance). Prior: v14.13–v14.19.1 series. Full series today: v14.13 post-edit verification → v14.14 playbook memory → v14.15 fuzzy diff edits → v14.16 context pinning → v14.17 sub-agent briefs → v14.17.1 tier inference tuning → v14.18/19/19.1 above. All tier-aware (ModelTier.IsLargeRuntime seam).
+**Updated:** 2026-09-23 — v14.20.1 integration/e2e-hardened typed per-tool outputs + dataflow chains (failure-path render, renderer path sanitization, isolated e2e working dir). Base: v14.20 typed per-tool model-facing outputs (`RenderForModel` on `EToolBase`, shared `RenderOutput` helper, `BuildOutputRenderer` for dotnet/git) + dataflow toolchains (`{{N}}` arg references → sequential chain execution, large-tier-only guidance). Prior: v14.13–v14.19.1 series. Full series today: v14.13 post-edit verification → v14.14 playbook memory → v14.15 fuzzy diff edits → v14.16 context pinning → v14.17 sub-agent briefs → v14.17.1 tier inference tuning → v14.18/19/19.1 above. All tier-aware (ModelTier.IsLargeRuntime seam).
 Current state: model-tier-adaptive harness (`model_tier.mode` small/large/auto, tier-resolved preplanning,
 slim directives + envelope budget for large tier), grammar tool-name union (`tool_names` wire field,
 DecisionGrammar.BuildGbnf on all 3 structured paths), envelope commentary (remote native path, local grammar
@@ -761,10 +761,36 @@ taught only to the large tier via a gated `DataflowChainsGuidance` block in
 
 **Tests:** BuildOutputRendererTests ×5, ToolCallChainSubstitutionTests ×5,
 ChainExecutionTests ×3 (sequential order + substitution + approval-preservation on
-the real executor with a stub executeToolFn). 185/186 targeted net green; the single
-red is `StructuredDecisionAdapterTests.EmptyEnvelope_FallsBackToThinkingAsAnswer` —
-a stale v14.18 unit test (behavior intentionally reversed at c70b897), fails on clean
-HEAD, unrelated to this work.
+the real executor with a stub executeToolFn). The stale v14.18
+`EmptyEnvelope_FallsBackToThinkingAsAnswer` unit test was since corrected to the
+v14.18 contract (3c648ab).
 
 **Known flagged issue:** ECodeEditor relative-path CWD bug carried from v14.19.1
 (needs a tool-signature change — out of scope here).
+
+## Addendum — v14.20.1 integration/e2e hardening (2026-09-23)
+
+**Failure-path rendering.** Tool failures previously reached the LLM unrendered
+(`"[ERROR] Tool failed: <raw>"` in `Orchestrator`) — the exact case where compact
+output matters most. `AddToolResult` now renders the error text through the tool's
+`RenderForModel` (build failures embed the raw log, so it compacts). Render happens
+exactly ONCE, in `AddToolResult` — callers must not pre-render (a second render
+re-parses compacted text and loses detail). `ParallelToolExecutor.CombineResults`
+failure branches render as well.
+
+**Renderer path sanitization.** MSBuild appends bracketed absolute project paths to
+error messages (`"... assembly reference?) [/abs/path.csproj]"`). `BuildOutputRenderer`
+strips the suffix and shortens absolute path tokens inside messages; class is now
+`static partial` for `[GeneratedRegex]`.
+
+**Test coverage (integration + e2e journeys).** `TypedOutputAndChainIntegrationTests`
+×5 drive the real Orchestrator → Engine → ParallelToolExecutor → Tools pipeline with
+MockEngine (render-to-context, chain substitution into real tool args, failed-ref
+marker, batch per-tool renders); assertions read `engine.ContextWindow` (model-visible,
+post-render), not pre-render raw args. Live e2e journey `HarnessE2E.BuildFailureJourney_*`
+(real server + qwen35-4b): a real broken project's build failure is reported by the
+model from the semantic render alone (file + CS1061, raw log never in context).
+
+**TestSupport factory.** `HarnessE2ESessionFactory` gained `prepareWorkingDir` — pins
+`AgentSettings.WorkingDirectory` to the isolated session dir BEFORE tool construction;
+previously tools resolved paths against the test runner's current directory.

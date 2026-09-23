@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T11:32:17.793487+00:00
-Packages: 2  |  Types: 491
+Generated: 2026-09-23T11:59:05.190743+00:00
+Packages: 2  |  Types: 494
 
 ---
 
-## ECAssistantCore (370 types, ~30859 LOC)
+## ECAssistantCore (371 types, ~31104 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -63,7 +63,6 @@ Packages: 2  |  Types: 491
 - 🟡 BuildCallSignatureTests  (ECAssistantCore)
 - 🟣 BuildError  (ECAssistantCore)  deps: [string, int, string, string]
 - 🟡 BuildErrorParser  (ECAssistantCore)
-- 🟡 BuildOutputRenderer  (ECAssistantCore)
 - 🟡 BuildOutputRendererTests  (ECAssistantCore)
 - 🟣 CapturedToolCall  (ECAssistantCore)  deps: [string, string]
 - 🟡 CatalogFetcher  (ECAssistantCore)  deps: [HttpClient, HttpClient, string]
@@ -225,6 +224,7 @@ Packages: 2  |  Types: 491
 - 🟡 OrchestratorIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 OrchestratorResult  (ECAssistantCore)
 - 🟡 OrchestratorV1419Tests : IDisposable  (ECAssistantCore)
+- 🟡 Order  (ECAssistantCore)
 - 🟡 OutputEntry  (ECAssistantCore)
 - 🟡 ParallelToolExecutor : IParallelToolExecutor  (ECAssistantCore)  deps: [EAgentEngine, ToolPolicy, Func, Action, ISessionOutput? sessionOutput =]
 - 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (ECAssistantCore)
@@ -353,6 +353,7 @@ Packages: 2  |  Types: 491
 - 🟡 TranscriptIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 TranscriptMessage  (ECAssistantCore)
 - 🟣 TranscriptMessage  (ECAssistantCore)  deps: [string, string, string? ToolCallId =]
+- 🟡 TypedOutputAndChainIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 UserJourneyE2E  (ECAssistantCore)
 - 🟡 UserJourneyExtendedE2E  (ECAssistantCore)
 - 🟡 VectorEntry  (ECAssistantCore)
@@ -378,7 +379,7 @@ Packages: 2  |  Types: 491
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (121 types, ~14532 LOC)
+## Tests (123 types, ~14766 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -444,6 +445,7 @@ Packages: 2  |  Types: 491
 - 🟡 NativeToolCallsAdapterTests  (Tests)
 - 🟡 OrchestratorIntegrationTests : IDisposable  (Tests)
 - 🟡 OrchestratorV1419Tests : IDisposable  (Tests)
+- 🟡 Order  (Tests)
 - 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (Tests)
 - 🟡 ParallelToolExecutorTests  (Tests)
 - 🟡 PlaybookTests : IDisposable  (Tests)
@@ -494,6 +496,7 @@ Packages: 2  |  Types: 491
 - 🟡 ToolPolicyTests  (Tests)
 - 🟡 ToolRepeatTrackerTests  (Tests)
 - 🟡 TranscriptIntegrationTests : IDisposable  (Tests)
+- 🟡 TypedOutputAndChainIntegrationTests : IDisposable  (Tests)
 - 🟡 UserJourneyE2E  (Tests)
 - 🟡 UserJourneyExtendedE2E  (Tests)
 - 🟡 VectorMemorySetupWriterTests : IDisposable  (Tests)

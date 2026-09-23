@@ -48,6 +48,8 @@ var result = await session.Orchestrator.ExecuteMultiStep("Summarize the docs in 
 |---|---|
 | **Agent engine** | Multi-session orchestration, sub-agents, self-correction, task planning |
 | **Model-tier adaptive harness** | One harness, every model size: small models get step-by-step scaffolding, tighter sampling and strict recipes; large models get a slim profile with more headroom — automatic via `model_tier.mode` |
+| **Typed per-tool outputs** | Tools speak for themselves: each tool renders its own model-facing projection (builds collapse to verdict + parsed errors, never raw logs) — smaller context, sharper next decisions. Override one virtual method on your custom tools |
+| **Dataflow toolchains** | A later tool call can reference an earlier call's output with `{{0}}` in the same decision — sequential execution and argument substitution without model round-trips (taught to large models only) |
 | **Post-edit verification** | Every file-modifying edit is followed by a build/test gate (tier-aware depth); failures are fed back to the model to fix, before you ever see the result |
 | **Playbook memory** | Successful multi-step goals are captured as reusable playbooks and replayed on similar future tasks |
 | **Context pinning** | Goals, decisions and the touched-file map survive compaction — long sessions don't lose the plot |
@@ -64,6 +66,7 @@ var result = await session.Orchestrator.ExecuteMultiStep("Summarize the docs in 
 - **Grammar-forced structured decisions** — the agent's act/answer/toolcall decisions are token-level constrained (GBNF), not prompt-asked. Valid tool calls with typed JSON Schema parameters, every time.
 - **Interactive checkpoints (`EAskUser`)** — the model escalates genuine ambiguity to a real choice prompt instead of guessing; falls back to autonomous mode when unattended.
 - **Self-correction with loop detection** — malformed outputs trigger error-feedback retries; long-range repeat loops are detected and stopped before they burn your budget.
+- **Dataflow chains, grammar-free** — `{{N}}` output references ride inside plain string args, so the GBNF grammar doesn't change: small models keep single calls, large models compose multi-step pipelines in one decision.
 - **Fuzzy tool edits** — the code editor tolerates imperfect match text: exact → whitespace-tolerant → line-anchored matching with indentation restoration, and a structured ambiguity error instead of guessing.
 - **Thinking never leaks** — empty or malformed model turns are retried with corrective feedback instead of surfacing the model's internal reasoning to your users.
 - **Thin by design** — 2.8 MB tool, server fetched on demand; local-first privacy with a remote escape hatch in the same code path.

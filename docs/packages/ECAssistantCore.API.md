@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 370  |  LOC: 30859  |  ~17493 tokens
+Types: 371  |  LOC: 31104  |  ~17702 tokens
 
 ---
 
@@ -413,9 +413,6 @@ Cross-package deps: ECAssistant.Core.Orchestration, Xunit
 ### Class: BuildErrorParser
 > Parser for .NET build output — extracts errors and warnings.
 
-### Class: BuildOutputRenderer
-> v14.20: semantic render of .NET build/test output for the model context.
-
 ### Class: BuildOutputRendererTests
 > v14.20: BuildOutputRenderer — semantic render of dotnet build/test output.
 Cross-package deps: ECAssistant.Core.Tools.Build
@@ -820,7 +817,7 @@ Cross-package deps: ECAssistant.Core.Setup, Xunit
 
 ### Class: HarnessE2E
 > Harness end-to-end: drives the REAL product stack (AgentSession →
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Session, ECAssistant.Core.Transport, ECAssistant.Core.Tools, ECAssistant.TestSupport
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Session, ECAssistant.Core.Transport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Build, ECAssistant.Core.Services, ECAssistant.TestSupport
 
 ### Class: HarnessE2EFeatures
 > v14.13–v14.16 feature E2E against a REAL server + real local model
@@ -1072,6 +1069,10 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.
 > v14.19.1 unit coverage for the gaps found in the feature audit:
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Interfaces, ECAssistant.TestSupport, Moq
+
+### Class: Order
+> Harness end-to-end: drives the REAL product stack (AgentSession →
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Session, ECAssistant.Core.Transport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Build, ECAssistant.Core.Services, ECAssistant.TestSupport
 
 ### Class: OutputEntry
 > "stream" (accumulated tokens) or "line" (a discrete line)
@@ -1569,6 +1570,11 @@ Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: TranscriptMessage
 > A single message in the conversation transcript.
+
+### Class: TypedOutputAndChainIntegrationTests
+> v14.20 integration: typed per-tool outputs (RenderForModel) and dataflow
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Build, ECAssistant.Core.UI, Moq
 
 ### Class: UserJourneyE2E
 > v14.19: USER-EXPERIENCE E2E — drives the session through AgentSession.Prompt
