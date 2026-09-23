@@ -38,7 +38,9 @@ public class EFileResearchToolTests : IDisposable
     public void Description_ContainsScan()
     {
         var tool = CreateTool();
-        Assert.Contains("scan", tool.Description, StringComparison.OrdinalIgnoreCase);
+        // v14.11: description hardened with tool-scope guidance; "search" replaces "scan"
+        Assert.Contains("search", tool.Description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ONLY", tool.Description, StringComparison.Ordinal);
     }
 
     

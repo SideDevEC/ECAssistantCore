@@ -24,6 +24,9 @@ public class EShellAgent : EToolBase
         "Can read/write/copy/move/delete files and folders, run any shell command, " +
         "compile code, search files, manage projects. " +
         "NEVER use heredocs ('<<') to write files — use ECodeEditor with action=create and the 'content' argument instead. " +
+        "Use ONLY when the request requires actually running commands on this machine (file " +
+        "operations, installs, system state). Do NOT use for knowledge or coding questions you " +
+        "can answer directly. " +
         "Working directory is set automatically — use relative paths.\n" +
         HostShellPrompt();
 

@@ -23,7 +23,8 @@ public class EBackgroundExecTool : EToolBase
     public override string Description =>
         "Start, check, or kill background processes. Non-blocking — lets you run long commands " +
         "like builds while continuing to work. Use action=start to begin, action=status to list, " +
-        "action=output to get results, action=kill to terminate.";
+        "action=output to get results, action=kill to terminate. Use ONLY for long-running commands " +
+        "that must not block the conversation. Do NOT use for quick commands or knowledge questions.";
 
     public override string UsageExample =>
         "EBackgroundExec(action:start, command:dotnet build)";

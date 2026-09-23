@@ -17,9 +17,11 @@ public class EFileReaderTool : EToolBase
     public override string Name => "EFileReader";
 
     public override string Description =>
-        "Read a file's contents with line numbers, offset, and limit. " +
+        "Read a specific file's contents with line numbers, offset, and limit. " +
         "Prevents context blowups on large files by controlling how much is read. " +
-        "Returns line-numbered content plus total line count so you know if there's more.";
+        "Returns line-numbered content plus total line count so you know if there's more. " +
+        "Use ONLY when the user asks about the contents of a specific known file. " +
+        "Do NOT use to answer knowledge or coding questions — answer those directly.";
 
     public override string GetParameterSchema() =>
         """

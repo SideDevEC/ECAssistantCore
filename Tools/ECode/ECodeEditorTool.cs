@@ -20,7 +20,9 @@ public class ECodeEditorTool : EToolBase
 
     public override string Description =>
         "Surgical code editing: create files, multi-line patch, diff preview, cross-file search & replace, " +
-        "line insertion/deletion. Better than shell echo for code changes.";
+        "line insertion/deletion. Better than shell echo for code changes. " +
+        "Use ONLY when the user asks to create or modify actual project files. Do NOT use to write " +
+        "example code inside a chat answer — answer coding questions directly.";
 
     public override string GetParameterSchema() =>
         """

@@ -29,10 +29,11 @@ public class ESubAgentTool : EToolBase
     public override string Name => "ESubAgent";
 
     public override string Description =>
-        "Spawn a sub-agent for a complex subtask. The sub-agent runs independently with its own " +
         "context window and tool set, then returns a result. Use for tasks that need deep focus " +
         "or might fill up the main context. Supports parallel sub-agents via multiple tool calls. " +
-        "Includes automatic retry, resource limits, and structured error reporting.";
+        "Includes automatic retry, resource limits, and structured error reporting. " +
+        "Use ONLY for genuinely complex, self-contained subtasks. Do NOT use for simple questions " +
+        "or a single tool call you can make yourself.";
 
     public override string UsageExample =>
         "ESubAgent(task=\"Research the codebase\")";

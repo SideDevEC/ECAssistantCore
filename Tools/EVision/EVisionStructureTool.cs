@@ -33,7 +33,8 @@ public class EVisionStructureTool : EToolBase
         "as a fixed JSON schema: elements (headers, labels, buttons, inputs, checkboxes, tables...) " +
         "with approximate pixel bounding boxes, label-to-control associations, and semantic groups " +
         "(form/section/toolbar/list). Use for screenshots and scanned documents that need to be read " +
-        "programmatically. Requires a vision-capable model.";
+        "programmatically. Requires a vision-capable model. Use ONLY when the user asks to analyze " +
+        "a local image or PDF file. Do NOT use for questions that involve no local file.";
 
     public override string GetParameterSchema() =>
         """

@@ -19,7 +19,8 @@ public class EGitTool : EToolBase
 
     public override string Description =>
         "Git operations with structured output. Actions: init, status, diff, commit, push, pull, log, " +
-        "add, branch, checkout. Better than raw shell for git — parses output into clean format.";
+        "add, branch, checkout. Better than raw shell for git — parses output into clean format. " +
+        "Use ONLY when the user asks for a git operation. Do NOT use for general questions.";
 
     public override string UsageExample =>
         "EGitTool(action:status)";

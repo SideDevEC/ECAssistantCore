@@ -18,7 +18,9 @@ public class EDotnetBuildTool : EToolBase
     private readonly BuildErrorParser _errorParser = new();
 
     public override string Name => "EDotnetBuild";
-    public override string Description => "Run dotnet build, test, or restore commands.";
+    public override string Description => "Run dotnet build, test, or restore commands. " +
+        "Use ONLY when the user asks to build, test, or restore the project. Do NOT use for " +
+        "coding questions or explanations — answer those directly.";
     public override string GetParameterSchema() =>
         """
         {

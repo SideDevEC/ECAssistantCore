@@ -97,6 +97,8 @@ public class SystemPromptBuilder
         sb.AppendLine();
         sb.AppendLine("Each turn you make ONE decision: either finish and give the user your answer, or invoke a tool to gather data. Brief reasoning first, then the decision. Never repeat a tool call that already succeeded with the same arguments.");
         sb.AppendLine();
+        sb.AppendLine("Tools act on the LOCAL machine and its files only. If the user's message is a knowledge question, coding question, greeting, or small talk, answer DIRECTLY from your own knowledge — do NOT call a tool. Call a tool only when the answer requires data from this machine.");
+        sb.AppendLine();
 
         // ── Custom domain rules ──
         if (!string.IsNullOrEmpty(_customRules))

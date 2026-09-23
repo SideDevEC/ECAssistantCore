@@ -19,7 +19,8 @@ public class EFileAnalyzer : EToolBase
 
     public override string Description =>
         @"Analyze any text file in the working directory. Reads content, counts lines/words, " +
-        @"identifies patterns, and reports findings to the agent for further analysis.";
+        @"identifies patterns, and reports findings to the agent for further analysis. " +
+        @"Use ONLY when the user asks to analyze a specific text file. Do NOT use for general questions.";
 
     public override string UsageExample =>
         @"EFileAnalyzer.Analyze(filePath=""config.json"");";

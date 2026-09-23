@@ -1444,8 +1444,15 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                 _out?.WriteDim($"[Engine] Answer ({answerText.Length} chars): {StringUtil.Default.Truncate(answerText, 500)}");
              }
 
-            if (string.IsNullOrEmpty(answerText))
-                answerText = timedOut ? "(Response truncated — model timed out)" : "(Empty response from model)";
+            // v14.11 (Option D): an empty turn is a model failure (small models do this
+            // most often right after a tool round-trip) — never mask it as a direct
+            // answer. Store the placeholder to keep transcript/context symmetric with
+            // the KV rewind the orchestrator's format-retry performs, but return a
+            // null-answer decision so the orchestrator removes the empty turn and
+            // nudges the model to answer in plain text. Only a timeout keeps its
+            // sentinel as a direct answer — a retry cannot fix truncation.
+            if (string.IsNullOrEmpty(answerText) && !timedOut)
+                answerText = "(Empty response from model)";
 
             _transcript.AddAssistant(FormatHistoryEntry(structuredDecision?.Reasoning, answerText));
             _contextWindow.AddAssistantMessage(FormatHistoryEntry(structuredDecision?.Reasoning, answerText));
@@ -1472,6 +1479,18 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                      }
                  }
                 return new LLMDecision(false, null, new Dictionary<string, string?>(), "(Stopped by user)");
+             }
+
+            // v14.11: empty response (not timeout, not stopped) → null-answer decision.
+            // WantsDirectAnswer stays false, so the orchestrator's format-retry path
+            // removes the empty turn (KV rewind is symmetric — the placeholder above
+            // was stored) and nudges the model to answer in plain text.
+            if (answerText == "(Empty response from model)")
+             {
+                _out?.WriteWarning("[Engine] Empty model response — handing back for format retry.");
+                _logger?.Warn("Engine", "Empty model response — orchestrator format retry");
+                return new LLMDecision(false, null, new Dictionary<string, string?>(), null,
+                    structuredDecision?.Reasoning);
              }
 
             return new LLMDecision(false, null, new Dictionary<string, string?>(), answerText);

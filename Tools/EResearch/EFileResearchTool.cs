@@ -21,8 +21,11 @@ public class EFileResearchTool : EToolBase
     public override string Name => "EFileResearchTool";
 
     public override string Description =>
-        "Scan project files, read content for LLM analysis. Use for: finding code patterns, " +
-        "checking file structure, reading source code, researching project dependencies.";
+        "Search and read files in the local project workspace. Use ONLY when the user explicitly " +
+        "asks to inspect, search, or analyze actual project files (e.g. 'find all controllers', " +
+        "'where is X defined'). " +
+        "Do NOT use for programming or knowledge questions (e.g. 'can you code in VBA?'), " +
+        "general explanations, or conversation — answer those directly from your own knowledge.";
 
     public override string GetParameterSchema() =>
         """
