@@ -94,6 +94,17 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         return _config?.ModelTier?.IsLargeRuntime(isLocal) ?? !isLocal;
      }
 
+    /// <summary>
+    /// v14.12: tier-aware structured envelope token budget. Small models get the
+    /// tight cap (they ramble — 768 floor, 1024 ceiling); large models get reasoning
+    /// headroom (1024 floor, 4096 ceiling). Pure function — extracted for tests.
+    /// </summary>
+    // Stateless utility — no mutable state
+    private static int ApplyEnvelopeBudget(int configured, bool isLarge)
+        => isLarge
+            ? Math.Min(Math.Max(configured, 1024), 4096)
+            : Math.Min(Math.Max(configured, 768), 1024);
+
     private ECAssistant.Core.Engine.SelfCorrectionManager? _injectedSelfCorrection;
     public ECAssistant.Core.Engine.SelfCorrectionManager? InjectedSelfCorrection
     {
@@ -1814,9 +1825,7 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
             // of CPU decode; the envelope needs far less.
             // v14.12: tier-aware envelope budget — small models get the tight cap
             // (they ramble), large models get reasoning headroom.
-            parameters.MaxTokens = IsLargeModelTier()
-                ? Math.Min(Math.Max(parameters.MaxTokens ?? 0, 1024), 4096)
-                : Math.Min(Math.Max(parameters.MaxTokens ?? 0, 768), 1024);
+            parameters.MaxTokens = ApplyEnvelopeBudget(parameters.MaxTokens ?? 0, IsLargeModelTier());
             // v14.12.1: constrain the decision grammar's toolcall.name to the registered
             // tools — small models physically cannot hallucinate a tool name. The remote
             // native-tools path never reads this field (server without support ignores it).
