@@ -244,4 +244,4 @@ Core knows NOTHING about ECAssistantLLM internals — **OpenAI-compatible HTTP e
 - `EcaCompositionRoot` is the single wiring point
 - **Interface-first:** every public service has an interface (LDC-enforced, 0 warnings)
 - **Naming:** `E` prefix = tool family (wire identity); bare names elsewhere; `Eca*` product prefix
-- Release discipline: TestSupport → LLM → Core → TUI → Console, one at a time, each confirmed on nuget.org before the next; NEVER ship a ref to an un-indexed upstream version
+- Release discipline: **unified versioning** (Emre, 2026-09-23) — ALL packages (TestSupport, LLM, Core, TUI, Console) carry the SAME version number and ship together in one release wave. Legacy packages were deprecated + unlisted on nuget.org; the wave starts from a clean slate.
