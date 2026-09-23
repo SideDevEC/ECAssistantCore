@@ -4,29 +4,26 @@ using ECAssistant.Core.Config;
 namespace ECAssistant.Core.Tests.Harness;
 
 /// <summary>
-/// v14.12: model-tier profile tests — IsLargeRuntime resolution (small/large/auto),
+/// v14.12: model-tier profile tests — IsLargeRuntime resolution (small/large/default),
 /// config wiring (model_tier section), and the Preplanning auto-resolution contract.
+/// Config-driven only — no transport heuristic (isLocal removed 2026-09-24).
 /// </summary>
 public sealed class ModelTierConfigTests
 {
     // ── IsLargeRuntime: explicit modes ──
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void IsLargeRuntime_ModeSmall_ReturnsFalse(bool isLocal)
+    [Fact]
+    public void IsLargeRuntime_ModeSmall_ReturnsFalse()
     {
         var tier = new ModelTierConfig { Mode = "small" };
-        Assert.False(tier.IsLargeRuntime(isLocal));
+        Assert.False(tier.IsLargeRuntime());
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void IsLargeRuntime_ModeLarge_ReturnsTrue(bool isLocal)
+    [Fact]
+    public void IsLargeRuntime_ModeLarge_ReturnsTrue()
     {
         var tier = new ModelTierConfig { Mode = "large" };
-        Assert.True(tier.IsLargeRuntime(isLocal));
+        Assert.True(tier.IsLargeRuntime());
     }
 
     [Theory]
@@ -36,8 +33,7 @@ public sealed class ModelTierConfigTests
     public void IsLargeRuntime_ModeCaseInsensitiveAndTrimmed_ReturnsTrue(string mode)
     {
         var tier = new ModelTierConfig { Mode = mode };
-        Assert.True(tier.IsLargeRuntime(isLocal: true));
-        Assert.True(tier.IsLargeRuntime(isLocal: false));
+        Assert.True(tier.IsLargeRuntime());
     }
 
     [Theory]
@@ -46,23 +42,16 @@ public sealed class ModelTierConfigTests
     public void IsLargeRuntime_ModeSmallCaseInsensitiveAndTrimmed_ReturnsFalse(string mode)
     {
         var tier = new ModelTierConfig { Mode = mode };
-        Assert.False(tier.IsLargeRuntime(isLocal: false));
+        Assert.False(tier.IsLargeRuntime());
     }
 
-    // ── IsLargeRuntime: auto (null/empty/unknown mode) resolves from local/remote ──
+    // ── IsLargeRuntime: absent/default config defaults to small (safe) ──
 
     [Fact]
-    public void IsLargeRuntime_NullMode_Local_ReturnsFalse()
+    public void IsLargeRuntime_NullMode_DefaultsToFalse()
     {
         var tier = new ModelTierConfig { Mode = null };
-        Assert.False(tier.IsLargeRuntime(isLocal: true));
-    }
-
-    [Fact]
-    public void IsLargeRuntime_NullMode_Remote_ReturnsTrue()
-    {
-        var tier = new ModelTierConfig { Mode = null };
-        Assert.True(tier.IsLargeRuntime(isLocal: false));
+        Assert.False(tier.IsLargeRuntime());
     }
 
     [Theory]
@@ -71,11 +60,10 @@ public sealed class ModelTierConfigTests
     [InlineData("")]
     [InlineData("  ")]
     [InlineData("bogus-mode")]
-    public void IsLargeRuntime_UnknownMode_AutoResolvesFromLocality(string mode)
+    public void IsLargeRuntime_UnknownMode_DefaultsToFalse(string mode)
     {
         var tier = new ModelTierConfig { Mode = mode };
-        Assert.False(tier.IsLargeRuntime(isLocal: true));   // auto: local → small
-        Assert.True(tier.IsLargeRuntime(isLocal: false));   // auto: remote → large
+        Assert.False(tier.IsLargeRuntime());
     }
 
     // ── Config wiring ──
@@ -87,7 +75,7 @@ public sealed class ModelTierConfigTests
             """{"model_tier": {"mode": "small"}}""");
         Assert.NotNull(config!.ModelTier);
         Assert.Equal("small", config.ModelTier!.Mode);
-        Assert.False(config.ModelTier.IsLargeRuntime(isLocal: false)); // explicit small beats remote
+        Assert.False(config.ModelTier.IsLargeRuntime());
     }
 
     [Fact]

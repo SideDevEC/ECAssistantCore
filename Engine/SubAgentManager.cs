@@ -172,13 +172,12 @@ public sealed class SubAgentManager : IDisposable
 
     /// <summary>
     /// v14.17: tier resolution for sub-agent briefs — same seam as Engine/Orchestrator
-    /// (ModelTier.IsLargeRuntime over local/remote; absent config = auto).
+    /// (config-driven only; absent config = small/safe).
     /// </summary>
     private bool IsLargeTier()
-     {
-        var isLocal = _config?.LlmProvider?.IsLocal ?? true;
-        return _config?.ModelTier?.IsLargeRuntime(isLocal) ?? !isLocal;
-     }
+    {
+        return _config?.ModelTier?.IsLargeRuntime() ?? false;
+    }
 
     /// <summary>v10.18.1: Cancel ALL active sub-agents (called when main agent gets ESC).</summary>
     public void CancelAll()

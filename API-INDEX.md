@@ -1,6 +1,6 @@
 # API-INDEX.md — ECAssistant
 
-Generated: 2026-09-23T21:57:07.413091+00:00
+Generated: 2026-09-23T22:20:19.539039+00:00
 Packages: 8  |  Types: 591
 
 ---
@@ -39,7 +39,7 @@ Packages: 8  |  Types: 591
 ## TestModelLoad (0 types, ~43 LOC)
 
 
-## ECAssistantCore (412 types, ~34599 LOC)
+## ECAssistantCore (412 types, ~34577 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)

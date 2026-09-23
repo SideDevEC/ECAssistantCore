@@ -6,12 +6,15 @@ namespace ECAssistant.Core.Config;
 /// v14.12: Model-tier profile — gates how much harness scaffolding (hand-holding
 /// directives, pre-planning, thinking budgets) the agent loop applies. Small models
 /// need the full scaffolding; large models get a slim profile so the harness does
-/// not hinder them. Absent config = auto: local → small (current behavior preserved),
-/// remote → large.
+/// not hinder them.
+/// 
+/// Config-driven only — no transport heuristic. The user sets mode explicitly:
+/// "small", "large", or absent (defaults to "small" — safe default, extra
+/// scaffolding doesn't hurt large models but missing scaffolding hurts small ones).
 /// </summary>
 public class ModelTierConfig
 {
-    /// <summary>Tier mode: "small", "large", or "auto"/null (auto = decide from local/remote).</summary>
+    /// <summary>Tier mode: "small", "large", or null/absent (defaults to small — safe).</summary>
     [JsonPropertyName("mode")]
     public string? Mode { get; init; }
 
@@ -33,18 +36,14 @@ public class ModelTierConfig
 
     /// <summary>
     /// Resolve whether the active model should get the large-model (slim) profile.
-    /// Pure resolution from immutable config — no mutable state.
+    /// Pure resolution from immutable config — no transport heuristic, no isLocal.
+    /// Explicit mode wins; absent config defaults to small (safe).
     /// </summary>
     // Stateless utility — no mutable state
-    public bool IsLargeRuntime(bool isLocal)
+    public bool IsLargeRuntime()
     {
         var mode = Mode?.Trim().ToLowerInvariant();
-        return mode switch
-        {
-            "small" => false,
-            "large" => true,
-            _ => !isLocal // auto/null: local runs small models, remote runs frontier models
-        };
+        return string.Equals(mode, "large", StringComparison.OrdinalIgnoreCase);
     }
 }
 

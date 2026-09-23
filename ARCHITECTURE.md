@@ -16,8 +16,8 @@ Two provider modes (`LlmProviderConfig.mode`):
 
 ## Model-Tier Awareness
 
-One seam governs behavior for small vs large models: `ModelTier.IsLargeRuntime(isLocal)`.
-Config: `model_tier.mode` = `small` | `large` | `auto` (auto: local → small, remote → large).
+One seam governs behavior for small vs large models: `ModelTier.IsLargeRuntime()`.
+Config: `model_tier.mode` = `small` | `large` | absent. Config-driven only — no transport heuristic (isLocal removed 2026-09-24, Emre). Absent config defaults to `small` (safe: extra scaffolding doesn't hurt large models; missing scaffolding hurts small ones). A large local model (70B+) or small remote model must be declared explicitly via `mode`.
 
 Tier-resolved behaviors:
 - **Preplanning** (`InterfaceConfig.Preplanning`, null=auto): small models decompose the task up front (LLM plan + StepMapper); large models plan in-loop. Conversational questions skip decomposition via the verb gate.

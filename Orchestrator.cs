@@ -131,8 +131,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
       /// <summary>v14.12: True when the active model runs the large-model (slim) profile.</summary>
      private bool IsLargeModelTier()
       {
-         var isLocal = _config?.LlmProvider?.IsLocal ?? true;
-         return _config?.ModelTier?.IsLargeRuntime(isLocal) ?? !isLocal;
+         return _config?.ModelTier?.IsLargeRuntime() ?? false;
       }
 
       /// <summary>v14.12.2: mid-run steering seam — hosts queue user input via AgentSession.Steer().</summary>

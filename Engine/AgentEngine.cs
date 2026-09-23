@@ -96,16 +96,14 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
     /// <summary>v14.12: True when the active model runs the large-model (slim) profile.</summary>
     /// <summary>v14.17: tier-tuned request params — small tier gets tighter sampling.</summary>
     private InferenceRequestParams CreateTieredParams(AppConfig cfg)
-     {
-        var isLocal = cfg.LlmProvider?.IsLocal ?? true;
-        return InferenceParamsFactory.Default.CreateTiered(cfg, cfg.ModelTier?.IsLargeRuntime(isLocal) ?? !isLocal);
-     }
+    {
+        return InferenceParamsFactory.Default.CreateTiered(cfg, cfg.ModelTier?.IsLargeRuntime() ?? false);
+    }
 
     private bool IsLargeModelTier()
-     {
-        var isLocal = _config?.LlmProvider?.IsLocal ?? true;
-        return _config?.ModelTier?.IsLargeRuntime(isLocal) ?? !isLocal;
-     }
+    {
+        return _config?.ModelTier?.IsLargeRuntime() ?? false;
+    }
 
     private ECAssistant.Core.Engine.SelfCorrectionManager? _injectedSelfCorrection;
     public ECAssistant.Core.Engine.SelfCorrectionManager? InjectedSelfCorrection
