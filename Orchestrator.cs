@@ -58,6 +58,12 @@ public sealed class AgentOrchestrator : IAsyncDisposable
     private SubAgentManager? _subAgentManager;
     public SubAgentManager? SubAgentManager => _subAgentManager;
 
+      // v14.13: tier-aware post-edit verification loop
+    private readonly IPostEditVerifier? _postEditVerifier;
+    private int _verificationFailRounds = 0;
+    private bool _verificationDisabled = false;   // set when max_rounds reached — stop verifying for the rest of the run
+    private bool _largeTierVerified = false;      // large tier verifies at most once per run
+
       /// <summary>Create orchestrator with config.</summary>
     public AgentOrchestrator(
         EAgentEngine engine,
@@ -66,7 +72,8 @@ public sealed class AgentOrchestrator : IAsyncDisposable
         int maxFailures = 3,
         ECAssistant.Core.Tools.ToolPolicy? toolPolicy = null,
         ECAssistant.Core.Interfaces.ILogger? logger = null,
-        ECAssistant.Core.Config.EAgentConfig? config = null)
+        ECAssistant.Core.Config.EAgentConfig? config = null,
+        IPostEditVerifier? postEditVerifier = null)
               {
                   _engine = engine;
                   _out = sessionOutput;
@@ -76,6 +83,14 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                   _toolPolicy = toolPolicy ?? new ECAssistant.Core.Tools.ToolPolicy();
                   _logger = logger ?? new Logger();
                   _config = config;
+                  // v14.13: mirror the SelfCorrectionManager pattern — create the default
+                  // verifier when none is injected and config enables the gate.
+                  _postEditVerifier = postEditVerifier ??
+                      (config?.Verification.Enabled == true
+                          ? new Verification.PostEditVerifier(
+                              new Verification.DotnetVerificationRunner(new Services.ProcessRunner()),
+                              config.Verification)
+                          : null);
 
             foreach (var tool in _engine.Tools)
                    _toolWhitelist.Add(tool.Name);
@@ -654,6 +669,9 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
                                      _engine.AddToolResult(decision.ToolName!, toolOutput);
 
+                                     // v14.13: tier-aware post-edit verification gate
+                                     await RunPostEditVerificationAsync(decision.ToolName!, argsDict, goal);
+
                                      // v10.6: Inject step-aware directive with sub-task context
                                     var stepDirective = BuildStepDirective();
                                      _engine.InjectFormatRetry(stepDirective);
@@ -826,6 +844,63 @@ public sealed class AgentOrchestrator : IAsyncDisposable
         return await tool.ExecuteAsync(args, _engine.ExecutionToken);
                }
 
+       /// <summary>v14.13: Tier-aware post-edit verification gate. Runs after a successful file-modifying tool call.</summary>
+    private async Task RunPostEditVerificationAsync(string toolName, Dictionary<string, string?> args, string goal)
+          {
+        var verifier = _postEditVerifier;
+        if (verifier == null || _verificationDisabled) return;
+
+        var isLarge = IsLargeModelTier();
+        // Large tier: verify only once per run (slim scaffolding).
+        if (isLarge && _largeTierVerified) return;
+        if (!verifier.ShouldVerify(toolName, args, isLarge)) return;
+
+        var workingDir = _config?.GetRootPath();
+        VerificationResult result;
+        try
+         {
+            result = await verifier.VerifyAsync(workingDir, _engine.ExecutionToken);
+         }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+         {
+            _logger?.Warn("Orchestrator", $"Verification runner failed: {ex.Message}");
+            return; // verification infra failure must never kill the agent loop
+         }
+        _largeTierVerified = true;
+
+        if (result.Succeeded)
+         {
+            _verificationFailRounds = 0;
+            _out?.WriteSuccess("[Verify] build OK");
+            // Success note only for the small tier — large tier stays slim.
+            if (!isLarge)
+                _engine.AddToolResult(toolName, verifier.BuildSuccessNote());
+            return;
+         }
+
+        _verificationFailRounds++;
+        var maxRounds = verifier.MaxRounds(isLarge);
+        _out?.WriteError($"[Verify] FAILED (round {_verificationFailRounds}/{maxRounds})");
+        _logger?.Warn("Orchestrator", $"Verification failed: {result.Command} exit={result.ExitCode}");
+        _engine.AddToolResult(toolName, verifier.BuildFailureFeedback(_verificationFailRounds, maxRounds, result));
+
+        if (_verificationFailRounds >= maxRounds)
+         {
+            // Cap reached — stop verifying for this run and make the model report.
+            _verificationDisabled = true;
+            _engine.InjectFormatRetry(
+                "Post-edit verification failed " + maxRounds + " time(s) without a fix.\n" +
+                "Do NOT keep editing blindly. Report the remaining build errors in your final answer.");
+            return;
+         }
+
+        // Failure fed back via AddToolResult above — direct the model to fix it now.
+        _engine.InjectFormatRetry(
+            "The user's original request was: \"" + goal + "\"\n" +
+            "Your last edit broke the build. Fix the [VERIFY FAIL] errors above with a file edit before doing anything else.");
+          }
+
        /// <summary>v10.18.1: Get tool call log for sub-agent partial results.</summary>
      public IReadOnlyList<string> GetToolCallLog() => _toolCallLog.AsReadOnly();
 
@@ -854,6 +929,10 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                     // v14.10.2: reset the repeat tracker per goal — denied/aborted calls
                     // from a previous goal must not block legitimate retries in the next.
                     _repeatTracker.Reset();
+                    // v14.13: reset verification gate state per goal
+                    _verificationFailRounds = 0;
+                    _verificationDisabled = false;
+                    _largeTierVerified = false;
                     _maxTurns = _baseMaxTurns; // recompute on next decomposition
                     // v10.6: Reset sub-task state
                     _subTasks = null;

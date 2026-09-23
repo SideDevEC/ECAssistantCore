@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-09-23 PM — v14.12.x harness chain complete + audit + TestSupport shared test infra.
+**Updated:** 2026-09-23 PM — v14.13 tier-aware post-edit verification loop + v14.12 harness chain complete + audit + TestSupport shared test infra.
 Current state: model-tier-adaptive harness (`model_tier.mode` small/large/auto, tier-resolved preplanning,
 slim directives + envelope budget for large tier), grammar tool-name union (`tool_names` wire field,
 DecisionGrammar.BuildGbnf on all 3 structured paths), envelope commentary (remote native path, local grammar
@@ -8,7 +8,8 @@ stays strict XOR), ToolOutputProjector curated outputs (off-switch `context_mana
 SteeringQueue seam + `AgentSession.Steer()`, remote composition guidance. Audit: v14.11 anti-tool-spam line
 ported to the live SystemPrompt.*.md (was stranded in dead SystemPromptBuilder); dead files removed
 (SystemPromptBuilder.cs, LLMDecision legacy factories, EFileAnalyzer — never registered in production,
-stale August planning docs). 10 built-in production tools. Shared test infra moved to ECAssistantTestSupport
+stale August planning docs). 10 built-in production tools. v14.13: `verification` config section —
+post-edit build/test gate fed back into the loop, tier-gated (small: every edit, max 2 rounds; large: once per run, trivial edits skipped). Shared test infra moved to ECAssistantTestSupport
 (MockEngine config param, public noops, ProbeTestTool, HarnessE2ESessionFactory). Test net: 65/65 unit +
 2/2 real-model e2e (live server + qwen35-4b). Dated history: git log + Addenda below.
 
@@ -568,3 +569,24 @@ delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-dri
 - **Test round (2026-09-23 PM):** engine-level tier tests x10 (TierTestEngine subclass flows config through the real ctor; small keeps nag lines / large one-liner; 4 tier resolutions) + envelope budget extracted to pure ApplyEnvelopeBudget and pinned by tests (768/1024 small, 1024/4096 large) + BuildToolSpecs schema-copy test now real (was existence-only) + tool-name plumbing test. Full v14.12 net: 65/65 filtered green.
 - **Audit (2026-09-23 PM):** v14.11 anti-tool-spam line was landing only in dead SystemPromptBuilder — ported to all three live SystemPrompt.*.md; SystemPromptBuilder.cs deleted; LLMDecision legacy factories removed (zero usages); projector clamps head/tail overlap for tiny-limit configs; EDecisionLoop kept (intentional prototype)
 - **Tool-name grammar union (v14.12.1):** `TryGenerateStructuredAsync` sends `tool_names` on the structured request; the server builds `DecisionGrammar.BuildGbnf(...)` so toolcall.name is constrained to the registered tools. Absent → permissive grammar (back-compat both directions).
+
+## Addendum — v14.13 tier-aware post-edit verification loop (2026-09-23)
+
+- **Config** (`VerificationConfig`, `verification` section): `enabled` (default true), `max_rounds`
+  (default 2, small tier), `trivial_edit_max_chars` (default 200, large-tier skip),
+  `build_command` (default `dotnet build --nologo -v q`), `test_command` (optional quick filtered tests).
+- **Gate:** after a SUCCESSFUL file-modifying tool call (detected by tool name + args only —
+  ECodeEditor create/patch/replace-all/insert/delete-lines/delete; EShellAgent write/move/delete
+  command heuristics), the orchestrator runs verification and feeds failures back via
+  AddToolResult + InjectFormatRetry so the model fixes them. Cap at max consecutive failed
+  rounds → verification disabled for the run, model told to report. Verification infra failures
+  never kill the agent loop. Batch (multi-tool) path not gated (conservative scope).
+- **Tier behavior:** small — verify after EVERY file-modifying edit, max 2 rounds, success note
+  injected; large — verify only once per run, trivially-small edits (single-line, ≤ threshold
+  chars) skipped, no success note (slim scaffolding).
+- **Architecture:** `IPostEditVerifier`/`PostEditVerifier` + `IVerificationRunner`/
+  `DotnetVerificationRunner` (new Verification/ package) — build/test execution behind the runner
+  interface; Orchestrator ctor-injects (default created when config enabled, mirroring
+  SelfCorrectionManager wiring). One type per file, no statics.
+- **Tests:** PostEditVerifierTests ×19 (classification, tier gating, stub-runner verification,
+  feedback formatting, MockEngine orchestrator wiring — no real builds). Net with tier tests: 29/29.

@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-23T07:29:44.261696+00:00
-Edges: 76  |  Packages: 2
+Generated: 2026-09-23T07:45:35.156330+00:00
+Edges: 80  |  Packages: 2
 
 ---
 
@@ -19,6 +19,8 @@ Edges: 76  |  Packages: 2
 - ContextManager ──implements──► IContextManager (ECAssistantCore)
 - ContextManager ──uses──► IConfigProvider (ECAssistantCore)
 - ContextManager ──uses──► IInferenceEngine (ECAssistantCore)
+- DotnetVerificationRunner ──implements──► IVerificationRunner (ECAssistantCore)
+- DotnetVerificationRunner ──uses──► IProcessRunner (ECAssistantCore)
 - EAgentEngine ──implements──► IEngine (ECAssistantCore)
 - EAgentEngine ──implements──► IEngineToolContext (ECAssistantCore)
 - EAgentEngine ──implements──► ISubAgentEngineHost (ECAssistantCore)
@@ -66,6 +68,8 @@ Edges: 76  |  Packages: 2
 - ModelParamValidator ──implements──► IModelParamValidator (ECAssistantCore)
 - NopKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
 - ParallelToolExecutor ──implements──► IParallelToolExecutor (ECAssistantCore)
+- PostEditVerifier ──implements──► IPostEditVerifier (ECAssistantCore)
+- PostEditVerifier ──uses──► IVerificationRunner (ECAssistantCore)
 - ProcessRunner ──implements──► IProcessRunner (ECAssistantCore)
 - RemoteKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
 - RemoteModelLoader ──implements──► IModelLoader (ECAssistantCore)

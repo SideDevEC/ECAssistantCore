@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 104  |  LOC: 12675  |  ~4128 tokens
+Types: 105  |  LOC: 12943  |  ~4209 tokens
 
 ---
 
@@ -235,6 +235,11 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.
 
 ### Class: ParallelToolExecutorTests
 Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.Engine, ECAssistant.Core.Tools, Moq
+
+### Class: PostEditVerifierTests
+> v14.13: tier-aware post-edit verification loop. Pure-logic tests — the build/test
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Tools, ECAssistant.Core.Verification, ECAssistant.TestSupport
 
 ### Class: ProcessRunnerTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces

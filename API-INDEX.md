@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T07:29:44.261044+00:00
-Packages: 2  |  Types: 429
+Generated: 2026-09-23T07:45:35.155646+00:00
+Packages: 2  |  Types: 437
 
 ---
 
-## ECAssistantCore (325 types, ~27817 LOC)
+## ECAssistantCore (332 types, ~28290 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -27,6 +27,7 @@ Packages: 2  |  Types: 429
 - 🔵 IOutputRenderer  (ECAssistantCore)
 - 🔵 IParallelToolExecutor  (ECAssistantCore)
 - 🔵 IPdfPageRenderer  (ECAssistantCore)
+- 🔵 IPostEditVerifier  (ECAssistantCore)
 - 🔵 IProcessRunner  (ECAssistantCore)
 - 🔵 IRemoteModelProbe  (ECAssistantCore)
 - 🔵 ISecureKeyStore  (ECAssistantCore)
@@ -41,10 +42,11 @@ Packages: 2  |  Types: 429
 - 🔵 IToolPolicyEvaluator  (ECAssistantCore)
 - 🔵 IVectorEmbedder  (ECAssistantCore)
 - 🔵 IVectorStore  (ECAssistantCore)
+- 🔵 IVerificationRunner  (ECAssistantCore)
 - 🟡 ActiveSubAgent  (ECAssistantCore)
 - 🟡 AgentConfig  (ECAssistantCore)
 - 🟡 AgentConfigBuilder  (ECAssistantCore)
-- 🟡 AgentOrchestrator : IAsyncDisposable  (ECAssistantCore)  deps: [EAgentEngine, ISessionOutput? sessionOutput =, int maxTurns =, int maxFailures =, ToolPolicy? toolPolicy =, ILogger? logger =, EAgentConfig? config =]
+- 🟡 AgentOrchestrator : IAsyncDisposable  (ECAssistantCore)  deps: [EAgentEngine, ISessionOutput? sessionOutput =, int maxTurns =, int maxFailures =, ToolPolicy? toolPolicy =, ILogger? logger =, EAgentConfig? config =, IPostEditVerifier? postEditVerifier =]
 - 🟡 AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable  (ECAssistantCore)  deps: [string, string, string, string, InferenceRequestParams, string, SemaphoreSlim, SubAgentConfig? subAgentConfig =, string? label =, ILogger? logger =, EAgentConfig? config =, OpenAIClient? httpClient =, RemoteTokenizer? remoteTokenizer =, string? apiKey =, bool isLocalMode =]
 - 🟡 AiSetupResetter : IAiSetupResetter  (ECAssistantCore)
 - 🟡 AiSetupResetterTests  (ECAssistantCore)
@@ -79,6 +81,7 @@ Packages: 2  |  Types: 429
 - 🟡 DecomposeConfig  (ECAssistantCore)
 - 🟡 DependencyGroup  (ECAssistantCore)
 - 🟡 DependencyGroupTests  (ECAssistantCore)
+- 🟡 DotnetVerificationRunner : IVerificationRunner  (ECAssistantCore)  deps: [IProcessRunner]
 - 🟣 DownloadProgress  (ECAssistantCore)  deps: [string, long, long, double, double]
 - 🟡 EAgentConfig  (ECAssistantCore)
 - 🟡 EAgentConfigTests : IDisposable  (ECAssistantCore)
@@ -210,6 +213,8 @@ Packages: 2  |  Types: 429
 - 🟡 ParallelToolExecutorTests  (ECAssistantCore)
 - 🟡 PathExpander  (ECAssistantCore)
 - 🟡 PlannedToolCall  (ECAssistantCore)
+- 🟡 PostEditVerifier : IPostEditVerifier  (ECAssistantCore)  deps: [IVerificationRunner, VerificationConfig]
+- 🟡 PostEditVerifierTests : IDisposable  (ECAssistantCore)
 - 🟣 ProcessResult  (ECAssistantCore)  deps: [int, string, string, bool]
 - 🟡 ProcessRunner : IProcessRunner  (ECAssistantCore)
 - 🟡 ProcessRunnerTests  (ECAssistantCore)
@@ -321,6 +326,8 @@ Packages: 2  |  Types: 429
 - 🟡 VectorMemoryStoreTests : IDisposable  (ECAssistantCore)
 - 🟣 VectorResult  (ECAssistantCore)  deps: [string, string, float]
 - 🟡 VectorSearchResult  (ECAssistantCore)
+- 🟡 VerificationConfig  (ECAssistantCore)
+- 🟡 VerificationResult  (ECAssistantCore)  deps: [bool, string, string, int]
 - 🟣 VisionElement  (ECAssistantCore)  deps: [string, VisionElementType, string, VisionBoundingBox, double, IReadOnlyList]
 - 🟣 VisionElementGroup  (ECAssistantCore)  deps: [string, VisionGroupRole, IReadOnlyList]
 - 🟣 VisionSourceInfo  (ECAssistantCore)  deps: [VisionSourceKind, int, int, int]
@@ -333,7 +340,7 @@ Packages: 2  |  Types: 429
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (104 types, ~12675 LOC)
+## Tests (105 types, ~12943 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -395,6 +402,7 @@ Packages: 2  |  Types: 429
 - 🟡 OrchestratorIntegrationTests : IDisposable  (Tests)
 - 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (Tests)
 - 🟡 ParallelToolExecutorTests  (Tests)
+- 🟡 PostEditVerifierTests : IDisposable  (Tests)
 - 🟡 ProcessRunnerTests  (Tests)
 - 🟡 ProgramGuiCollection  (Tests)
 - 🟡 ProjectContextExclusionTests : IDisposable  (Tests)

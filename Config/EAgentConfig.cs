@@ -68,6 +68,10 @@ public class EAgentConfig
     [JsonPropertyName("model_tier")]
     public ModelTierConfig? ModelTier { get; init; }
 
+    /// <summary>v14.13: tier-aware post-edit verification gate (build/test after file edits).</summary>
+    [JsonPropertyName("verification")]
+    public VerificationConfig Verification { get; set; } = new();
+
     /// <summary>
     /// Multi-provider section (OpenClaw-style). When present with valid entries,
     /// remote mode resolves through the registry (default provider + optional fallback).

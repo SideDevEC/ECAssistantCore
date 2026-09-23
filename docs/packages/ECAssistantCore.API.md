@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 325  |  LOC: 27817  |  ~15049 tokens
+Types: 332  |  LOC: 28290  |  ~15569 tokens
 
 ---
 
@@ -185,6 +185,16 @@ Cross-package deps: ECAssistant.Core.Engine
 Methods:
   - Task<byte[]?> RenderPageToPngAsync(string pdfPath, int page, CancellationToken ct = default)
 
+### Interface: IPostEditVerifier
+> v14.13: Tier-aware post-edit verification gate. Classifies file-modifying tool
+Methods:
+  - bool IsFileModifyingCall(string toolName, IReadOnlyDictionary<string, string?> args)
+  - bool ShouldVerify(string toolName, IReadOnlyDictionary<string, string?> args, bool isLargeTier)
+  - int MaxRounds(bool isLargeTier)
+  - string BuildFailureFeedback(int round, int maxRounds, VerificationResult result)
+  - string BuildSuccessNote()
+  - Task<VerificationResult> VerifyAsync(string? workingDir, CancellationToken ct = default)
+
 ### Interface: IProcessRunner
 > Abstract process execution.
 Methods:
@@ -311,6 +321,11 @@ Methods:
   - Task IndexAsync(string content, string metadata)
   - Task<List<VectorResult>> SearchAsync(float[] embedding, int maxResults = 5)
 
+### Interface: IVerificationRunner
+> v14.13: Executes one verification command (build / filtered test) in a working
+Methods:
+  - Task<VerificationResult> RunAsync(string command, string? workingDir = null, CancellationToken ct = default)
+
 ### Class: ActiveSubAgent
 
 ### Class: AgentConfig
@@ -324,7 +339,7 @@ Cross-package deps: ECAssistant.Core.Config
 > Orchestrator — the decision-making brain for multi-step agent workflows.
 Implements: IAsyncDisposable
 Constructor:
-  - AgentOrchestrator(EAgentEngine engine, ISessionOutput? sessionOutput = null, int maxTurns = 5, int maxFailures = 3, ECAssistant.Core.Tools.ToolPolicy? toolPolicy = null, ECAssistant.Core.Interfaces.ILogger? logger = null, ECAssistant.Core.Config.EAgentConfig? config = null)
+  - AgentOrchestrator(EAgentEngine engine, ISessionOutput? sessionOutput = null, int maxTurns = 5, int maxFailures = 3, ECAssistant.Core.Tools.ToolPolicy? toolPolicy = null, ECAssistant.Core.Interfaces.ILogger? logger = null, ECAssistant.Core.Config.EAgentConfig? config = null, IPostEditVerifier? postEditVerifier = null)
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools, ECAssistant.Core.Services, ECAssistant.Core.Session, ECAssistant.Core.Interfaces
 
 ### Class: AgentSession
@@ -456,6 +471,13 @@ Cross-package deps: ECAssistant.Core.Engine
 
 ### Class: DependencyGroupTests
 Cross-package deps: ECAssistant.Core.Engine
+
+### Class: DotnetVerificationRunner
+> v14.13: Real verification runner — executes the configured build/test command via
+Implements: IVerificationRunner
+Constructor:
+  - DotnetVerificationRunner(IProcessRunner processRunner)
+Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Services
 
 ### Class: EAgentConfig
 > App settings — matches the nested structure in appsettings.json
@@ -993,6 +1015,18 @@ Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.Engine, ECAssistan
 ### Class: PlannedToolCall
 > A single planned tool call — concrete mapping from a sub-task to a tool + args.
 
+### Class: PostEditVerifier
+> v14.13: Default post-edit verifier. Pure classification/gating logic plus an
+Implements: IPostEditVerifier
+Constructor:
+  - PostEditVerifier(IVerificationRunner runner, VerificationConfig config)
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
+
+### Class: PostEditVerifierTests
+> v14.13: tier-aware post-edit verification loop. Pure-logic tests — the build/test
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Tools, ECAssistant.Core.Verification, ECAssistant.TestSupport
+
 ### Class: ProcessRunner
 > Concrete process execution implementation.
 Implements: IProcessRunner
@@ -1413,6 +1447,14 @@ Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Memory, ECAssistant.Core.Services
 
 ### Class: VectorSearchResult
+
+### Class: VerificationConfig
+> v14.13: Tier-aware post-edit verification gate. After a file-modifying tool call
+
+### Class: VerificationResult
+> v14.13: Immutable outcome of one verification run (build + optional test).
+Constructor:
+  - VerificationResult(bool succeeded, string output, string command, int exitCode)
 
 ### Class: VisionStructureGrammar
 > GBNF grammar that force-constrains the vision model's output to the
