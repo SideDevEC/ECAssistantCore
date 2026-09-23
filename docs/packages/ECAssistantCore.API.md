@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 394  |  LOC: 32832  |  ~19361 tokens
+Types: 395  |  LOC: 32971  |  ~19404 tokens
 
 ---
 
@@ -1180,6 +1180,11 @@ Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.Engine, ECAssistan
 ### Class: PathExpander
 > String utility — truncation and text helpers.
 
+### Class: PersistentPowerShellSession
+> Persistent PowerShell session via one long-lived pwsh process (Windows).
+Implements: IShellSession
+Cross-package deps: ECAssistant.Core.Interfaces
+
 ### Class: PersistentShellSession
 > Persistent POSIX shell session via one long-lived zsh/bash process.
 Implements: IShellSession
@@ -1439,7 +1444,7 @@ Constructor:
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup
 
 ### Class: ShellSessionFactory
-> Factory for per-run persistent shell sessions (injected; one store per agent run).
+> Factory for per-run persistent shell sessions — picks the platform
 Implements: IShellSessionFactory
 Constructor:
   - ShellSessionFactory(ILogger? logger = null)

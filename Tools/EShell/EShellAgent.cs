@@ -126,10 +126,13 @@ public class EShellAgent : EToolBase
         _maxOutputChars = ReadCfg(_toolConfig, "max_output_chars", 50000);
         _sessionFactory = sessionFactory;
         _isLargeTier = isLargeTier;
-        // v15: persistent session for the large tier (config still wins).
-        _usePersistentSession = isLargeTier
+        // v15: persistent session on every tier/platform that can host one
+        // (POSIX: zsh/bash; Windows: pwsh). Requires a session factory (hosts that
+        // wire it opt in; direct ctor use without factory = isolated calls, keeping
+        // mock-based tests and minimal embeds working). Config kill-switch still wins.
+        _usePersistentSession = sessionFactory != null
             && ReadCfg(_toolConfig, "persistent_session", true)
-            && PersistentShellSession.IsSupported;
+            && (PersistentShellSession.IsSupported || PersistentPowerShellSession.IsSupported);
         // v15: sandboxing enabled for the large tier by default (config can disable).
         var sandboxEnabled = isLargeTier && ReadCfg(_toolConfig, "sandbox", true);
         _sandbox = sandbox ?? new SeatbeltShellSandbox(

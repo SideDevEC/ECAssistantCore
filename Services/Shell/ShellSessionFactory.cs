@@ -3,8 +3,9 @@ using ECAssistant.Core.Interfaces;
 namespace ECAssistant.Core.Services.Shell;
 
 /// <summary>
-/// Factory for per-run persistent shell sessions (injected; one store per agent run).
-/// Sessions live for the duration of an agent run and are disposed with it.
+/// Factory for per-run persistent shell sessions — picks the platform
+/// implementation: zsh/bash on macOS/Linux, pwsh on Windows. Falls back to
+/// null when the platform cannot host a session (caller then runs isolated).
 /// </summary>
 public sealed class ShellSessionFactory : IShellSessionFactory
 {
@@ -13,5 +14,11 @@ public sealed class ShellSessionFactory : IShellSessionFactory
     public ShellSessionFactory(ILogger? logger = null) => _logger = logger;
 
     public async Task<IShellSession> CreateAsync(string initialWorkingDirectory, CancellationToken ct = default)
-        => await PersistentShellSession.StartAsync(initialWorkingDirectory, _logger);
+    {
+        if (PersistentShellSession.IsSupported)
+            return await PersistentShellSession.StartAsync(initialWorkingDirectory, _logger);
+        if (PersistentPowerShellSession.IsSupported)
+            return await PersistentPowerShellSession.StartAsync(initialWorkingDirectory, _logger);
+        throw new PlatformNotSupportedException("No persistent shell implementation for this platform.");
+    }
 }

@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-23T18:39:18.474884+00:00
-Edges: 100  |  Packages: 2
+Generated: 2026-09-23T18:45:35.655296+00:00
+Edges: 101  |  Packages: 2
 
 ---
 
@@ -78,6 +78,7 @@ Edges: 100  |  Packages: 2
 - ModelParamValidator ──implements──► IModelParamValidator (ECAssistantCore)
 - NopKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
 - ParallelToolExecutor ──implements──► IParallelToolExecutor (ECAssistantCore)
+- PersistentPowerShellSession ──implements──► IShellSession (ECAssistantCore)
 - PersistentShellSession ──implements──► IShellSession (ECAssistantCore)
 - PlaybookExtractor ──implements──► IPlaybookExtractor (ECAssistantCore)
 - PlaybookStore ──implements──► IPlaybookStore (ECAssistantCore)

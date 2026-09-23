@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T18:39:18.474176+00:00
-Packages: 2  |  Types: 527
+Generated: 2026-09-23T18:45:35.654576+00:00
+Packages: 2  |  Types: 528
 
 ---
 
-## ECAssistantCore (394 types, ~32832 LOC)
+## ECAssistantCore (395 types, ~32971 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -244,6 +244,7 @@ Packages: 2  |  Types: 527
 - 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 ParallelToolExecutorTests  (ECAssistantCore)
 - 🟡 PathExpander  (ECAssistantCore)
+- 🟡 PersistentPowerShellSession : IShellSession  (ECAssistantCore)
 - 🟡 PersistentShellSession : IShellSession  (ECAssistantCore)
 - 🟡 PersistentShellSessionTests : IDisposable  (ECAssistantCore)
 - 🟣 PinnedFact  (ECAssistantCore)  deps: [string, string]
