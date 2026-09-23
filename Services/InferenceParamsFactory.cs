@@ -4,7 +4,7 @@ using ECAssistant.Core.Interfaces;
 namespace ECAssistant.Core.Services;
 
 /// <summary>
-/// Factory for creating InferenceRequestParams from EAgentConfig.
+/// Factory for creating InferenceRequestParams from AppConfig.
 /// Instance class (not static) for OOP compliance.
 /// </summary>
 public class InferenceParamsFactory
@@ -13,9 +13,9 @@ public class InferenceParamsFactory
     public static readonly InferenceParamsFactory Default = new();
 
     /// <summary>
-    /// Create InferenceRequestParams from an EAgentConfig's Inference and Sampling settings.
+    /// Create InferenceRequestParams from an AppConfig's Inference and Sampling settings.
     /// </summary>
-    public InferenceRequestParams Create(EAgentConfig config)
+    public InferenceRequestParams Create(AppConfig config)
     {
         return new InferenceRequestParams
         {
@@ -34,7 +34,7 @@ public class InferenceParamsFactory
     /// v14.17: create params from config, then apply the tier profile (small tier
     /// gets tighter sampling; large tier and customized sampling unchanged).
     /// </summary>
-    public InferenceRequestParams CreateTiered(EAgentConfig config, bool isLargeTier)
+    public InferenceRequestParams CreateTiered(AppConfig config, bool isLargeTier)
     {
         return TierInferenceTuner.Apply(Create(config), isLargeTier, config?.Sampling);
     }

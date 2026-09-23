@@ -25,7 +25,7 @@ namespace ECAssistant.Core.Tests.Integration;
 public class TypedOutputAndChainIntegrationTests : IDisposable
 {
     private readonly string _tempDir;
-    private readonly EGuiTestHarness _gui;
+    private readonly GuiTestHarness _gui;
     private readonly List<MockEngine> _engines = new();
     private readonly List<AgentOrchestrator> _orchestrators = new();
 
@@ -39,7 +39,7 @@ public class TypedOutputAndChainIntegrationTests : IDisposable
     {
         _tempDir = Path.Combine(Path.GetTempPath(), "ECAInteg_Typed_" + Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(_tempDir);
-        _gui = new EGuiTestHarness();
+        _gui = new GuiTestHarness();
         TestRunner.TestGui = _gui;
     }
 
@@ -89,7 +89,7 @@ public class TypedOutputAndChainIntegrationTests : IDisposable
             .Setup(p => p.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult(1, FailedBuildOutput, "", false));
 
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         config.AgentSettings.WorkingDirectory = _tempDir;
         var engine = NewEngine();
         engine.RegisterTool(new EDotnetBuildTool(processRunner.Object, config));
@@ -118,7 +118,7 @@ public class TypedOutputAndChainIntegrationTests : IDisposable
             .Setup(p => p.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult(0, "Build succeeded.\n    0 Warning(s)\n    0 Error(s)", "", false));
 
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         config.AgentSettings.WorkingDirectory = _tempDir;
         var engine = NewEngine();
         engine.RegisterTool(new EDotnetBuildTool(processRunner.Object, config));
@@ -144,7 +144,7 @@ public class TypedOutputAndChainIntegrationTests : IDisposable
             .Setup(p => p.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult(0, "echoed", "", false));
 
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         config.AgentSettings.WorkingDirectory = _tempDir;
         var engine = NewEngine();
         engine.RegisterTool(new ProbeTestTool());
@@ -173,7 +173,7 @@ public class TypedOutputAndChainIntegrationTests : IDisposable
             .Setup(p => p.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult(1, "", "", false)); // every shell call fails
 
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         config.AgentSettings.WorkingDirectory = _tempDir;
         var engine = NewEngine();
         engine.RegisterTool(new EShellAgent(processRunner.Object, config, _tempDir));
@@ -201,7 +201,7 @@ public class TypedOutputAndChainIntegrationTests : IDisposable
             .Setup(p => p.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult(1, FailedBuildOutput, "", false));
 
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         config.AgentSettings.WorkingDirectory = _tempDir;
         var engine = NewEngine();
         engine.RegisterTool(new EDotnetBuildTool(processRunner.Object, config));

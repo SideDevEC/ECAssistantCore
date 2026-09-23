@@ -16,7 +16,7 @@ namespace ECAssistant.Core.Session;
 /// A fully isolated agent session.
 ///
 /// Each session has:
-/// - Its own EAgentEngine (own server-side KV cache via HTTP, own session)
+/// - Its own AgentEngine (own server-side KV cache via HTTP, own session)
 /// - Its own orchestrator
 /// - Its own tools (registered independently)
 /// - Its own memory
@@ -41,7 +41,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     public DateTime LastActivity { get; set; } = DateTime.UtcNow;
 
     // ── Engine & Orchestration ───────────────────────
-    private EAgentEngine _engine;
+    private AgentEngine _engine;
     private AgentOrchestrator _orchestrator;
     private readonly string _workingDir;
     private readonly string _sessionDir;
@@ -86,7 +86,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
 
     // ── Tool policy ───────────────────────────────────
     private readonly ECAssistant.Core.Tools.ToolPolicy _toolPolicy;
-    private readonly EAgentConfig? _config;  // v10.24: for tool config registration
+    private readonly AppConfig? _config;  // v10.24: for tool config registration
 
     /// <summary>UI verbosity. Silent (default) filters diagnostic lines from the UI;
     /// everything is still written to the session transcript file.</summary>
@@ -115,7 +115,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
         SubAgentConfig? subAgentConfig = null,
         string? label = null,
         ILogger? logger = null,
-        EAgentConfig? config = null,
+        AppConfig? config = null,
         OpenAIClient? httpClient = null,
         RemoteTokenizer? remoteTokenizer = null,
         string? apiKey = null,
@@ -159,7 +159,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
             ? new RemoteKvCacheController(client)
             : new NopKvCacheController();
 
-        _engine = new EAgentEngine(
+        _engine = new AgentEngine(
             sessionId: sessionId,
             inferenceEngine: inferenceEngine,
             kvCacheController: kvCacheController,
@@ -221,7 +221,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     }
 
     /// <summary>The engine powering this session.</summary>
-    public EAgentEngine Engine => _engine;
+    public AgentEngine Engine => _engine;
 
 
 
@@ -229,7 +229,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     public BackgroundTasksConfig? BackgroundTasks => _engine.BackgroundTasks;
 
     /// <summary>ISessionContext: Keyword memory.</summary>
-    public EMemoryManager Memory => _engine.Memory;
+    public MemoryManager Memory => _engine.Memory;
 
     /// <summary>ISessionContext: Vector memory (semantic search).</summary>
     public VectorMemoryStore? VectorMemory => _engine.VectorMemory;
@@ -975,10 +975,10 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
     // ═══════════════════════════════════════════════════
 
     /// <summary>Register a tool for this session's engine.
-    /// v10.24: If tool's config section is not in EAgentConfig.Tools, adds it via GetConfigSection()
+    /// v10.24: If tool's config section is not in AppConfig.Tools, adds it via GetConfigSection()
     /// and calls AgentConfigBuilder.Default.Update() to persist to appsettings.json.
     /// </summary>
-    public void RegisterTool(EToolBase tool)
+    public void RegisterTool(ToolBase tool)
     {
         // Set session context before registration so tools can use it
         tool.Session = this;

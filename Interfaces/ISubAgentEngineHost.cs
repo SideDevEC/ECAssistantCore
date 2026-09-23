@@ -2,7 +2,7 @@ namespace ECAssistant.Core.Interfaces;
 
 /// <summary>
 /// Host-side surface the SubAgentManager needs from the main engine.
-/// Decouples SubAgentManager from the concrete EAgentEngine, breaking the
+/// Decouples SubAgentManager from the concrete AgentEngine, breaking the
 /// circular <c>this</c> reference in the object graph.
 /// </summary>
 public interface ISubAgentEngineHost

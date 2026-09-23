@@ -35,7 +35,7 @@ namespace ECAssistant.Core;
 /// </summary>
 public class SessionBuilder : ISessionBuilder
 {
-    private readonly EAgentConfig _config;
+    private readonly AppConfig _config;
     private readonly string _workingDir;
     private readonly string _userConfigDir;
     private readonly ILogger _logger;
@@ -46,7 +46,7 @@ public class SessionBuilder : ISessionBuilder
     /// Set before calling BuildAsync(). These are registered first,
     /// before the native tools.
     /// </summary>
-    public List<EToolBase> ExternalTools { get; set; } = new();
+    public List<ToolBase> ExternalTools { get; set; } = new();
 
     /// <summary>
     /// Whether to register the built-in ECAssistant tools (shell, file reader, git, etc.).
@@ -81,13 +81,13 @@ public class SessionBuilder : ISessionBuilder
     /// <summary>
     /// Create a SessionBuilder.
     /// </summary>
-    /// <param name="config">Loaded EAgentConfig from appsettings.json</param>
+    /// <param name="config">Loaded AppConfig from appsettings.json</param>
     /// <param name="workingDir">Working directory for the agent</param>
     /// <param name="userConfigDir">User config directory (for resolving relative model paths)</param>
     /// <param name="logger">Logger instance (optional, creates default if null)</param>
     /// <param name="bgManager">Background process manager (optional, creates one if null)</param>
     public SessionBuilder(
-        EAgentConfig config,
+        AppConfig config,
         string workingDir,
         string userConfigDir,
         ILogger? logger = null,
@@ -156,7 +156,7 @@ public class SessionBuilder : ISessionBuilder
     /// Both get their config section written if missing.
     /// </summary>
     /// <param name="externalTools">Tools from the host to register alongside native tools</param>
-    public async Task BuildAsync(AgentSession session, List<EToolBase>? externalTools)
+    public async Task BuildAsync(AgentSession session, List<ToolBase>? externalTools)
     {
         // ── Vector Memory (semantic search) ──
         if (EnableVectorMemory ?? _config.VectorMemory.Enabled)
@@ -206,7 +206,7 @@ public class SessionBuilder : ISessionBuilder
     /// - Config section written if missing (via GetConfigSection())
     /// - Tool registered only if IsEnabled is true
     /// </summary>
-    public void RegisterBuiltInToolsAsync(AgentSession session, List<EToolBase>? externalTools = null)
+    public void RegisterBuiltInToolsAsync(AgentSession session, List<ToolBase>? externalTools = null)
     {
         // ── External tools first ──
         if (externalTools != null)
@@ -268,11 +268,11 @@ public class SessionBuilder : ISessionBuilder
     }
 
     /// <summary>
-    /// Ensure the tool's config section exists in EAgentConfig.Tools.
+    /// Ensure the tool's config section exists in AppConfig.Tools.
     /// If not, writes the default from GetConfigSection() and persists to appsettings.json.
     /// Called for all tools — enabled or disabled — so config always has a section.
     /// </summary>
-    private void EnsureToolConfigSection(EToolBase tool)
+    private void EnsureToolConfigSection(ToolBase tool)
     {
         if (!_config.Tools.ContainsKey(tool.Name))
         {
@@ -288,7 +288,7 @@ public class SessionBuilder : ISessionBuilder
     /// System-critical tools (IsSystemCritical = true) always register regardless of config.
     /// System-critical tools also cannot be blocked by ToolPolicy.
     /// </summary>
-    private void EnsureAndRegister(AgentSession session, EToolBase tool)
+    private void EnsureAndRegister(AgentSession session, ToolBase tool)
     {
         EnsureToolConfigSection(tool);
         if (tool.IsSystemCritical)

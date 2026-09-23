@@ -11,9 +11,9 @@ namespace ECAssistant.Core.Tests.Config;
 /// </summary>
 public class SupportsVisionTests
 {
-    private static EAgentConfig Config(Action<LlmProviderConfig> setup)
+    private static AppConfig Config(Action<LlmProviderConfig> setup)
     {
-        var cfg = new EAgentConfig();
+        var cfg = new AppConfig();
         var provider = new LlmProviderConfig();
         setup(provider);
         cfg.LlmProvider = provider;
@@ -51,7 +51,7 @@ public class SupportsVisionTests
     [Fact]
     public void LlmProviderNull_SupportsVisionFalse_NoThrow()
     {
-        var cfg = new EAgentConfig { LlmProvider = null! };
+        var cfg = new AppConfig { LlmProvider = null! };
         Assert.False(cfg.SupportsVision);
     }
 
@@ -80,7 +80,7 @@ public class SupportsVisionTests
             var json = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(path))!.AsObject();
             Assert.Equal(true, json["llm_provider"]!["vision_enabled"]!.GetValue<bool>());
 
-            var roundTrip = System.Text.Json.JsonSerializer.Deserialize<EAgentConfig>(
+            var roundTrip = System.Text.Json.JsonSerializer.Deserialize<AppConfig>(
                 File.ReadAllText(path), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             Assert.True(roundTrip!.SupportsVision);
         }

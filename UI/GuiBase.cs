@@ -6,7 +6,7 @@ namespace ECAssistant.Core.UI;
 /// so swapping the concrete implementation (console, GUI, web, etc.) is trivial —
 /// one line change in Program.cs.
 /// </summary>
-public abstract class EGuiBase
+public abstract class GuiBase
 {
     // ─── Write / Print Methods ───────────────────────
 

@@ -6,7 +6,7 @@ namespace ECAssistant.Core.ContextPinning;
 /// <summary>
 /// v14.16: deterministic context pinner. Small tier → file map + decisions + goal
 /// (≤ max_chars, default ~1200); large tier → goal only (≤ ~300 chars). All state
-/// is in-memory per session; compaction re-injects the block via EAgentEngine.
+/// is in-memory per session; compaction re-injects the block via AgentEngine.
 /// </summary>
 public sealed class ContextPinner : IContextPinner
 {

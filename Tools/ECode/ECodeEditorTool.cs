@@ -10,7 +10,7 @@ namespace ECAssistant.Core.Tools.Code;
 /// Code Editor Tool — surgical code edits with diff preview, multi-line replacement,
 /// cross-file search & replace, and syntax-aware editing.
 /// </summary>
-public class ECodeEditorTool : EToolBase
+public class ECodeEditorTool : ToolBase
 {
     private readonly IFileSystem _fileSystem;
     private readonly JsonElement? _toolConfig;
@@ -49,7 +49,7 @@ public class ECodeEditorTool : EToolBase
 
     public override bool IsEnabled { get; protected set; } = true;
 
-    public ECodeEditorTool(IFileSystem fileSystem, EAgentConfig config)
+    public ECodeEditorTool(IFileSystem fileSystem, AppConfig config)
     {
         _fileSystem = fileSystem;
         config.Tools.TryGetValue(Name, out var tc);
@@ -63,11 +63,11 @@ public class ECodeEditorTool : EToolBase
 
     public override object GetConfigSection() => new { enabled = true };
 
-    public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
+    public override async Task<ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         var action = arguments.GetValueOrDefault("action")?.ToLower().Trim();
         if (string.IsNullOrEmpty(action))
-            return EToolResult.Failure(Name, "Missing 'action' argument.");
+            return ToolResult.Failure(Name, "Missing 'action' argument.");
 
         // (success, message) tuples — result classification must not be guessed from
         // message text (that marked real failures like "old_text found 5 times" as Success).
@@ -83,7 +83,7 @@ public class ECodeEditorTool : EToolBase
             _ => (false, $"ECodeEditor: Unknown action: {action}")
         };
 
-        return ok ? EToolResult.Success(Name, result) : EToolResult.Failure(Name, result);
+        return ok ? ToolResult.Success(Name, result) : ToolResult.Failure(Name, result);
     }
 
     // ─── Create: create a new file with content ───────────────

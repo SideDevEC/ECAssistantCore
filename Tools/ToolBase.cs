@@ -9,7 +9,7 @@ namespace ECAssistant.Core.Tools;
 /// Each tool must extend this and implement ExecuteAsync().
 /// New tools are added by creating a subclass — no changes to Harness required.
 /// </summary>
-public abstract class EToolBase
+public abstract class ToolBase
 {
              /// <summary>Unique name of this tool (e.g., "EShellAgent")</summary>
     public abstract string Name { get; }
@@ -37,7 +37,7 @@ public abstract class EToolBase
     /// v14.20: semantic model-facing projection of this tool's output. The tool
     /// itself knows what its output means — it renders the facts the NEXT decision
     /// needs (summary + top errors), not raw text. Default: passthrough.
-    /// Applied by EAgentEngine.AddToolResult before truncation; the raw output
+    /// Applied by AgentEngine.AddToolResult before truncation; the raw output
     /// still reaches the console/UI. Override where the tool has structured
     /// semantics (builds, git, search); tools whose output IS the content
     /// (e.g. file readers) keep the passthrough.
@@ -48,7 +48,7 @@ public abstract class EToolBase
                 /// Execute the tool with given arguments.
                  /// </summary>
              /// <param name="arguments">Dictionary of argument key/value pairs from the LLM</param>
-    public abstract Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default);
+    public abstract Task<ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// v10.24: Returns the default config section for this tool.
@@ -124,7 +124,7 @@ public abstract class EToolBase
     // ── v10.24: Config helpers ──
 
     /// <summary>
-    /// Read a value from the tool's config section in EAgentConfig.Tools.
+    /// Read a value from the tool's config section in AppConfig.Tools.
     /// Returns defaultValue if the key is not found or the section doesn't exist.
     /// </summary>
     protected T ReadConfig<T>(Dictionary<string, JsonElement> tools, string toolName, string key, T defaultValue)

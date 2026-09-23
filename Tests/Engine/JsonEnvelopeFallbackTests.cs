@@ -12,7 +12,7 @@ public class JsonEnvelopeFallbackTests
 {
     private static object? InvokeEnvelope(string raw)
     {
-        var method = typeof(EAgentEngine).GetMethod("TryParseJsonEnvelope",
+        var method = typeof(AgentEngine).GetMethod("TryParseJsonEnvelope",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         Assert.NotNull(method);
         return method!.Invoke(null, new object?[] { raw });

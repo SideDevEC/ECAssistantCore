@@ -21,7 +21,7 @@ namespace ECAssistant.Core.Tests.Integration;
 public class OrchestratorIntegrationTests : IDisposable
 {
     private readonly string _tempDir;
-    private readonly EGuiTestHarness _gui;
+    private readonly GuiTestHarness _gui;
     private readonly List<MockEngine> _engines = new();
     private readonly List<AgentOrchestrator> _orchestrators = new();
 
@@ -29,7 +29,7 @@ public class OrchestratorIntegrationTests : IDisposable
     {
         _tempDir = Path.Combine(Path.GetTempPath(), "ECAInteg_Orch_" + Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(_tempDir);
-        _gui = new EGuiTestHarness();
+        _gui = new GuiTestHarness();
         TestRunner.TestGui = _gui;
     }
 
@@ -48,7 +48,7 @@ public class OrchestratorIntegrationTests : IDisposable
     {
         var mockProcessRunner = new Mock<IProcessRunner>();
         var mockFileSystem = new Mock<IFileSystem>();
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         var mockLogger = new Mock<ILogger>();
 
         config.AgentSettings.WorkingDirectory = _tempDir;

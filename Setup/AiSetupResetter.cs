@@ -45,7 +45,7 @@ public class AiSetupResetter : IAiSetupResetter
         {
             try
             {
-                var config = JsonSerializer.Deserialize<EAgentConfig>(File.ReadAllText(appsettingsPath), JsonOptions);
+                var config = JsonSerializer.Deserialize<AppConfig>(File.ReadAllText(appsettingsPath), JsonOptions);
                 if (config?.LlmProvider?.ServerRootPath != null)
                     return PathExpander.Default.Expand(config.LlmProvider.ServerRootPath);
             }
@@ -59,7 +59,7 @@ public class AiSetupResetter : IAiSetupResetter
         if (!File.Exists(appsettingsPath))
             return;
 
-        var config = JsonSerializer.Deserialize<EAgentConfig>(File.ReadAllText(appsettingsPath), JsonOptions);
+        var config = JsonSerializer.Deserialize<AppConfig>(File.ReadAllText(appsettingsPath), JsonOptions);
         if (config == null)
             return;
 

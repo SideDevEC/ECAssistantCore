@@ -11,14 +11,14 @@ namespace ECAssistant.Core.Analysis;
 /// v2: Improved with real analysis — line counts, file types, TODOs, circular deps,
 /// dependency graph, and a human-readable summary. No more placeholder logic.
 /// </summary>
-public class EContextAnalyzer : IDisposable
+public class ContextAnalyzer : IDisposable
 {
     private readonly string _projectRoot;
     private readonly List<FileInfoData> _files = new();
     private List<ProjectRelationship> _relationships = new();
     private ProjectArchitecture? _architecture;
 
-    public EContextAnalyzer(string projectRoot)
+    public ContextAnalyzer(string projectRoot)
     {
         _projectRoot = Path.GetFullPath(projectRoot);
     }
@@ -98,7 +98,7 @@ public class EContextAnalyzer : IDisposable
             catch (Exception ex)
             {
                 // Unreadable individual file — log and keep scanning.
-                System.Diagnostics.Debug.WriteLine($"[EContextAnalyzer] Skipped unreadable file '{file}': {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ContextAnalyzer] Skipped unreadable file '{file}': {ex.Message}");
             }
         }
     }

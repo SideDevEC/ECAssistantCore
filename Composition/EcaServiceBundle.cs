@@ -10,7 +10,7 @@ using ECAssistant.Core.Interfaces;
 /// instead of creating services individually.
 /// </summary>
 public record EcaServiceBundle(
-    EAgentConfig Config,
+    AppConfig Config,
     string ModelPath,
     string WorkingDirectory,
     string UserConfigDirectory,

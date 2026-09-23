@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-09-23 — v14.20.1 integration/e2e-hardened typed per-tool outputs + dataflow chains (failure-path render, renderer path sanitization, isolated e2e working dir). Base: v14.20 typed per-tool model-facing outputs (`RenderForModel` on `EToolBase`, shared `RenderOutput` helper, `BuildOutputRenderer` for dotnet/git) + dataflow toolchains (`{{N}}` arg references → sequential chain execution, large-tier-only guidance). Prior: v14.13–v14.19.1 series. Full series today: v14.13 post-edit verification → v14.14 playbook memory → v14.15 fuzzy diff edits → v14.16 context pinning → v14.17 sub-agent briefs → v14.17.1 tier inference tuning → v14.18/19/19.1 above. All tier-aware (ModelTier.IsLargeRuntime seam).
+**Updated:** 2026-09-23 — v14.20.1 integration/e2e-hardened typed per-tool outputs + dataflow chains (failure-path render, renderer path sanitization, isolated e2e working dir). Base: v14.20 typed per-tool model-facing outputs (`RenderForModel` on `ToolBase`, shared `RenderOutput` helper, `BuildOutputRenderer` for dotnet/git) + dataflow toolchains (`{{N}}` arg references → sequential chain execution, large-tier-only guidance). Prior: v14.13–v14.19.1 series. Full series today: v14.13 post-edit verification → v14.14 playbook memory → v14.15 fuzzy diff edits → v14.16 context pinning → v14.17 sub-agent briefs → v14.17.1 tier inference tuning → v14.18/19/19.1 above. All tier-aware (ModelTier.IsLargeRuntime seam).
 Current state: model-tier-adaptive harness (`model_tier.mode` small/large/auto, tier-resolved preplanning,
 slim directives + envelope budget for large tier), grammar tool-name union (`tool_names` wire field,
 DecisionGrammar.BuildGbnf on all 3 structured paths), envelope commentary (remote native path, local grammar
@@ -28,7 +28,7 @@ Two provider modes (`LlmProviderConfig.mode`):
 ## OOP Principles
 
 - **Encapsulation:** Config models are init-only (immutable); 2 documented exceptions for builder-mutated properties
-- **No globals or statics:** Dependencies injected via constructors. No static classes, no static mutable state. Utility classes (StringUtil, InferenceParamsFactory, ResourceLoader, AgentConfigBuilder) are instance classes with `Default` shared instance. The only allowed static methods are factory methods on immutable data classes (EToolResult.Success, TranscriptMessage.User, ToolPermissionRecord construction, AgentConfigBuilder.Create, etc.) and pure protected instance helpers on EToolBase (ReadConfig, ReadCfg, IsToolEnabled)
+- **No globals or statics:** Dependencies injected via constructors. No static classes, no static mutable state. Utility classes (StringUtil, InferenceParamsFactory, ResourceLoader, AgentConfigBuilder) are instance classes with `Default` shared instance. The only allowed static methods are factory methods on immutable data classes (ToolResult.Success, TranscriptMessage.User, ToolPermissionRecord construction, AgentConfigBuilder.Create, etc.) and pure protected instance helpers on ToolBase (ReadConfig, ReadCfg, IsToolEnabled)
 - **No cross-dependencies:** Layers depend only on the layer below
 - **Single responsibility:** One type per file, one interface = one concern
 - **Modular & interchangeable:** Every service behind an interface, mockable via Moq
@@ -40,17 +40,17 @@ Two provider modes (`LlmProviderConfig.mode`):
 
 ```
 ECAssistantCore/            # Core engine, tools, sessions, memory (168 .cs files + 59 test files)
-├── Analysis/               # Project context analysis (EContextAnalyzer)
+├── Analysis/               # Project context analysis (ContextAnalyzer)
 ├── Composition/            # EcaCompositionRoot + EcaServiceBundle
 ├── Config/                 # AgentConfigBuilder, ConfigLoader, 17 config models (init-only)
 │    └── Models/            # LlmProviderConfig, LlmServerEndpointConfig, LlmConfig, InferenceConfig, ...
-├── Engine/                 # EAgentEngine (IEngine), PrefixCachedExtractor, TaskPlanner
+├── Engine/                 # AgentEngine (IEngine), PrefixCachedExtractor, TaskPlanner
 │    ├── SelfCorrection/    # FailureAnalysis, FailurePattern, FileSnapshot
 │    ├── SubAgent/          # SubAgentTask, SubAgentResult, SubAgentError
 │    ├── PrefixCachedExtractor.cs  # HTTP KV-cache reuse for long-lived extraction tasks
 │    └── TokenCounter.cs    # Wraps RemoteTokenizer (HTTP /eca/tokenize)
 ├── Interfaces/             # 25 interfaces (IEngine, IInferenceEngine, IKvCacheController, ILlmServerClient, IConfigLoader, IModelParamValidator, IStepMapper, IParallelToolExecutor, ITaskPlanner, ISessionBuilder, IHtmlTextConverter, IReadableContentExtractor, ...)
-├── Memory/                 # EMemoryManager, VectorMemoryStore
+├── Memory/                 # MemoryManager, VectorMemoryStore
 ├── Services/               # Service implementations (Logger, ContextManager, InferenceParamsFactory, etc.)
 │    ├── HtmlTextConverter.cs       # IHtmlTextConverter — block-tag-aware HTML→text
 │    ├── ReadableContentExtractor.cs # IReadableContentExtractor — article/main extraction, boilerplate stripping
@@ -58,7 +58,7 @@ ECAssistantCore/            # Core engine, tools, sessions, memory (168 .cs file
 ├── Session/                # AgentSession, SessionManager, SessionBuilder, SessionDiscovery
 │    └── ISessionContext    # Exposes Memory/VectorMemory/BackgroundTasks (NOT SharedWeights/SharedModelParams)
 ├── Transport/              # OpenAIClient (HttpClient wrapper), SseParser (SSE token stream)
-└── Tools/                  # EToolBase + 10 built-in tools
+└── Tools/                  # ToolBase + 10 built-in tools
      ├── EBackground/       # Background process execution
      ├── Build/             # BuildErrorParser (extracted from EDotnetBuildTool)
      ├── ECode/             # Code editor (create, patch, diff, search, insert, delete)
@@ -70,7 +70,7 @@ ECAssistantCore/            # Core engine, tools, sessions, memory (168 .cs file
      ├── Policy/            # ToolPermission, ToolPolicyDecision
      ├── Reader/            # File reader
      ├── SubAgent/          # Sub-agent tool
-     └── EToolResult.cs     # Tool call result (split from EToolBase.cs)
+     └── ToolResult.cs     # Tool call result (split from ToolBase.cs)
 
 Services/Http/  (HTTP transport layer — talks to ECAssistantLLM / OpenAI-compatible API)
 ├── HttpStreamingEngine.cs    # IInferenceEngine — stream/generate via /v1/chat/completions (SSE)
@@ -95,7 +95,7 @@ ECAssistantTUI/             # Terminal UI layer (12 files + 4 test files)
 ├── Controller/             # AppController
 └── UI/                     # BaseLayer, SessionLayer, ConfigLayer, HelpLayer, LoadingIndicator, StartupLayer
      ├── IGuiConsole.cs     # Console interface
-     ├── EGuiConsole.cs     # Full TUI implementation (uses ITerminalOutput)
+     ├── GuiConsole.cs     # Full TUI implementation (uses ITerminalOutput)
      ├── ITerminalOutput.cs # Terminal output abstraction
      └── ConsoleTerminalOutput.cs   # Default System.Console implementation
 
@@ -124,7 +124,7 @@ ECAssistantConsole ←── [Core DLL, TUI DLL]
 
 | Interface | Implementation | Purpose |
 |-----------|---------------|---------|
-| IEngine | EAgentEngine | Engine lifecycle (Start, Run, Dispose) |
+| IEngine | AgentEngine | Engine lifecycle (Start, Run, Dispose) |
 | IInferenceEngine | HttpStreamingEngine | LLM text generation over HTTP (StreamAsync / GenerateAsync) |
 | IKvCacheController | RemoteKvCacheController | Server-side KV cache: session create/prefill/rewind/save/reset/status |
 | ILlmServerClient | LlmServerClient | Server client lifecycle: register / heartbeat / disconnect |
@@ -160,7 +160,7 @@ ECAssistantConsole ←── [Core DLL, TUI DLL]
 ## Session Architecture
 
 Each `AgentSession` has:
-- Own EAgentEngine (own **server-side** KV cache via HTTP session, not an in-process LLamaContext)
+- Own AgentEngine (own **server-side** KV cache via HTTP session, not an in-process LLamaContext)
 - Own orchestrator, tools, memory, output buffer, prompt queue, runner thread
 - Sessions share the **same ECAssistantLLM server** (one model in VRAM) but are otherwise fully independent
 - `SessionBuilder` — public API for external consumers (e.g., ECSQL)
@@ -172,12 +172,12 @@ SessionManager wires HTTP infra (shared across all sessions): `ServerLauncher`, 
 - `AgentSession` no longer takes `LLamaWeights`/`ModelParams` — it takes `IInferenceEngine` + `IKvCacheController` (+ session id).
 - **Idle watchdog:** `StartIdleWatchdog(15)` checks every 60s; after 15 min inactivity → stops heartbeat, sends `/eca/shutdown`, frees VRAM. `MarkUserActivity()` on input resets timer.
 - **Reconnection:** `MarkUserActivity()` when idle-disconnected → `ReconnectAfterIdleAsync()` → ensures server running → re-registers → recreates HTTP client → restarts heartbeat → recreates KV cache sessions → re-prefills static prefix.
-- **Server-down recovery (v12.11):** connection-refused / HttpRequestException in local mode never reaches the LLM parse pipeline. `EAgentEngine` runs `ConnectionRecovery` (wired by SessionManager): restarts server via `EnsureServerRunningAsync`, re-registers, retries the request once. `MarkUserActivityAsync` (throttled 30s) proactively pings the server at user activity and recovers even when not idle-flagged. v12.12: HTTP 404 (`IsStaleSessionFailure`) is also recoverable — recovery restores KV sessions via `RestoreSessionsAsync()` (both reconnect and fast path) before the retry.
+- **Server-down recovery (v12.11):** connection-refused / HttpRequestException in local mode never reaches the LLM parse pipeline. `AgentEngine` runs `ConnectionRecovery` (wired by SessionManager): restarts server via `EnsureServerRunningAsync`, re-registers, retries the request once. `MarkUserActivityAsync` (throttled 30s) proactively pings the server at user activity and recovers even when not idle-flagged. v12.12: HTTP 404 (`IsStaleSessionFailure`) is also recoverable — recovery restores KV sessions via `RestoreSessionsAsync()` (both reconnect and fast path) before the retry.
 - **Heartbeat auto-reconnect:** `LlmServerClient` tracks consecutive failures; after 3 failures → `TryReconnectAsync()` re-registers. `OnReconnected` event fires for session restoration.
 - **Shutdown wiring:** `AppController` calls `SessionManager.DisposeAsync()` on quit → `DisconnectAsync()` + `ServerLauncher.StopServerAsync()` → POST `/eca/shutdown` → server winds down if last client.
-- **Session restore:** `AgentSession.UpdateClientId()` + `RecreateKvCacheSessionAsync()` rewire engine to new server connection and rebuild KV cache via `PrefillStaticPrefix()`. `EAgentEngine.UpdateHttpClient()` recreates `RemoteKvCacheController` + `HttpStreamingEngine`.
-- **Stale-session recovery (v12.12):** a restarted server drops KV sessions while client-side `_kvState` claims they're prefilled. Fixes: (1) `UpdateHttpClient()` clears BOTH `SessionActive` and `IsPrefilled`; (2) `EAgentEngine.InvalidateKvSessionState()` is called by `RecreateKvCacheSessionAsync()` so re-prefill always forces a full session recreate; (3) `SessionManager.RestoreSessionsAsync()` (extracted helper) runs on BOTH the reconnect path AND the recovery fast path; (4) `EAgentEngine.IsStaleSessionFailure()` treats HTTP 404 on generate as a stale session — recover + retry once instead of feeding the error into the parse pipeline.
-- **Tag-free decisions (v14):** The `<lm>`/`<thinking>`/`<toolcall>`/`<output>` tag protocol has been completely removed. `EAgentEngine.GenerateAsync()` returns `Task<LLMDecision>` directly — the server produces `DecisionEnvelope` JSON (grammar-constrained for local, native OpenAI `tool_calls` for remote), which `StructuredDecisionAdapter.ParseDecision()` converts to `LLMDecision`. The orchestrator consumes `LLMDecision` objects directly. `ParseLLMDecision()`, `ParseToolCallBlock()`, `ExtractCleanResponse()` deleted. Any model works — local or remote — same as OpenClaw/Hermes.
+- **Session restore:** `AgentSession.UpdateClientId()` + `RecreateKvCacheSessionAsync()` rewire engine to new server connection and rebuild KV cache via `PrefillStaticPrefix()`. `AgentEngine.UpdateHttpClient()` recreates `RemoteKvCacheController` + `HttpStreamingEngine`.
+- **Stale-session recovery (v12.12):** a restarted server drops KV sessions while client-side `_kvState` claims they're prefilled. Fixes: (1) `UpdateHttpClient()` clears BOTH `SessionActive` and `IsPrefilled`; (2) `AgentEngine.InvalidateKvSessionState()` is called by `RecreateKvCacheSessionAsync()` so re-prefill always forces a full session recreate; (3) `SessionManager.RestoreSessionsAsync()` (extracted helper) runs on BOTH the reconnect path AND the recovery fast path; (4) `AgentEngine.IsStaleSessionFailure()` treats HTTP 404 on generate as a stale session — recover + retry once instead of feeding the error into the parse pipeline.
+- **Tag-free decisions (v14):** The `<lm>`/`<thinking>`/`<toolcall>`/`<output>` tag protocol has been completely removed. `AgentEngine.GenerateAsync()` returns `Task<LLMDecision>` directly — the server produces `DecisionEnvelope` JSON (grammar-constrained for local, native OpenAI `tool_calls` for remote), which `StructuredDecisionAdapter.ParseDecision()` converts to `LLMDecision`. The orchestrator consumes `LLMDecision` objects directly. `ParseLLMDecision()`, `ParseToolCallBlock()`, `ExtractCleanResponse()` deleted. Any model works — local or remote — same as OpenClaw/Hermes.
 - **Reasoning in history (v14.5):** The model's `thinking` field is stored as `[reasoning] ...` in transcript + context window, prefixed to the answer text. The model can learn from prior reasoning on later turns (matches old tag system behavior). Constrained to max 1 sentence to prevent token waste and hallucination. `LLMDecision.Reasoning` property carries it through the pipeline.
 - **Early termination (v14.7):** The LLM server's streaming loop checks `TryParseCompleteEnvelope()` after each token — stops generation as soon as the JSON envelope is complete (valid `DecisionEnvelope` with `answer` or `toolcalls`). Saves ~70% generation time by not wasting tokens after the grammar root matches. `max_tokens` reduced from 512 to 256 as safety cap.
 - **Catalog metadata self-heal (v12.12):** `ModelCatalogDocument.Load()` backfills empty `License` fields from the embedded default catalog (by model id). User-set values always win; on-disk file is never rewritten.
@@ -356,7 +356,7 @@ No admin/elevated rights required anywhere: user-scope crypto, non-privileged po
 | UI | 1+4 | ~17 |
 | **Total** | **62+4** | **914** |
 
-`MockEngine` (now in the separate `ECAssistant.TestSupport` project) extends `EAgentEngine` with a no-op HTTP transport so tests run without a live ECAssistantLLM server. TestRunner/TestScenario/EcaTests also live in TestSupport.
+`MockEngine` (now in the separate `ECAssistant.TestSupport` project) extends `AgentEngine` with a no-op HTTP transport so tests run without a live ECAssistantLLM server. TestRunner/TestScenario/EcaTests also live in TestSupport.
 
 ## EWebFetch v2 — Structured Content Pipeline (v12.1)
 
@@ -384,7 +384,7 @@ EWebFetch was reworked to produce LLM-parseable output. The old tool returned a 
 - Prevents Cloudflare/bot-protection 403s and block pages
 
 **EWebFetchTool changes:**
-- Constructor injects `IHttpClient` + `IReadableContentExtractor` + `IHtmlTextConverter` + `EAgentConfig`
+- Constructor injects `IHttpClient` + `IReadableContentExtractor` + `IHtmlTextConverter` + `AppConfig`
 - New `offset` arg (chars) — LLM can page through long content; output includes next-offset hint
 - Default `maxchars` raised from 6000 → 12000
 - `GetToolRules()` injects offset guidance into system prompt
@@ -396,16 +396,16 @@ EWebFetch was reworked to produce LLM-parseable output. The old tool returned a 
 
 - No static classes, no static mutable state
 - Utility classes use instance methods with `Default` shared instance (StringUtil, InferenceParamsFactory, ResourceLoader, AgentConfigBuilder)
-- Factory methods on immutable data classes are the only allowed static methods (EToolResult.Success, TranscriptMessage.User, ToolPermissionRecord construction, AgentConfigBuilder.Create, etc.)
-- EToolBase config helpers (ReadConfig, ReadCfg, IsToolEnabled) are protected instance methods
+- Factory methods on immutable data classes are the only allowed static methods (ToolResult.Success, TranscriptMessage.User, ToolPermissionRecord construction, AgentConfigBuilder.Create, etc.)
+- ToolBase config helpers (ReadConfig, ReadCfg, IsToolEnabled) are protected instance methods
 - Constructor injection throughout
 - One type per file
 - All config models init-only (2 documented exceptions)
-- All ReadCfg logic consolidated in EToolBase
-- EAgentEngine implements IEngine (unsealed)
-- EAgentEngine: optional constructor injection for EMemoryManager, SelfCorrectionManager, ProjectContextManager, TaskPlanner
+- All ReadCfg logic consolidated in ToolBase
+- AgentEngine implements IEngine (unsealed)
+- AgentEngine: optional constructor injection for MemoryManager, SelfCorrectionManager, ProjectContextManager, TaskPlanner
 - SubAgentManager: injects IProcessRunner, IFileSystem, IHttpClient, BackgroundProcessManager via constructor
-- EGuiConsole uses ITerminalOutput (no direct Console.Write)
+- GuiConsole uses ITerminalOutput (no direct Console.Write)
 - EcaCompositionRoot is the single wiring point
 - **No LLamaSharp in Core** — all inference is HTTP; model + GPU + KV cache are server-side
 - Inference crosses a process boundary via `OpenAIClient` (HTTP/SSE) to ECAssistantLLM or any OpenAI-compatible endpoint
@@ -450,11 +450,11 @@ EWebFetch was reworked to produce LLM-parseable output. The old tool returned a 
 
 - **Setup/**: `RemoteProviderSetupWriter` (remote config + keyfile ref), `VectorMemorySetupWriter` (vector_memory.enabled), installer hardening (internet probe, disk check, retry, orphan GGUF registration `RegisterLocalModelFile`, sibling mmproj auto-detect, `CatalogSuggestedConfig.BatchSize`)
 - **Services/**: `SecureKeyStore.SetKey` — encrypt-on-save (new on `ISecureKeyStore`); key never stored plaintext in appsettings
-- **Engine/**: `EAgentEngine.InitializeVectorMemoryAsync` now wires the embedder into the store (was dropped) + TfidfEmbedder fallback when none
+- **Engine/**: `AgentEngine.InitializeVectorMemoryAsync` now wires the embedder into the store (was dropped) + TfidfEmbedder fallback when none
 
 ## Changelog — 2026-08-27 (evening: embeddings independence + vision flag)
 
-- **Config/**: `EmbeddingConfig.Mode` ("local"|"remote") + `Endpoint`/`ModelId` overrides — embeddings are independent of the main LLM mode. `LlmProviderConfig.VisionEnabled` + `RemoteProviderConfig.VisionEnabled` + `EAgentConfig.SupportsVision` (mode-agnostic integration answer)
+- **Config/**: `EmbeddingConfig.Mode` ("local"|"remote") + `Endpoint`/`ModelId` overrides — embeddings are independent of the main LLM mode. `LlmProviderConfig.VisionEnabled` + `RemoteProviderConfig.VisionEnabled` + `AppConfig.SupportsVision` (mode-agnostic integration answer)
 - **Session/**: `SessionManager` spawns a local LLM server for embeddings when main AI is remote but `embedding.mode=local` (`_embeddingServerLauncher`, ctor sync-over-async pattern, disposed on shutdown). `SessionBuilder.ResolveEmbeddingEndpoint/ModelId` route the embedder by embedding mode (local → localhost + "embeddings"; remote → provider endpoint/model)
 - **Setup/**: `EmbeddingSetupWriter` (embedding.mode persistence); `ModelInstallerService` keeps `llm.model_path` + `llm_provider.vision_enabled` in sync (creates minimal appsettings when missing — critical during first-run); `SecureKeyStore.SetKey`; `DetectSiblingMmproj` public (vision pairing); `LooksLikeEmbeddingModel` public
 - **Interfaces/**: `ISecureKeyStore.SetKey(fileName, plaintext)` — encrypt-on-save
@@ -533,14 +533,14 @@ delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-dri
 - **P1 — Tool-result truncation limits config-driven** (`tool_output_limits`):
   `max_result_chars` (default 4000), per-tool overrides
   (`max_result_chars_per_tool`), `max_stored_outputs`. Truncation before
-  injection already existed (EAgentEngine.TruncateToolOutput) — the hardcoded
+  injection already existed (AgentEngine.TruncateToolOutput) — the hardcoded
   4000/6000/8000 constants are now config values with the same defaults.
 - **P2 — In-loop planning by default** (`interface.preplanning`, default false):
   skips the 2-3 LLM pre-pass calls (Decompose + StepMapper). Pre-planning stays
   available via config for small models that want explicit step lists.
 - **P3 — Verifier contract** (`interface.verify_command`): injected into the
   system prompt (VERIFIER rule) — act → observe → verify loop.
-- **P4 — Typed tool schemas**: `EToolBase.GetParameterSchema()` (virtual, JSON
+- **P4 — Typed tool schemas**: `ToolBase.GetParameterSchema()` (virtual, JSON
   Schema string) implemented on Shell/CodeEditor/FileReader/WebSearch/WebFetch/
   EDotnetBuild/FileResearch; `ToolSpec.ParameterSchema` carries it into the
   native function-calling request (tools without a schema fall back permissive).
@@ -604,7 +604,7 @@ delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-dri
   on every GoalAchieved return with ≥1 successful tool call, TryCapturePlaybookAsync extracts and stores
   a playbook — never kills the agent loop. Dedup: equal normalized title OR equal trigger keyword set →
   UseCount++/LastUsedAt update instead of a new entry. Cap 50 → least-used/oldest evicted.
-- **Injection (EAgentEngine):** `InitializePlaybooks(workingDir)` mirrors InitializeSelfCorrection
+- **Injection (AgentEngine):** `InitializePlaybooks(workingDir)` mirrors InitializeSelfCorrection
   (called by AgentSession + TestRunner); turn-1 `BuildIncrementalInput` adds `GetPlaybookInjection` —
   trigger-keyword match vs the user request, top N=2, 1500-char cap.
 - **Tier behavior:** small tier → STRICT recipe ("Follow these steps exactly; adapt only if a step
@@ -656,7 +656,7 @@ delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-dri
 - **Tier behavior:** small → goal + decisions + file-map line, ≤ `max_chars` (default
   1200); large → goal only, ≤ ~300 chars. One `[PINNED CONTEXT]` prefix per line.
 - **Config:** `context_pinning` (enabled true, max_files 15, max_chars 1200) in
-  `EAgentConfig`/appsettings.json following existing patterns.
+  `AppConfig`/appsettings.json following existing patterns.
 - **Tests:** ContextPinningTests ×20 (path extraction, decision positive/negative,
   dedup, eviction, tier caps, simulated compaction survival with real ContextWindow).
   Filter ContextPinn|Pinned|EngineTierBehavior|Playbook: 28/28.
@@ -736,9 +736,9 @@ delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-dri
 
 ## Addendum — v14.20 typed per-tool outputs + dataflow chains (2026-09-23)
 
-**Feature A — Typed per-tool model-facing outputs.** `EToolBase.RenderForModel(raw)`
+**Feature A — Typed per-tool model-facing outputs.** `ToolBase.RenderForModel(raw)`
 virtual (default passthrough). The engine projects each tool's output via its own
-override *before* truncation: `EAgentEngine.RenderOutput(name, raw)` is the shared
+override *before* truncation: `AgentEngine.RenderOutput(name, raw)` is the shared
 helper used by both paths — single-call (`AddToolResult`) and batch
 (`ParallelToolExecutor.CombineResults`, which previously combined raw outputs under
 the "Batch" name that matches no tool). Overrides today: `EDotnetBuildTool` +
@@ -811,10 +811,10 @@ are disposed.
 **New files:**
 - `Engine/Handoff/HandoffRequest.cs` — sealed record: Name, SystemPrompt,
   AllowedTools, Reason, ContextSummary, ModelOverride?, MaxTurns, TimeoutSeconds
-- `Engine/Handoff/HandoffExecutor.cs` — creates a child EAgentEngine (same
+- `Engine/Handoff/HandoffExecutor.cs` — creates a child AgentEngine (same
   pattern as SubAgentManager.RunSingleAsync: HttpStreamingEngine +
   RemoteKvCacheController, own session_id), injects the request's SystemPrompt
-  via `EAgentEngine.SystemPromptText`, registers a FILTERED tool subset
+  via `AgentEngine.SystemPromptText`, registers a FILTERED tool subset
   (EHandoff itself never registered on specialists — no recursive handoffs),
   runs a child AgentOrchestrator, returns its OrchestratorResult directly.
   Timeout via CancellationTokenSource(timeout) linked with parent token (ESC
@@ -861,3 +861,30 @@ different-prompt specialists cost nothing extra.
 - **Consumers:** ConsoleApplication + AppController (TUI) still construct
   FirstRunOrchestrator directly (hosts own composition — no change needed).
 - **LDC enforcement:** fully silent — 0 interface-first warnings, PASSED.
+
+## Addendum — E-prefix stripped from non-tool classes (2026-09-23 evening)
+
+**Decision (Emre):** classes REGISTERED AS TOOLS keep the E (class name = wire
+name = grammar union / config keys / stored playbooks — renaming those would be
+a protocol migration). Everything else loses the bare E. `Eca*` types
+(EcaCompositionRoot, EcaServiceBundle) keep their product prefix.
+
+**Renames (wire names untouched, config JSON keys untouched):**
+- EAgentEngine → AgentEngine · EAgentConfig → AppConfig (root config doc)
+- EToolBase → ToolBase · EToolResult → ToolResult (infrastructure, not tools)
+- EMemoryManager → MemoryManager · EContextAnalyzer → ContextAnalyzer
+- EColor → AnsiColor (collision-avoidance vs future Avalonia/Drawing)
+- TUI: EGuiBase → GuiBase (lives in Core/UI) · EGuiConsole → GuiConsole
+- TestSupport: EGuiTestHarness → GuiTestHarness
+- Test classes follow their type (AppConfigTests, ToolBaseTests, …)
+
+**NOT renamed:** all 11+ tool classes (EShellAgent, EHandoffTool, …) and their
+tests; AgentConfig (agent_settings sub-section — kept as-is per Emre).
+
+**Mechanics:** perl word-boundary rename across Core/TUI/TestSupport/Console
+(.cs + .md + .csproj), git mv file renames (one-type-per-file preserved), TUI
+csproj whitelist updated. Wire protocol (tool Name properties, JSON
+[JsonPropertyName], playbooks, transcripts) verified untouched.
+
+**Versioning note:** public API break — next release wave must bump Core
+(major-ish) and ship TestSupport → Core → TUI → Console in order.

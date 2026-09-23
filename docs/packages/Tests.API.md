@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 127  |  LOC: 15112  |  ~5649 tokens
+Types: 127  |  LOC: 15112  |  ~5647 tokens
 
 ---
 
@@ -90,10 +90,6 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 ### Class: EGitToolTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Git
 
-### Class: EGuiTestHarnessTests
-> Tests for EGuiTestHarness — verifies it captures output correctly.
-Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.UI
-
 ### Class: EHandoffToolTests
 > Unit tests for EHandoffTool — the model-facing handoff tool.
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Handoff
@@ -106,7 +102,7 @@ Cross-package deps: ECAssistant.Core.Memory
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Shell
 
 ### Class: EToolBaseTests
-> Concrete subclass for testing EToolBase abstract members.
+> Concrete subclass for testing ToolBase abstract members.
 Cross-package deps: ECAssistant.Core, ECAssistant.Core.Tools
 
 ### Class: EUserAskToolTests
@@ -152,6 +148,10 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 > Tests for FirstRunDetector remote-provider awareness: a configured remote
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Setup
+
+### Class: GuiTestHarnessTests
+> Tests for GuiTestHarness — verifies it captures output correctly.
+Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.UI
 
 ### Class: HandoffE2E
 > v15 ephemeral handoff — end-to-end against a REAL ECAssistantLLM server with
@@ -224,7 +224,7 @@ Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, ECAssistant.Core.UI, Moq
 
 ### Class: MemoryIntegrationTests
-> Integration tests for the memory pipeline — EMemoryManager and VectorMemoryStore
+> Integration tests for the memory pipeline — MemoryManager and VectorMemoryStore
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Memory, ECAssistant.Core.Services
 
@@ -233,12 +233,12 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, Moq
 
 ### Class: MockProbeTool
 > Integration tests for the v15 ephemeral handoff: EHandoff tool registration,
-Implements: EToolBase
+Implements: ToolBase
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.UI
 
 ### Class: MockSubAgentTool
 > Integration tests for sub-agent spawning through the orchestrator.
-Implements: EToolBase
+Implements: ToolBase
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.UI
 
 ### Class: ModelCatalogTests
@@ -302,7 +302,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 
 ### Class: ProgramGuiCollection
-> xUnit test collection that serializes tests sharing the static EGuiTestHarness field.
+> xUnit test collection that serializes tests sharing the static GuiTestHarness field.
 
 ### Class: ProjectContextExclusionTests
 > Project-context scan must exclude host runtime/config files — the model should

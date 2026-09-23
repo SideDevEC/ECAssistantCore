@@ -96,7 +96,7 @@ public class EcaCompositionRoot
             sessionBuilder);
     }
 
-    private string ResolveModelPath(EAgentConfig config, string userConfigDir)
+    private string ResolveModelPath(AppConfig config, string userConfigDir)
     {
         // Resolve model path from the shared LLM root's models directory.
         // No dev-tree/build-tree paths — only the shared location.

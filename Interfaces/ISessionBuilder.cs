@@ -9,13 +9,13 @@ namespace ECAssistant.Core.Interfaces;
 /// </summary>
 public interface ISessionBuilder
 {
-    List<EToolBase> ExternalTools { get; set; }
+    List<ToolBase> ExternalTools { get; set; }
     bool RegisterBuiltInTools { get; set; }
     bool? EnableVectorMemory { get; set; }
     bool? EnableSubAgents { get; set; }
     bool EnableBackgroundTasks { get; set; }
     BackgroundProcessManager BackgroundManager { get; }
     Task BuildAsync(AgentSession session);
-    Task BuildAsync(AgentSession session, List<EToolBase>? externalTools);
-    void RegisterBuiltInToolsAsync(AgentSession session, List<EToolBase>? externalTools = null);
+    Task BuildAsync(AgentSession session, List<ToolBase>? externalTools);
+    void RegisterBuiltInToolsAsync(AgentSession session, List<ToolBase>? externalTools = null);
 }

@@ -15,8 +15,8 @@ public sealed class UserJourneyExtendedE2E
     private string ModelId =>
         Environment.GetEnvironmentVariable("ECA_E2E_MODEL") ?? "qwen35-4b";
 
-    private static EAgentConfig BuildConfig(string modelId, string tier = "small") =>
-        JsonSerializer.Deserialize<EAgentConfig>(
+    private static AppConfig BuildConfig(string modelId, string tier = "small") =>
+        JsonSerializer.Deserialize<AppConfig>(
             $$"""
             {
               "llm_provider": { "mode": "local", "model_id": "{{modelId}}" },

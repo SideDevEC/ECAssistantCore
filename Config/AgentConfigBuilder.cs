@@ -134,13 +134,13 @@ public class AgentConfigBuilder
     }
 
     /// <summary>
-    /// Build the EAgentConfig.
+    /// Build the AppConfig.
     ///
     /// 1. Use working dir directly (no subdirectory appended)
     /// 2. If appsettings.json exists there → load and return it (JSON wins)
     /// 3. If not → generate it with code values + defaults, then return
     /// </summary>
-    public EAgentConfig Build()
+    public AppConfig Build()
     {
         // 1. Use working directory directly
         var workingDir = _workingDir;
@@ -155,7 +155,7 @@ public class AgentConfigBuilder
             try
             {
                 var json = File.ReadAllText(jsonPath);
-                var config = JsonSerializer.Deserialize<EAgentConfig>(json, jsonOptions);
+                var config = JsonSerializer.Deserialize<AppConfig>(json, jsonOptions);
                 if (config != null)
                 {
                     // Ensure working dir paths point to the resolved location
@@ -172,7 +172,7 @@ public class AgentConfigBuilder
         }
 
         // 3. No JSON (or corrupt) → build from code values + defaults
-        var freshConfig = new EAgentConfig
+        var freshConfig = new AppConfig
         {
             RootPath = workingDir,
             AgentSettings = new AgentConfig { WorkingDirectory = workingDir },
@@ -259,11 +259,11 @@ public class AgentConfigBuilder
     public static readonly AgentConfigBuilder Default = new();
 
     /// <summary>
-    /// v10.24: Write an updated EAgentConfig back to appsettings.json.
+    /// v10.24: Write an updated AppConfig back to appsettings.json.
     /// Uses config.RootPath to locate the file. Called when new tools are registered
     /// and their config sections are added to the Tools dictionary.
     /// </summary>
-    public void Update(EAgentConfig config)
+    public void Update(AppConfig config)
     {
         var jsonPath = Path.Combine(config.RootPath, "appsettings.json");
         var jsonOptions = new JsonSerializerOptions { WriteIndented = true, PropertyNameCaseInsensitive = true };

@@ -24,7 +24,7 @@ namespace ECAssistant.Core.Engine;
 public sealed class HandoffExecutor : IAsyncDisposable
 {
     private readonly ISubAgentEngineHost _mainEngine;
-    private readonly EAgentConfig _config;
+    private readonly AppConfig _config;
     private readonly InferenceRequestParams _inferenceParams;
     private readonly ILogger _logger;
     private readonly ISessionOutput? _out;
@@ -33,12 +33,12 @@ public sealed class HandoffExecutor : IAsyncDisposable
     private readonly IFileSystem _fileSystem;
     private readonly Services.BackgroundProcessManager _bgManager;
 
-    private EAgentEngine? _specialistEngine;
+    private AgentEngine? _specialistEngine;
 
     /// <summary>Create a handoff executor bound to the main engine's host surface.</summary>
     public HandoffExecutor(
         ISubAgentEngineHost mainEngine,
-        EAgentConfig config,
+        AppConfig config,
         InferenceRequestParams inferenceParams,
         string workingDir,
         ILogger? logger,
@@ -91,7 +91,7 @@ public sealed class HandoffExecutor : IAsyncDisposable
             var inference = new HttpStreamingEngine(client, modelId, sessionId);
             var kvCache = new RemoteKvCacheController(client);
 
-            _specialistEngine = new EAgentEngine(
+            _specialistEngine = new AgentEngine(
                 sessionId: sessionId,
                 inferenceEngine: inference,
                 kvCacheController: kvCache,
@@ -183,7 +183,7 @@ public sealed class HandoffExecutor : IAsyncDisposable
     /// allowed-tools set if provided. EHandoff itself is never registered on
     /// a specialist — no recursive handoffs.
     /// </summary>
-    private void RegisterSpecialistTools(EAgentEngine engine, HashSet<string>? allowedSet)
+    private void RegisterSpecialistTools(AgentEngine engine, HashSet<string>? allowedSet)
     {
         static bool IsAllowed(string toolName, HashSet<string>? allowed) =>
             allowed == null || allowed.Contains(toolName);

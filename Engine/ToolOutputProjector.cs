@@ -4,7 +4,7 @@ namespace ECAssistant.Core.Engine;
 /// v14.12.2: curates an oversized tool output for the context window — key lines
 /// (errors, warnings, failures, diffs, summaries, results) plus head and tail,
 /// instead of a blind head-truncate that hides the lines that matter. Pure and
-/// deterministic; wired in EAgentEngine.TruncateToolOutput, gated by
+/// deterministic; wired in AgentEngine.TruncateToolOutput, gated by
 /// context_management.curate_tool_outputs.
 /// Stateless utility — no mutable state.
 /// </summary>

@@ -10,7 +10,7 @@ namespace ECAssistant.Core.Tests.Harness;
 
 /// <summary>
 /// v14.12: model-tier-adaptive behavior tests at the ENGINE level — verifies the
-/// tier resolution + scaffolding gates where they live (EAgentEngine). Uses a thin
+/// tier resolution + scaffolding gates where they live (AgentEngine). Uses a thin
 /// engine subclass with test doubles (config flows through the real ctor, like
 /// MockEngine does) plus a registered typed-schema tool.
 /// Config-level resolution is covered by ModelTierConfigTests; these cover the
@@ -19,9 +19,9 @@ namespace ECAssistant.Core.Tests.Harness;
 public sealed class EngineTierBehaviorTests : IDisposable
 {
     private readonly string _dir = Directory.CreateTempSubdirectory("eca-engine-tier").FullName;
-    private readonly List<EAgentEngine> _engines = new();
+    private readonly List<AgentEngine> _engines = new();
 
-    private MockEngine CreateEngine(EAgentConfig config)
+    private MockEngine CreateEngine(AppConfig config)
     {
         var engine = new MockEngine(workingDir: _dir, config: config);
         _engines.Add(engine);
@@ -29,7 +29,7 @@ public sealed class EngineTierBehaviorTests : IDisposable
         return engine;
     }
 
-    private static EAgentConfig BuildConfig(string? tierMode, bool isLocal)
+    private static AppConfig BuildConfig(string? tierMode, bool isLocal)
     {
         var tierJson = tierMode == null ? "" : $", \"model_tier\": {{ \"mode\": \"{tierMode}\" }}";
         var json = $$"""
@@ -37,25 +37,25 @@ public sealed class EngineTierBehaviorTests : IDisposable
           "llm_provider": { "mode": "{{(isLocal ? "local" : "remote")}}" }{{tierJson}}
         }
         """;
-        return JsonSerializer.Deserialize<EAgentConfig>(json)!;
+        return JsonSerializer.Deserialize<AppConfig>(json)!;
     }
 
     // ── IsLargeModelTier resolution (private → reflection, established pattern) ──
 
-    private static bool InvokeIsLargeModelTier(EAgentEngine engine)
+    private static bool InvokeIsLargeModelTier(AgentEngine engine)
     {
-        var m = typeof(EAgentEngine).GetMethod("IsLargeModelTier",
+        var m = typeof(AgentEngine).GetMethod("IsLargeModelTier",
             BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(m);
         return (bool)m.Invoke(engine, null)!;
     }
 
-    private static string InvokeBuildIncrementalInput(EAgentEngine engine)
+    private static string InvokeBuildIncrementalInput(AgentEngine engine)
     {
         // Turn-2+ branch fires whenever TurnCount != 1; a fresh engine has 0, and a
         // tool output in the window supplies the <tooloutput> block the branch feeds.
         engine.AddToolResult("ProbeTool", "some tool output");
-        var m = typeof(EAgentEngine).GetMethod("BuildIncrementalInput",
+        var m = typeof(AgentEngine).GetMethod("BuildIncrementalInput",
             BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(m);
         return (string)m.Invoke(engine, new object[] { "continue" })!;
@@ -63,7 +63,7 @@ public sealed class EngineTierBehaviorTests : IDisposable
 
     private static int InvokeApplyEnvelopeBudget(int configured, bool isLarge)
     {
-        var m = typeof(EAgentEngine).GetMethod("ApplyEnvelopeBudget",
+        var m = typeof(AgentEngine).GetMethod("ApplyEnvelopeBudget",
             BindingFlags.Static | BindingFlags.NonPublic);
         Assert.NotNull(m);
         return (int)m.Invoke(null, new object[] { configured, isLarge })!;
@@ -154,7 +154,7 @@ public sealed class EngineTierBehaviorTests : IDisposable
     public void BuildToolSpecs_CopiesParameterSchema()
     {
         var engine = CreateEngine(BuildConfig(null, isLocal: true));
-        var m = typeof(EAgentEngine).GetMethod("BuildToolSpecs",
+        var m = typeof(AgentEngine).GetMethod("BuildToolSpecs",
             BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(m);
         var specs = (List<ToolSpec>)m.Invoke(engine, null)!;

@@ -7,7 +7,7 @@ using ECAssistant.Core.Services;
 namespace ECAssistant.Core.Config;
 
 /// <summary>
-/// Loads EAgentConfig from JSON files.
+/// Loads AppConfig from JSON files.
 /// Falls back to embedded default appsettings.json from Core.dll if file not found.
 /// </summary>
 public class ConfigLoader : IConfigLoader
@@ -19,7 +19,7 @@ public class ConfigLoader : IConfigLoader
         _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
     }
 
-    public EAgentConfig Load(string filePath = "appsettings.json")
+    public AppConfig Load(string filePath = "appsettings.json")
     {
         // Try user-provided file first
         try
@@ -43,7 +43,7 @@ public class ConfigLoader : IConfigLoader
             var embeddedJson = ResourceLoader.Default.LoadText("appsettings.json");
             if (embeddedJson != null)
             {
-                var config = JsonSerializer.Deserialize<EAgentConfig>(embeddedJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var config = JsonSerializer.Deserialize<AppConfig>(embeddedJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (config != null) return config;
             }
         }
@@ -52,7 +52,7 @@ public class ConfigLoader : IConfigLoader
             // Embedded parse failed — continue to defaults
         }
 
-        return new EAgentConfig();
+        return new AppConfig();
     }
 
     /// <summary>
@@ -60,7 +60,7 @@ public class ConfigLoader : IConfigLoader
     /// config, so untouched sections keep shipped defaults instead of being wiped.
     /// Returns null when the user JSON cannot be parsed at all.
     /// </summary>
-    private static EAgentConfig? MergeOverEmbeddedDefaults(string userJson)
+    private static AppConfig? MergeOverEmbeddedDefaults(string userJson)
     {
         try
         {
@@ -87,7 +87,7 @@ public class ConfigLoader : IConfigLoader
 
             MigrateLegacyToolKeys(root);
 
-            return root.Deserialize<EAgentConfig>(opts);
+            return root.Deserialize<AppConfig>(opts);
         }
         catch (Exception)
         {

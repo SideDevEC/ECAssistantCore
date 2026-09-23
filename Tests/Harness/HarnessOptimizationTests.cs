@@ -29,7 +29,7 @@ public sealed class HarnessOptimizationTests : IDisposable
           }
         }
         """;
-        var config = JsonSerializer.Deserialize<EAgentConfig>(json);
+        var config = JsonSerializer.Deserialize<AppConfig>(json);
         Assert.NotNull(config!.ToolOutputLimits);
         Assert.Equal(2500, config.ToolOutputLimits.MaxResultChars);
         Assert.Equal(9000, config.ToolOutputLimits.MaxResultCharsPerTool!["ECodeEditor"]);
@@ -54,14 +54,14 @@ public sealed class HarnessOptimizationTests : IDisposable
     [Fact]
     public void Preplanning_DefaultsNull_AutoResolution()
     {
-        var config = JsonSerializer.Deserialize<EAgentConfig>("{}");
+        var config = JsonSerializer.Deserialize<AppConfig>("{}");
         Assert.Null(config!.Interface.Preplanning);
     }
 
     [Fact]
     public void VerifyCommand_ParsesFromConfig()
     {
-        var config = JsonSerializer.Deserialize<EAgentConfig>(
+        var config = JsonSerializer.Deserialize<AppConfig>(
             """{"interface": {"verify_command": "dotnet test --filter Fast"}}""");
         Assert.Equal("dotnet test --filter Fast", config!.Interface.VerifyCommand);
     }
@@ -100,7 +100,7 @@ public sealed class HarnessOptimizationTests : IDisposable
         // native function-calling path can send real schemas.
         var engine = new MockEngine(workingDir: _dir);
         engine.RegisterTool(new ProbeTestTool());
-        var method = typeof(EAgentEngine).GetMethod("BuildToolSpecs",
+        var method = typeof(AgentEngine).GetMethod("BuildToolSpecs",
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
         Assert.NotNull(method);
         var specs = (List<ToolSpec>)method.Invoke(engine, null)!;
@@ -178,7 +178,7 @@ public sealed class HarnessOptimizationTests : IDisposable
         File.WriteAllText(rulesPath, "Never touch config files.");
 
         var engine = new MockEngine(workingDir: _dir);
-        var method = typeof(EAgentEngine).GetMethod("BuildSystemToolsPrompt",
+        var method = typeof(AgentEngine).GetMethod("BuildSystemToolsPrompt",
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
         Assert.NotNull(method);
         var prompt = (string)method.Invoke(engine, null)!;
@@ -187,26 +187,26 @@ public sealed class HarnessOptimizationTests : IDisposable
         Assert.Contains("Never touch config files.", prompt);
     }
 
-    private static List<(string, ECAssistant.Core.Tools.EToolBase)> SchemaProviders()
+    private static List<(string, ECAssistant.Core.Tools.ToolBase)> SchemaProviders()
     {
-        var found = new List<(string, ECAssistant.Core.Tools.EToolBase)>();
-        foreach (var t in typeof(EAgentEngine).Assembly.GetTypes()
-                     .Where(t => t.IsSubclassOf(typeof(ECAssistant.Core.Tools.EToolBase)) && !t.IsAbstract))
+        var found = new List<(string, ECAssistant.Core.Tools.ToolBase)>();
+        foreach (var t in typeof(AgentEngine).Assembly.GetTypes()
+                     .Where(t => t.IsSubclassOf(typeof(ECAssistant.Core.Tools.ToolBase)) && !t.IsAbstract))
         {
             try
             {
                 object? instance;
                 if (t.Name == "EShellAgent")
                 {
-                    // EShellAgent ctor needs (IProcessRunner, EAgentConfig, string).
+                    // EShellAgent ctor needs (IProcessRunner, AppConfig, string).
                     instance = Activator.CreateInstance(t,
-                        new StubProcessRunner(), new EAgentConfig(), Directory.GetCurrentDirectory());
+                        new StubProcessRunner(), new AppConfig(), Directory.GetCurrentDirectory());
                 }
                 else
                 {
                     instance = Activator.CreateInstance(t);
                 }
-                if (instance is ECAssistant.Core.Tools.EToolBase tool) found.Add((t.Name, tool));
+                if (instance is ECAssistant.Core.Tools.ToolBase tool) found.Add((t.Name, tool));
             }
             catch { /* constructors needing other deps are skipped */ }
         }

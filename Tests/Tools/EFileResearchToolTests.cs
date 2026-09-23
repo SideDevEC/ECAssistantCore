@@ -8,7 +8,7 @@ public class EFileResearchToolTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly Mock<IFileSystem> _fileSystem = new();
-    private readonly EAgentConfig _config = new();
+    private readonly AppConfig _config = new();
 
     public EFileResearchToolTests()
     {

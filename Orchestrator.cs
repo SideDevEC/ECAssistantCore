@@ -22,7 +22,7 @@ namespace ECAssistant.Core.Orchestration;
 /// </summary>
 public sealed class AgentOrchestrator : IAsyncDisposable
 {
-    private readonly EAgentEngine _engine;
+    private readonly AgentEngine _engine;
     private readonly ISessionOutput? _out;
     private int _turnCount = 0;
     private readonly List<string> _toolCallLog = new();
@@ -41,7 +41,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
     private ExecutionPlan? _executionPlan = null;
 
       // v10.23: Config for sub-agent manager injection
-    private readonly ECAssistant.Core.Config.EAgentConfig? _config;
+    private readonly ECAssistant.Core.Config.AppConfig? _config;
 
       // ─── Hard Limits ──────────────────────
     private int _maxTurns;   // v10.6: changed from readonly to allow dynamic adjustment
@@ -77,13 +77,13 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
       /// <summary>Create orchestrator with config.</summary>
     public AgentOrchestrator(
-        EAgentEngine engine,
+        AgentEngine engine,
         ISessionOutput? sessionOutput = null,
         int maxTurns = 5,
         int maxFailures = 3,
         ECAssistant.Core.Tools.ToolPolicy? toolPolicy = null,
         ECAssistant.Core.Interfaces.ILogger? logger = null,
-        ECAssistant.Core.Config.EAgentConfig? config = null,
+        ECAssistant.Core.Config.AppConfig? config = null,
         IPostEditVerifier? postEditVerifier = null,
         IPlaybookStore? playbookStore = null,
         IPlaybookExtractor? playbookExtractor = null)
@@ -144,8 +144,8 @@ public sealed class AgentOrchestrator : IAsyncDisposable
          _handoffWorkingDir = defaultWorkingDir;
          _handoffExecutor = new HandoffExecutor(
              _engine, // ISubAgentEngineHost
-             _config ?? new Config.EAgentConfig(),
-             InferenceParamsFactory.Default.Create(_config ?? new Config.EAgentConfig()),
+             _config ?? new Config.AppConfig(),
+             InferenceParamsFactory.Default.Create(_config ?? new Config.AppConfig()),
              defaultWorkingDir,
              _logger,
              _out);
@@ -917,7 +917,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                 }
 
        /// <summary>Execute a tool call by name with args dictionary.</summary>
-    private async Task<EToolResult> ExecuteTool(string toolName, Dictionary<string, string?> args)
+    private async Task<ToolResult> ExecuteTool(string toolName, Dictionary<string, string?> args)
                {
         var tool = _engine.Tools.FirstOrDefault(t => t.Name.Equals(toolName, StringComparison.OrdinalIgnoreCase));
         if (tool == null)
@@ -926,7 +926,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
         if (!tool.IsEnabled)
          {
             _logger?.Info("Orchestrator", $"Tool blocked (disabled): {tool.Name}");
-            return EToolResult.Failure(toolName, "[BLOCKED] Tool is disabled by configuration.");
+            return ToolResult.Failure(toolName, "[BLOCKED] Tool is disabled by configuration.");
          }
          _logger?.Debug("Orchestrator", $"Executing: {tool.Name}");
           // v10.9.3: Pass execution cancellation token to tool

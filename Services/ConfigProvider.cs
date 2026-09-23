@@ -13,7 +13,7 @@ public class ConfigProvider : IConfigProvider
 {
     private readonly IFileSystem _fileSystem;
     private readonly string _configPath;
-    private readonly EAgentConfig? _preloadedConfig;
+    private readonly AppConfig? _preloadedConfig;
     private readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     // Parsed JSON root — parsing per-lookup was wasteful and re-read the file.
@@ -27,8 +27,8 @@ public class ConfigProvider : IConfigProvider
         _configPath = configPath ?? throw new ArgumentNullException(nameof(configPath));
     }
 
-    /// <summary>v10.23: Use a preloaded EAgentConfig directly — no file I/O. For library consumers.</summary>
-    public ConfigProvider(IFileSystem fileSystem, EAgentConfig config)
+    /// <summary>v10.23: Use a preloaded AppConfig directly — no file I/O. For library consumers.</summary>
+    public ConfigProvider(IFileSystem fileSystem, AppConfig config)
     {
         _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
         _preloadedConfig = config ?? throw new ArgumentNullException(nameof(config));

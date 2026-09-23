@@ -4,7 +4,7 @@ using ECAssistant.Core.Services;
 namespace ECAssistant.Core.Tests.Integration;
 
 /// <summary>
-/// Integration tests for the memory pipeline — EMemoryManager and VectorMemoryStore
+/// Integration tests for the memory pipeline — MemoryManager and VectorMemoryStore
 /// with real file system persistence across save/load cycles.
 /// </summary>
 public class MemoryIntegrationTests : IDisposable
@@ -23,13 +23,13 @@ public class MemoryIntegrationTests : IDisposable
             try { Directory.Delete(_tempDir, true); } catch { }
     }
 
-    // ─── EMemoryManager Pipeline ──────────────────
+    // ─── MemoryManager Pipeline ──────────────────
 
     [Fact]
     public void EMemoryManager_AddSaveLoadSearch_FullPipelineWorks()
     {
         var memDir = Path.Combine(_tempDir, "mem");
-        var mgr = new EMemoryManager(memDir);
+        var mgr = new MemoryManager(memDir);
         mgr.Load();
 
         // Add an entry
@@ -42,7 +42,7 @@ public class MemoryIntegrationTests : IDisposable
         Assert.NotEmpty(files);
 
         // Load in a new instance
-        var mgr2 = new EMemoryManager(memDir);
+        var mgr2 = new MemoryManager(memDir);
         mgr2.Load();
         Assert.Equal(1, mgr2.Count);
 
@@ -56,7 +56,7 @@ public class MemoryIntegrationTests : IDisposable
     public void EMemoryManager_AddMultiple_SearchReturnsRankedResults()
     {
         var memDir = Path.Combine(_tempDir, "mem_multi");
-        var mgr = new EMemoryManager(memDir);
+        var mgr = new MemoryManager(memDir);
         mgr.Load();
 
         mgr.AddEntry("config setup", "How to configure the agent settings", "general");
@@ -74,7 +74,7 @@ public class MemoryIntegrationTests : IDisposable
     public void EMemoryManager_SaveLoadAfterDispose_DataPersists()
     {
         var memDir = Path.Combine(_tempDir, "mem_persist");
-        var mgr = new EMemoryManager(memDir);
+        var mgr = new MemoryManager(memDir);
         mgr.Load();
         mgr.AddEntry("persistKey", "This should survive disposal", "general");
 
@@ -86,7 +86,7 @@ public class MemoryIntegrationTests : IDisposable
         Assert.NotEmpty(files);
 
         // Load in a fresh instance
-        var mgr2 = new EMemoryManager(memDir);
+        var mgr2 = new MemoryManager(memDir);
         mgr2.Load();
         Assert.Equal(1, mgr2.Count);
         var entry = mgr2.Entries.First();
@@ -116,7 +116,7 @@ public class MemoryIntegrationTests : IDisposable
             File.WriteAllText(Path.Combine(memDir, $"entry_{i:D4}_key{i}_.json"), json);
         }
 
-        var mgr = new EMemoryManager(memDir);
+        var mgr = new MemoryManager(memDir);
         mgr.Load();
         Assert.Equal(3, mgr.Count);
     }
@@ -125,7 +125,7 @@ public class MemoryIntegrationTests : IDisposable
     public void EMemoryManager_Clear_RemovesEntriesFromMemory()
     {
         var memDir = Path.Combine(_tempDir, "mem_clear");
-        var mgr = new EMemoryManager(memDir);
+        var mgr = new MemoryManager(memDir);
         mgr.Load();
         mgr.AddEntry("k1", "c1");
         mgr.AddEntry("k2", "c2");
@@ -135,7 +135,7 @@ public class MemoryIntegrationTests : IDisposable
         mgr.Clear();
         Assert.Equal(0, mgr.Count);
 
-        // Note: EMemoryManager.Save() only writes current entries —
+        // Note: MemoryManager.Save() only writes current entries —
         // it does not delete previously-saved files from disk.
         // This is a known limitation of the current implementation.
     }

@@ -17,9 +17,9 @@ namespace ECAssistant.Core.Engine;
 /// </summary>
 public class ParallelToolExecutor : IParallelToolExecutor
 {
-    private readonly EAgentEngine _engine;
+    private readonly AgentEngine _engine;
     private readonly ECAssistant.Core.Tools.ToolPolicy _toolPolicy;
-    private readonly Func<string, Dictionary<string, string?>, Task<EToolResult>> _executeToolFn;
+    private readonly Func<string, Dictionary<string, string?>, Task<ToolResult>> _executeToolFn;
     private readonly Action<string> _log;
     private readonly ISessionOutput? _out;
 
@@ -32,9 +32,9 @@ public class ParallelToolExecutor : IParallelToolExecutor
     /// <param name="log">Optional logging callback</param>
     /// <param name="sessionOutput">Optional session output for approval requests</param>
     public ParallelToolExecutor(
-        EAgentEngine engine,
+        AgentEngine engine,
         ECAssistant.Core.Tools.ToolPolicy toolPolicy,
-        Func<string, Dictionary<string, string?>, Task<EToolResult>> executeToolFn,
+        Func<string, Dictionary<string, string?>, Task<ToolResult>> executeToolFn,
         Action<string>? log = null,
         ISessionOutput? sessionOutput = null)
     {

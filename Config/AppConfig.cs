@@ -8,7 +8,7 @@ using ECAssistant.Core.Tools;
 namespace ECAssistant.Core.Config;
 
 /// <summary>App settings — matches the nested structure in appsettings.json</summary>
-public class EAgentConfig
+public class AppConfig
 {
     [JsonPropertyName("root_path")]
     public string RootPath { get; set; } = ".";  // v10.23: default to current dir, not 'ECAssistant'

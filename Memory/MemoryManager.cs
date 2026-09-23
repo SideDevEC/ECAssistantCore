@@ -22,7 +22,7 @@ namespace ECAssistant.Core.Memory;
 /// Files stored in: ECAssistant/Memory/memories/   (or custom path)
 /// File format: .json with structured metadata for easy searching.
 /// </summary>
-public class EMemoryManager : IDisposable
+public class MemoryManager : IDisposable
 {
     private readonly string _memoryDir;
     private readonly List<MemoryEntry> _loadedMemories = new();
@@ -31,7 +31,7 @@ public class EMemoryManager : IDisposable
     
 
     /// <summary>Create memory manager with custom or default directory</summary>
-    public EMemoryManager(string? dataPath = null)
+    public MemoryManager(string? dataPath = null)
     {
 
         var basePath = !string.IsNullOrWhiteSpace(dataPath)
@@ -184,7 +184,7 @@ public class EMemoryManager : IDisposable
     /// <summary>Count of loaded memories - for startup diagnostics.</summary>
     public int Count => _loadedMemories.Count;
 
-    /// <summary>All entries as enumerable - used by EAgentEngine for counting.</summary>
+    /// <summary>All entries as enumerable - used by AgentEngine for counting.</summary>
     public IEnumerable<MemoryEntry> Entries => _loadedMemories.AsEnumerable();
 
     /// <summary>Get all memory entries as a single string (for LLM context injection)</summary>

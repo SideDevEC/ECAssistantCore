@@ -40,20 +40,20 @@ public class StructuredFallbackResilienceTests
         }
     }
 
-    private static EAgentEngine BuildEngine()
+    private static AgentEngine BuildEngine()
         => new("test-session", new NullStructuredEngine(), new NullKvController(),
-            inferenceParams: new InferenceRequestParams(), config: new EAgentConfig());
+            inferenceParams: new InferenceRequestParams(), config: new AppConfig());
 
     [Fact]
     public async Task TransientNull_KeepsStructuredDecodingEnabled()
     {
         var engine = BuildEngine();
-        var flagField = typeof(EAgentEngine).GetField("_useStructuredDecoding",
+        var flagField = typeof(AgentEngine).GetField("_useStructuredDecoding",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         Assert.NotNull(flagField);
         flagField!.SetValue(engine, true);
 
-        var method = typeof(EAgentEngine).GetMethod("TryGenerateStructuredAsync",
+        var method = typeof(AgentEngine).GetMethod("TryGenerateStructuredAsync",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         Assert.NotNull(method);
 

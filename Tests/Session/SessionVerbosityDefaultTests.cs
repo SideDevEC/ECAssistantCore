@@ -34,7 +34,7 @@ public sealed class SessionVerbosityDefaultTests : IDisposable
     [Fact]
     public async Task CreateSession_DefaultsToVerbose()
     {
-        var config = JsonSerializer.Deserialize<EAgentConfig>(
+        var config = JsonSerializer.Deserialize<AppConfig>(
             """{ "llm_provider": { "mode": "local", "model_id": "mock" } }""")!;
         var manager = new SessionManager(config, _modelPath, _tempDir);
         try

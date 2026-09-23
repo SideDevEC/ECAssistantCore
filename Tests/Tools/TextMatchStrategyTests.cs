@@ -195,7 +195,7 @@ public class TextMatchStrategyTests
     // ── Tool integration (Mock IFileSystem) ──
 
     private readonly Mock<IFileSystem> _fileSystem = new();
-    private readonly EAgentConfig _config = new();
+    private readonly AppConfig _config = new();
 
     [Fact]
     public async Task Patch_ExactFailsWhitespaceRescues_ReportsStrategy()
@@ -314,7 +314,7 @@ public class TextMatchStrategyTests
     public void Description_RemoteAutoTier_ResolvesLarge()
     {
         // auto (null mode) + remote provider → large tier
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         config.LlmProvider.Mode = "remote";
         var tool = new ECodeEditorTool(new Mock<IFileSystem>().Object, config);
 
@@ -327,7 +327,7 @@ public class TextMatchStrategyTests
     public void Description_SmallTier_ExplicitFuzzyGuidance()
     {
         // default config: mode null + local provider → small tier
-        var tool = new ECodeEditorTool(new Mock<IFileSystem>().Object, new EAgentConfig());
+        var tool = new ECodeEditorTool(new Mock<IFileSystem>().Object, new AppConfig());
 
         Assert.Contains("Copy text exactly first; fuzzy fallback will rescue small mismatches", tool.Description);
     }
@@ -335,7 +335,7 @@ public class TextMatchStrategyTests
     [Fact]
     public void Description_LargeTier_TerseHint()
     {
-        var config = new EAgentConfig { ModelTier = new ModelTierConfig { Mode = "large" } };
+        var config = new AppConfig { ModelTier = new ModelTierConfig { Mode = "large" } };
         var tool = new ECodeEditorTool(new Mock<IFileSystem>().Object, config);
 
         Assert.Contains("Approximate matches tolerated", tool.Description);
@@ -345,7 +345,7 @@ public class TextMatchStrategyTests
     [Fact]
     public void Description_ContainsOptionalFuzzyBehaviorForSchema()
     {
-        var tool = new ECodeEditorTool(new Mock<IFileSystem>().Object, new EAgentConfig());
+        var tool = new ECodeEditorTool(new Mock<IFileSystem>().Object, new AppConfig());
         Assert.Contains("\"fuzzy\"", tool.GetParameterSchema());
     }
 

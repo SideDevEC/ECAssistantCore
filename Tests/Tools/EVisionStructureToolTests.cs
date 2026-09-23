@@ -12,7 +12,7 @@ public class EVisionStructureToolTests : IDisposable
 {
     private readonly Mock<IInferenceEngine> _engine = new();
     private readonly Mock<IPdfPageRenderer> _pdfRenderer = new();
-    private readonly EAgentConfig _config = new();
+    private readonly AppConfig _config = new();
     private readonly string _tempDir;
 
     private const string ValidVisionJson = """

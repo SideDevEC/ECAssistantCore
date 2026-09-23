@@ -68,7 +68,7 @@ public sealed class OrchestratorV1419Tests : IDisposable
         mockRunner
             .Setup(r => r.ExecuteAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult(0, "out", "", false));
-        engine.RegisterTool(new EShellAgent(mockRunner.Object, new EAgentConfig(), _tempDir));
+        engine.RegisterTool(new EShellAgent(mockRunner.Object, new AppConfig(), _tempDir));
 
         var v = verifier as RecordingVerifier ?? new RecordingVerifier();
         var orchestrator = new AgentOrchestrator(

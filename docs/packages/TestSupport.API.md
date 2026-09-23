@@ -4,9 +4,9 @@ Types: 8  |  LOC: 1512  |  ~483 tokens
 
 ---
 
-### Class: EGuiTestHarness
-> Non-interactive test harness for EGuiBase.
-Implements: EGuiBase
+### Class: GuiTestHarness
+> Non-interactive test harness for GuiBase.
+Implements: GuiBase
 Cross-package deps: ECAssistant.Core.UI
 
 ### Class: EcaTestSuite
@@ -15,7 +15,7 @@ Cross-package deps: ECAssistant.Core.Orchestration
 
 ### Class: MockEngine
 > Mock engine for testing — no real model loaded. Returns pre-queued responses.
-Implements: EAgentEngine
+Implements: AgentEngine
 Constructor:
   - MockEngine(Queue<string> responses, int maxIterations = 5, bool stopAfterFirstTool = false, string? workingDir = null, ISessionOutput? sessionOutput = null, string? workingDir = null, ISessionOutput? sessionOutput = null, bool cycleResponses = false)
 Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Session
@@ -40,5 +40,5 @@ Cross-package deps: ECAssistant.Core.Orchestration
 > Test implementation of ISessionOutput.
 Implements: ISessionOutput
 Constructor:
-  - TestSessionOutput(EGuiTestHarness gui)
+  - TestSessionOutput(GuiTestHarness gui)
 Cross-package deps: ECAssistant.Core.Session

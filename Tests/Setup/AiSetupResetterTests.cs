@@ -18,7 +18,7 @@ public class AiSetupResetterTests
         var dir = MakeTempDir();
         try
         {
-            var config = new EAgentConfig
+            var config = new AppConfig
             {
                 LlmProvider = new LlmProviderConfig { Mode = "remote", Endpoint = "http://example" }
             };
@@ -27,7 +27,7 @@ public class AiSetupResetterTests
 
             new AiSetupResetter().Reset(dir);
 
-            var reloaded = System.Text.Json.JsonSerializer.Deserialize<EAgentConfig>(
+            var reloaded = System.Text.Json.JsonSerializer.Deserialize<AppConfig>(
                 File.ReadAllText(Path.Combine(dir, "appsettings.json")));
             Assert.NotNull(reloaded);
             Assert.Null(reloaded!.LlmProviders);
@@ -51,7 +51,7 @@ public class AiSetupResetterTests
             File.WriteAllText(Path.Combine(llmRoot, "llm-server.json"), "{}");
 
             // Write appsettings with ServerRootPath pointing to our temp llmRoot
-            var config = new EAgentConfig
+            var config = new AppConfig
             {
                 LlmProvider = new LlmProviderConfig { ServerRootPath = llmRoot }
             };

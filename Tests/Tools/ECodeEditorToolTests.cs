@@ -7,7 +7,7 @@ namespace ECAssistant.Core.Tests.Tools;
 public class ECodeEditorToolTests
 {
     private readonly Mock<IFileSystem> _fileSystem = new();
-    private readonly EAgentConfig _config = new();
+    private readonly AppConfig _config = new();
 
     private ECodeEditorTool CreateTool(string workingDir = "/project")
     {

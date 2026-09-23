@@ -20,7 +20,7 @@ public class EAgentConfigTests : IDisposable
     [Fact]
     public void Constructor_Default_CreatesInstanceWithDefaults()
     {
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         Assert.NotNull(config);
         Assert.Equal(".", config.RootPath);
     }
@@ -28,7 +28,7 @@ public class EAgentConfigTests : IDisposable
     [Fact]
     public void Constructor_Default_InitializesAllSections()
     {
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         Assert.NotNull(config.Memory);
         Assert.NotNull(config.Workspace);
         Assert.NotNull(config.Tools);
@@ -46,7 +46,7 @@ public class EAgentConfigTests : IDisposable
     [Fact]
     public void GetRootPath_DefaultRootPath_ReturnsFullPath()
     {
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         var rootPath = config.GetRootPath();
         Assert.True(Path.IsPathRooted(rootPath));
         Assert.Contains("ECAssistant", rootPath);
@@ -55,7 +55,7 @@ public class EAgentConfigTests : IDisposable
     [Fact]
     public void GetRootPath_CustomRootPath_ReturnsCustomFullPath()
     {
-        var config = new EAgentConfig { RootPath = "MyCustomProject" };
+        var config = new AppConfig { RootPath = "MyCustomProject" };
         var rootPath = config.GetRootPath();
         Assert.True(Path.IsPathRooted(rootPath));
         Assert.Contains("MyCustomProject", rootPath);
@@ -64,7 +64,7 @@ public class EAgentConfigTests : IDisposable
     [Fact]
     public void GetMemoryDirectory_Default_ReturnsMemorySubdirectory()
     {
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         var memDir = config.GetMemoryDirectory();
         Assert.True(Path.IsPathRooted(memDir));
         Assert.Contains("Memory", memDir);
@@ -73,7 +73,7 @@ public class EAgentConfigTests : IDisposable
     [Fact]
     public void GetMemoryDirectory_CustomRootPath_ContainsCustomRoot()
     {
-        var config = new EAgentConfig { RootPath = "CustomRoot" };
+        var config = new AppConfig { RootPath = "CustomRoot" };
         var memDir = config.GetMemoryDirectory();
         Assert.Contains("CustomRoot", memDir);
         Assert.Contains("Memory", memDir);
@@ -82,7 +82,7 @@ public class EAgentConfigTests : IDisposable
     [Fact]
     public void GetWorkspaceDirectory_Default_ReturnsWorkspaceSubdirectory()
     {
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         var wsDir = config.GetWorkspaceDirectory();
         Assert.True(Path.IsPathRooted(wsDir));
         Assert.Contains("Workspace", wsDir);
@@ -91,7 +91,7 @@ public class EAgentConfigTests : IDisposable
     [Fact]
     public void GetWorkspaceDirectory_CustomRootPath_ContainsCustomRoot()
     {
-        var config = new EAgentConfig { RootPath = "CustomRoot" };
+        var config = new AppConfig { RootPath = "CustomRoot" };
         var wsDir = config.GetWorkspaceDirectory();
         Assert.Contains("CustomRoot", wsDir);
         Assert.Contains("Workspace", wsDir);
@@ -100,7 +100,7 @@ public class EAgentConfigTests : IDisposable
     [Fact]
     public void Save_ValidFilePath_WritesJsonFile()
     {
-        var config = new EAgentConfig { RootPath = "TestProject" };
+        var config = new AppConfig { RootPath = "TestProject" };
         var filePath = Path.Combine(_tempDir, "appsettings.json");
         config.Save(filePath);
         Assert.True(File.Exists(filePath));
@@ -116,7 +116,7 @@ public class EAgentConfigTests : IDisposable
         try
         {
             Environment.CurrentDirectory = _tempDir;
-            var config = new EAgentConfig { RootPath = "DefaultSave" };
+            var config = new AppConfig { RootPath = "DefaultSave" };
             config.Save();
             Assert.True(File.Exists(Path.Combine(_tempDir, "appsettings.json")));
         }
@@ -129,7 +129,7 @@ public class EAgentConfigTests : IDisposable
     [Fact]
     public void Save_ProducesValidJson()
     {
-        var config = new EAgentConfig { RootPath = "JsonTest" };
+        var config = new AppConfig { RootPath = "JsonTest" };
         var filePath = Path.Combine(_tempDir, "test_save.json");
         config.Save(filePath);
         var content = File.ReadAllText(filePath);
@@ -142,7 +142,7 @@ public class EAgentConfigTests : IDisposable
     [Fact]
     public void Save_Roundtrip_PreservesConfiguration()
     {
-        var config = new EAgentConfig
+        var config = new AppConfig
         {
             RootPath = "RoundtripTest",
             Memory = new MemoryConfig { DataPath = "CustomMemory", Enabled = false }
@@ -150,7 +150,7 @@ public class EAgentConfigTests : IDisposable
         var filePath = Path.Combine(_tempDir, "roundtrip.json");
         config.Save(filePath);
 
-        var loaded = System.Text.Json.JsonSerializer.Deserialize<EAgentConfig>(File.ReadAllText(filePath));
+        var loaded = System.Text.Json.JsonSerializer.Deserialize<AppConfig>(File.ReadAllText(filePath));
         Assert.NotNull(loaded);
         Assert.Equal("RoundtripTest", loaded.RootPath);
         Assert.Equal("CustomMemory", loaded.Memory.DataPath);

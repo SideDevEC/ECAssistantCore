@@ -30,7 +30,7 @@ public sealed class HarnessE2EFeatures
     private static readonly string ToolTask =
         "Call the ProbeTool with action probe, then report what it returned.";
 
-    private EAgentConfig BuildConfig() => JsonSerializer.Deserialize<EAgentConfig>(
+    private AppConfig BuildConfig() => JsonSerializer.Deserialize<AppConfig>(
         $$"""
         {
           "llm_provider": { "mode": "local", "model_id": "{{ModelId}}" },
@@ -151,7 +151,7 @@ public sealed class HarnessE2EFeatures
                 {
                     engine.RegisterTool(new global::ECAssistant.Core.Tools.Code.ECodeEditorTool(
                         new global::ECAssistant.Core.Services.FileSystemAdapter(),
-                        new global::ECAssistant.Core.Config.EAgentConfig()));
+                        new global::ECAssistant.Core.Config.AppConfig()));
                     return;
                 }
                 engine.RegisterTool(new ProbeTestTool());

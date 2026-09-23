@@ -218,7 +218,7 @@ public class ConfigIntegrationTests : IDisposable
     [Fact]
     public void EAgentConfig_SaveLoad_RoundTrip_PreservesAllValues()
     {
-        var config = new EAgentConfig
+        var config = new AppConfig
         {
             RootPath = "RoundTripProject",
             Memory = new MemoryConfig
@@ -357,7 +357,7 @@ public class ConfigIntegrationTests : IDisposable
 
         // Untouched sections keep the EMBEDDED values exactly (whatever they are today).
         // Drift-proof: compare against a fresh parse of the embedded resource itself.
-        var embedded = System.Text.Json.JsonSerializer.Deserialize<EAgentConfig>(
+        var embedded = System.Text.Json.JsonSerializer.Deserialize<AppConfig>(
             ResourceLoader.Default.LoadText("appsettings.json")!,
             new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         Assert.NotNull(embedded);

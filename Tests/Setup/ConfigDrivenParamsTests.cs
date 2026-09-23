@@ -39,7 +39,7 @@ public sealed class ConfigDrivenParamsTests : IDisposable
           "llm": { "context_size": 32768 }
         }
         """;
-        var config = JsonSerializer.Deserialize<EAgentConfig>(json);
+        var config = JsonSerializer.Deserialize<AppConfig>(json);
 
         Assert.NotNull(config);
         Assert.Equal(25, config!.Interface.MaxTurns);
@@ -77,7 +77,7 @@ public sealed class ConfigDrivenParamsTests : IDisposable
         // Previously: engine defaulted to 8192 and llm.context_size was silently
         // ignored. The context window must now follow the config.
         var json = """{"llm": {"context_size": 16384}}""";
-        var config = JsonSerializer.Deserialize<EAgentConfig>(json);
+        var config = JsonSerializer.Deserialize<AppConfig>(json);
         Assert.NotNull(config);
 
         var session = new AgentSession(

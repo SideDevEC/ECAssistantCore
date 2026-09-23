@@ -13,7 +13,7 @@ namespace ECAssistant.Core.Tools.User;
 /// default option when present, else "no answer — proceed with your best judgment",
 /// keeping the agent autonomous when nobody is watching.
 /// </summary>
-public sealed class EUserAskTool : EToolBase
+public sealed class EUserAskTool : ToolBase
 {
     private readonly ISessionOutput? _out;
 
@@ -39,7 +39,7 @@ public sealed class EUserAskTool : EToolBase
         }
         """;
 
-    public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
+    public override async Task<ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         arguments ??= new Dictionary<string, string?>();
         var question = arguments.GetValueOrDefault("question")?.Trim();
@@ -47,7 +47,7 @@ public sealed class EUserAskTool : EToolBase
         var fallback = arguments.GetValueOrDefault("default")?.Trim();
 
         if (string.IsNullOrEmpty(question))
-            return EToolResult.Failure(Name, "Missing 'question' argument.");
+            return ToolResult.Failure(Name, "Missing 'question' argument.");
 
         var options = new List<string>();
         if (!string.IsNullOrEmpty(optionsRaw))
@@ -64,12 +64,12 @@ public sealed class EUserAskTool : EToolBase
             catch (JsonException) { /* fall through to error below */ }
         }
         if (options.Count < 2 || options.Count > 4)
-            return EToolResult.Failure(Name, "Invalid 'options' — provide a JSON array of 2-4 option strings.");
+            return ToolResult.Failure(Name, "Invalid 'options' — provide a JSON array of 2-4 option strings.");
 
         if (_out == null)
         {
             // No output channel — fall back to declared default or autonomous continuation.
-            return EToolResult.Success(Name,
+            return ToolResult.Success(Name,
                 string.IsNullOrEmpty(fallback)
                     ? "No user available — proceed with your best judgment."
                     : $"No user available — proceeding with default: {fallback}");
@@ -77,10 +77,10 @@ public sealed class EUserAskTool : EToolBase
 
         var picked = await Task.Run(() => _out.RequestChoice(question, options), cancellationToken);
         if (picked.HasValue && picked.Value >= 1 && picked.Value <= options.Count)
-            return EToolResult.Success(Name, $"User chose option {picked.Value}: {options[picked.Value - 1]}");
+            return ToolResult.Success(Name, $"User chose option {picked.Value}: {options[picked.Value - 1]}");
 
         // null = nobody answered (no listener / timeout / cancel)
-        return EToolResult.Success(Name,
+        return ToolResult.Success(Name,
             string.IsNullOrEmpty(fallback)
                 ? "No answer from the user — proceed with your best judgment."
                 : $"No answer from the user — proceeding with default: {fallback}");

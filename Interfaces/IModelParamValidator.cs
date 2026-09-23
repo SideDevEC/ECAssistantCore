@@ -9,5 +9,5 @@ namespace ECAssistant.Core.Interfaces;
 public interface IModelParamValidator
 {
     ModelLoadException? Validate(string modelPath, uint contextSize);
-    ModelLoadException? Validate(EAgentConfig config, string resolvedModelPath);
+    ModelLoadException? Validate(AppConfig config, string resolvedModelPath);
 }

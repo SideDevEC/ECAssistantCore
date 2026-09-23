@@ -83,7 +83,7 @@ public sealed class ModelTierConfigTests
     [Fact]
     public void ModelTier_ParsesFromConfig()
     {
-        var config = JsonSerializer.Deserialize<EAgentConfig>(
+        var config = JsonSerializer.Deserialize<AppConfig>(
             """{"model_tier": {"mode": "small"}}""");
         Assert.NotNull(config!.ModelTier);
         Assert.Equal("small", config.ModelTier!.Mode);
@@ -93,7 +93,7 @@ public sealed class ModelTierConfigTests
     [Fact]
     public void ModelTier_Absent_IsNull()
     {
-        var config = JsonSerializer.Deserialize<EAgentConfig>("{}");
+        var config = JsonSerializer.Deserialize<AppConfig>("{}");
         Assert.Null(config!.ModelTier);
     }
 
@@ -103,18 +103,18 @@ public sealed class ModelTierConfigTests
     public void Preplanning_DefaultIsNull_AutoResolution()
     {
         // v14.12: null = auto (large models skip preplanning, small models keep it).
-        var config = JsonSerializer.Deserialize<EAgentConfig>("{}");
+        var config = JsonSerializer.Deserialize<AppConfig>("{}");
         Assert.Null(config!.Interface.Preplanning);
     }
 
     [Fact]
     public void Preplanning_ExplicitOverride_ParsesFromConfig()
     {
-        var config = JsonSerializer.Deserialize<EAgentConfig>(
+        var config = JsonSerializer.Deserialize<AppConfig>(
             """{"interface": {"preplanning": true}}""");
         Assert.True(config!.Interface.Preplanning);
 
-        var off = JsonSerializer.Deserialize<EAgentConfig>(
+        var off = JsonSerializer.Deserialize<AppConfig>(
             """{"interface": {"preplanning": false}}""");
         Assert.False(off!.Interface.Preplanning);
     }

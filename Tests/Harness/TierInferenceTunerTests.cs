@@ -56,7 +56,7 @@ public sealed class TierInferenceTunerTests
     [Fact]
     public void CreateTiered_Factory_SmallTierWireUp()
     {
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         var p = InferenceParamsFactory.Default.CreateTiered(config, isLargeTier: false);
         Assert.Equal(TierInferenceTuner.SmallTierTemperature, p.Temperature);
     }
@@ -64,7 +64,7 @@ public sealed class TierInferenceTunerTests
     [Fact]
     public void CreateTiered_Factory_LargeTierWireUp()
     {
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         var p = InferenceParamsFactory.Default.CreateTiered(config, isLargeTier: true);
         Assert.Equal(config.Sampling.Temperature, p.Temperature);
     }

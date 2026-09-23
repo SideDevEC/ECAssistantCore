@@ -13,7 +13,7 @@ namespace ECAssistant.Core.Tests.Session;
 /// </summary>
 public class EmbeddingRoutingTests
 {
-    private static EAgentConfig RemoteMainConfig() => new()
+    private static AppConfig RemoteMainConfig() => new()
     {
         LlmProvider = new LlmProviderConfig
         {
@@ -24,7 +24,7 @@ public class EmbeddingRoutingTests
         }
     };
 
-    private static EAgentConfig LocalMainConfig(int port = 48217) => new()
+    private static AppConfig LocalMainConfig(int port = 48217) => new()
     {
         LlmProvider = new LlmProviderConfig
         {
@@ -34,7 +34,7 @@ public class EmbeddingRoutingTests
         }
     };
 
-    private static SessionBuilder Builder(EAgentConfig config) =>
+    private static SessionBuilder Builder(AppConfig config) =>
         new(config, Path.GetTempPath(), Path.GetTempPath());
 
     // ── remote main + local embeddings (the combo that motivated the feature) ──
@@ -147,7 +147,7 @@ public class EmbeddingRoutingTests
             File.WriteAllText(path, """{"llm_provider":{"mode":"remote","endpoint":"https://api.example.com/v1"}}""");
             new EmbeddingSetupWriter(path).SetMode("local", modelId: "minilm");
 
-            var config = JsonSerializer.Deserialize<EAgentConfig>(File.ReadAllText(path),
+            var config = JsonSerializer.Deserialize<AppConfig>(File.ReadAllText(path),
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             Assert.NotNull(config);
             Assert.Equal("local", config.Embedding.Mode);

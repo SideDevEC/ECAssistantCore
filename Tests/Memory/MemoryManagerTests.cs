@@ -26,21 +26,21 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void Constructor_WithCustomPath_SetsDirectory()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         Assert.Equal(Path.GetFullPath(_tempDir), Path.GetFullPath(_tempDir));
     }
 
     [Fact]
     public void Constructor_WithNullPath_DefaultsToMemoryDir()
     {
-        var mgr = new EMemoryManager(null);
+        var mgr = new MemoryManager(null);
         Assert.Equal(Path.GetFullPath("Memory"), mgr.Count >= 0 ? Path.GetFullPath("Memory") : "");
     }
 
     [Fact]
     public void Load_WithNoDirectory_CreatesDirectoryAndReturnsEmpty()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         Assert.Equal(0, mgr.Count);
         Assert.True(Directory.Exists(_tempDir));
@@ -63,7 +63,7 @@ public class EMemoryManagerTests : IDisposable
         var json = System.Text.Json.JsonSerializer.Serialize(entry);
         File.WriteAllText(Path.Combine(_tempDir, "test_entry.json"), json);
 
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         Assert.Equal(1, mgr.Count);
     }
@@ -76,7 +76,7 @@ public class EMemoryManagerTests : IDisposable
         File.WriteAllText(Path.Combine(_tempDir, "empty_key.json"),
             System.Text.Json.JsonSerializer.Serialize(new ECAssistant.Core.Memory.MemoryEntry { Key = "" }));
 
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         Assert.Equal(0, mgr.Count);
     }
@@ -84,7 +84,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void AddEntry_ValidEntry_IncreasesCount()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         mgr.AddEntry("testKey", "test content", "general");
         Assert.Equal(1, mgr.Count);
@@ -93,7 +93,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void AddEntry_MultipleEntries_CountIncreases()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         mgr.AddEntry("k1", "c1");
         mgr.AddEntry("k2", "c2");
@@ -104,7 +104,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void AddEntry_WithRelatedProject_SetsProperty()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         mgr.AddEntry("key", "content", "general", "MyProject");
         var entry = mgr.Entries.First();
@@ -114,7 +114,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void AddEntry_SetsTimestamp()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         mgr.AddEntry("key", "content");
         var entry = mgr.Entries.First();
@@ -124,7 +124,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void Query_NoMemories_ReturnsNoMemoriesMessage()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         var result = mgr.Query("anything");
         Assert.Contains("No memories found", result);
@@ -133,7 +133,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void Query_WithMatchingEntries_ReturnsResults()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         mgr.AddEntry("config bug", "Fixed config loading issue", "bugs");
         var result = mgr.Query("config");
@@ -144,7 +144,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void Query_WithCategoryFilter_PrioritizesMatchingCategory()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         mgr.AddEntry("key1", "content about bugs", "bugs");
         mgr.AddEntry("key2", "content about bugs", "features");
@@ -156,7 +156,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void Query_NoMatch_ReturnsNoMemoriesForSearchTerm()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         mgr.AddEntry("key1", "content about config", "bugs");
         var result = mgr.Query("xyz_nonexistent");
@@ -166,7 +166,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void Query_MaxResultsLimit_RespectsLimit()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         for (int i = 0; i < 10; i++)
             mgr.AddEntry($"key{i}", $"content{i}", "general");
@@ -179,7 +179,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void GetContextSummary_NoMemories_ReturnsFirstTimeMessage()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         var summary = mgr.GetContextSummary();
         Assert.Contains("No prior memories", summary);
@@ -188,7 +188,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void GetContextSummary_WithMemories_ReturnsFormattedSummary()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         mgr.AddEntry("key1", "content1", "bugs");
         mgr.AddEntry("key2", "content2", "features");
@@ -201,7 +201,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void Clear_WithEntries_ClearsAll()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         mgr.AddEntry("k1", "c1");
         mgr.AddEntry("k2", "c2");
@@ -212,7 +212,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void DeleteEntry_ExistingKey_RemovesEntry()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         mgr.AddEntry("keyToDelete", "content");
         mgr.DeleteEntry("keyToDelete");
@@ -222,7 +222,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void DeleteEntry_NonExistentKey_DoesNothing()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         mgr.AddEntry("k1", "c1");
         mgr.DeleteEntry("nonexistent");
@@ -232,7 +232,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void DeleteEntry_CaseInsensitive_MatchesKey()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         mgr.AddEntry("MyKey", "content");
         mgr.DeleteEntry("mykey");
@@ -242,7 +242,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void Save_WithDirtyFlag_WritesFilesToDisk()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         mgr.AddEntry("saveKey", "saveContent", "general");
         mgr.Save();
@@ -253,7 +253,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void Save_WithoutDirtyFlag_DoesNothing()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         // No AddEntry, so _dirty is false → Save should not write anything
         mgr.Save();
@@ -264,7 +264,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void GetStats_WithEntries_ReturnsStatsWithCounts()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         mgr.AddEntry("k1", "c1", "bugs");
         mgr.AddEntry("k2", "c2", "features");
@@ -277,7 +277,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void GetStats_NoEntries_ReturnsZeroCount()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         var stats = mgr.GetStats();
         Assert.Contains("Total entries: 0", stats);
@@ -286,7 +286,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void Entries_AfterAdd_ReturnsEnumerable()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         mgr.AddEntry("k1", "c1");
         var entries = mgr.Entries.ToList();
@@ -297,7 +297,7 @@ public class EMemoryManagerTests : IDisposable
     [Fact]
     public void Dispose_SavesDirtyChanges()
     {
-        var mgr = new EMemoryManager(_tempDir);
+        var mgr = new MemoryManager(_tempDir);
         mgr.Load();
         mgr.AddEntry("disposeKey", "disposeContent");
         mgr.Dispose();

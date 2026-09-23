@@ -2,7 +2,7 @@ namespace ECAssistant.Core.Engine;
 
 /// <summary>
 /// Local mirror of server-side KV cache status for one engine session.
-/// Extracted from EAgentEngine to group related mutable state (v12 refactor).
+/// Extracted from AgentEngine to group related mutable state (v12 refactor).
 /// </summary>
 internal sealed class KvCacheState
 {

@@ -81,9 +81,9 @@ public class ModelParamValidator : IModelParamValidator
     }
 
     /// <summary>
-    /// Validate from an EAgentConfig. Convenience overload.
+    /// Validate from an AppConfig. Convenience overload.
     /// </summary>
-    public ModelLoadException? Validate(EAgentConfig config, string resolvedModelPath)
+    public ModelLoadException? Validate(AppConfig config, string resolvedModelPath)
     {
         return Validate(
             resolvedModelPath,

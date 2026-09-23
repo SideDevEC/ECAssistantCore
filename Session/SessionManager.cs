@@ -38,7 +38,7 @@ public class SessionManager : IAsyncDisposable
     /// <summary>The main session (always exists, always key "main").</summary>
     public AgentSession Main { get; private set; } = null!;
 
-    private readonly EAgentConfig _config;
+    private readonly AppConfig _config;
     private int _sessionCounter = 0;
     private readonly ILogger _logger;
     private readonly string _appRoot;
@@ -121,7 +121,7 @@ public class SessionManager : IAsyncDisposable
     /// In remote mode, just sets up the HTTP client with API key.
     /// </summary>
     public SessionManager(
-        EAgentConfig config,
+        AppConfig config,
         string resolvedModelPath,
         string workingDir,
         ILogger? logger = null,
@@ -282,7 +282,7 @@ public class SessionManager : IAsyncDisposable
     public SubAgentConfig SubAgentConfig => _subAgentConfig;
 
     /// <summary>Agent config.</summary>
-    public EAgentConfig Config => _config;
+    public AppConfig Config => _config;
 
     /// <summary>Server client (ECA-extension servers only, null for plain OpenAI backends).</summary>
     public LlmServerClient? ServerClient => _serverClient;

@@ -23,7 +23,7 @@ namespace ECAssistant.Core.Tests.Integration;
 public class HandoffIntegrationTests : IDisposable
 {
     private readonly string _tempDir;
-    private readonly EGuiTestHarness _gui;
+    private readonly GuiTestHarness _gui;
     private readonly List<MockEngine> _engines = new();
     private readonly List<AgentOrchestrator> _orchestrators = new();
 
@@ -31,7 +31,7 @@ public class HandoffIntegrationTests : IDisposable
     {
         _tempDir = Path.Combine(Path.GetTempPath(), "ECAInteg_Handoff_" + Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(_tempDir);
-        _gui = new EGuiTestHarness();
+        _gui = new GuiTestHarness();
         TestRunner.TestGui = _gui;
     }
 
@@ -225,14 +225,14 @@ public class HandoffIntegrationTests : IDisposable
 }
 
 /// <summary>Minimal mock tool used to verify the non-handoff path still works.</summary>
-public class MockProbeTool : ECAssistant.Core.Tools.EToolBase
+public class MockProbeTool : ECAssistant.Core.Tools.ToolBase
 {
     public override string Name => "EProbe";
     public override string Description => "Mock probe tool";
     public override string UsageExample => "EProbe(action=\"probe\")";
 
-    public override Task<ECAssistant.Core.Tools.EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
-        => Task.FromResult(new ECAssistant.Core.Tools.EToolResult
+    public override Task<ECAssistant.Core.Tools.ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
+        => Task.FromResult(new ECAssistant.Core.Tools.ToolResult
         {
             ToolName = Name,
             Succeeded = true,

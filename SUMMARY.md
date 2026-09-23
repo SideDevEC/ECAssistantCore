@@ -40,7 +40,7 @@ ECAssistant is a local-first AI agent framework. It runs LLM inference on-device
 - **Conversational gate before decomposition:** Skip task decomposition for simple chat questions
   - Fast path: action-verb + step-indicator heuristic (instant, zero cost) — catches ~70-80% of conversational questions
   - LLM fallback: 1-token TASK/CHAT classification (~0.15s) for ambiguous cases
-  - `IsConversationalAsync()` on EAgentEngine — StatelessExecutor with shared weights, 2-token output
+  - `IsConversationalAsync()` on AgentEngine — StatelessExecutor with shared weights, 2-token output
   - `LooksConversational()` on Orchestrator — static heuristic, no LLM needed
 - **System prompt improvement:** Teach LLM to learn from failed thinking in conversation history
   - Added guidance: review past failed tool calls, adjust approach, do not repeat failed reasoning
@@ -50,14 +50,14 @@ ECAssistant is a local-first AI agent framework. It runs LLM inference on-device
 ## v11.3 Changes (2026-08-17 — OOP compliance refactor, complete)
 
 Full OOP compliance audit and refactor — all static methods removed except factory methods on immutable data classes:
-- **Split multi-type files:** `EToolBase.cs` → `EToolBase.cs` + `EToolResult.cs`; `BackgroundTasksConfig.cs` → 3 files
-- **Removed static mutable state:** `_sForceMockMode` → protected mock-mode constructor on EAgentEngine
+- **Split multi-type files:** `ToolBase.cs` → `ToolBase.cs` + `ToolResult.cs`; `BackgroundTasksConfig.cs` → 3 files
+- **Removed static mutable state:** `_sForceMockMode` → protected mock-mode constructor on AgentEngine
 - **Deleted deprecated dead code:** `SecondaryModelLoader.cs` + `SecondaryModelConfig.cs` removed
 - **Converted static classes to instance:** `StringUtil`, `InferenceParamsFactory`, `ResourceLoader`, `AgentConfigBuilder` — now instance classes with `Default` shared instance
-- **EToolBase config helpers:** `ReadConfig<T>`, `ReadCfg<T>`, `IsToolEnabled` → protected instance methods (no more static)
+- **ToolBase config helpers:** `ReadConfig<T>`, `ReadCfg<T>`, `IsToolEnabled` → protected instance methods (no more static)
 - **AgentConfigBuilder.Update:** static → instance method with `Default` shared instance
 - **SubAgentManager:** service dependencies (IProcessRunner, IFileSystem, IHttpClient, BackgroundProcessManager) now injected via constructor
-- **EAgentEngine:** optional constructor injection for EMemoryManager, SelfCorrectionManager, ProjectContextManager, TaskPlanner
+- **AgentEngine:** optional constructor injection for MemoryManager, SelfCorrectionManager, ProjectContextManager, TaskPlanner
 - **BuildErrorParser:** extracted from EDotnetBuildTool into dedicated instance class
 - **ParallelToolExecutor:** CombineResults/FormatConsoleSummary moved from static to instance methods
 - **ProcessRunner.CommandExists:** static → instance method
@@ -79,11 +79,11 @@ Full OOP compliance audit and refactor — all static methods removed except fac
 
 - **6 architectural refactoring batches:**
   - Split 15 multi-type files → 35 individual files (one type per file)
-  - EAgentEngine implements IEngine (unsealed)
-  - Consolidated 9 duplicate ReadCfg methods into EToolBase
+  - AgentEngine implements IEngine (unsealed)
+  - Consolidated 9 duplicate ReadCfg methods into ToolBase
   - 14 config/policy/analysis models → init-only (immutable)
   - EcaCompositionRoot — central service wiring point
-  - ITerminalOutput abstraction — EGuiConsole no longer calls Console.Write directly
+  - ITerminalOutput abstraction — GuiConsole no longer calls Console.Write directly
 
 ## Project Structure
 

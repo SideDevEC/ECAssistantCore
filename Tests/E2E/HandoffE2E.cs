@@ -25,7 +25,7 @@ public sealed class HandoffE2E
     private string ModelId =>
         Environment.GetEnvironmentVariable("ECA_E2E_MODEL") ?? "qwen35-4b";
 
-    private EAgentConfig BuildConfig()
+    private AppConfig BuildConfig()
     {
         var json = $$"""
         {
@@ -35,7 +35,7 @@ public sealed class HandoffE2E
           "context_management": { "max_context_tokens": 16384 }
         }
         """;
-        return System.Text.Json.JsonSerializer.Deserialize<EAgentConfig>(json)!;
+        return System.Text.Json.JsonSerializer.Deserialize<AppConfig>(json)!;
     }
 
     private async Task<(AgentSession session, string dir)> CreateSessionAsync(string endpoint)

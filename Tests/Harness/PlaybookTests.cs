@@ -225,7 +225,7 @@ public sealed class PlaybookTests : IDisposable
         var engine = new MockEngine(workingDir: _dir);
         engine.RegisterTool(new FakeEchoTool());
         var store = new PlaybookStore(_dir + "-capture");
-        var config = JsonSerializer.Deserialize<EAgentConfig>("""{ "model_tier": { "mode": "small" } }""");
+        var config = JsonSerializer.Deserialize<AppConfig>("""{ "model_tier": { "mode": "small" } }""");
         var orchestrator = new AgentOrchestrator(engine, null, maxTurns: 5, maxFailures: 3,
             toolPolicy: AllowEchoPolicy(), config: config, playbookStore: store);
 
@@ -244,7 +244,7 @@ public sealed class PlaybookTests : IDisposable
     {
         var engine = new MockEngine(workingDir: _dir);
         var store = new PlaybookStore(_dir + "-nocapture");
-        var config = JsonSerializer.Deserialize<EAgentConfig>("{}");
+        var config = JsonSerializer.Deserialize<AppConfig>("{}");
         var orchestrator = new AgentOrchestrator(engine, null, maxTurns: 3, maxFailures: 3,
             toolPolicy: null, config: config, playbookStore: store);
 
@@ -271,13 +271,13 @@ public sealed class PlaybookTests : IDisposable
 }
 
 /// <summary>Trivial always-succeeding tool for orchestrator capture tests.</summary>
-file sealed class FakeEchoTool : EToolBase
+file sealed class FakeEchoTool : ToolBase
 {
     public override string Name => "EchoTool";
     public override string Description => "Test double that always succeeds.";
     public override string UsageExample => "EchoTool(command=\"x\")";
 
-    public override Task<EToolResult> ExecuteAsync(
+    public override Task<ToolResult> ExecuteAsync(
         Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
-        => Task.FromResult(EToolResult.Success(Name, "ok: " + (arguments.GetValueOrDefault("command") ?? "")));
+        => Task.FromResult(ToolResult.Success(Name, "ok: " + (arguments.GetValueOrDefault("command") ?? "")));
 }

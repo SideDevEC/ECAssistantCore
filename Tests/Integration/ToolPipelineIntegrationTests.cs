@@ -21,7 +21,7 @@ namespace ECAssistant.Core.Tests.Integration;
 public class ToolPipelineIntegrationTests : IDisposable
 {
     private readonly string _tempDir;
-    private readonly EGuiTestHarness _gui;
+    private readonly GuiTestHarness _gui;
     private readonly List<MockEngine> _engines = new();
     private readonly List<AgentOrchestrator> _orchestrators = new();
 
@@ -29,7 +29,7 @@ public class ToolPipelineIntegrationTests : IDisposable
     {
         _tempDir = Path.Combine(Path.GetTempPath(), "ECAInteg_Pipeline_" + Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(_tempDir);
-        _gui = new EGuiTestHarness();
+        _gui = new GuiTestHarness();
         TestRunner.TestGui = _gui;
     }
 
@@ -44,11 +44,11 @@ public class ToolPipelineIntegrationTests : IDisposable
     }
 
     /// <summary>Setup mock dependencies with common defaults.</summary>
-    private (MockEngine engine, AgentOrchestrator orchestrator, Mock<IProcessRunner> procRunner, Mock<IFileSystem> fileSystem, EAgentConfig config) CreatePipeline(int maxTurns = 10)
+    private (MockEngine engine, AgentOrchestrator orchestrator, Mock<IProcessRunner> procRunner, Mock<IFileSystem> fileSystem, AppConfig config) CreatePipeline(int maxTurns = 10)
     {
         var procRunner = new Mock<IProcessRunner>();
         var fileSystem = new Mock<IFileSystem>();
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         var logger = new Mock<ILogger>();
 
         config.AgentSettings.WorkingDirectory = _tempDir;

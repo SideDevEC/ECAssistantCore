@@ -17,9 +17,9 @@ public sealed class SubAgentManager : IDisposable
 {
     private readonly ISubAgentEngineHost _mainEngine;
     private readonly InferenceRequestParams _inferenceParams;
-    private readonly EAgentConfig _config;
+    private readonly AppConfig _config;
     private readonly ConcurrentDictionary<string, ActiveSubAgent> _activeSubAgents = new();
-    private readonly List<EAgentEngine> _childEngines = new();
+    private readonly List<AgentEngine> _childEngines = new();
     private readonly object _lock = new();
     // v10.19.2: Main working dir — sub-agent temp dirs created inside it
     private readonly string _mainWorkingDir;
@@ -54,7 +54,7 @@ public sealed class SubAgentManager : IDisposable
     public IReadOnlyDictionary<string, ActiveSubAgent> ActiveAgents => _activeSubAgents;
 
     public SubAgentManager(ISubAgentEngineHost mainEngine, string mainWorkingDir = "", ILogger? logger = null, ISessionOutput? sessionOutput = null,
-        EAgentConfig? config = null,
+        AppConfig? config = null,
         ECAssistant.Core.Interfaces.IProcessRunner? processRunner = null,
         ECAssistant.Core.Interfaces.IFileSystem? fileSystem = null,
         ECAssistant.Core.Interfaces.IHttpClient? httpClient = null,
@@ -72,7 +72,7 @@ public sealed class SubAgentManager : IDisposable
         _httpClient = httpClient ?? new Services.HttpClientAdapter();
 
         // v10.23: Config injected, not read from ~/ECAssistant/appsettings.json
-        _config = config ?? new EAgentConfig();
+        _config = config ?? new AppConfig();
         DefaultContextSize = _config.SubAgent.ContextSize;
         MaxConcurrent = _config.SubAgent.MaxConcurrent;
         DefaultMaxTurns = _config.SubAgent.MaxTurns;
@@ -201,9 +201,9 @@ public sealed class SubAgentManager : IDisposable
         return _activeSubAgents.Values.Select(a =>
         {
             var elapsed = DateTime.UtcNow - a.StartedAt;
-            // Audit fix: reflection into EAgentEngine._workingDir replaced with the
+            // Audit fix: reflection into AgentEngine._workingDir replaced with the
             // public WorkingDir surface the engine now exposes.
-            var workDir = (a.Engine as EAgentEngine)?.WorkingDir ?? "?";
+            var workDir = (a.Engine as AgentEngine)?.WorkingDir ?? "?";
             return (a.Id, a.Description, elapsed, workDir);
         }).ToList();
     }
@@ -215,7 +215,7 @@ public sealed class SubAgentManager : IDisposable
     private async Task<SubAgentResult> RunSingleAsync(SubAgentTask task, int retryAttempt)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        EAgentEngine? childEngine = null;
+        AgentEngine? childEngine = null;
         var handle = new ActiveSubAgent { Description = task.Description, TaskDef = task };
 
         try
@@ -239,7 +239,7 @@ public sealed class SubAgentManager : IDisposable
                 ?? throw new InvalidOperationException("Main engine has no inference engine — cannot spawn sub-agent."));
             var subInference = new Services.Http.HttpStreamingEngine(subClient, _config.LlmProvider.ModelId, subSessionId);
             var subKvCache = new Services.Http.RemoteKvCacheController(subClient);
-            childEngine = new EAgentEngine(
+            childEngine = new AgentEngine(
                 sessionId: subSessionId,
                 inferenceEngine: subInference,
                 kvCacheController: subKvCache,

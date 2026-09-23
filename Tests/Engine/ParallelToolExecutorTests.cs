@@ -13,12 +13,12 @@ public class ParallelToolExecutorTests
 
     private static ParallelToolExecutor CreateTestExecutor()
     {
-        // Create a mock EAgentEngine via the mock-mode constructor path
+        // Create a mock AgentEngine via the mock-mode constructor path
         var engine = new MockEngine("/tmp", cycleResponses: true);
         return new ParallelToolExecutor(
             engine,
             new ECAssistant.Core.Tools.ToolPolicy(),
-            (name, args) => Task.FromResult(EToolResult.Success(name, "mock")));
+            (name, args) => Task.FromResult(ToolResult.Success(name, "mock")));
     }
 
     private static ToolCallRequest MakeTool(string name, int index, Dictionary<string, string?>? args = null)
@@ -250,7 +250,7 @@ public class ParallelToolExecutorTests
     public async Task ExecuteAsync_SingleTool_ExecutesSuccessfully()
     {
         // We test CombineResults and FormatConsoleSummary as static methods.
-        // ExecuteAsync requires EAgentEngine, ToolPolicy, and Program.Gui which are hard to mock.
+        // ExecuteAsync requires AgentEngine, ToolPolicy, and Program.Gui which are hard to mock.
         // This is covered by the static method tests above.
         await Task.CompletedTask;
         Assert.True(true);

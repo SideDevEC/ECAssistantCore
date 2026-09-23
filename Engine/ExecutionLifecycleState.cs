@@ -5,7 +5,7 @@ namespace ECAssistant.Core.Engine;
 /// Thread-safe: the ESC flag and turn counter are touched from streaming callbacks
 /// and parallel tool execution, so they use volatile/interlocked access and the
 /// CTS is guarded by a lock.
-/// Extracted from EAgentEngine to group related mutable state (v12 refactor).
+/// Extracted from AgentEngine to group related mutable state (v12 refactor).
 /// </summary>
 public sealed class ExecutionLifecycleState
 {

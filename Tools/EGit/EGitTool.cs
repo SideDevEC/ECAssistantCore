@@ -8,7 +8,7 @@ namespace ECAssistant.Core.Tools.Git;
 /// <summary>
 /// Git Integration Tool — wraps common git operations with structured output.
 /// </summary>
-public class EGitTool : EToolBase
+public class EGitTool : ToolBase
 {
     private readonly IProcessRunner _processRunner;
     private readonly IFileSystem _fileSystem;
@@ -27,7 +27,7 @@ public class EGitTool : EToolBase
 
     public override bool IsEnabled { get; protected set; } = true;
 
-    public EGitTool(IProcessRunner processRunner, IFileSystem fileSystem, EAgentConfig config)
+    public EGitTool(IProcessRunner processRunner, IFileSystem fileSystem, AppConfig config)
     {
         _processRunner = processRunner;
         _fileSystem = fileSystem;
@@ -53,30 +53,30 @@ public class EGitTool : EToolBase
         }
         """;
 
-    public override async Task<EToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
+    public override async Task<ToolResult> ExecuteAsync(Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         var action = arguments.GetValueOrDefault("action")?.ToLower().Trim();
 
         if (string.IsNullOrEmpty(action))
-            return EToolResult.Failure(Name, "Missing 'action' argument.");
+            return ToolResult.Failure(Name, "Missing 'action' argument.");
 
         var cmd = BuildGitCommand(action, arguments);
         if (string.IsNullOrEmpty(cmd))
-            return EToolResult.Failure(Name, $"Unknown git action: {action}");
+            return ToolResult.Failure(Name, $"Unknown git action: {action}");
 
         try
         {
             var result = await _processRunner.ExecuteAsync($"git {cmd}", _workingDir, cancellationToken);
 
             if (result.ExitCode != 0 && !string.IsNullOrWhiteSpace(result.StdErr))
-                return EToolResult.Failure(Name, $"git {action} failed (exit {result.ExitCode}):\n{result.StdErr.Trim()}");
+                return ToolResult.Failure(Name, $"git {action} failed (exit {result.ExitCode}):\n{result.StdErr.Trim()}");
 
             var output = ParseGitOutput(action, result.StdOut);
-            return EToolResult.Success(Name, output);
+            return ToolResult.Success(Name, output);
         }
         catch (Exception ex)
         {
-            return EToolResult.Failure(Name, $"git error: {ex.Message}");
+            return ToolResult.Failure(Name, $"git error: {ex.Message}");
         }
     }
 

@@ -7,7 +7,7 @@ namespace ECAssistant.Core.Tests.Tools;
 public class EShellAgentTests
 {
     private readonly Mock<IProcessRunner> _processRunner = new();
-    private readonly EAgentConfig _config = new();
+    private readonly AppConfig _config = new();
 
     private EShellAgent CreateTool(string workingDir = "/tmp")
     {

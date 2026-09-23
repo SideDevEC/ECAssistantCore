@@ -81,12 +81,12 @@ public sealed class RemoteProviderSetupWriter
         return cleaned.Length > 0 ? cleaned : "remote-provider";
     }
 
-    private EAgentConfig Load()
+    private AppConfig Load()
     {
         if (!File.Exists(_appsettingsPath))
-            return new EAgentConfig();
+            return new AppConfig();
 
         var json = File.ReadAllText(_appsettingsPath);
-        return JsonSerializer.Deserialize<EAgentConfig>(json, JsonOptions) ?? new EAgentConfig();
+        return JsonSerializer.Deserialize<AppConfig>(json, JsonOptions) ?? new AppConfig();
     }
 }

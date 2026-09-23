@@ -22,7 +22,7 @@ public sealed class PostEditVerifierTests : IDisposable
     [Fact]
     public void VerificationConfig_Defaults_MatchBrief()
     {
-        var config = JsonSerializer.Deserialize<EAgentConfig>("{}");
+        var config = JsonSerializer.Deserialize<AppConfig>("{}");
         Assert.NotNull(config!.Verification);
         Assert.True(config.Verification.Enabled);
         Assert.Equal(2, config.Verification.MaxRounds);
@@ -37,7 +37,7 @@ public sealed class PostEditVerifierTests : IDisposable
         { "verification": { "enabled": false, "max_rounds": 3, "trivial_edit_max_chars": 50,
                             "build_command": "dotnet build -c Release", "test_command": "dotnet test --filter Fast" } }
         """;
-        var config = JsonSerializer.Deserialize<EAgentConfig>(json);
+        var config = JsonSerializer.Deserialize<AppConfig>(json);
         Assert.False(config!.Verification.Enabled);
         Assert.Equal(3, config.Verification.MaxRounds);
         Assert.Equal(50, config.Verification.TrivialEditMaxChars);
@@ -283,8 +283,8 @@ public sealed class PostEditVerifierTests : IDisposable
         VerificationConfig? config = null, IVerificationRunner? runner = null) =>
         new(runner ?? new StubRunner(), config ?? new VerificationConfig());
 
-    private static EAgentConfig TierConfig(string tierMode, bool isLocal) =>
-        JsonSerializer.Deserialize<EAgentConfig>($$"""
+    private static AppConfig TierConfig(string tierMode, bool isLocal) =>
+        JsonSerializer.Deserialize<AppConfig>($$"""
         {
           "llm_provider": { "mode": "{{(isLocal ? "local" : "remote")}}" },
           "model_tier": { "mode": "{{tierMode}}" }
@@ -316,13 +316,13 @@ file sealed class StubRunner : IVerificationRunner
 }
 
 /// <summary>Stand-in for ECodeEditorTool — verifies by NAME + args, so no concrete tool dependency is needed.</summary>
-file sealed class FakeCodeEditorTool : EToolBase
+file sealed class FakeCodeEditorTool : ToolBase
 {
     public override string Name => "ECodeEditor";
     public override string Description => "Test double for the code editor (write path only).";
     public override string UsageExample => "ECodeEditor(action=\"create\")";
 
-    public override Task<EToolResult> ExecuteAsync(
+    public override Task<ToolResult> ExecuteAsync(
         Dictionary<string, string?> arguments, CancellationToken cancellationToken = default)
     {
         // Unique temp name: multiple verifier tests run headless and parallel —
@@ -330,6 +330,6 @@ file sealed class FakeCodeEditorTool : EToolBase
         var path = arguments.GetValueOrDefault("file_path")
             ?? Path.Combine(Path.GetTempPath(), "fake-edit-" + Guid.NewGuid().ToString("N")[..8] + ".txt");
         File.WriteAllText(path, arguments.GetValueOrDefault("content") ?? "");
-        return Task.FromResult(EToolResult.Success(Name, "created " + path));
+        return Task.FromResult(ToolResult.Success(Name, "created " + path));
     }
 }

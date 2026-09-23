@@ -1,6 +1,6 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T13:27:31.073421+00:00
+Generated: 2026-09-23T13:46:58.293876+00:00
 Packages: 2  |  Types: 506
 
 ---
@@ -54,11 +54,14 @@ Packages: 2  |  Types: 506
 - 🟡 ActiveSubAgent  (ECAssistantCore)
 - 🟡 AgentConfig  (ECAssistantCore)
 - 🟡 AgentConfigBuilder  (ECAssistantCore)
-- 🟡 AgentOrchestrator : IAsyncDisposable  (ECAssistantCore)  deps: [EAgentEngine, ISessionOutput? sessionOutput =, int maxTurns =, int maxFailures =, ToolPolicy? toolPolicy =, ILogger? logger =, EAgentConfig? config =, IPostEditVerifier? postEditVerifier =, IPlaybookStore? playbookStore =, IPlaybookExtractor? playbookExtractor =]
-- 🟡 AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable  (ECAssistantCore)  deps: [string, string, string, string, InferenceRequestParams, string, SemaphoreSlim, SubAgentConfig? subAgentConfig =, string? label =, ILogger? logger =, EAgentConfig? config =, OpenAIClient? httpClient =, RemoteTokenizer? remoteTokenizer =, string? apiKey =, bool isLocalMode =]
+- 🟡 AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost  (ECAssistantCore)  deps: [string, IInferenceEngine, IKvCacheController, RemoteTokenizer? tokenizer =, InferenceRequestParams? inferenceParams =, uint contextSize =, string modelPath =, AppConfig? config =, string? workingDir =, ILogger? logger =, MemoryManager? memoryManager =, SelfCorrectionManager? selfCorrection =, IPlaybookStore? playbookStore =, ProjectContextManager? projectContext =, ITaskPlanner? taskPlanner =]
+- 🟡 AgentOrchestrator : IAsyncDisposable  (ECAssistantCore)  deps: [AgentEngine, ISessionOutput? sessionOutput =, int maxTurns =, int maxFailures =, ToolPolicy? toolPolicy =, ILogger? logger =, AppConfig? config =, IPostEditVerifier? postEditVerifier =, IPlaybookStore? playbookStore =, IPlaybookExtractor? playbookExtractor =]
+- 🟡 AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable  (ECAssistantCore)  deps: [string, string, string, string, InferenceRequestParams, string, SemaphoreSlim, SubAgentConfig? subAgentConfig =, string? label =, ILogger? logger =, AppConfig? config =, OpenAIClient? httpClient =, RemoteTokenizer? remoteTokenizer =, string? apiKey =, bool isLocalMode =]
 - 🟡 AiSetupResetter : IAiSetupResetter  (ECAssistantCore)
 - 🟡 AiSetupResetterTests  (ECAssistantCore)
+- 🟡 AnsiColor  (ECAssistantCore)
 - 🟡 ApiUserController  (ECAssistantCore)
+- 🟡 AppConfig  (ECAssistantCore)
 - 🟡 BackgroundProcessManager : IDisposable  (ECAssistantCore)
 - 🟡 BackgroundProcessManagerTests : IDisposable  (ECAssistantCore)
 - 🟡 BackgroundTasksConfig  (ECAssistantCore)
@@ -77,9 +80,10 @@ Packages: 2  |  Types: 506
 - 🟡 ConfigIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 ConfigLoader : IConfigLoader  (ECAssistantCore)  deps: [IFileSystem]
 - 🟡 ConfigLoaderTests  (ECAssistantCore)
-- 🟡 ConfigProvider : IConfigProvider  (ECAssistantCore)  deps: [IFileSystem, string, IFileSystem, EAgentConfig]
+- 🟡 ConfigProvider : IConfigProvider  (ECAssistantCore)  deps: [IFileSystem, string, IFileSystem, AppConfig]
 - 🟡 ConfigProviderTests  (ECAssistantCore)
 - 🟡 ConsoleSetupUi : ISetupUi  (ECAssistantCore)
+- 🟡 ContextAnalyzer : IDisposable  (ECAssistantCore)  deps: [string]
 - 🟡 ContextManagementConfig  (ECAssistantCore)
 - 🟡 ContextManager : IContextManager  (ECAssistantCore)  deps: [IInferenceEngine, IConfigProvider]
 - 🟡 ContextManagerTests  (ECAssistantCore)
@@ -97,42 +101,33 @@ Packages: 2  |  Types: 506
 - 🟡 DependencyGroupTests  (ECAssistantCore)
 - 🟡 DotnetVerificationRunner : IVerificationRunner  (ECAssistantCore)  deps: [IProcessRunner]
 - 🟣 DownloadProgress  (ECAssistantCore)  deps: [string, long, long, double, double]
-- 🟡 EAgentConfig  (ECAssistantCore)
 - 🟡 EAgentConfigTests : IDisposable  (ECAssistantCore)
-- 🟡 EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost  (ECAssistantCore)  deps: [string, IInferenceEngine, IKvCacheController, RemoteTokenizer? tokenizer =, InferenceRequestParams? inferenceParams =, uint contextSize =, string modelPath =, EAgentConfig? config =, string? workingDir =, ILogger? logger =, EMemoryManager? memoryManager =, SelfCorrectionManager? selfCorrection =, IPlaybookStore? playbookStore =, ProjectContextManager? projectContext =, ITaskPlanner? taskPlanner =]
-- 🟡 EBackgroundExecTool : EToolBase  (ECAssistantCore)  deps: [BackgroundProcessManager, IProcessRunner, IFileSystem, EAgentConfig]
+- 🟡 EBackgroundExecTool : ToolBase  (ECAssistantCore)  deps: [BackgroundProcessManager, IProcessRunner, IFileSystem, AppConfig]
 - 🟡 EBackgroundExecToolTests : IDisposable  (ECAssistantCore)
-- 🟡 ECodeEditorTool : EToolBase  (ECAssistantCore)  deps: [IFileSystem, EAgentConfig]
+- 🟡 ECodeEditorTool : ToolBase  (ECAssistantCore)  deps: [IFileSystem, AppConfig]
 - 🟡 ECodeEditorToolTests  (ECAssistantCore)
-- 🟡 EColor  (ECAssistantCore)
-- 🟡 EContextAnalyzer : IDisposable  (ECAssistantCore)  deps: [string]
 - 🟡 EContextAnalyzerTests : IDisposable  (ECAssistantCore)
-- 🟡 EDotnetBuildTool : EToolBase  (ECAssistantCore)  deps: [IProcessRunner, EAgentConfig]
+- 🟡 EDotnetBuildTool : ToolBase  (ECAssistantCore)  deps: [IProcessRunner, AppConfig]
 - 🟡 EDotnetBuildToolTests  (ECAssistantCore)
-- 🟡 EFileReaderTool : EToolBase  (ECAssistantCore)  deps: [IFileSystem, EAgentConfig]
+- 🟡 EFileReaderTool : ToolBase  (ECAssistantCore)  deps: [IFileSystem, AppConfig]
 - 🟡 EFileReaderToolTests  (ECAssistantCore)
-- 🟡 EFileResearchTool : EToolBase  (ECAssistantCore)  deps: [IFileSystem, EAgentConfig]
+- 🟡 EFileResearchTool : ToolBase  (ECAssistantCore)  deps: [IFileSystem, AppConfig]
 - 🟡 EFileResearchToolTests : IDisposable  (ECAssistantCore)
-- 🟡 EGitTool : EToolBase  (ECAssistantCore)  deps: [IProcessRunner, IFileSystem, EAgentConfig]
+- 🟡 EGitTool : ToolBase  (ECAssistantCore)  deps: [IProcessRunner, IFileSystem, AppConfig]
 - 🟡 EGitToolTests  (ECAssistantCore)
-- 🟡 EGuiBase  (ECAssistantCore)
-- 🟡 EGuiTestHarnessTests  (ECAssistantCore)
-- 🟡 EHandoffTool : EToolBase  (ECAssistantCore)  deps: [Func]
+- 🟡 EHandoffTool : ToolBase  (ECAssistantCore)  deps: [Func]
 - 🟡 EHandoffToolTests  (ECAssistantCore)
-- 🟡 EMemoryManager : IDisposable  (ECAssistantCore)  deps: [string? dataPath =]
 - 🟡 EMemoryManagerTests : IDisposable  (ECAssistantCore)
-- 🟡 EShellAgent : EToolBase  (ECAssistantCore)  deps: [IProcessRunner, EAgentConfig, string]
+- 🟡 EShellAgent : ToolBase  (ECAssistantCore)  deps: [IProcessRunner, AppConfig, string]
 - 🟡 EShellAgentTests  (ECAssistantCore)
-- 🟡 ESubAgentTool : EToolBase  (ECAssistantCore)  deps: [SubAgentManager, string]
-- 🟡 EToolBase  (ECAssistantCore)
+- 🟡 ESubAgentTool : ToolBase  (ECAssistantCore)  deps: [SubAgentManager, string]
 - 🟡 EToolBaseTests  (ECAssistantCore)
-- 🟡 EToolResult  (ECAssistantCore)
-- 🟡 EUserAskTool : EToolBase  (ECAssistantCore)  deps: [ISessionOutput]
+- 🟡 EUserAskTool : ToolBase  (ECAssistantCore)  deps: [ISessionOutput]
 - 🟡 EUserAskToolTests  (ECAssistantCore)
-- 🟡 EVisionStructureTool : EToolBase  (ECAssistantCore)  deps: [IInferenceEngine, IPdfPageRenderer, EAgentConfig]
+- 🟡 EVisionStructureTool : ToolBase  (ECAssistantCore)  deps: [IInferenceEngine, IPdfPageRenderer, AppConfig]
 - 🟡 EVisionStructureToolTests : IDisposable  (ECAssistantCore)
 - 🟡 EcaCompositionRoot  (ECAssistantCore)  deps: [string, string]
-- 🟣 EcaServiceBundle  (ECAssistantCore)  deps: [EAgentConfig, string, string, string, ILogger, BackgroundProcessManager, FileWatcherService, ISessionBuilder]
+- 🟣 EcaServiceBundle  (ECAssistantCore)  deps: [AppConfig, string, string, string, ILogger, BackgroundProcessManager, FileWatcherService, ISessionBuilder]
 - 🟡 EmbeddingConfig  (ECAssistantCore)
 - 🟡 EmbeddingRoutingTests  (ECAssistantCore)
 - 🟡 EmbeddingSetupWriter  (ECAssistantCore)  deps: [string]
@@ -162,8 +157,10 @@ Packages: 2  |  Types: 506
 - 🟡 FirstRunOrchestrator : IFirstRunOrchestrator  (ECAssistantCore)  deps: [string, ISetupUi, string, ISetupUi, Func, Func]
 - 🟡 FirstRunStatus  (ECAssistantCore)
 - 🟣 GenerationParams  (ECAssistantCore)  deps: [int, float, float, int, float]
+- 🟡 GuiBase  (ECAssistantCore)
+- 🟡 GuiTestHarnessTests  (ECAssistantCore)
 - 🟡 HandoffE2E  (ECAssistantCore)
-- 🟡 HandoffExecutor : IAsyncDisposable  (ECAssistantCore)  deps: [ISubAgentEngineHost, EAgentConfig, InferenceRequestParams, string, ILogger, ISessionOutput? sessionOutput =, IProcessRunner? processRunner =, IFileSystem? fileSystem =, BackgroundProcessManager? bgManager =]
+- 🟡 HandoffExecutor : IAsyncDisposable  (ECAssistantCore)  deps: [ISubAgentEngineHost, AppConfig, InferenceRequestParams, string, ILogger, ISessionOutput? sessionOutput =, IProcessRunner? processRunner =, IFileSystem? fileSystem =, BackgroundProcessManager? bgManager =]
 - 🟡 HandoffIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 HandoffRequestTests  (ECAssistantCore)
 - 🟡 HardwareProfile  (ECAssistantCore)
@@ -210,10 +207,11 @@ Packages: 2  |  Types: 506
 - 🟡 MemoryEntry  (ECAssistantCore)
 - 🟣 MemoryEntry  (ECAssistantCore)  deps: [string, string, float[]? Embedding =]
 - 🟡 MemoryIntegrationTests : IDisposable  (ECAssistantCore)
+- 🟡 MemoryManager : IDisposable  (ECAssistantCore)  deps: [string? dataPath =]
 - 🟡 MemoryService : IMemoryService  (ECAssistantCore)  deps: [IFileSystem, IVectorStore, IConfigProvider, IVectorEmbedder]
 - 🟡 MemoryServiceTests  (ECAssistantCore)
-- 🟡 MockProbeTool : EToolBase  (ECAssistantCore)
-- 🟡 MockSubAgentTool : EToolBase  (ECAssistantCore)
+- 🟡 MockProbeTool : ToolBase  (ECAssistantCore)
+- 🟡 MockSubAgentTool : ToolBase  (ECAssistantCore)
 - 🟡 ModelCatalogDocument  (ECAssistantCore)
 - 🟡 ModelCatalogEntry  (ECAssistantCore)
 - 🟡 ModelCatalogTests : IDisposable  (ECAssistantCore)
@@ -234,7 +232,7 @@ Packages: 2  |  Types: 506
 - 🟡 OrchestratorV1419Tests : IDisposable  (ECAssistantCore)
 - 🟡 Order  (ECAssistantCore)
 - 🟡 OutputEntry  (ECAssistantCore)
-- 🟡 ParallelToolExecutor : IParallelToolExecutor  (ECAssistantCore)  deps: [EAgentEngine, ToolPolicy, Func, Action, ISessionOutput? sessionOutput =]
+- 🟡 ParallelToolExecutor : IParallelToolExecutor  (ECAssistantCore)  deps: [AgentEngine, ToolPolicy, Func, Action, ISessionOutput? sessionOutput =]
 - 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 ParallelToolExecutorTests  (ECAssistantCore)
 - 🟡 PathExpander  (ECAssistantCore)
@@ -287,11 +285,11 @@ Packages: 2  |  Types: 506
 - 🟡 ServerInstallCoordinator : IServerInstallCoordinator  (ECAssistantCore)  deps: [string, ISetupUi]
 - 🟡 ServerLauncher  (ECAssistantCore)  deps: [LlmProviderConfig]
 - 🟡 ServerLauncherResolveTests : IDisposable  (ECAssistantCore)
-- 🟡 SessionBuilder : ISessionBuilder  (ECAssistantCore)  deps: [EAgentConfig, string, string, ILogger? logger =, BackgroundProcessManager? bgManager =]
+- 🟡 SessionBuilder : ISessionBuilder  (ECAssistantCore)  deps: [AppConfig, string, string, ILogger? logger =, BackgroundProcessManager? bgManager =]
 - 🟡 SessionDiscovery  (ECAssistantCore)
 - 🟡 SessionDiscoveryTests : IDisposable  (ECAssistantCore)
 - 🟡 SessionManagementIntegrationTests : IDisposable  (ECAssistantCore)
-- 🟡 SessionManager : IAsyncDisposable  (ECAssistantCore)  deps: [EAgentConfig, string, string, ILogger? logger =, Func, Func, LlmServerClient? serverClient =, SecureKeyStore? keyStore =, ILlmProviderRegistry? providerRegistry =, IModelParamValidator? modelParamValidator =]
+- 🟡 SessionManager : IAsyncDisposable  (ECAssistantCore)  deps: [AppConfig, string, string, ILogger? logger =, Func, Func, LlmServerClient? serverClient =, SecureKeyStore? keyStore =, ILlmProviderRegistry? providerRegistry =, IModelParamValidator? modelParamValidator =]
 - 🟡 SessionQueueTests  (ECAssistantCore)
 - 🟡 SessionVerbosityDefaultTests : IDisposable  (ECAssistantCore)
 - 🟡 SetupWizard : ISetupWizard  (ECAssistantCore)  deps: [ISetupUi]
@@ -313,7 +311,7 @@ Packages: 2  |  Types: 506
 - 🟡 SubAgentError  (ECAssistantCore)
 - 🟡 SubAgentErrorTests  (ECAssistantCore)
 - 🟡 SubAgentIntegrationTests : IDisposable  (ECAssistantCore)
-- 🟡 SubAgentManager : IDisposable  (ECAssistantCore)  deps: [ISubAgentEngineHost, string mainWorkingDir =, ILogger? logger =, ISessionOutput? sessionOutput =, EAgentConfig? config =, IProcessRunner? processRunner =, IFileSystem? fileSystem =, IHttpClient? httpClient =, BackgroundProcessManager? bgManager =]
+- 🟡 SubAgentManager : IDisposable  (ECAssistantCore)  deps: [ISubAgentEngineHost, string mainWorkingDir =, ILogger? logger =, ISessionOutput? sessionOutput =, AppConfig? config =, IProcessRunner? processRunner =, IFileSystem? fileSystem =, IHttpClient? httpClient =, BackgroundProcessManager? bgManager =]
 - 🟡 SubAgentResult  (ECAssistantCore)
 - 🟡 SubAgentResultTests  (ECAssistantCore)
 - 🟡 SubAgentTask  (ECAssistantCore)
@@ -338,6 +336,7 @@ Packages: 2  |  Types: 506
 - 🟡 TierInferenceTunerTests  (ECAssistantCore)
 - 🟡 TokenCounter  (ECAssistantCore)  deps: [RemoteTokenizer? tokenizer =]
 - 🟡 TokenCounterTests  (ECAssistantCore)
+- 🟡 ToolBase  (ECAssistantCore)
 - 🟡 ToolCallChainSubstitutionTests  (ECAssistantCore)
 - 🟡 ToolCallRequest  (ECAssistantCore)
 - 🟡 ToolCallRequestTests  (ECAssistantCore)
@@ -357,6 +356,7 @@ Packages: 2  |  Types: 506
 - 🟡 ToolPolicyTests  (ECAssistantCore)
 - 🟡 ToolRepeatTracker  (ECAssistantCore)
 - 🟡 ToolRepeatTrackerTests  (ECAssistantCore)
+- 🟡 ToolResult  (ECAssistantCore)
 - 🟡 ToolSpec  (ECAssistantCore)
 - 🟡 TranscriptIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 TranscriptMessage  (ECAssistantCore)
@@ -413,7 +413,6 @@ Packages: 2  |  Types: 506
 - 🟡 EFileReaderToolTests  (Tests)
 - 🟡 EFileResearchToolTests : IDisposable  (Tests)
 - 🟡 EGitToolTests  (Tests)
-- 🟡 EGuiTestHarnessTests  (Tests)
 - 🟡 EHandoffToolTests  (Tests)
 - 🟡 EMemoryManagerTests : IDisposable  (Tests)
 - 🟡 EShellAgentTests  (Tests)
@@ -429,6 +428,7 @@ Packages: 2  |  Types: 506
 - 🟡 FakeLlmServer : IDisposable  (Tests)
 - 🟡 FileSystemAdapterTests : IDisposable  (Tests)
 - 🟡 FirstRunDetectorTests : IDisposable  (Tests)
+- 🟡 GuiTestHarnessTests  (Tests)
 - 🟡 HandoffE2E  (Tests)
 - 🟡 HandoffIntegrationTests : IDisposable  (Tests)
 - 🟡 HandoffRequestTests  (Tests)
@@ -448,8 +448,8 @@ Packages: 2  |  Types: 506
 - 🟡 LoggerTests : IDisposable  (Tests)
 - 🟡 MemoryIntegrationTests : IDisposable  (Tests)
 - 🟡 MemoryServiceTests  (Tests)
-- 🟡 MockProbeTool : EToolBase  (Tests)
-- 🟡 MockSubAgentTool : EToolBase  (Tests)
+- 🟡 MockProbeTool : ToolBase  (Tests)
+- 🟡 MockSubAgentTool : ToolBase  (Tests)
 - 🟡 ModelCatalogTests : IDisposable  (Tests)
 - 🟡 ModelInstallerConfigTests : IDisposable  (Tests)
 - 🟡 ModelTierConfigTests  (Tests)

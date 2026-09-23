@@ -19,7 +19,7 @@ namespace ECAssistant.Core.Tests.Harness;
 /// </summary>
 public sealed class ToolDescriptionScopeTests
 {
-    private static readonly EAgentConfig Config = new();
+    private static readonly AppConfig Config = new();
 
     private static IEnumerable<(string Name, string Description)> Descriptions()
     {

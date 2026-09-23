@@ -3,7 +3,7 @@ namespace ECAssistant.Core.Setup;
 /// <summary>Default <see cref="ISetupUi"/> backed by System.Console.</summary>
 public sealed class ConsoleSetupUi : ISetupUi
 {
-    private static readonly EColor Color = new();
+    private static readonly AnsiColor Color = new();
 
     /// <inheritdoc />
     public void WriteLine(string text = "") => Console.WriteLine(text);

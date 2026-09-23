@@ -10,7 +10,7 @@ public class EBackgroundExecToolTests : IDisposable
     private readonly BackgroundProcessManager _mgr = new();
     private readonly Mock<IProcessRunner> _processRunner = new();
     private readonly Mock<IFileSystem> _fileSystem = new();
-    private readonly EAgentConfig _config = new();
+    private readonly AppConfig _config = new();
 
     private EBackgroundExecTool CreateTool()
     {

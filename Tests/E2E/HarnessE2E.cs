@@ -14,7 +14,7 @@ namespace ECAssistant.Core.Tests.E2E;
 
 /// <summary>
 /// Harness end-to-end: drives the REAL product stack (AgentSession →
-/// HttpStreamingEngine + RemoteKvCacheController → EAgentEngine → AgentOrchestrator)
+/// HttpStreamingEngine + RemoteKvCacheController → AgentEngine → AgentOrchestrator)
 /// against a REAL running ECAssistantLLM server with a real local model.
 /// Gated behind env vars so plain unit/CI runs are unaffected (ModelSmokeE2E pattern):
 ///   ECA_E2E_SERVER — required (e.g. http://localhost:48217)
@@ -30,7 +30,7 @@ public sealed class HarnessE2E
     private string ModelId =>
         Environment.GetEnvironmentVariable("ECA_E2E_MODEL") ?? "qwen35-4b";
 
-    private EAgentConfig BuildConfig()
+    private AppConfig BuildConfig()
     {
         var json = $$"""
         {
@@ -40,12 +40,12 @@ public sealed class HarnessE2E
           "context_management": { "max_context_tokens": 16384 }
         }
         """;
-        return JsonSerializer.Deserialize<EAgentConfig>(json)!;
+        return JsonSerializer.Deserialize<AppConfig>(json)!;
     }
 
     private async Task<(AgentSession session, string dir)> CreateSessionAsync(
         string endpoint,
-        Action<EAgentEngine, EAgentConfig>? configureWithConfig = null,
+        Action<AgentEngine, AppConfig>? configureWithConfig = null,
         Action<string>? prepareWorkingDir = null)
     {
         var config = BuildConfig();

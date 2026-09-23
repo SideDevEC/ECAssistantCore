@@ -30,7 +30,7 @@ public class RemoteProviderSetupWriterTests
         });
 
         var json = File.ReadAllText(path);
-        var config = JsonSerializer.Deserialize<EAgentConfig>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var config = JsonSerializer.Deserialize<AppConfig>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
         Assert.NotNull(config);
         Assert.Equal("remote", config!.LlmProvider.Mode);
@@ -57,7 +57,7 @@ public class RemoteProviderSetupWriterTests
     public void Write_OnExistingFile_PreservesOtherSections()
     {
         var path = TempPath();
-        var existing = new EAgentConfig
+        var existing = new AppConfig
         {
             RootPath = "/tmp/eca",
             Memory = new MemoryConfig { MaxEntries = 123 }
@@ -72,7 +72,7 @@ public class RemoteProviderSetupWriterTests
             ModelId = "test/model"
         });
 
-        var config = JsonSerializer.Deserialize<EAgentConfig>(File.ReadAllText(path),
+        var config = JsonSerializer.Deserialize<AppConfig>(File.ReadAllText(path),
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
         Assert.NotNull(config);

@@ -19,9 +19,9 @@ public class LoggerTests : IDisposable
         try { File.Delete(_tempLogPath); } catch { }
     }
 
-    private EGuiBase CreateMockGui()
+    private GuiBase CreateMockGui()
     {
-        var mock = new Mock<EGuiBase>();
+        var mock = new Mock<GuiBase>();
         mock.Setup(g => g.LogInternal(It.IsAny<string>()));
         return mock.Object;
     }

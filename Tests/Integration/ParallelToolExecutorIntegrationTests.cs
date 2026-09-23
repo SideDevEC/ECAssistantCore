@@ -21,7 +21,7 @@ namespace ECAssistant.Core.Tests.Integration;
 public class ParallelToolExecutorIntegrationTests : IDisposable
 {
     private readonly string _tempDir;
-    private readonly EGuiTestHarness _gui;
+    private readonly GuiTestHarness _gui;
     private readonly List<MockEngine> _engines = new();
     private readonly List<AgentOrchestrator> _orchestrators = new();
 
@@ -29,7 +29,7 @@ public class ParallelToolExecutorIntegrationTests : IDisposable
     {
         _tempDir = Path.Combine(Path.GetTempPath(), "ECAInteg_Parallel_" + Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(_tempDir);
-        _gui = new EGuiTestHarness();
+        _gui = new GuiTestHarness();
         TestRunner.TestGui = _gui;
     }
 
@@ -201,7 +201,7 @@ public class ParallelToolExecutorIntegrationTests : IDisposable
     {
         var mockProcessRunner = new Mock<IProcessRunner>();
         var mockFileSystem = new Mock<IFileSystem>();
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         config.AgentSettings.WorkingDirectory = _tempDir;
         var mockLogger = new Mock<ILogger>();
 
@@ -241,7 +241,7 @@ public class ParallelToolExecutorIntegrationTests : IDisposable
     public async Task TwoDependentTools_SameFileWriteThenRead_BothExecuteThroughOrchestrator()
     {
         var mockFileSystem = new Mock<IFileSystem>();
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         config.AgentSettings.WorkingDirectory = _tempDir;
         var mockLogger = new Mock<ILogger>();
 
@@ -277,7 +277,7 @@ public class ParallelToolExecutorIntegrationTests : IDisposable
     public async Task ParallelExecution_BatchOutput_ContainsBothToolResults()
     {
         var mockProcessRunner = new Mock<IProcessRunner>();
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         config.AgentSettings.WorkingDirectory = _tempDir;
         var mockLogger = new Mock<ILogger>();
 
@@ -314,7 +314,7 @@ public class ParallelToolExecutorIntegrationTests : IDisposable
     public async Task ParallelBatch_OneToolFails_OtherStillSucceeds()
     {
         var mockProcessRunner = new Mock<IProcessRunner>();
-        var config = new EAgentConfig();
+        var config = new AppConfig();
         config.AgentSettings.WorkingDirectory = _tempDir;
         var mockLogger = new Mock<ILogger>();
 

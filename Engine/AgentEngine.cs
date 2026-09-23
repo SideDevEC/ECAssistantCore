@@ -19,11 +19,11 @@ namespace ECAssistant.Core.Engine;
 /// server). No in-process LLamaSharp weights or context.
 /// Implements IEngine for testing/abstraction.
 /// </summary>
-public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
+public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
 {
     protected readonly string _modelPath;
     protected readonly uint _contextSize;
-    protected readonly EAgentConfig _config;
+    protected readonly AppConfig _config;
 
     /// <summary>v13: grammar-structured decision decoding enabled — local mode only
     /// (remote providers can't be grammar-constrained). Disabled permanently after
@@ -52,7 +52,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
 
      // ── Core components ──
     protected TokenCounter _tokenCounter;
-    protected EMemoryManager _memoryManager;
+    protected MemoryManager _memoryManager;
     protected ContextWindow _contextWindow;
     protected ConversationTranscript _transcript;
 
@@ -90,7 +90,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
      }
     /// <summary>v14.12: True when the active model runs the large-model (slim) profile.</summary>
     /// <summary>v14.17: tier-tuned request params — small tier gets tighter sampling.</summary>
-    private InferenceRequestParams CreateTieredParams(EAgentConfig cfg)
+    private InferenceRequestParams CreateTieredParams(AppConfig cfg)
      {
         var isLocal = cfg.LlmProvider?.IsLocal ?? true;
         return InferenceParamsFactory.Default.CreateTiered(cfg, cfg.ModelTier?.IsLargeRuntime(isLocal) ?? !isLocal);
@@ -139,7 +139,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
      }
 
      // ── Shared components (lazily created / injected) ──
-    private readonly List<EToolBase> _tools = new();
+    private readonly List<ToolBase> _tools = new();
     private readonly object _toolsLock = new();
     private SubAgentManager? _subAgentManager;
     private ECAssistant.Core.Engine.SelfCorrectionManager? _selfCorrection;
@@ -237,8 +237,8 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
 
     public ContextWindow ContextWindow => _contextWindow;
     public ConversationTranscript Transcript => _transcript;
-    public EMemoryManager Memory => _memoryManager;
-    public IReadOnlyList<EToolBase> Tools
+    public MemoryManager Memory => _memoryManager;
+    public IReadOnlyList<ToolBase> Tools
      {
         get { lock (_toolsLock) return _tools.ToArray(); }
      }
@@ -275,7 +275,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
      /// Primary constructor. Takes the HTTP transport (inference engine, KV cache
      /// controller, tokenizer) plus a session id. No in-process LLamaSharp model.
      /// </summary>
-    public EAgentEngine(
+    public AgentEngine(
         string sessionId,
         IInferenceEngine inferenceEngine,
         IKvCacheController kvCacheController,
@@ -283,10 +283,10 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         InferenceRequestParams? inferenceParams = null,
         uint contextSize = 8192,
         string modelPath = "",
-        EAgentConfig? config = null,
+        AppConfig? config = null,
         string? workingDir = null,
         ILogger? logger = null,
-        EMemoryManager? memoryManager = null,
+        MemoryManager? memoryManager = null,
         ECAssistant.Core.Engine.SelfCorrectionManager? selfCorrection = null,
         ECAssistant.Core.Playbooks.IPlaybookStore? playbookStore = null,
         ECAssistant.Core.Engine.ProjectContextManager? projectContext = null,
@@ -302,13 +302,13 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         _kvCacheController = kvCacheController;
         _tokenizer = tokenizer;
         _sessionId = sessionId;
-        _requestParams = inferenceParams ?? CreateTieredParams(config ?? new EAgentConfig());
+        _requestParams = inferenceParams ?? CreateTieredParams(config ?? new AppConfig());
         _requestParams.SessionId = sessionId;
 
         _modelPath = modelPath;
         _contextSize = contextSize;
         _kvState.ContextSize = contextSize;
-        _config = config ?? new EAgentConfig();
+        _config = config ?? new AppConfig();
         // v13b: structured decisions on BOTH paths — local via grammar envelope,
         // remote via native OpenAI function calling. Neither needs tag instructions.
         _useStructuredDecoding = true;
@@ -328,7 +328,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         if (_tokenizer != null)
             _tokenCounter.Initialize(_tokenizer);
 
-        _memoryManager = memoryManager ?? new EMemoryManager();
+        _memoryManager = memoryManager ?? new MemoryManager();
         var summarySvc = _inferenceEngine != null
              ? new SummaryService(p => _inferenceEngine.GenerateAsync(p, BuildStatelessParams(), CancellationToken.None))
              : null;
@@ -1100,7 +1100,7 @@ User: " + userRequest + "\n";
 
      // ── Tool registration + results ────────────────────────────
 
-    public void RegisterTool(EToolBase tool)
+    public void RegisterTool(ToolBase tool)
      {
         lock (_toolsLock) _tools.Add(tool);
         _out?.WriteInfo($"[Tool] Registered: {tool.Name}");
@@ -1114,7 +1114,7 @@ User: " + userRequest + "\n";
         /// </summary>
     public string RenderOutput(string toolName, string rawOutput)
          {
-        EToolBase? tool = null;
+        ToolBase? tool = null;
         lock (_toolsLock) tool = _tools.FirstOrDefault(t => t.Name.Equals(toolName, StringComparison.OrdinalIgnoreCase));
         return tool?.RenderForModel(rawOutput) ?? rawOutput;
          }

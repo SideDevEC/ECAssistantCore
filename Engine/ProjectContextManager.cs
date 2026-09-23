@@ -10,7 +10,7 @@ namespace ECAssistant.Core.Engine;
 /// 
 /// Capabilities:
 /// - Auto-scan project on startup and on file changes
-/// - Build dependency graph (from EContextAnalyzer)
+/// - Build dependency graph (from ContextAnalyzer)
 /// - Detect file relationships (using statements, references)
 /// - Track recent changes
 /// - Inject project summary into every prompt

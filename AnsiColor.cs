@@ -3,7 +3,7 @@ namespace ECAssistant.Core;
 /// <summary>
 /// ANSI color codes. Used by ConsoleUiRenderer (the UI bridge) and the setup wizard UIs.
 /// </summary>
-public class EColor
+public class AnsiColor
 {
     public string Reset      => "\x1b[0m";
     public string Bold       => "\x1b[1m";
