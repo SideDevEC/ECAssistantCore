@@ -64,10 +64,11 @@ public sealed class ContextPinner : IContextPinner
             decisions = _decisions.ToList();
             files = _fileMap.ToList();
         }
-        if (goal == null) return null;
+        if (goal == null && decisions.Count == 0 && files.Count == 0) return null;
 
         var sb = new System.Text.StringBuilder("[PINNED CONTEXT]");
-        sb.AppendLine(" goal: " + goal);
+        if (goal != null)
+            sb.AppendLine(" goal: " + goal);
         if (!isLargeTier)
         {
             foreach (var d in decisions)

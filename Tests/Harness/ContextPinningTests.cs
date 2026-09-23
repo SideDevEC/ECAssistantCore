@@ -1,5 +1,6 @@
 using ECAssistant.Core.Config;
 using ECAssistant.Core.ContextPinning;
+using ECAssistant.Core.Engine;
 using ECAssistant.Core.Interfaces;
 
 namespace ECAssistant.Core.Tests.Harness;
