@@ -165,7 +165,7 @@ public sealed class EngineTierBehaviorTests : IDisposable
         var engine = CreateEngine(BuildConfig("large", isLocal: true));
         var prompt = InvokeBuildSystemToolsPrompt(engine);
         Assert.Contains("autonomous engineer-agent", prompt);
-        Assert.Contains("Batch independent", prompt);
+        Assert.Contains("MULTIPLE tool calls", prompt);
         Assert.DoesNotContain("ONE tool call per turn", prompt);
     }
 
@@ -189,6 +189,24 @@ public sealed class EngineTierBehaviorTests : IDisposable
     {
         var p = InferenceParamsFactory.Default.Create(new AppConfig());
         Assert.Null(p.ReasoningEffort);
+    }
+
+    [Fact]
+    public void SystemPrompt_SmallTier_HasConcreteEnvelopeExamples()
+    {
+        var engine = CreateEngine(BuildConfig("small", isLocal: true));
+        var prompt = InvokeBuildSystemToolsPrompt(engine);
+        Assert.Contains("\"toolcalls\": [{\"name\"", prompt); // exact envelope example
+        Assert.Contains("NEVER output JSON as plain text", prompt);
+    }
+
+    [Fact]
+    public void SystemPrompt_MultiCallAllowedOnlyOnLargeTier()
+    {
+        var small = InvokeBuildSystemToolsPrompt(CreateEngine(BuildConfig("small", isLocal: true)));
+        var large = InvokeBuildSystemToolsPrompt(CreateEngine(BuildConfig("large", isLocal: true)));
+        Assert.DoesNotContain("MULTIPLE tool calls", small);
+        Assert.Contains("MULTIPLE tool calls", large);
     }
 
     public void Dispose()
