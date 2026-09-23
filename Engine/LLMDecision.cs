@@ -91,13 +91,4 @@ public class LLMDecision
 
       /// <summary>Is this a multi-call (parallel) decision?</summary>
     public bool IsMultiCall => ToolCalls.Count > 1;
-
-    public LLMDecision ToolCall(string name, Dictionary<string, string?> dict)
-                  => new(true, name, dict);
-
-    public LLMDecision DirectAnswer(string answer)
-                  => new(false, null, new Dictionary<string, string?>(), answer);
-
-    public LLMDecision Unknown()
-                  => new(false, null, new Dictionary<string, string?>(), null);
 }

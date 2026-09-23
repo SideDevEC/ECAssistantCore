@@ -78,4 +78,19 @@ public sealed class ToolOutputProjectorTests
         Assert.Contains(text[^100..], projected);
         Assert.Contains(StoreNote, projected);
     }
+
+    [Fact]
+    public void TinyText_HeadTailClamp_NoOverlapDuplication()
+    {
+        // v14.12.2-audit: when an oversized output is shorter than head+tail window
+        // (2400 chars), an unclamped tail would start inside the head and duplicate
+        // the overlap region. The clamp keeps the tail start past the head boundary.
+        var text = new string('a', 900) + "\nERROR: mid failure\n" + new string('z', 900);
+        var projected = ToolOutputProjector.Project(text, "[stored]");
+        var marker = "[... tail ...]";
+        var tailPart = projected[(projected.IndexOf(marker) + marker.Length)..];
+        // The error line (char ~902) is in the HEAD — the tail must start past it.
+        Assert.DoesNotContain("ERROR: mid failure", tailPart);
+        Assert.Contains("ERROR: mid failure", projected); // still visible once (head)
+    }
 }

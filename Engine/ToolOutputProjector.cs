@@ -36,7 +36,11 @@ public static class ToolOutputProjector
     {
         var head = text[..Math.Min(KeepHeadChars, text.Length)];
         var tailStart = Math.Max(0, text.Length - KeepTailChars);
-        var tail = text[tailStart..];
+        // v14.12.2-audit: tiny outputs (max_result_chars below head+tail size) would
+        // overlap head and tail and duplicate the overlap region — clamp tail start
+        // past the head boundary so the elided marker stays truthful.
+        if (tailStart < KeepHeadChars) tailStart = KeepHeadChars;
+        var tail = tailStart >= text.Length ? string.Empty : text[tailStart..];
 
         var sb = new System.Text.StringBuilder();
         sb.Append(head);
