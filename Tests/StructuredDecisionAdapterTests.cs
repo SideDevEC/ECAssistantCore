@@ -43,11 +43,17 @@ public class StructuredDecisionAdapterTests
     }
 
     [Fact]
-    public void EmptyEnvelope_FallsBackToThinkingAsAnswer()
+    public void EmptyEnvelope_DoesNotSurfaceThinkingAsAnswer()
     {
+        // v14.18 contract change (regression-fixed 2026-09-23): thinking-only
+        // envelopes must NOT be delivered as the user's answer — they bypass
+        // format-retry. Expect a null-answer decision; thinking stays in
+        // Reasoning for the post-retry best-effort path.
         var result = StructuredDecisionAdapter.ParseDecision("""{"thinking":"hmm"}""");
-        Assert.True(result.WantsDirectAnswer);
-        Assert.Equal("hmm", result.AnswerText);
+        Assert.False(result.WantsDirectAnswer);
+        Assert.Null(result.AnswerText);
+        Assert.Equal("hmm", result.Reasoning);
+        Assert.False(result.WantsToolCall);
     }
 
     [Fact]
