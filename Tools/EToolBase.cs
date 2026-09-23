@@ -95,21 +95,31 @@ public abstract class EToolBase
                     /// Override GetToolRules() to add policy constraints on top of existing examples.
                     /// The engine calls this once per tool during registration prompt injection.
                      /// </summary>
-          public string ToSystemPromptBlock()
+          public string ToSystemPromptBlock() => ToSystemPromptBlock(isLargeTier: false);
+
+                /// <summary>
+                /// v15: tier-aware prompt block (Emre, 2026-09-23). Small models need
+                /// precise, literal guidance with do-nots and worked examples; large
+                /// models need goals and constraints only. The ENGINE passes the active
+                /// tier — every registered tool's block is rendered for that tier.
+                /// Tools customize via GetToolRulesForTier/GetToolExampleForTier;
+                /// default falls back to the tier-agnostic overrides.
+                /// </summary>
+          public string ToSystemPromptBlock(bool isLargeTier)
                {
                 var sb = new System.Text.StringBuilder();
               sb.AppendLine($"## {Name}");
               sb.AppendLine($"{Description}");
 
             // Rules come before examples (enforce first, illustrate second)
-            var rules = GetToolRules();
+            var rules = GetToolRulesForTier(isLargeTier);
             if (!string.IsNullOrEmpty(rules))
                {
                 sb.AppendLine();
                 sb.Append(rules);
                }
 
-            var example = GetToolExample();
+            var example = GetToolExampleForTier(isLargeTier);
             if (!string.IsNullOrEmpty(example))
                {
                 sb.AppendLine();
@@ -120,6 +130,22 @@ public abstract class EToolBase
 
             return sb.ToString();
            }
+
+                /// <summary>
+                /// v15: tier hook for rules. Default: tier-agnostic <see cref="GetToolRules"/>.
+                /// Override to give small models stricter, more literal rules and large
+                /// models slimmer goal-oriented ones.
+                 /// </summary>
+          public virtual string GetToolRulesForTier(bool isLargeTier)
+                   => GetToolRules();
+
+                /// <summary>
+                /// v15: tier hook for examples. Default: tier-agnostic <see cref="GetToolExample"/>.
+                /// Override to give small models step-by-step worked examples and large
+                /// models compact call signatures.
+                 /// </summary>
+          public virtual string GetToolExampleForTier(bool isLargeTier)
+                   => GetToolExample();
 
     // ── v10.24: Config helpers ──
 

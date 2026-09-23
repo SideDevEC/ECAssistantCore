@@ -532,4 +532,20 @@ public class ECodeEditorTool : EToolBase
 
         return sb.ToString();
     }
+        /// <summary>v15: small tier gets exact-format guidance; large tier gets intent-level rules.</summary>
+        public override string GetToolRulesForTier(bool isLargeTier)
+        {
+            if (isLargeTier)
+            {
+                return "Rules:\n" +
+                       "- Prefer targeted edits (exact match) over full-file rewrites.\n" +
+                       "- Verify content exists before attempting replace edits.\n";
+            }
+            return "Rules:\n" +
+                   "- action=create needs BOTH file and content. action=replace needs file, old_text and new_text.\n" +
+                   "- old_text must match the file EXACTLY (copy it from earlier tool output — never invent it).\n" +
+                   "- NEVER create project files (.csproj) unless explicitly asked — a broken csproj fails every later build.\n" +
+                   "- After a failed edit, re-read the file first, then retry with corrected old_text.\n";
+        }
+
 }

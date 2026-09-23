@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 380  |  LOC: 32156  |  ~18595 tokens
+Types: 381  |  LOC: 32265  |  ~18635 tokens
 
 ---
 
@@ -687,6 +687,10 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Session
 ### Class: EToolBaseTests
 > Concrete subclass for testing EToolBase abstract members.
 Cross-package deps: ECAssistant.Core, ECAssistant.Core.Tools
+
+### Class: EToolBaseTierPromptsTests
+> v15: tier-aware tool prompt enforcement (Emre, 2026-09-23) — the abstract base
+Cross-package deps: ECAssistant.Core.Tools
 
 ### Class: EToolResult
 > Standardized tool call result that flows from any Tool back to the Agent.

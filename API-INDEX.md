@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T17:09:35.453146+00:00
-Packages: 2  |  Types: 508
+Generated: 2026-09-23T17:13:53.702047+00:00
+Packages: 2  |  Types: 510
 
 ---
 
-## ECAssistantCore (380 types, ~32156 LOC)
+## ECAssistantCore (381 types, ~32265 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -123,6 +123,7 @@ Packages: 2  |  Types: 508
 - 🟡 ESubAgentTool : EToolBase  (ECAssistantCore)  deps: [SubAgentManager, string]
 - 🟡 EToolBase  (ECAssistantCore)
 - 🟡 EToolBaseTests  (ECAssistantCore)
+- 🟡 EToolBaseTierPromptsTests  (ECAssistantCore)
 - 🟡 EToolResult  (ECAssistantCore)
 - 🟡 EUserAskTool : EToolBase  (ECAssistantCore)  deps: [ISessionOutput]
 - 🟡 EUserAskToolTests  (ECAssistantCore)
@@ -388,7 +389,7 @@ Packages: 2  |  Types: 508
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (128 types, ~15440 LOC)
+## Tests (129 types, ~15514 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -418,6 +419,7 @@ Packages: 2  |  Types: 508
 - 🟡 EMemoryManagerTests : IDisposable  (Tests)
 - 🟡 EShellAgentTests  (Tests)
 - 🟡 EToolBaseTests  (Tests)
+- 🟡 EToolBaseTierPromptsTests  (Tests)
 - 🟡 EUserAskToolTests  (Tests)
 - 🟡 EVisionStructureToolTests : IDisposable  (Tests)
 - 🟡 EmbeddingRoutingTests  (Tests)

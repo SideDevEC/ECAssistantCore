@@ -714,9 +714,12 @@ User: " + userRequest + "\n";
             sb.AppendLine();
             sb.AppendLine("## REGISTERED TOOLS");
             sb.AppendLine();
+            // v15: every tool's prompt block is rendered for the ACTIVE tier —
+            // enforced through EToolBase.ToSystemPromptBlock(isLargeTier).
+            var isLarge = IsLargeModelTier();
             foreach (var tool in _tools)
              {
-                sb.AppendLine(tool.ToSystemPromptBlock());
+                sb.AppendLine(tool.ToSystemPromptBlock(isLarge));
                 sb.AppendLine();
              }
          }

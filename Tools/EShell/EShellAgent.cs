@@ -204,6 +204,23 @@ public class EShellAgent : EToolBase
         var result = await _processRunner.ExecuteAsync(command, workingDir, cancellationToken);
         return new ShellProcessResult(result.StdOut, result.StdErr, result.ExitCode);
     }
+        /// <summary>v15: small tier gets literal do-not rules; large tier gets judgment-based guidance.</summary>
+        public override string GetToolRulesForTier(bool isLargeTier)
+        {
+            if (isLargeTier)
+            {
+                return "Rules:\n" +
+                       "- Combine related shell steps with && or ; when safe — fewer, larger calls beat many round-trips.\n" +
+                       "- Prefer targeted output (head/tail/grep) over dumping unbounded streams.\n";
+            }
+            return "Rules:\n" +
+                   "- ONE command per call. NEVER chain with && or ; — separate calls only.\n" +
+                   "- NEVER use interactive commands (vim, top, sudo). They hang the agent.\n" +
+                   "- NEVER redirect output to files the user did not ask for.\n" +
+                   "- If a command returns an error, do NOT repeat it unchanged. Fix the path/argument or report the error.\n" +
+                   "- Keep output small: use head, tail, or grep instead of printing everything.\n";
+        }
+
 }
 
 internal record ShellProcessResult(string StandardOutput, string StandardError, int ExitCode);
