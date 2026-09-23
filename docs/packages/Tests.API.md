@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 109  |  LOC: 13623  |  ~4433 tokens
+Types: 110  |  LOC: 13681  |  ~4487 tokens
 
 ---
 
@@ -368,6 +368,10 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssi
 
 ### Class: TfidfEmbedderTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
+
+### Class: TierInferenceTunerTests
+> v14.17: tier-aware inference tuning — pure logic. Small tier tightens DEFAULT
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Services
 
 ### Class: TokenCounterTests
 Cross-package deps: ECAssistant.Core.Engine

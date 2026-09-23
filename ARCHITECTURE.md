@@ -677,3 +677,17 @@ delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-dri
   local → small, remote → large). `ESubAgentTool` schema unchanged.
 - **Tests:** SubAgentBriefBuilderTests ×6 (objective passthrough, contract always
   present, tier flavoring, empty-Description fallback). Filter run: 6/6.
+
+## Addendum — v14.17.1 tier-aware inference tuning (2026-09-23)
+
+- **New:** `Services/TierInferenceTuner.cs` — pure utility. Small tier tightens
+  DEFAULT sampling only: temperature 0.3 → 0.2, repeat penalty 1.1 → 1.15
+  (counters small-model rambling/loops). Large tier untouched. Explicitly
+  customized sampling always wins (default-ness detected vs fresh SamplingConfig).
+- **Factory:** `InferenceParamsFactory.CreateTiered(config, isLargeTier)`;
+  Engine uses it at both param-creation sites (ctor + per-turn fallback).
+- **Zombie cleanup:** the wedged context-pinning run woke and rewrote the
+  committed ContextPinning design (duplicate IContextPinner in ContextPinning/ +
+  Interfaces/, duplicate config property/field, replaced matchers). Reverted to
+  the committed (verified) impl2 design; zombie-only files removed.
+- **Tests:** TierInferenceTunerTests ×7. Filter run: 59/59, build 0 errors.

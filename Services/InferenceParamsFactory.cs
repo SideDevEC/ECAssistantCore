@@ -31,6 +31,15 @@ public class InferenceParamsFactory
     }
 
     /// <summary>
+    /// v14.17: create params from config, then apply the tier profile (small tier
+    /// gets tighter sampling; large tier and customized sampling unchanged).
+    /// </summary>
+    public InferenceRequestParams CreateTiered(EAgentConfig config, bool isLargeTier)
+    {
+        return TierInferenceTuner.Apply(Create(config), isLargeTier, config?.Sampling);
+    }
+
+    /// <summary>
     /// Create InferenceRequestParams with explicit values.
     /// Used by sub-agents and secondary tasks that may override config defaults.
     /// </summary>

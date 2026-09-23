@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T08:52:28.816988+00:00
-Packages: 2  |  Types: 466
+Generated: 2026-09-23T08:56:14.784753+00:00
+Packages: 2  |  Types: 469
 
 ---
 
-## ECAssistantCore (357 types, ~29736 LOC)
+## ECAssistantCore (359 types, ~29825 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -319,6 +319,8 @@ Packages: 2  |  Types: 466
 - 🟡 TextMatchStrategyTests  (ECAssistantCore)
 - 🟡 TfidfEmbedder : IVectorEmbedder  (ECAssistantCore)
 - 🟡 TfidfEmbedderTests  (ECAssistantCore)
+- 🟡 TierInferenceTuner  (ECAssistantCore)
+- 🟡 TierInferenceTunerTests  (ECAssistantCore)
 - 🟡 TokenCounter  (ECAssistantCore)  deps: [RemoteTokenizer? tokenizer =]
 - 🟡 TokenCounterTests  (ECAssistantCore)
 - 🟡 ToolCallRequest  (ECAssistantCore)
@@ -365,7 +367,7 @@ Packages: 2  |  Types: 466
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (109 types, ~13623 LOC)
+## Tests (110 types, ~13681 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -462,6 +464,7 @@ Packages: 2  |  Types: 466
 - 🟡 Test  (Tests)
 - 🟡 TextMatchStrategyTests  (Tests)
 - 🟡 TfidfEmbedderTests  (Tests)
+- 🟡 TierInferenceTunerTests  (Tests)
 - 🟡 TokenCounterTests  (Tests)
 - 🟡 ToolCallRequestTests  (Tests)
 - 🟡 ToolDependencyAnalyzerTests  (Tests)

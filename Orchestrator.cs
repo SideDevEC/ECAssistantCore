@@ -442,6 +442,10 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                             _repeatTracker.Unrecord(BuildCallSignature(r.ToolCall.ToolName ?? "(unknown)", r.ToolCall.Args));
                     }
 
+                     // v14.16: expose batch call args to the engine pin seam (file map).
+                    foreach (var r in batchResult.Results)
+                        _engine.SetPendingToolCallArgs(r.ToolCall.Args);
+
                      // Combine all results into one output block for the LLM
                     var combinedOutput = parallelExec.CombineResults(batchResult);
                     _out?.WriteLine($"[Orchestrator] Batch output:\n{StringUtil.Default.Truncate(combinedOutput, 2000)}");
@@ -633,6 +637,8 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                         // v14.12.2: show the model's progress narration (remote path).
                         if (!string.IsNullOrEmpty(decision.Commentary))
                             _out?.WriteDim($"[Agent] {decision.Commentary}");
+                        // v14.16: expose the call's args to the engine pin seam (file map).
+                        _engine.SetPendingToolCallArgs(argsDict);
                         var result = await ExecuteTool(decision.ToolName!, argsDict);
                         var elapsedMs = (long)((DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - startMs);
 

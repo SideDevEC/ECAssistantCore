@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 357  |  LOC: 29736  |  ~16763 tokens
+Types: 359  |  LOC: 29825  |  ~16861 tokens
 
 ---
 
@@ -1447,6 +1447,14 @@ Cross-package deps: ECAssistant.Core.Interfaces
 
 ### Class: TfidfEmbedderTests
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
+
+### Class: TierInferenceTuner
+> v14.17: tier-aware inference parameter tuning. Small models need tighter
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
+
+### Class: TierInferenceTunerTests
+> v14.17: tier-aware inference tuning — pure logic. Small tier tightens DEFAULT
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Services
 
 ### Class: TokenCounter
 > Token counting via RemoteTokenizer (HTTP /eca/tokenize endpoint).

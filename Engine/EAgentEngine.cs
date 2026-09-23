@@ -89,6 +89,13 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         set => _backgroundTasks = value;
      }
     /// <summary>v14.12: True when the active model runs the large-model (slim) profile.</summary>
+    /// <summary>v14.17: tier-tuned request params — small tier gets tighter sampling.</summary>
+    private InferenceRequestParams CreateTieredParams(EAgentConfig cfg)
+     {
+        var isLocal = cfg.LlmProvider?.IsLocal ?? true;
+        return InferenceParamsFactory.Default.CreateTiered(cfg, cfg.ModelTier?.IsLargeRuntime(isLocal) ?? !isLocal);
+     }
+
     private bool IsLargeModelTier()
      {
         var isLocal = _config?.LlmProvider?.IsLocal ?? true;
@@ -285,7 +292,7 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         _kvCacheController = kvCacheController;
         _tokenizer = tokenizer;
         _sessionId = sessionId;
-        _requestParams = inferenceParams ?? InferenceParamsFactory.Default.Create(config ?? new EAgentConfig());
+        _requestParams = inferenceParams ?? CreateTieredParams(config ?? new EAgentConfig());
         _requestParams.SessionId = sessionId;
 
         _modelPath = modelPath;
@@ -1398,7 +1405,7 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                  }
                 else
                     requestParams = _config != null
-                        ? InferenceParamsFactory.Default.Create(_config)
+                        ? CreateTieredParams(_config)
                         : new InferenceRequestParams(); // no config — factory defaults
 
                 bool retriedAfterRecovery = false;
