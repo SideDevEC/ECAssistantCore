@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-22T13:35:14.507243+00:00
-Packages: 2  |  Types: 418
+Generated: 2026-09-23T07:29:44.261044+00:00
+Packages: 2  |  Types: 429
 
 ---
 
-## ECAssistantCore (319 types, ~27204 LOC)
+## ECAssistantCore (325 types, ~27817 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -94,8 +94,6 @@ Packages: 2  |  Types: 418
 - 🟡 EDecisionLoopTests  (ECAssistantCore)
 - 🟡 EDotnetBuildTool : EToolBase  (ECAssistantCore)  deps: [IProcessRunner, EAgentConfig]
 - 🟡 EDotnetBuildToolTests  (ECAssistantCore)
-- 🟡 EFileAnalyzer : EToolBase  (ECAssistantCore)  deps: [string]
-- 🟡 EFileAnalyzerTests : IDisposable  (ECAssistantCore)
 - 🟡 EFileReaderTool : EToolBase  (ECAssistantCore)  deps: [IFileSystem, EAgentConfig]
 - 🟡 EFileReaderToolTests  (ECAssistantCore)
 - 🟡 EFileResearchTool : EToolBase  (ECAssistantCore)  deps: [IFileSystem, EAgentConfig]
@@ -123,6 +121,7 @@ Packages: 2  |  Types: 418
 - 🟡 EmbeddingSetupWriter  (ECAssistantCore)  deps: [string]
 - 🟡 EndpointNormalizer  (ECAssistantCore)
 - 🟡 EndpointNormalizerTests  (ECAssistantCore)
+- 🟡 EngineTierBehaviorTests : IDisposable  (ECAssistantCore)
 - 🟡 ExecutionLifecycleState  (ECAssistantCore)
 - 🟡 ExecutionPlan  (ECAssistantCore)
 - 🟡 ExecutionState  (ECAssistantCore)
@@ -147,6 +146,7 @@ Packages: 2  |  Types: 418
 - 🟣 GenerationParams  (ECAssistantCore)  deps: [int, float, float, int, float]
 - 🟡 HardwareProfile  (ECAssistantCore)
 - 🟡 HardwareProfileTests  (ECAssistantCore)
+- 🟡 HarnessE2E  (ECAssistantCore)
 - 🟡 HarnessOptimizationTests : IDisposable  (ECAssistantCore)
 - 🟡 HomeController  (ECAssistantCore)
 - 🟡 HttpClientAdapter : IHttpClient, IDisposable  (ECAssistantCore)
@@ -170,7 +170,7 @@ Packages: 2  |  Types: 418
 - 🟡 InterfaceConfig  (ECAssistantCore)
 - 🟡 JsonEnvelopeFallbackTests  (ECAssistantCore)
 - 🟡 KvCacheStatus  (ECAssistantCore)
-- 🟡 LLMDecision  (ECAssistantCore)  deps: [bool, string, Dictionary, string? answerText =, string? reasoning =, List, string? reasoning =]
+- 🟡 LLMDecision  (ECAssistantCore)  deps: [bool, string, Dictionary, string? answerText =, string? reasoning =, List, string? reasoning =, string? commentary =]
 - 🟡 LlmConfig  (ECAssistantCore)
 - 🟡 LlmProviderConfig  (ECAssistantCore)
 - 🟡 LlmProviderRegistry : ILlmProviderRegistry  (ECAssistantCore)  deps: [MultiLlmProvidersConfig, ILogger? logger =, ISecureKeyStore? keyStore =]
@@ -194,6 +194,8 @@ Packages: 2  |  Types: 418
 - 🟡 ModelInstallerService  (ECAssistantCore)  deps: [HttpClient, string, string, string? appsettingsPath =]
 - 🟡 ModelLoadException : Exception  (ECAssistantCore)  deps: [ModelLoadPhase, string, int, uint, string, Exception? inner =]
 - 🟡 ModelParamValidator : IModelParamValidator  (ECAssistantCore)  deps: [ILogger? logger =]
+- 🟡 ModelTierConfig  (ECAssistantCore)
+- 🟡 ModelTierConfigTests  (ECAssistantCore)
 - 🟡 MultiLlmProvidersConfig  (ECAssistantCore)
 - 🟡 MyTests  (ECAssistantCore)
 - 🟡 NativeToolCallsAdapterTests  (ECAssistantCore)
@@ -258,6 +260,8 @@ Packages: 2  |  Types: 418
 - 🟡 SipsPdfPageRenderer : IPdfPageRenderer  (ECAssistantCore)  deps: [IProcessRunner]
 - 🟡 SseParser  (ECAssistantCore)
 - 🟡 StartupTimeoutDefaultsTests  (ECAssistantCore)
+- 🟡 SteeringQueue  (ECAssistantCore)
+- 🟡 SteeringQueueTests  (ECAssistantCore)
 - 🟡 StepMapper : IStepMapper  (ECAssistantCore)  deps: [IEngineToolContext, ILogger? logger =]
 - 🟡 StepMapperTests  (ECAssistantCore)
 - 🟡 StringUtil  (ECAssistantCore)
@@ -278,7 +282,6 @@ Packages: 2  |  Types: 418
 - 🟡 SummaryService  (ECAssistantCore)  deps: [Func, Func]
 - 🟡 SummaryServiceTests  (ECAssistantCore)
 - 🟡 SupportsVisionTests  (ECAssistantCore)
-- 🟡 SystemPromptBuilder  (ECAssistantCore)
 - 🟡 SystemToolConfigEntry  (ECAssistantCore)
 - 🟡 TaskPlanner : ITaskPlanner  (ECAssistantCore)  deps: [ILogger? logger =]
 - 🟡 TaskPlannerTests  (ECAssistantCore)
@@ -295,11 +298,14 @@ Packages: 2  |  Types: 418
 - 🟡 ToolDependencyAnalyzer  (ECAssistantCore)
 - 🟡 ToolDependencyAnalyzerTests  (ECAssistantCore)
 - 🟡 ToolOutputLimitsConfig  (ECAssistantCore)
+- 🟡 ToolOutputProjector  (ECAssistantCore)
+- 🟡 ToolOutputProjectorTests  (ECAssistantCore)
 - 🟡 ToolPermission  (ECAssistantCore)
 - 🟡 ToolPermissionConfigEntry  (ECAssistantCore)
 - 🟡 ToolPipelineIntegrationTests : IDisposable  (ECAssistantCore)
 - 🟡 ToolPolicy  (ECAssistantCore)
 - 🟡 ToolPolicyDecision  (ECAssistantCore)
+- 🟡 ToolPolicySessionApprovalTests  (ECAssistantCore)
 - 🟡 ToolPolicyTests  (ECAssistantCore)
 - 🟡 ToolRepeatTracker  (ECAssistantCore)
 - 🟡 ToolRepeatTrackerTests  (ECAssistantCore)
@@ -327,7 +333,7 @@ Packages: 2  |  Types: 418
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (99 types, ~12309 LOC)
+## Tests (104 types, ~12675 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -348,7 +354,6 @@ Packages: 2  |  Types: 418
 - 🟡 EContextAnalyzerTests : IDisposable  (Tests)
 - 🟡 EDecisionLoopTests  (Tests)
 - 🟡 EDotnetBuildToolTests  (Tests)
-- 🟡 EFileAnalyzerTests : IDisposable  (Tests)
 - 🟡 EFileReaderToolTests  (Tests)
 - 🟡 EFileResearchToolTests : IDisposable  (Tests)
 - 🟡 EGitToolTests  (Tests)
@@ -360,6 +365,7 @@ Packages: 2  |  Types: 418
 - 🟡 EVisionStructureToolTests : IDisposable  (Tests)
 - 🟡 EmbeddingRoutingTests  (Tests)
 - 🟡 EndpointNormalizerTests  (Tests)
+- 🟡 EngineTierBehaviorTests : IDisposable  (Tests)
 - 🟡 FailureAnalysisTests  (Tests)
 - 🟡 FailureEntryTests  (Tests)
 - 🟡 FailurePatternTests  (Tests)
@@ -367,6 +373,7 @@ Packages: 2  |  Types: 418
 - 🟡 FileSystemAdapterTests : IDisposable  (Tests)
 - 🟡 FirstRunDetectorTests : IDisposable  (Tests)
 - 🟡 HardwareProfileTests  (Tests)
+- 🟡 HarnessE2E  (Tests)
 - 🟡 HarnessOptimizationTests : IDisposable  (Tests)
 - 🟡 HomeController  (Tests)
 - 🟡 HttpClientAdapterTests : IDisposable  (Tests)
@@ -382,6 +389,7 @@ Packages: 2  |  Types: 418
 - 🟡 MockSubAgentTool : EToolBase  (Tests)
 - 🟡 ModelCatalogTests : IDisposable  (Tests)
 - 🟡 ModelInstallerConfigTests : IDisposable  (Tests)
+- 🟡 ModelTierConfigTests  (Tests)
 - 🟡 MyTests  (Tests)
 - 🟡 NativeToolCallsAdapterTests  (Tests)
 - 🟡 OrchestratorIntegrationTests : IDisposable  (Tests)
@@ -403,6 +411,7 @@ Packages: 2  |  Types: 418
 - 🟡 SessionManagementIntegrationTests : IDisposable  (Tests)
 - 🟡 SessionQueueTests  (Tests)
 - 🟡 StartupTimeoutDefaultsTests  (Tests)
+- 🟡 SteeringQueueTests  (Tests)
 - 🟡 StepMapperTests  (Tests)
 - 🟡 StructuredDecisionAdapterTests  (Tests)
 - 🟡 StructuredFallbackResilienceTests  (Tests)
@@ -419,7 +428,9 @@ Packages: 2  |  Types: 418
 - 🟡 TokenCounterTests  (Tests)
 - 🟡 ToolCallRequestTests  (Tests)
 - 🟡 ToolDependencyAnalyzerTests  (Tests)
+- 🟡 ToolOutputProjectorTests  (Tests)
 - 🟡 ToolPipelineIntegrationTests : IDisposable  (Tests)
+- 🟡 ToolPolicySessionApprovalTests  (Tests)
 - 🟡 ToolPolicyTests  (Tests)
 - 🟡 ToolRepeatTrackerTests  (Tests)
 - 🟡 TranscriptIntegrationTests : IDisposable  (Tests)

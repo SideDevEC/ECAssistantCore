@@ -1073,7 +1073,6 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
 
     private const int MaxToolOutputDefault = 4000;
     private const int MaxToolOutputCode = 8000;
-    private const int MaxToolOutputSearch = 6000;
     private const int MaxStoredOutputsConst = 20;
 
     private readonly Dictionary<string, string> _toolOutputStore = new();
@@ -1099,7 +1098,6 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
             {
                 "ecodeeditor" => MaxToolOutputCode,
                 "efileresearchtool" => MaxToolOutputCode,
-                "ewebsearch" => MaxToolOutputSearch,
                 _ => limits.MaxResultChars > 0 ? limits.MaxResultChars : MaxToolOutputDefault
             };
         }
@@ -1107,7 +1105,6 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
         {
             "ecodeeditor" => MaxToolOutputCode,
             "efileresearchtool" => MaxToolOutputCode,
-            "ewebsearch" => MaxToolOutputSearch,
             _ => limits.MaxResultChars > 0 ? limits.MaxResultChars : MaxToolOutputDefault
         };
 

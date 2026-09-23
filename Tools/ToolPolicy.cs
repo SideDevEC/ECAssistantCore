@@ -20,7 +20,6 @@ public class ToolPolicy
         // ── Read-only tools: no approval needed ──
         // IMPORTANT: names must match the tool's `Name` property exactly.
         SetPermission("EFileResearchTool", approvalRequired: false, "Read-only research");
-        SetPermission("EFileAnalyzer", approvalRequired: false, "Read-only analysis");
         SetPermission("EFileReader", approvalRequired: false, "Read-only file access");
         SetPermission("EDotnetBuild", approvalRequired: false, "Build only — no side effects");
         SetPermission("ESubAgent", approvalRequired: false, "Sub-agent orchestration");

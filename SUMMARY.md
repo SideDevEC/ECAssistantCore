@@ -9,7 +9,7 @@
 
 ## What It Is
 
-ECAssistant is a local-first AI agent framework. It runs LLM inference on-device via LLamaSharp with multi-session orchestration, sub-agents, vector memory, self-correction, 12 built-in tools, and a full TUI — no cloud, no API keys.
+ECAssistant is a local-first AI agent framework. It runs LLM inference on-device via LLamaSharp with multi-session orchestration, sub-agents, vector memory, self-correction, 10 built-in tools, and a full TUI — no cloud, no API keys.
 
 ## 2026-09-18 — Core/LLM Boundary + Process Backend Support
 
@@ -54,7 +54,6 @@ Full OOP compliance audit and refactor — all static methods removed except fac
 - **Removed static mutable state:** `_sForceMockMode` → protected mock-mode constructor on EAgentEngine
 - **Deleted deprecated dead code:** `SecondaryModelLoader.cs` + `SecondaryModelConfig.cs` removed
 - **Converted static classes to instance:** `StringUtil`, `InferenceParamsFactory`, `ResourceLoader`, `AgentConfigBuilder` — now instance classes with `Default` shared instance
-- **SystemPromptBuilder:** private static methods → instance methods
 - **EToolBase config helpers:** `ReadConfig<T>`, `ReadCfg<T>`, `IsToolEnabled` → protected instance methods (no more static)
 - **AgentConfigBuilder.Update:** static → instance method with `Default` shared instance
 - **SubAgentManager:** service dependencies (IProcessRunner, IFileSystem, IHttpClient, BackgroundProcessManager) now injected via constructor
@@ -116,7 +115,7 @@ TestModelLoad/       # Standalone model load test (outside project)
 - **PrefixCachedExtractor:** KV cache reuse for long-lived extraction tasks (v11.5)
 - **Vector memory:** TF-IDF embeddings + in-memory vector store
 - **Self-correction:** Failure patterns, file snapshots, rollback
-- **12 built-in tools:** Shell, FileEditor, FileReader, FileResearch, Git, DotnetBuild, WebSearch, WebFetch, BackgroundExec, SubAgent, CodeEditor, FileAnalyzer
+- **10 built-in tools:** Shell, FileEditor, FileReader, FileResearch, Git, DotnetBuild, WebSearch, WebFetch, BackgroundExec, SubAgent, CodeEditor, FileAnalyzer
 - **Tool policy:** Permission levels, approval patterns
 - **Context management:** Summary-and-shift strategy with configurable thresholds
 - **Composition root:** `EcaCompositionRoot.Build()` returns wired `EcaServiceBundle`

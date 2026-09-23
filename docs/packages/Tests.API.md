@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 99  |  LOC: 12309  |  ~3863 tokens
+Types: 104  |  LOC: 12675  |  ~4128 tokens
 
 ---
 
@@ -71,10 +71,6 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, Moq
 ### Class: EDotnetBuildToolTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Build
 
-### Class: EFileAnalyzerTests
-Implements: IDisposable
-Cross-package deps: ECAssistant.Core, ECAssistant.Core.Tools.Example
-
 ### Class: EFileReaderToolTests
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools.Reader
 
@@ -116,6 +112,11 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.
 > Tests for base-URL normalization (strip trailing "/v1") and the remote
 Cross-package deps: ECAssistant.Core.Setup, ECAssistant.Core.Transport
 
+### Class: EngineTierBehaviorTests
+> v14.12: model-tier-adaptive behavior tests at the ENGINE level — verifies the
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools, ECAssistant.TestSupport
+
 ### Class: FailureAnalysisTests
 Cross-package deps: ECAssistant.Core.Engine
 
@@ -142,6 +143,10 @@ Cross-package deps: ECAssistant.Core.Setup
 ### Class: HardwareProfileTests
 > HardwareProfile tuning rules: GPU layers / context / batch adapt to the machine.
 Cross-package deps: ECAssistant.Core.Setup, Xunit
+
+### Class: HarnessE2E
+> Harness end-to-end: drives the REAL product stack (AgentSession →
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Session, ECAssistant.Core.Transport, ECAssistant.Core.Tools, ECAssistant.TestSupport
 
 ### Class: HarnessOptimizationTests
 > Tests for the 2026-09-21 harness optimizations (P1-P6): tool-result truncation
@@ -206,6 +211,10 @@ Cross-package deps: ECAssistant.Core.Setup, Xunit
 > Config merge behaviour — mmproj wiring, id replacement, config preservation.
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Setup, Xunit
+
+### Class: ModelTierConfigTests
+> v14.12: model-tier profile tests — IsLargeRuntime resolution (small/large/auto),
+Cross-package deps: ECAssistant.Core.Config
 
 ### Class: MyTests
 Cross-package deps: ECAssistant.Core.Analysis
@@ -290,6 +299,10 @@ Cross-package deps: ECAssistant.Core.Session
 > v12.8 regression: the installer must detect models already on disk so
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup, Xunit
 
+### Class: SteeringQueueTests
+> v14.12.2: mid-run steering seam — single pending slot, newest wins, drained once.
+Cross-package deps: ECAssistant.Core.Engine
+
 ### Class: StepMapperTests
 Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools
 
@@ -343,10 +356,17 @@ Cross-package deps: ECAssistant.Core.Engine
 ### Class: ToolDependencyAnalyzerTests
 Cross-package deps: ECAssistant.Core.Engine
 
+### Class: ToolOutputProjectorTests
+> v14.12.2: curated tool-output projection — key lines + head/tail instead of a
+Cross-package deps: ECAssistant.Core.Engine
+
 ### Class: ToolPipelineIntegrationTests
 > Integration tests for tools working through the full pipeline:
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core, ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.TestSupport, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Reader, ECAssistant.Core.UI
+
+### Class: ToolPolicySessionApprovalTests
+Cross-package deps: Xunit, ECAssistant.Core.Tools
 
 ### Class: ToolPolicyTests
 Cross-package deps: ECAssistant.Core.Tools

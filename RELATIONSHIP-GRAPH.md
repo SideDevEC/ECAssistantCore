@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-22T13:35:14.507881+00:00
-Edges: 77  |  Packages: 2
+Generated: 2026-09-23T07:29:44.261696+00:00
+Edges: 76  |  Packages: 2
 
 ---
 
@@ -31,7 +31,6 @@ Edges: 77  |  Packages: 2
 - ECodeEditorTool ──uses──► IFileSystem (ECAssistantCore)
 - EDotnetBuildTool ──implements──► EToolBase (ECAssistantCore)
 - EDotnetBuildTool ──uses──► IProcessRunner (ECAssistantCore)
-- EFileAnalyzer ──implements──► EToolBase (ECAssistantCore)
 - EFileReaderTool ──implements──► EToolBase (ECAssistantCore)
 - EFileReaderTool ──uses──► IFileSystem (ECAssistantCore)
 - EFileResearchTool ──implements──► EToolBase (ECAssistantCore)

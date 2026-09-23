@@ -37,8 +37,7 @@ session.AddListener(myListener);          // implements IOutputListener
 await services.SessionBuilder.BuildAsync(session, externalTools: null);
 
 // Run the agent — it plans, calls tools, and streams its answer
-var loop = new EDecisionLoop(session.Engine, session);
-await loop.ExecuteInteractiveLoop("Summarize the docs in this folder");
+var result = await session.Orchestrator.ExecuteMultiStep("Summarize the docs in this folder");
 ```
 
 **A complete, runnable wiring example lives in [ECAssistantConsole](https://github.com/SideDevEC/ECAssistantConsole/blob/main/ConsoleApplication.cs).**
@@ -48,7 +47,7 @@ await loop.ExecuteInteractiveLoop("Summarize the docs in this folder");
 | Capability | What it means for your app |
 |---|---|
 | **Agent engine** | Multi-session orchestration, sub-agents, self-correction, task planning |
-| **11 built-in tools** | Shell, file I/O, code editing, git, dotnet, sub-agents, vision structure — permission-gated (approve once / always this session / deny — session-scoped, never persisted) |
+| **10 built-in tools** | Shell, file I/O, code editing, git, dotnet, sub-agents, vision structure — permission-gated (approve once / always this session / deny — session-scoped, never persisted) |
 | **Custom tools** | Implement one interface, register it. That's the whole API. |
 | **Memory** | Vector memory (embeddings) + daily notes + curated long-term memory |
 | **Local or remote LLM** | GGUF via the bundled [LLM server](https://github.com/SideDevEC/ECAssistantLLM), or any OpenAI-compatible endpoint — identical code path |

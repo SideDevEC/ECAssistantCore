@@ -24,11 +24,11 @@ namespace ECAssistant.Core.Tests.E2E;
 /// </summary>
 public sealed class HarnessE2E
 {
-    private static string? ServerUrl => Environment.GetEnvironmentVariable("ECA_E2E_SERVER");
-    private static string ModelId =>
+    private string? ServerUrl => Environment.GetEnvironmentVariable("ECA_E2E_SERVER");
+    private string ModelId =>
         Environment.GetEnvironmentVariable("ECA_E2E_MODEL") ?? "qwen35-4b";
 
-    private static EAgentConfig BuildConfig()
+    private EAgentConfig BuildConfig()
     {
         var json = $$"""
         {
@@ -41,7 +41,7 @@ public sealed class HarnessE2E
         return JsonSerializer.Deserialize<EAgentConfig>(json)!;
     }
 
-    private static async Task<(AgentSession session, string dir)> CreateSessionAsync(string endpoint)
+    private async Task<(AgentSession session, string dir)> CreateSessionAsync(string endpoint)
     {
         var config = BuildConfig();
         var factory = new HarnessE2ESessionFactory();
