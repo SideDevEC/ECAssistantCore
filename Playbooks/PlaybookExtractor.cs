@@ -40,9 +40,18 @@ public sealed class PlaybookExtractor : IPlaybookExtractor
         var oneLine = goal.Replace("\r", " ").Replace("\n", " ").Trim();
         // v14.19: first sentence only — prompts often append tool-call instructions
         // ("Make EXACTLY this tool call: ...") that would otherwise become the title.
-        var sentenceEnd = oneLine.IndexOfAny(['.', '!', '?']);
-        if (sentenceEnd > 10 && sentenceEnd < oneLine.Length - 1)
-            oneLine = oneLine[..(sentenceEnd + 1)];
+        // A period inside a token ("note.txt", version numbers) is NOT a sentence
+        // boundary: the terminator must be followed by whitespace or end-of-string.
+        for (var i = 10; i < oneLine.Length; i++)
+        {
+            var c = oneLine[i];
+            if (c != '.' && c != '!' && c != '?') continue;
+            if (i == oneLine.Length - 1 || char.IsWhiteSpace(oneLine[i + 1]))
+            {
+                oneLine = oneLine[..(i + 1)];
+                break;
+            }
+        }
         return oneLine.Length <= 80 ? oneLine : oneLine[..80] + "…";
     }
 
