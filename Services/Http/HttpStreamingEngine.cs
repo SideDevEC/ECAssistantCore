@@ -253,6 +253,7 @@ public sealed class HttpStreamingEngine : IInferenceEngine
             repeat_penalty = parameters.RepeatPenalty,
             session_id = parameters.SessionId ?? _defaultSessionId,
             tool_names = parameters.ToolNames,
+            reasoning_effort = parameters.ReasoningEffort,
         };
         return JsonSerializer.Serialize(req, JsonOptions);
     }
@@ -280,7 +281,8 @@ public sealed class HttpStreamingEngine : IInferenceEngine
             repeat_penalty = parameters.RepeatPenalty,
             session_id = parameters.SessionId ?? _defaultSessionId,
             stop = parameters.Stop,
-            grammar = parameters.Grammar
+            grammar = parameters.Grammar,
+            reasoning_effort = parameters.ReasoningEffort,
         };
 
         return JsonSerializer.Serialize(req, JsonOptions);

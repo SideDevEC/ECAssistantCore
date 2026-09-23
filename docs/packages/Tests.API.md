@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 128  |  LOC: 15416  |  ~5743 tokens
+Types: 128  |  LOC: 15440  |  ~5750 tokens
 
 ---
 
@@ -124,7 +124,7 @@ Cross-package deps: ECAssistant.Core.Setup, ECAssistant.Core.Transport
 ### Class: EngineTierBehaviorTests
 > v14.12: model-tier-adaptive behavior tests at the ENGINE level — verifies the
 Implements: IDisposable
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools, ECAssistant.TestSupport
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Services, ECAssistant.Core.Tools, ECAssistant.TestSupport
 
 ### Class: FailureAnalysisTests
 Cross-package deps: ECAssistant.Core.Engine

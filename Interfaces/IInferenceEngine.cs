@@ -72,6 +72,13 @@ public sealed class InferenceRequestParams
     public string? Grammar { get; set; }
 
     /// <summary>
+    /// v15: reasoning effort hint for reasoning-capable models (off/low/medium/high).
+    /// Sent as `reasoning_effort` on remote OpenAI-compatible requests; local servers
+    /// and non-supporting providers ignore it. Null = not set (provider default).
+    /// </summary>
+    public string? ReasoningEffort { get; set; }
+
+    /// <summary>
     /// v13b: tool specs for remote native function calling (OpenAI `tools` parameter).
     /// Null/empty on local mode — the local server enforces the decision grammar instead.
     /// </summary>

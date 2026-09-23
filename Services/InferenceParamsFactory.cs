@@ -26,6 +26,7 @@ public class InferenceParamsFactory
             RepeatPenalty = config.Sampling.RepeatPenalty,
             Stop = config.Inference.AntiPrompts,
             ModelId = config.LlmProvider.ModelId,
+            ReasoningEffort = config.LlmProvider.ReasoningEffort,
             Stream = true
         };
     }

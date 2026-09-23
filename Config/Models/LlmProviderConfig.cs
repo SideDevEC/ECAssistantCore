@@ -58,6 +58,14 @@ public sealed class LlmProviderConfig
     public string? ApiKey { get; set; } = null;
 
     /// <summary>
+    /// v15: reasoning effort for reasoning-capable models — off | low | medium | high.
+    /// Like OpenAI's reasoning_effort. Only sent to the model backend; small/large
+    /// tier-independent (user config decides). Null = provider default.
+    /// </summary>
+    [JsonPropertyName("reasoning_effort")]
+    public string? ReasoningEffort { get; set; } = null;
+
+    /// <summary>
     /// Model ID for chat completions.
     /// Local: must match a model in llm-server.json (e.g. "main")
     /// Remote: model name from provider (e.g. "gpt-4o", "deepseek-chat")

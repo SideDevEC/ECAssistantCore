@@ -3,6 +3,7 @@ using System.Text.Json;
 using ECAssistant.Core.Config;
 using ECAssistant.Core.Engine;
 using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Services;
 using ECAssistant.Core.Tools;
 using ECAssistant.TestSupport;
 
@@ -61,14 +62,6 @@ public sealed class EngineTierBehaviorTests : IDisposable
         return (string)m.Invoke(engine, new object[] { "continue" })!;
     }
 
-    private static int InvokeApplyEnvelopeBudget(int configured, bool isLarge)
-    {
-        var m = typeof(AgentEngine).GetMethod("ApplyEnvelopeBudget",
-            BindingFlags.Static | BindingFlags.NonPublic);
-        Assert.NotNull(m);
-        return (int)m.Invoke(null, new object[] { configured, isLarge })!;
-    }
-
     // ── tier resolution ──
 
     [Fact]
@@ -120,23 +113,6 @@ public sealed class EngineTierBehaviorTests : IDisposable
         Assert.Contains("<tooloutput>", input);
     }
 
-    // ── structured envelope budget (production helper, reflection-invoked) ──
-
-    [Fact]
-    public void EnvelopeBudget_SmallTier_CapsAt1024()
-    {
-        Assert.Equal(1024, InvokeApplyEnvelopeBudget(8192, isLarge: false));
-        Assert.Equal(768, InvokeApplyEnvelopeBudget(0, isLarge: false));
-        Assert.Equal(900, InvokeApplyEnvelopeBudget(900, isLarge: false));
-    }
-
-    [Fact]
-    public void EnvelopeBudget_LargeTier_CapsAt4096()
-    {
-        Assert.Equal(4096, InvokeApplyEnvelopeBudget(8192, isLarge: true));
-        Assert.Equal(1024, InvokeApplyEnvelopeBudget(0, isLarge: true));
-        Assert.Equal(2048, InvokeApplyEnvelopeBudget(2048, isLarge: true));
-    }
 
     // ── registered tools: what the grammar union allows (tool_names plumbing) ──
 
@@ -160,6 +136,59 @@ public sealed class EngineTierBehaviorTests : IDisposable
         var specs = (List<ToolSpec>)m.Invoke(engine, null)!;
         var spec = specs.Single(s => s.Name == "ProbeTool");
         Assert.Contains("\"action\"", spec.ParameterSchema);
+    }
+
+    // ── v15: tier operating profiles (system prompt overlays) ──
+
+    private static string InvokeBuildSystemToolsPrompt(AgentEngine engine)
+    {
+        var m = typeof(AgentEngine).GetMethod("BuildSystemToolsPrompt",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(m);
+        return (string)m.Invoke(engine, null)!;
+    }
+
+    [Fact]
+    public void SystemPrompt_SmallTier_HasPrecisionOverlay()
+    {
+        var engine = CreateEngine(BuildConfig("small", isLocal: true));
+        var prompt = InvokeBuildSystemToolsPrompt(engine);
+        Assert.Contains("ONE tool call per turn", prompt);
+        Assert.Contains("NEVER invent tool names", prompt);
+        Assert.Contains("Worked example", prompt);
+        Assert.DoesNotContain("senior autonomous engineer-agent", prompt);
+    }
+
+    [Fact]
+    public void SystemPrompt_LargeTier_HasAutonomyOverlay()
+    {
+        var engine = CreateEngine(BuildConfig("large", isLocal: true));
+        var prompt = InvokeBuildSystemToolsPrompt(engine);
+        Assert.Contains("autonomous engineer-agent", prompt);
+        Assert.Contains("Batch independent", prompt);
+        Assert.DoesNotContain("ONE tool call per turn", prompt);
+    }
+
+    // ── v15: reasoning effort config → request params ──
+
+    [Fact]
+    public void ReasoningEffort_Config_FlowsToParams()
+    {
+        var json = """
+        {
+          "llm_provider": { "mode": "remote", "reasoning_effort": "medium" }
+        }
+        """;
+        var config = JsonSerializer.Deserialize<AppConfig>(json)!;
+        var p = InferenceParamsFactory.Default.Create(config);
+        Assert.Equal("medium", p.ReasoningEffort);
+    }
+
+    [Fact]
+    public void ReasoningEffort_Default_Null()
+    {
+        var p = InferenceParamsFactory.Default.Create(new AppConfig());
+        Assert.Null(p.ReasoningEffort);
     }
 
     public void Dispose()

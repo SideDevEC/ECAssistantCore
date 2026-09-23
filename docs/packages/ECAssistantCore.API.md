@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 380  |  LOC: 32086  |  ~18588 tokens
+Types: 380  |  LOC: 32156  |  ~18595 tokens
 
 ---
 
@@ -741,7 +741,7 @@ Cross-package deps: ECAssistant.Core.Setup, ECAssistant.Core.Transport
 ### Class: EngineTierBehaviorTests
 > v14.12: model-tier-adaptive behavior tests at the ENGINE level — verifies the
 Implements: IDisposable
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools, ECAssistant.TestSupport
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Interfaces, ECAssistant.Core.Services, ECAssistant.Core.Tools, ECAssistant.TestSupport
 
 ### Class: ExactMatchStrategy
 > Priority 1: exact substring match — the pre-v14.15 behavior, unchanged.

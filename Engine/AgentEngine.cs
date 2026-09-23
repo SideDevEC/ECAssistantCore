@@ -107,17 +107,6 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         return _config?.ModelTier?.IsLargeRuntime(isLocal) ?? !isLocal;
      }
 
-    /// <summary>
-    /// v14.12: tier-aware structured envelope token budget. Small models get the
-    /// tight cap (they ramble — 768 floor, 1024 ceiling); large models get reasoning
-    /// headroom (1024 floor, 4096 ceiling). Pure function — extracted for tests.
-    /// </summary>
-    // Stateless utility — no mutable state
-    private static int ApplyEnvelopeBudget(int configured, bool isLarge)
-        => isLarge
-            ? Math.Min(Math.Max(configured, 1024), 4096)
-            : Math.Min(Math.Max(configured, 768), 1024);
-
     private ECAssistant.Core.Engine.SelfCorrectionManager? _injectedSelfCorrection;
     public ECAssistant.Core.Engine.SelfCorrectionManager? InjectedSelfCorrection
     {
@@ -733,6 +722,61 @@ User: " + userRequest + "\n";
          }
 
         sb.Append(BuildHostEnvironmentSection());
+        sb.Append(BuildTierOperatingProfile());
+        return sb.ToString();
+     }
+
+    /// <summary>
+    /// v15: tier operating profile (Emre, 2026-09-23). Small models: precise,
+    /// deterministic, guided — explicit do-not rules and worked examples, one tool
+    /// call per turn. Large models: Claude-Code-like autonomy — goals + constraints,
+    /// no hand-holding, room to reason. Output-token/context budgets are NOT tiered
+    /// (hardware-driven); this is prompt-precision shaping only.
+    /// </summary>
+    private string BuildTierOperatingProfile()
+     {
+        return IsLargeModelTier()
+            ? BuildLargeTierProfile()
+            : BuildSmallTierProfile();
+     }
+
+    private string BuildSmallTierProfile()
+     {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine();
+        sb.AppendLine("## OPERATING RULES (small model — follow EXACTLY)");
+        sb.AppendLine();
+        sb.AppendLine("You are a precise, deterministic agent. Follow these rules literally:");
+        sb.AppendLine("1. ONE tool call per turn. Wait for its result before deciding anything else.");
+        sb.AppendLine("2. NEVER invent tool names. Use ONLY names from REGISTERED TOOLS above, spelled exactly.");
+        sb.AppendLine("3. NEVER invent tool arguments. Copy argument names and value formats from the tool's usage example.");
+        sb.AppendLine("4. If a tool call fails, DO NOT repeat the identical call. Change exactly one thing (an argument or approach) or report the failure.");
+        sb.AppendLine("5. If a tool fails twice, STOP and report what you tried and what failed. Do not keep retrying.");
+        sb.AppendLine("6. When the tool result answers the user's request, give your final answer IMMEDIATELY. Do not call more tools.");
+        sb.AppendLine("7. Answer ONLY what was asked. No preamble, no summary of your process unless asked.");
+        sb.AppendLine();
+        sb.AppendLine("Worked example — user says: \"Create a file named notes.txt containing 'hello'\"");
+        sb.AppendLine("You call the file-creation tool ONCE with file=notes.txt and content=hello. After the result confirms creation, you answer: \"Created notes.txt.\" Nothing else.");
+        sb.AppendLine();
+        sb.AppendLine("Worked example — tool returns an error: You do NOT call the same tool with the same arguments again. You either fix the argument or report: \"Failed: <error>\".");
+        sb.AppendLine();
+        sb.AppendLine("If instructions conflict with these rules, these rules win. When unsure, DO LESS and report.");
+        return sb.ToString();
+     }
+
+    private string BuildLargeTierProfile()
+     {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine();
+        sb.AppendLine("## OPERATING PROFILE (autonomous)");
+        sb.AppendLine();
+        sb.AppendLine("You are a senior autonomous engineer-agent. You get goals, not micro-steps:");
+        sb.AppendLine("- Plan internally, then act. Batch independent reads/commands into single multi-call turns where safe.");
+        sb.AppendLine("- Compose work into fewer, larger steps; chain shell commands when sensible.");
+        sb.AppendLine("- You have judgment on approach — optimize for a correct, verified outcome, not literal instruction-following.");
+        sb.AppendLine("- Verify your work when practical (build, run, test) before claiming success.");
+        sb.AppendLine("- Think before acting on ambiguous requests; state your interpretation briefly if you deviate from the obvious path.");
+        sb.AppendLine("- Do not over-report. Final answers: concise, factual, with evidence (command output, file state).");
         return sb.ToString();
      }
 
@@ -1987,9 +2031,8 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
             // invalid decision, so think+answer/toolcalls must fit. Floor AND cap:
             // config MaxTokens is a context budget (8192) that would take ~15 min
             // of CPU decode; the envelope needs far less.
-            // v14.12: tier-aware envelope budget — small models get the tight cap
-            // (they ramble), large models get reasoning headroom.
-            parameters.MaxTokens = ApplyEnvelopeBudget(parameters.MaxTokens ?? 0, IsLargeModelTier());
+            // v15: max_tokens is config/hardware-driven — NO tier cap (Emre 2026-09-23).
+            // Tier shaping happens via sampling + prompt overlays, never token budgets.
             // v14.12.1: constrain the decision grammar's toolcall.name to the registered
             // tools — small models physically cannot hallucinate a tool name. The remote
             // native-tools path never reads this field (server without support ignores it).
