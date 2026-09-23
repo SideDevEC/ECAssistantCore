@@ -70,7 +70,11 @@ public class AppConfig
 
     /// <summary>v14.12: model-tier profile gating harness scaffolding depth. Null = auto.</summary>
     [JsonPropertyName("model_tier")]
-    public ModelTierConfig? ModelTier { get; init; }
+    // v15 fix: default instance, not null. A config without explicit model_tier must
+    // resolve via the auto tier resolver (remote → large, local → small); a null
+    // ModelTier made IsLargeModelTier collapse to false (small) for every config
+    // that omitted the section — including remote frontier models.
+    public ModelTierConfig ModelTier { get; init; } = new();
 
     /// <summary>v14.13: tier-aware post-edit verification gate (build/test after file edits).</summary>
     [JsonPropertyName("verification")]

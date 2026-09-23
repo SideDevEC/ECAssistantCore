@@ -196,6 +196,52 @@ public class ContextWindow
     }
 
     public int MessageCount { get { lock (_messagesLock) return _messages.Count; } }
+
+    /// <summary>v15: true when a compaction summary message is present (window
+    /// shrinkage is then legitimate, not corruption).</summary>
+    public bool ContainsSummaryMarker
+     {
+        get
+         {
+            lock (_messagesLock)
+                return _messages.Any(m => m.Role == "system" &&
+                    (m.Content.Contains("[Summary", StringComparison.Ordinal) ||
+                     m.Content.Contains("[Previous conversation summary", StringComparison.Ordinal)));
+         }
+     }
+
+    /// <summary>v15: true when a user message contains the given task text.</summary>
+    public bool HasUserMessageContaining(string text)
+     {
+        if (string.IsNullOrWhiteSpace(text)) return false;
+        var probe = text.Trim();
+        if (probe.Length > 64) probe = probe[..64];
+        lock (_messagesLock)
+            return _messages.Any(m => m.Role == "user" && m.Content.Contains(probe, StringComparison.Ordinal));
+     }
+
+    /// <summary>
+    /// v15: window-integrity self-heal — replace the window with the full transcript.
+    /// Used when the window lost content it must logically contain (empty window,
+    /// or the user task vanished without a compaction summary). The window is
+    /// derived state; the transcript is the source of truth. Over-budget windows
+    /// re-compact normally on the next GetWindowMessages call.
+    /// </summary>
+    public void RestoreFrom(IEnumerable<TranscriptMessage> messages)
+     {
+        lock (_messagesLock)
+         {
+            _messages.Clear();
+            _messages.AddRange(messages.Select(m => new TranscriptMessage
+             {
+                Role = m.Role,
+                Source = m.Source,
+                Content = m.Content,
+                EstimatedTokens = m.EstimatedTokens,
+                ImageDataUris = m.ImageDataUris
+             }));
+         }
+     }
     public uint MaxTokens => _maxTokens;
 
     /// <summary>

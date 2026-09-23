@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 134  |  LOC: 15820  |  ~6013 tokens
+Types: 139  |  LOC: 16476  |  ~6152 tokens
 
 ---
 
@@ -111,6 +111,9 @@ Cross-package deps: ECAssistant.Core, ECAssistant.Core.Tools
 
 ### Class: EToolBaseTierPromptsTests
 > v15: tier-aware tool prompt enforcement (Emre, 2026-09-23) — the abstract base
+Cross-package deps: ECAssistant.Core.Tools
+
+### Class: EToolResultImagesTests
 Cross-package deps: ECAssistant.Core.Tools
 
 ### Class: EUserAskToolTests
@@ -235,6 +238,17 @@ Cross-package deps: ECAssistant.Core.Services.Http
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, ECAssistant.Core.UI, Moq
 
+### Class: McpConfigTests
+Cross-package deps: ECAssistant.Core.Config
+
+### Class: McpServerRegistrarTests
+> Invoke the static ApplyToolFilter method via reflection (it's private).
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Mcp
+
+### Class: McpToolAdapterTests
+Cross-package deps: ECAssistant.Core.Tools.Mcp
+
 ### Class: MemoryIntegrationTests
 > Integration tests for the memory pipeline — MemoryManager and VectorMemoryStore
 Implements: IDisposable
@@ -264,7 +278,7 @@ Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Setup, Xunit
 
 ### Class: ModelTierConfigTests
-> v14.12: model-tier profile tests — IsLargeRuntime resolution (small/large/auto),
+> v14.12: model-tier profile tests — IsLargeRuntime resolution (small/large/default),
 Cross-package deps: ECAssistant.Core.Config
 
 ### Class: MyTests
@@ -472,6 +486,9 @@ Cross-package deps: ECAssistant.Core.Engine
 ### Class: ToolDescriptionScopeTests
 > v14.19.1: every user-facing tool description carries an explicit scope —
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services, ECAssistant.Core.Tools.Background, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Build, ECAssistant.Core.Tools.Git, ECAssistant.Core.Tools.Research, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Reader
+
+### Class: ToolImageRefTests
+Cross-package deps: ECAssistant.Core.Tools
 
 ### Class: ToolOutputProjectorTests
 > v14.12.2: curated tool-output projection — key lines + head/tail instead of a

@@ -110,10 +110,15 @@ public sealed class ModelTierConfigTests
     }
 
     [Fact]
-    public void ModelTier_Absent_IsNull()
+    public void ModelTier_Absent_DefaultsToAutoInstance()
     {
+        // v15 fix: absent model_tier must NOT be null — a null ModelTier collapsed
+        // IsLargeModelTier to false (small) for every config that omitted the
+        // section, even remote frontier models. Default instance = auto resolution
+        // (remote → large, local → small via ModelTierAutoResolver).
         var config = JsonSerializer.Deserialize<AppConfig>("{}");
-        Assert.Null(config!.ModelTier);
+        Assert.NotNull(config!.ModelTier);
+        Assert.Null(config.ModelTier!.Mode); // auto mode preserved
     }
 
     // v15: preplanning config removed — tier decides. Contract test:

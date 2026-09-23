@@ -1,29 +1,17 @@
-# PACKAGE-MAP.md — ECAssistant
+# PACKAGE-MAP.md — ECAssistantCore
 
-Generated: 2026-09-23T22:33:14.131341+00:00
+Generated: 2026-09-23T22:47:05.213109+00:00
 
 ---
 
 | Package | Types | LOC | ~Tokens | Dependencies |
 |---|---|---|---|---|
-| ECAssistantConsole | 2 | 356 | ~41 | — |
-| Tests | 7 | 852 | ~291 | — |
-| ECAssistantTestSupport | 13 | 1714 | ~759 | — |
-| TestModelLoad | 0 | 43 | ~0 | — |
-| ECAssistantCore | 413 | 34636 | ~20259 | — |
-| grammar-decision | 0 | 61 | ~0 | — |
-| ECAssistantLLM | 134 | 9714 | ~5679 | — |
-| ECAssistantTUI | 23 | 4018 | ~1721 | — |
+| ECAssistantCore | 413 | 34696 | ~20259 | — |
+| Tests | 139 | 16476 | ~6152 | — |
 
 ---
 
 ## Dependency Direction
 
-ECAssistantConsole → (leaf, no deps)
-Tests → (leaf, no deps)
-ECAssistantTestSupport → (leaf, no deps)
-TestModelLoad → (leaf, no deps)
 ECAssistantCore → (leaf, no deps)
-grammar-decision → (leaf, no deps)
-ECAssistantLLM → (leaf, no deps)
-ECAssistantTUI → (leaf, no deps)
+Tests → (leaf, no deps)

@@ -82,6 +82,7 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         set => _systemPromptPathOverride = value;
      }
     private string? _systemPromptTextOverride;
+    private string? _lastUserTask;
     public string? SystemPromptText
     {
         get => _systemPromptTextOverride;
@@ -1260,6 +1261,34 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
         _out?.WriteInfo("[Memory] Loaded.");
     }
 
+    /// <summary>
+    /// v15: window-integrity self-heal. The context window is derived state; the
+    /// transcript is the source of truth. If the window lost content it must
+    /// logically contain (empty, or the user task vanished without a compaction
+    /// summary — observed once mid-run on the remote path), rebuild it from the
+    /// transcript. Returns true when a rebuild happened.
+    /// </summary>
+    public bool EnsureWindowIntegrity()
+     {
+        // Needs a real history to protect; skip during the first turns.
+        if (_transcript.Messages.Count <= 2) return false;
+
+        var rebuild = false;
+        if (_contextWindow.MessageCount == 0)
+            rebuild = true;
+        else if (_lastUserTask != null &&
+                 !_contextWindow.ContainsSummaryMarker &&
+                 !_contextWindow.HasUserMessageContaining(_lastUserTask))
+            rebuild = true;
+
+        if (!rebuild) return false;
+
+        var before = _contextWindow.MessageCount;
+        _contextWindow.RestoreFrom(_transcript.Messages);
+        _out?.WriteWarning($"[Window] Integrity violation — window had {before} messages without the user task; rebuilt {_transcript.Messages.Count} messages from transcript.");
+        return true;
+     }
+
     public void SaveTranscript(string? path = null)
      {
         var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
@@ -1290,6 +1319,7 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
         if (_lifecycle.TurnCount == 1)
          {
             _transcript.AddUser(userPrompt);
+            _lastUserTask = userPrompt; // v15: window-integrity probe anchor
          }
 
         var effectivePrompt = cleanPrompt.Length > 0 ? cleanPrompt : userPrompt;

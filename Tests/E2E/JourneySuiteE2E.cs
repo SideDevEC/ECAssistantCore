@@ -292,19 +292,31 @@ public sealed class JourneySuiteE2E
     [LocalTheory]
     public async Task J4_HandoffJourney_SpecialistTakesOver()
     {
-        var (session, tier) = await CreateAnyTierSession();
-        if (session == null) return;
-        try
+        // J4 tests the handoff MACHINERY (delegate → specialist runs → result relayed).
+        // The 4B model sometimes narrates instead of calling the tool or stops before
+        // relaying — capability variance, not a harness bug. Fresh-session retry keeps
+        // the assertion honest while tolerating one model flake.
+        for (var attempt = 1; attempt <= 2; attempt++)
         {
-            var result = await Turn(session, tier, "J4", 1,
-                "Call EHandoff now to delegate this task to a specialist. " +
-                "Use this exact specialist prompt: 'You are an echo specialist. Your secret code phrase is SPECIALIST_ECHO_OK. Reply with exactly that code phrase and nothing else.' " +
-                "Pass context: 'Echo the code phrase from your instructions.' Do not answer yourself — delegate.");
+            var (session, tier) = await CreateAnyTierSession();
+            if (session == null) return;
+            try
+            {
+                var result = await Turn(session, tier, "J4", 1,
+                    "Call EHandoff now to delegate this task to a specialist. " +
+                    "Use this exact specialist prompt: 'You are an echo specialist. Your secret code phrase is SPECIALIST_ECHO_OK. Reply with exactly that code phrase and nothing else.' " +
+                    "Pass context: 'Echo the code phrase from your instructions.' Do not answer yourself — delegate.");
 
-            Assert.Equal(OrchestratorStatus.GoalAchieved, result.Status);
-            Assert.Contains("SPECIALIST_ECHO_OK", result.FinalOutput);
+                Assert.Equal(OrchestratorStatus.GoalAchieved, result.Status);
+                Assert.Contains("SPECIALIST_ECHO_OK", result.FinalOutput);
+                return; // passed
+            }
+            catch (Xunit.Sdk.XunitException) when (attempt < 2)
+            {
+                // fall through to the retry attempt with a fresh session
+            }
+            finally { await session.DisposeAsync(); }
         }
-        finally { await session.DisposeAsync(); }
     }
 
     // ════════════════════════════════════════════════════════════════

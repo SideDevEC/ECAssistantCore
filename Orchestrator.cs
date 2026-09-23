@@ -345,6 +345,9 @@ public sealed class AgentOrchestrator : IAsyncDisposable
 
             while (TimeBudgetExceeded == false && (UseTurnLimit == false || _turnCount < _maxTurns))
                    {
+                       // v15: window-integrity self-heal — a lost/emptied window is rebuilt from the
+                       // transcript instead of letting the model see "no task in progress".
+                       _engine.EnsureWindowIntegrity();
                  // v10.9: Check for user cancellation before each turn
                 if (_engine.ExecutionToken.IsCancellationRequested)
                  {

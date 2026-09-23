@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 396  |  LOC: 33200  |  ~19452 tokens
+Types: 413  |  LOC: 34696  |  ~20259 tokens
 
 ---
 
@@ -146,6 +146,16 @@ Methods:
   - void Error(string tag, string message, Exception ex)
   - string GetRecentLines(int count)
 Cross-package deps: ECAssistant.Core.Services
+
+### Interface: IMcpClient
+> Client for communicating with an MCP (Model Context Protocol) server.
+Implements: IAsyncDisposable
+Properties:
+  - string ServerName { get; set; }
+Methods:
+  - Task<McpServerInfo> InitializeAsync(CancellationToken ct = default)
+  - Task<IReadOnlyList<McpToolDescriptor>> ListToolsAsync(CancellationToken ct = default)
+  - Task<McpToolResult> CallToolAsync(string name, string jsonArguments, CancellationToken ct = default)
 
 ### Interface: IMemoryService
 > Persistent memory with vector search.
@@ -431,7 +441,7 @@ Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools, ECAssistant
 Implements: ISessionOutput, ISessionContext, IAsyncDisposable
 Constructor:
   - AgentSession(string key, string sessionId, string endpoint, string? clientId, InferenceRequestParams inferenceParams, string workingDir, SemaphoreSlim inferenceLock, SubAgentConfig? subAgentConfig = null, string? label = null, ILogger? logger = null, AppConfig? config = null, OpenAIClient? httpClient = null, RemoteTokenizer? remoteTokenizer = null, string? apiKey = null, bool isLocalMode = true)
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Memory, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Transport, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Memory, ECAssistant.Core.Orchestration, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Transport, ECAssistant.Core.Interfaces, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Mcp
 
 ### Class: AiSetupResetter
 > Default <see cref="IAiSetupResetter"/>: rewrites appsettings.json back to the
@@ -720,6 +730,9 @@ Cross-package deps: ECAssistant.Core.Tools
 
 ### Class: EToolResult
 > Standardized tool call result that flows from any Tool back to the Agent.
+
+### Class: EToolResultImagesTests
+Cross-package deps: ECAssistant.Core.Tools
 
 ### Class: EUserAskTool
 > v14.9 ambiguity-triggered checkpoint: lets the MODEL declare uncertainty and ask
@@ -1040,6 +1053,49 @@ Cross-package deps: ECAssistant.Core.Interfaces
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, ECAssistant.Core.UI, Moq
 
+### Class: McpConfig
+> MCP server configuration section in appsettings.json.
+
+### Class: McpConfigTests
+Cross-package deps: ECAssistant.Core.Config
+
+### Class: McpHttpSseClient
+> MCP client over HTTP/SSE (remote server). Communicates via JSON-RPC 2.0
+Implements: IMcpClient
+Constructor:
+  - McpHttpSseClient(string serverName, McpServerConfig config, ILogger logger, Dictionary<string, string>? resolvedHeaders = null)
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
+
+### Class: McpServerConfig
+> MCP server configuration section in appsettings.json.
+
+### Class: McpServerRegistrar
+> Manages MCP server lifecycle: create clients, initialize, discover tools,
+Implements: IAsyncDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Session
+
+### Class: McpServerRegistrarTests
+> Invoke the static ApplyToolFilter method via reflection (it's private).
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Mcp
+
+### Class: McpStdioClient
+> MCP client over stdio (local subprocess). Spawns the server process,
+Implements: IMcpClient
+Constructor:
+  - McpStdioClient(string serverName, McpServerConfig config, ILogger logger, Dictionary<string, string>? resolvedEnv = null)
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
+
+### Class: McpToolAdapter
+> Adapter that wraps an MCP tool descriptor as an EToolBase subclass.
+Implements: EToolBase
+Constructor:
+  - McpToolAdapter(IMcpClient client, McpToolDescriptor descriptor)
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Session
+
+### Class: McpToolAdapterTests
+Cross-package deps: ECAssistant.Core.Tools.Mcp
+
 ### Class: MemoryConfig
 
 ### Class: MemoryEntry
@@ -1109,11 +1165,14 @@ Constructor:
   - ModelParamValidator(ILogger? logger = null)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
 
+### Class: ModelTierAutoResolver
+> Derives the model tier from the model id/name (Emre's rule, 2026-09-24):
+
 ### Class: ModelTierConfig
 > v14.12: Model-tier profile — gates how much harness scaffolding (hand-holding
 
 ### Class: ModelTierConfigTests
-> v14.12: model-tier profile tests — IsLargeRuntime resolution (small/large/auto),
+> v14.12: model-tier profile tests — IsLargeRuntime resolution (small/large/default),
 Cross-package deps: ECAssistant.Core.Config
 
 ### Class: MultiLlmProvidersConfig
@@ -1406,7 +1465,7 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services.Http, Xun
 Implements: ISessionBuilder
 Constructor:
   - SessionBuilder(AppConfig config, string workingDir, string userConfigDir, ILogger? logger = null, BackgroundProcessManager? bgManager = null)
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Services, ECAssistant.Core.Session, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Background, ECAssistant.Core.Tools.Build, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Git, ECAssistant.Core.Tools.Reader, ECAssistant.Core.Tools.Research, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Interfaces, ECAssistant.Core.Services.Http, ECAssistant.Core.Transport
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Services, ECAssistant.Core.Session, ECAssistant.Core.Tools, ECAssistant.Core.Tools.Background, ECAssistant.Core.Tools.Build, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Git, ECAssistant.Core.Tools.Reader, ECAssistant.Core.Tools.Research, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Mcp, ECAssistant.Core.Interfaces, ECAssistant.Core.Services.Http, ECAssistant.Core.Transport
 
 ### Class: SessionDiscovery
 > Discovers existing sessions on disk and determines which one to load as active.
@@ -1653,6 +1712,9 @@ Cross-package deps: ECAssistant.Core.Engine
 > v14.19.1: every user-facing tool description carries an explicit scope —
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services, ECAssistant.Core.Tools.Background, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Build, ECAssistant.Core.Tools.Git, ECAssistant.Core.Tools.Research, ECAssistant.Core.Tools.Shell, ECAssistant.Core.Tools.Reader
 
+### Class: ToolImageRefTests
+Cross-package deps: ECAssistant.Core.Tools
+
 ### Class: ToolOutputLimitsConfig
 > Tool-result truncation limits (2026-09-21 — previously hardcoded constants).
 
@@ -1817,6 +1879,26 @@ Constructor:
 > Progress callback payload for a running download.
 Constructor:
   - InstallResult(bool Success, string Message, IReadOnlyList<string> DownloadedFiles)
+
+### Record: McpContentItem
+> Client for communicating with an MCP (Model Context Protocol) server.
+Constructor:
+  - McpContentItem(string Type, string? Text, string? Data, string? MimeType)
+
+### Record: McpServerInfo
+> Client for communicating with an MCP (Model Context Protocol) server.
+Constructor:
+  - McpServerInfo(string Name, string Version)
+
+### Record: McpToolDescriptor
+> Client for communicating with an MCP (Model Context Protocol) server.
+Constructor:
+  - McpToolDescriptor(string Name, string Description, string InputSchema)
+
+### Record: McpToolResult
+> Client for communicating with an MCP (Model Context Protocol) server.
+Constructor:
+  - McpToolResult(bool IsError, IReadOnlyList<McpContentItem> Content)
 
 ### Record: MemoryEntry
 Constructor:
