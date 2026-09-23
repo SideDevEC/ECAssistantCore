@@ -1,13 +1,13 @@
 # PACKAGE-MAP.md — ECAssistantCore
 
-Generated: 2026-09-23T17:25:03.245428+00:00
+Generated: 2026-09-23T17:27:36.695017+00:00
 
 ---
 
 | Package | Types | LOC | ~Tokens | Dependencies |
 |---|---|---|---|---|
-| ECAssistantCore | 382 | 32435 | ~18675 | — |
-| Tests | 130 | 15556 | ~5830 | — |
+| ECAssistantCore | 382 | 32419 | ~18675 | — |
+| Tests | 130 | 15566 | ~5830 | — |
 
 ---
 

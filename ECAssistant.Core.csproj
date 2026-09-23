@@ -55,6 +55,9 @@
     <EmbeddedResource Include="SystemPrompt.Linux.md" />
     <EmbeddedResource Include="SystemPrompt.Windows.md" />
     <EmbeddedResource Include="SystemPrompt.Mac.md" />
+    <EmbeddedResource Include="SystemPrompt.Mac.Small.md" />
+    <EmbeddedResource Include="SystemPrompt.Windows.Small.md" />
+    <EmbeddedResource Include="SystemPrompt.Linux.Small.md" />
     <EmbeddedResource Include="appsettings.json" />
     <EmbeddedResource Include="catalog\model-catalog.json" />
   </ItemGroup>

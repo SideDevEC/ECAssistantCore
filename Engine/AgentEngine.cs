@@ -415,9 +415,15 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
              }
             else
              {
-                var promptResourceName = OperatingSystem.IsMacOS() ? "SystemPrompt.Mac.md"
-                     : OperatingSystem.IsWindows() ? "SystemPrompt.Windows.md"
-                     : "SystemPrompt.Linux.md";
+                // v15: small tier gets its own dedicated prompt file — zero
+                // conflicting messaging with the large-tier base prompt.
+                var isSmall = !IsLargeModelTier();
+                var promptResourceName = (OperatingSystem.IsMacOS(), OperatingSystem.IsWindows()) switch
+                 {
+                    (true, _)  => isSmall ? "SystemPrompt.Mac.Small.md" : "SystemPrompt.Mac.md",
+                    (_, true)  => isSmall ? "SystemPrompt.Windows.Small.md" : "SystemPrompt.Windows.md",
+                    _          => isSmall ? "SystemPrompt.Linux.Small.md" : "SystemPrompt.Linux.md"
+                 };
 
                 var embedded = ResourceLoader.Default.LoadTextWithFallback(promptResourceName, "SystemPrompt.Linux.md");
                 if (embedded != null)
@@ -730,46 +736,14 @@ User: " + userRequest + "\n";
      }
 
     /// <summary>
-    /// v15: tier operating profile (Emre, 2026-09-23). Small models: precise,
-    /// deterministic, guided — explicit do-not rules and worked examples, one tool
-    /// call per turn. Large models: Claude-Code-like autonomy — goals + constraints,
-    /// no hand-holding, room to reason. Output-token/context budgets are NOT tiered
-    /// (hardware-driven); this is prompt-precision shaping only.
+    /// v15: tier operating profile. Small tier: NO overlay here — small models get a
+    /// dedicated OS prompt file (SystemPrompt.*.Small.md) with zero conflicting
+    /// messaging; appending rules on top would duplicate them. Large tier: slim
+    /// autonomy overlay on top of the full base prompt (Emre, 2026-09-23).
     /// </summary>
     private string BuildTierOperatingProfile()
      {
-        return IsLargeModelTier()
-            ? BuildLargeTierProfile()
-            : BuildSmallTierProfile();
-     }
-
-    private string BuildSmallTierProfile()
-     {
-        var sb = new System.Text.StringBuilder();
-        sb.AppendLine();
-        sb.AppendLine("## OPERATING RULES (small model — follow EXACTLY)");
-        sb.AppendLine();
-        sb.AppendLine("You are a precise, deterministic agent. Follow these rules literally — where they CONFLICT with earlier guidance in this prompt, THESE rules win:");
-        sb.AppendLine("1. ONE tool call per turn (this overrides any earlier multi-call guidance). Wait for its result before deciding anything else.");
-        sb.AppendLine("2. NEVER invent tool names. Use ONLY names from REGISTERED TOOLS above, spelled exactly.");
-        sb.AppendLine("3. NEVER invent tool arguments. Copy argument names and value formats from the tool's usage example.");
-        sb.AppendLine("4. If a tool call fails, DO NOT repeat the identical call. Change exactly one thing (an argument or approach) or report the failure.");
-        sb.AppendLine("5. If a tool fails twice, STOP and report what you tried and what failed. Do not keep retrying.");
-        sb.AppendLine("6. When the tool result answers the user's request, give your final answer IMMEDIATELY. Do not call more tools.");
-        sb.AppendLine("7. Answer ONLY what was asked. No preamble, no summary of your process unless asked.");
-        sb.AppendLine();
-        sb.AppendLine("Response format — exact examples:");
-        sb.AppendLine("Direct answer:  {\"thinking\": \"direct answer possible\", \"answer\": \"Created notes.txt.\"}");
-        sb.AppendLine("Tool call:      {\"thinking\": \"need file listing\", \"toolcalls\": [{\"name\": \"EShellAgent\", \"args\": {\"command\": \"ls -la\"}}]}");
-        sb.AppendLine("NEVER output JSON as plain text inside answer. NEVER add keys beyond thinking/answer/toolcalls.");
-        sb.AppendLine();
-        sb.AppendLine("Worked example — user says: \"Create a file named notes.txt containing 'hello'\"");
-        sb.AppendLine("You call the file-creation tool ONCE with file=notes.txt and content=hello. After the result confirms creation, you answer: \"Created notes.txt.\" Nothing else.");
-        sb.AppendLine();
-        sb.AppendLine("Worked example — tool returns an error: You do NOT call the same tool with the same arguments again. You either fix the argument or report: \"Failed: <error>\".");
-        sb.AppendLine();
-        sb.AppendLine("If instructions conflict with these rules, these rules win. When unsure, DO LESS and report.");
-        return sb.ToString();
+        return IsLargeModelTier() ? BuildLargeTierProfile() : string.Empty;
      }
 
     private string BuildLargeTierProfile()

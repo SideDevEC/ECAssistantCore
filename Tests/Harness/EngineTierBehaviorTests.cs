@@ -149,14 +149,31 @@ public sealed class EngineTierBehaviorTests : IDisposable
     }
 
     [Fact]
-    public void SystemPrompt_SmallTier_HasPrecisionOverlay()
+    public void SystemPrompt_SmallTier_NoOverlayInEngine()
     {
+        // Small tier's rules live in the dedicated SystemPrompt.*.Small.md file —
+        // the engine must NOT append a duplicate overlay.
         var engine = CreateEngine(BuildConfig("small", isLocal: true));
         var prompt = InvokeBuildSystemToolsPrompt(engine);
-        Assert.Contains("ONE tool call per turn", prompt);
-        Assert.Contains("NEVER invent tool names", prompt);
-        Assert.Contains("Worked example", prompt);
+        Assert.DoesNotContain("OPERATING RULES (small model", prompt);
         Assert.DoesNotContain("senior autonomous engineer-agent", prompt);
+    }
+
+    [Fact]
+    public void SystemPrompt_SmallFiles_EmbeddedAndConflictFree()
+    {
+        foreach (var name in new[] { "SystemPrompt.Mac.Small.md", "SystemPrompt.Windows.Small.md", "SystemPrompt.Linux.Small.md" })
+        {
+            var text = ECAssistant.Core.Services.ResourceLoader.Default.LoadTextWithFallback(name, null);
+            Assert.False(string.IsNullOrEmpty(text), $"{name} not embedded");
+            // Multi-call allowance must NOT appear in small prompts (zero conflict).
+            Assert.DoesNotContain("MULTIPLE tool calls", text);
+            // The override-precedence hack is gone — no conflicts to resolve.
+            Assert.DoesNotContain("overrides any earlier", text);
+            // Format contract + precision rules present.
+            Assert.Contains("ONE tool call per turn", text);
+            Assert.Contains("NEVER put JSON inside `answer`", text);
+        }
     }
 
     [Fact]
@@ -192,12 +209,13 @@ public sealed class EngineTierBehaviorTests : IDisposable
     }
 
     [Fact]
-    public void SystemPrompt_SmallTier_HasConcreteEnvelopeExamples()
+    public void SystemPrompt_SmallFiles_HaveConcreteEnvelopeExamples()
     {
-        var engine = CreateEngine(BuildConfig("small", isLocal: true));
-        var prompt = InvokeBuildSystemToolsPrompt(engine);
-        Assert.Contains("\"toolcalls\": [{\"name\"", prompt); // exact envelope example
-        Assert.Contains("NEVER output JSON as plain text", prompt);
+        // Envelope examples now live in the dedicated small prompt files.
+        var text = ECAssistant.Core.Services.ResourceLoader.Default.LoadTextWithFallback("SystemPrompt.Mac.Small.md", null);
+        Assert.False(string.IsNullOrEmpty(text));
+        Assert.Contains("NEVER put JSON inside `answer`", text);
+        Assert.Contains("\"toolcalls\": [{\"name\": \"EShellAgent\", \"args\"", text);
     }
 
     [Fact]
@@ -208,7 +226,8 @@ public sealed class EngineTierBehaviorTests : IDisposable
         // Base prompt (restored) carries the multi-call line for both tiers;
         // the small overlay explicitly overrides it.
         Assert.Contains("MULTIPLE tool calls", large);
-        Assert.Contains("overrides any earlier multi-call guidance", small);
+        // small prompt file (not engine overlay) forbids multi-call — engine prompt
+        // for small carries no overlay at all (dedicated file path).
     }
 
     public void Dispose()
