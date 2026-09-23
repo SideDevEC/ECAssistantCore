@@ -256,8 +256,11 @@ public sealed class SubAgentManager : IDisposable
                 inferenceEngine: subInference,
                 kvCacheController: subKvCache,
                 inferenceParams: _inferenceParams,
+                config: _config,
                 workingDir: workingDir,
-                logger: _logger);
+                logger: _logger,
+                sharedHttpClient: subClient,
+                isLocalMode: isLocal);
 
             handle.Engine = childEngine;
             _activeSubAgents[handle.Id] = handle;

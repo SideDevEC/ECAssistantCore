@@ -12,6 +12,7 @@ public class ContextWindow
     private readonly List<TranscriptMessage> _messages = new();
     private readonly object _messagesLock = new();
     private int _summarizeInProgress = 0;
+    private int _windowSummarized = 0;
 
     /// <summary>Flat token estimate per attached image for budgeting.</summary>
     public const int TokensPerImage = 800;
@@ -117,6 +118,13 @@ public class ContextWindow
     }
 
     public void SetSummaryService(SummaryService service) => _summaryService = service;
+
+    /// <summary>
+    /// v15: returns true exactly once after SummarizeOldest replaced in-window
+    /// messages with a summary — the server KV cache needs a reset + re-feed.
+    /// </summary>
+    public bool ConsumeWindowSummarized() =>
+        Interlocked.Exchange(ref _windowSummarized, 0) == 1;
 
     public bool RemoveLastAssistantMessage()
     {
@@ -248,6 +256,11 @@ public class ContextWindow
                         while (insertAt < _messages.Count && _messages[insertAt].Role == "system")
                             insertAt++;
                         _messages.Insert(insertAt, summaryMsg);
+                        // v15 fix: the server-side KV cache still holds the pre-summary
+                        // conversation. Flag it so the engine can reset + re-feed the
+                        // server cache (KV/window desync otherwise overflows the server
+                        // context window even though this window stays compact).
+                        Interlocked.Exchange(ref _windowSummarized, 1);
                     }
                 }
                 catch { /* summarization is best-effort — messages stay in place on failure */ }

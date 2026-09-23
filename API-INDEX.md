@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T18:54:52.587372+00:00
+Generated: 2026-09-23T20:55:28.647560+00:00
 Packages: 2  |  Types: 530
 
 ---
 
-## ECAssistantCore (396 types, ~33121 LOC)
+## ECAssistantCore (396 types, ~33144 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -404,7 +404,7 @@ Packages: 2  |  Types: 530
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (134 types, ~15815 LOC)
+## Tests (134 types, ~15820 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 AllToolsTierPromptsTests  (Tests)

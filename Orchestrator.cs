@@ -982,7 +982,12 @@ public sealed class AgentOrchestrator : IAsyncDisposable
         if (isLarge && _largeTierVerified) return;
         if (!verifier.ShouldVerify(toolName, args, isLarge)) return;
 
-        var workingDir = _config?.GetRootPath();
+        // v15 fix: verification must run where the agent edits files. GetRootPath()
+        // alone made the gate build the wrong directory whenever WorkingDirectory
+        // differs from RootPath (MSB1003 "no project" on a valid workspace).
+        var workingDir = !string.IsNullOrWhiteSpace(_config?.AgentSettings?.WorkingDirectory)
+            ? _config.AgentSettings.WorkingDirectory
+            : _config?.GetRootPath();
         VerificationResult result;
         try
          {

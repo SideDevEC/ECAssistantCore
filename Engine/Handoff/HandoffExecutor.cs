@@ -102,8 +102,11 @@ public sealed class HandoffExecutor : IAsyncDisposable
                 inferenceEngine: inference,
                 kvCacheController: kvCache,
                 inferenceParams: _inferenceParams,
+                config: _config,
                 workingDir: _workingDir,
-                logger: _logger);
+                logger: _logger,
+                sharedHttpClient: client,
+                isLocalMode: isLocal);
 
             // ── Inject the specialist's system prompt ──
             _specialistEngine.SystemPromptText = request.SystemPrompt;

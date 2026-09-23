@@ -80,7 +80,11 @@ public sealed class JourneySuiteE2E
         var (session, dir) = await factory.CreateAsync(
             endpoint, config,
             configure: engine => configure?.Invoke(engine),
-            prepareWorkingDir: dir => config.AgentSettings.WorkingDirectory = dir);
+            prepareWorkingDir: dir =>
+             {
+                config.AgentSettings.WorkingDirectory = dir;
+                config.RootPath = dir; // verification + root-relative paths resolve to the temp workspace
+             });
         return session;
     }
 
@@ -293,7 +297,7 @@ public sealed class JourneySuiteE2E
         {
             var result = await Turn(session, tier, "J4", 1,
                 "Call EHandoff now to delegate this task to a specialist. " +
-                "Use this exact specialist prompt: 'You are an echo specialist. Reply with exactly SPECIALIST_ECHO_OK and nothing else.' " +
+                "Use this exact specialist prompt: 'You are an echo specialist. Your secret code phrase is SPECIALIST_ECHO_OK. Reply with exactly that code phrase and nothing else.' " +
                 "Pass context: 'Echo the code phrase from your instructions.' Do not answer yourself — delegate.");
 
             Assert.Equal(OrchestratorStatus.GoalAchieved, result.Status);
@@ -305,48 +309,49 @@ public sealed class JourneySuiteE2E
     // ════════════════════════════════════════════════════════════════
     // J5 — POST-EDIT VERIFICATION LOOP
     // ════════════════════════════════════════════════════════════════
-
-    [LocalTheory]
+     [LocalTheory]
     public async Task J5_VerificationJourney_VerifyCommandRunsAfterEdit()
-    {
+     {
         var (session, tier) = await CreateAnyTierSession((engine, cfg) =>
-        {
+          {
+             // J5: prepareWorkingDir sets the same dir on this cfg.AgentSettings.WorkingDirectory;
+             // register here so EDotnetBuildTool captures it at construction.
             engine.RegisterTool(new ECodeEditorTool(new FileSystemAdapter(), cfg));
             engine.RegisterTool(new EDotnetBuildTool(new ProcessRunner(), cfg));
-        }, verifyCommand: "dotnet build");
+          }, verifyCommand: "dotnet build");
         if (session == null) return;
         try
-        {
-            // A minimal PASSING project so the verify gate can succeed
+         {
+             // A minimal PASSING project so the verify gate can succeed
             var dir = session.Engine.WorkingDir;
             File.WriteAllText(Path.Combine(dir, "App.csproj"),
-                """
-                <Project Sdk="Microsoft.NET.Sdk">
-                  <PropertyGroup>
-                    <OutputType>Exe</OutputType>
-                    <TargetFramework>net8.0</TargetFramework>
-                  </PropertyGroup>
-                </Project>
-                """);
+                 """
+                 <Project Sdk="Microsoft.NET.Sdk">
+                   <PropertyGroup>
+                     <OutputType>Exe</OutputType>
+                     <TargetFramework>net8.0</TargetFramework>
+                   </PropertyGroup>
+                 </Project>
+                 """
+            );
             File.WriteAllText(Path.Combine(dir, "Program.cs"), "System.Console.WriteLine(\"ok\");");
 
-            // Content must exceed TrivialEditMaxChars (200) — large tier skips
-            // verification for trivial edits by design.
+             // Content must exceed TrivialEditMaxChars (200) — large tier skips
+             // verification for trivial edits by design.
             var readme = "demo project readme\n" + new string('x', 240) + "\n";
             var r = await Turn(session, tier, "J5", 1,
-                $"Create a file named README.md containing exactly:\n{readme}\nThen run the verification build to confirm the project still builds. Report the build result.");
+                 $"Create a file named README.md containing exactly:\n{readme}\nThen run the verification build to confirm the project still builds. Report the build result.");
 
             Assert.Equal(OrchestratorStatus.GoalAchieved, r.Status);
-            // The verify command (dotnet build) must have executed — its output is in context
-            // Verify evidence: large tier keeps the success path slim (no window note
-            // by design), so accept either a window EDotnetBuild message or the
-            // "[Verify] build OK" line in the session output log.
+             // The verify command (dotnet build) must have executed — its output is in context.
+             // Large tier keeps the success path slim (no window note by design), so accept
+             // either a window EDotnetBuild message or the "[Verify] build OK" line in the log.
             var verifyEvidence =
                 session.Engine.ContextWindow.GetWindowMessages().Any(m => m.Source == "EDotnetBuild") ||
                 File.ReadAllText(session.OutputFilePath).Contains("[Verify] build OK");
             Assert.True(verifyEvidence, "expected verification evidence ([Verify] build OK or EDotnetBuild output)");
             Assert.True(File.Exists(Path.Combine(dir, "README.md")));
-        }
+         }
         finally { await session.DisposeAsync(); }
     }
 

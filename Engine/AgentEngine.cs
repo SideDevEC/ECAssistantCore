@@ -1325,7 +1325,17 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
             // warm-path incremental input never delivers (window/server desync).
             var keepRecent = Math.Max(1, _config?.ContextManagement?.KeepRecentToolOutputs ?? 3);
             bool rebuilt = false;
-            if (!_contextWindow.TrimStaleToolOutputs(keepRecent))
+            // v15 fix: when the window self-summarized (ContextWindow.SummarizeOldest),
+            // the server KV cache still holds the pre-summary conversation. Sync it by
+            // resetting + re-feeding — otherwise the server context overflows even
+            // though the Core window stays compact (J2 local failure mode).
+            bool windowSummarized = _contextWindow.ConsumeWindowSummarized();
+            if (windowSummarized)
+             {
+                rebuilt = true;
+                await ResetAndRebuildCacheAsync();
+             }
+            else if (!_contextWindow.TrimStaleToolOutputs(keepRecent))
              {
                 rebuilt = true;
                 if (_inferenceEngine != null && (_backgroundTasks?.Summarize.UseLlm ?? true))
