@@ -135,6 +135,12 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
     private readonly object _toolsLock = new();
     private SubAgentManager? _subAgentManager;
     private ECAssistant.Core.Engine.SelfCorrectionManager? _selfCorrection;
+
+    // v14.14: persistent success playbooks (tier-aware injection into turn-1 input)
+    private ECAssistant.Core.Playbooks.IPlaybookStore? _injectedPlaybookStore;
+    private ECAssistant.Core.Playbooks.IPlaybookStore? _playbookStore;
+    /// <summary>v14.14: success-procedure memory store (null until initialized).</summary>
+    public ECAssistant.Core.Playbooks.IPlaybookStore? PlaybookStore => _playbookStore;
     private ECAssistant.Core.Engine.ProjectContextManager? _projectContext;
     private ITaskPlanner? _taskPlanner;
     private IStepMapper? _sharedStepMapper;
@@ -258,11 +264,13 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         ILogger? logger = null,
         EMemoryManager? memoryManager = null,
         ECAssistant.Core.Engine.SelfCorrectionManager? selfCorrection = null,
+        ECAssistant.Core.Playbooks.IPlaybookStore? playbookStore = null,
         ECAssistant.Core.Engine.ProjectContextManager? projectContext = null,
         ITaskPlanner? taskPlanner = null)
      {
         if (logger != null) _logger = logger;
         _injectedSelfCorrection = selfCorrection;
+        _injectedPlaybookStore = playbookStore;
         _injectedProjectContext = projectContext;
         _injectedTaskPlanner = taskPlanner;
 
@@ -442,6 +450,13 @@ public class EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
      {
         _selfCorrection = _injectedSelfCorrection
             ?? new ECAssistant.Core.Engine.SelfCorrectionManager(workingDir, _logger);
+    }
+
+    /// <summary>v14.14: initialize persistent success-playbook memory (mirrors InitializeSelfCorrection).</summary>
+    public void InitializePlaybooks(string workingDir)
+    {
+        _playbookStore = _injectedPlaybookStore
+            ?? new ECAssistant.Core.Playbooks.PlaybookStore(workingDir, _logger);
     }
 
 
@@ -948,6 +963,7 @@ User: " + userRequest + "\n";
             var projectCtx = GetProjectContextInjection(userRequest);
             var taskProgress = GetTaskProgressInjection();
             var failureCtx = GetFailureInjection();
+            var playbookInject = GetPlaybookInjection(userRequest);
 
             var systemMessages = _contextWindow.GetWindowMessages().Where(m => m.Role == "system");
             foreach (var sysMsg in systemMessages)
@@ -971,6 +987,11 @@ User: " + userRequest + "\n";
                 sb.AppendLine(taskProgress);
             if (!string.IsNullOrEmpty(failureCtx))
                 sb.AppendLine(failureCtx);
+            if (!string.IsNullOrEmpty(playbookInject))
+            {
+                sb.AppendLine(playbookInject);
+                sb.AppendLine();
+            }
 
             sb.AppendLine("<user>");
             sb.AppendLine(userRequest);
@@ -1039,6 +1060,10 @@ User: " + userRequest + "\n";
 
     private string? GetTaskProgressInjection() => null;
     private string? GetFailureInjection() => null;
+
+    /// <summary>v14.14: tier-flavored playbook injection — matched success procedures for this request.</summary>
+    private string? GetPlaybookInjection(string userRequest) =>
+        _playbookStore?.BuildInjection(userRequest, IsLargeModelTier());
 
      // ── Tool registration + results ────────────────────────────
 

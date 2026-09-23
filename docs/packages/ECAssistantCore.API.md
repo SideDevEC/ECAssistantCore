@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 332  |  LOC: 28290  |  ~15569 tokens
+Types: 340  |  LOC: 28828  |  ~16035 tokens
 
 ---
 
@@ -185,6 +185,20 @@ Cross-package deps: ECAssistant.Core.Engine
 Methods:
   - Task<byte[]?> RenderPageToPngAsync(string pdfPath, int page, CancellationToken ct = default)
 
+### Interface: IPlaybookExtractor
+> v14.14: Deterministic playbook extraction from a completed run's successful
+Methods:
+  - Playbook? Extract(string goal, IReadOnlyList<CapturedToolCall> successfulCalls, string source = "goal")
+
+### Interface: IPlaybookStore
+> v14.14: Storage for persistent success playbooks. Owns dedup, usage counters,
+Properties:
+  - IReadOnlyList<Playbook> All { get; set; }
+Methods:
+  - Task<Playbook> CaptureAsync(Playbook candidate)
+  - IReadOnlyList<Playbook> Match(string userRequest, int topN)
+  - string? BuildInjection(string userRequest, bool isLargeTier, int topN = 2, int maxChars = 1500)
+
 ### Interface: IPostEditVerifier
 > v14.13: Tier-aware post-edit verification gate. Classifies file-modifying tool
 Methods:
@@ -339,8 +353,8 @@ Cross-package deps: ECAssistant.Core.Config
 > Orchestrator — the decision-making brain for multi-step agent workflows.
 Implements: IAsyncDisposable
 Constructor:
-  - AgentOrchestrator(EAgentEngine engine, ISessionOutput? sessionOutput = null, int maxTurns = 5, int maxFailures = 3, ECAssistant.Core.Tools.ToolPolicy? toolPolicy = null, ECAssistant.Core.Interfaces.ILogger? logger = null, ECAssistant.Core.Config.EAgentConfig? config = null, IPostEditVerifier? postEditVerifier = null)
-Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools, ECAssistant.Core.Services, ECAssistant.Core.Session, ECAssistant.Core.Interfaces
+  - AgentOrchestrator(EAgentEngine engine, ISessionOutput? sessionOutput = null, int maxTurns = 5, int maxFailures = 3, ECAssistant.Core.Tools.ToolPolicy? toolPolicy = null, ECAssistant.Core.Interfaces.ILogger? logger = null, ECAssistant.Core.Config.EAgentConfig? config = null, IPostEditVerifier? postEditVerifier = null, IPlaybookStore? playbookStore = null, IPlaybookExtractor? playbookExtractor = null)
+Cross-package deps: ECAssistant.Core.Engine, ECAssistant.Core.Tools, ECAssistant.Core.Services, ECAssistant.Core.Session, ECAssistant.Core.Interfaces, ECAssistant.Core.Playbooks
 
 ### Class: AgentSession
 > A fully isolated agent session.
@@ -491,7 +505,7 @@ Cross-package deps: ECAssistant.Core.Config
 > v10.30: Core engine. All inference + KV cache control is HTTP-based via the
 Implements: IEngine, IEngineToolContext, ISubAgentEngineHost
 Constructor:
-  - EAgentEngine(string sessionId, IInferenceEngine inferenceEngine, IKvCacheController kvCacheController, RemoteTokenizer? tokenizer = null, InferenceRequestParams? inferenceParams = null, uint contextSize = 8192, string modelPath = "", EAgentConfig? config = null, string? workingDir = null, ILogger? logger = null, EMemoryManager? memoryManager = null, ECAssistant.Core.Engine.SelfCorrectionManager? selfCorrection = null, ECAssistant.Core.Engine.ProjectContextManager? projectContext = null, ITaskPlanner? taskPlanner = null)
+  - EAgentEngine(string sessionId, IInferenceEngine inferenceEngine, IKvCacheController kvCacheController, RemoteTokenizer? tokenizer = null, InferenceRequestParams? inferenceParams = null, uint contextSize = 8192, string modelPath = "", EAgentConfig? config = null, string? workingDir = null, ILogger? logger = null, EMemoryManager? memoryManager = null, ECAssistant.Core.Engine.SelfCorrectionManager? selfCorrection = null, ECAssistant.Core.Playbooks.IPlaybookStore? playbookStore = null, ECAssistant.Core.Engine.ProjectContextManager? projectContext = null, ITaskPlanner? taskPlanner = null)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
 
 ### Class: EBackgroundExecTool
@@ -1015,6 +1029,28 @@ Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.Engine, ECAssistan
 ### Class: PlannedToolCall
 > A single planned tool call — concrete mapping from a sub-task to a tool + args.
 
+### Class: Playbook
+> v14.14: A persistent success playbook — a lightweight, deterministic recipe
+
+### Class: PlaybookExtractor
+> v14.14: Deterministic playbook extractor — builds a playbook purely from the
+Implements: IPlaybookExtractor
+
+### Class: PlaybookMatcher
+> v14.14: Pure text helpers for playbook keyword extraction and matching.
+
+### Class: PlaybookStore
+> v14.14: JSON-file-backed playbook store. One JSON file per playbook under
+Implements: IPlaybookStore
+Constructor:
+  - PlaybookStore(string workingDir, ILogger? logger = null, int maxPlaybooks = 50)
+Cross-package deps: ECAssistant.Core.Interfaces
+
+### Class: PlaybookTests
+> v14.14: tier-aware playbook memory. Pure-logic tests — JSON persistence in
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Orchestration, ECAssistant.Core.Playbooks, ECAssistant.Core.Tools, ECAssistant.TestSupport
+
 ### Class: PostEditVerifier
 > v14.13: Default post-edit verifier. Pure classification/gating logic plus an
 Implements: IPostEditVerifier
@@ -1488,6 +1524,11 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup, Xunit
 > Parser for .NET build output — extracts errors and warnings.
 Constructor:
   - BuildError(string File, int Line, string Code, string Message)
+
+### Record: CapturedToolCall
+> v14.14: One successful tool call from a completed run, in summarized form.
+Constructor:
+  - CapturedToolCall(string ToolName, string ArgsSummary)
 
 ### Record: DownloadProgress
 > Progress callback payload for a running download.

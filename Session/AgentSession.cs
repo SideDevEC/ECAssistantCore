@@ -183,6 +183,7 @@ public class AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable
 
         // Initialize self-correction, project context, task planner
         _engine.InitializeSelfCorrection(workingDir);
+        _engine.InitializePlaybooks(workingDir);
         _engine.InitializeTaskPlanner();
 
         WriteSystem($"Session '{key}' created.");

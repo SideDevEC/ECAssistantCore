@@ -5,6 +5,7 @@ using ECAssistant.Core.Tools;
 using ECAssistant.Core.Services;
 using ECAssistant.Core.Session;
 using ECAssistant.Core.Interfaces;
+using ECAssistant.Core.Playbooks;
 
 namespace ECAssistant.Core.Orchestration;
 
@@ -64,6 +65,11 @@ public sealed class AgentOrchestrator : IAsyncDisposable
     private bool _verificationDisabled = false;   // set when max_rounds reached — stop verifying for the rest of the run
     private bool _largeTierVerified = false;      // large tier verifies at most once per run
 
+    // v14.14: persistent success playbooks — capture after GoalAchieved runs with tools
+    private readonly IPlaybookStore? _playbookStore;
+    private readonly IPlaybookExtractor _playbookExtractor;
+    private readonly List<CapturedToolCall> _successfulCalls = new();
+
       /// <summary>Create orchestrator with config.</summary>
     public AgentOrchestrator(
         EAgentEngine engine,
@@ -73,7 +79,9 @@ public sealed class AgentOrchestrator : IAsyncDisposable
         ECAssistant.Core.Tools.ToolPolicy? toolPolicy = null,
         ECAssistant.Core.Interfaces.ILogger? logger = null,
         ECAssistant.Core.Config.EAgentConfig? config = null,
-        IPostEditVerifier? postEditVerifier = null)
+        IPostEditVerifier? postEditVerifier = null,
+        IPlaybookStore? playbookStore = null,
+        IPlaybookExtractor? playbookExtractor = null)
               {
                   _engine = engine;
                   _out = sessionOutput;
@@ -91,6 +99,10 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                               new Verification.DotnetVerificationRunner(new Services.ProcessRunner()),
                               config.Verification)
                           : null);
+              // v14.14: playbook store — explicit injection wins; else reuse the engine's
+              // store (created by InitializePlaybooks alongside InitializeSelfCorrection).
+              _playbookStore = playbookStore ?? _engine.PlaybookStore;
+              _playbookExtractor = playbookExtractor ?? new Playbooks.PlaybookExtractor();
 
             foreach (var tool in _engine.Tools)
                    _toolWhitelist.Add(tool.Name);
@@ -286,6 +298,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                  {
                     _out?.WriteWarning("Execution cancelled by user. Stopping.");
                     var cancelSummary = FormatTurnLog();
+                    await TryCapturePlaybookAsync(goal);
                     return new OrchestratorResult
                      {
                         FinalOutput = $"Execution cancelled by user.\n\n{cancelSummary}",
@@ -336,6 +349,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                  // The static prefix (system prompt + tools) is re-prefilled fresh.
                 await _engine.RebuildCacheAfterStopAsync();
                 var stopSummary = FormatTurnLog();
+                await TryCapturePlaybookAsync(goal);
                 return new OrchestratorResult
                  {
                     FinalOutput = $"Execution stopped by user (ESC).\n\n{stopSummary}",
@@ -446,6 +460,9 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                         var stepCmd = r.ToolCall.Args.GetValueOrDefault("command") ?? r.ToolCall.Args.GetValueOrDefault("action") ?? "";
                         var stepDesc = $"{r.ToolCall.ToolName}: {StringUtil.Default.Truncate(stepCmd, 80)}";
                          _completedSteps.Add(stepDesc);
+                        // v14.14: record successful batch calls for playbook capture
+                        if (r.Succeeded)
+                            _successfulCalls.Add(new CapturedToolCall(r.ToolCall.ToolName ?? "(unknown)", SummarizeArgs(r.ToolCall.Args)));
                      }
 
                      // v10.16.2: Conservative batch sub-task advancement.
@@ -645,6 +662,9 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                                     var stepDesc = $"{decision.ToolName}: {StringUtil.Default.Truncate(stepCmd, 80)}";
                                      _completedSteps.Add(stepDesc);
 
+                                     // v14.14: record the successful call for playbook capture
+                                     _successfulCalls.Add(new CapturedToolCall(decision.ToolName!, SummarizeArgs(argsDict)));
+
                                      // v10.17: Sub-task advancement based on execution plan.
                                      // If the plan says this call covers multiple steps, advance all of them.
                                      // If no plan or call not in plan, advance one (conservative default).
@@ -725,6 +745,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
             else if (decision.WantsDirectAnswer)
                        {
                 _out?.WriteLine("[Orchestrator] LLM gave direct answer. Stopping.");
+                    await TryCapturePlaybookAsync(goal);
                     return new OrchestratorResult
                              {
                             FinalOutput = decision.AnswerText!,
@@ -758,6 +779,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                      // deliver the model's last response (best effort) so ANY model can
                      // complete a conversation.
                      _logger?.Warn("Orchestrator", $"No decision after {MaxFormatRetries} retries — delivering best-effort response.");
+                    await TryCapturePlaybookAsync(goal);
                     return new OrchestratorResult
                              {
                             FinalOutput = decision.AnswerText ?? "(No response content)",
@@ -901,6 +923,36 @@ public sealed class AgentOrchestrator : IAsyncDisposable
             "Your last edit broke the build. Fix the [VERIFY FAIL] errors above with a file edit before doing anything else.");
           }
 
+       /// <summary>v14.14: Summarize tool args for a playbook step line (key=value pairs, char-capped). Pure.</summary>
+     internal static string SummarizeArgs(Dictionary<string, string?> args)
+          {
+        var summary = string.Join(", ",
+            (args ?? new Dictionary<string, string?>())
+                .Where(kv => !string.IsNullOrWhiteSpace(kv.Value))
+                .Select(kv => $"{kv.Key}={kv.Value!.Trim()}"));
+        summary = summary.Replace("\r", " ").Replace("\n", " ");
+        return summary.Length <= 120 ? summary : summary[..120] + "…";
+          }
+
+       /// <summary>v14.14: capture a success playbook after a goal achieved with at least one successful tool call. Never kills the agent loop.</summary>
+     private async Task TryCapturePlaybookAsync(string goal)
+          {
+        var store = _playbookStore;
+        if (store == null || _successfulCalls.Count == 0) return;
+        try
+         {
+            var candidate = _playbookExtractor.Extract(goal, _successfulCalls);
+            if (candidate == null) return;
+            var saved = await store.CaptureAsync(candidate);
+            _out?.WriteDim($"[Playbook] {saved.Title} (x{saved.UseCount})");
+            _logger?.Info("Orchestrator", $"Playbook captured: {saved.Id} (use_count={saved.UseCount})");
+         }
+        catch (Exception ex)
+         {
+            _logger?.Warn("Orchestrator", $"Playbook capture failed (non-critical): {ex.Message}");
+         }
+          }
+
        /// <summary>v10.18.1: Get tool call log for sub-agent partial results.</summary>
      public IReadOnlyList<string> GetToolCallLog() => _toolCallLog.AsReadOnly();
 
@@ -933,6 +985,7 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                     _verificationFailRounds = 0;
                     _verificationDisabled = false;
                     _largeTierVerified = false;
+                    _successfulCalls.Clear(); // v14.14: playbook capture log is per-goal
                     _maxTurns = _baseMaxTurns; // recompute on next decomposition
                     // v10.6: Reset sub-task state
                     _subTasks = null;

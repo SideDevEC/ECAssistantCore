@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-23T07:45:35.155646+00:00
-Packages: 2  |  Types: 437
+Generated: 2026-09-23T07:53:57.989114+00:00
+Packages: 2  |  Types: 446
 
 ---
 
-## ECAssistantCore (332 types, ~28290 LOC)
+## ECAssistantCore (340 types, ~28828 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -27,6 +27,8 @@ Packages: 2  |  Types: 437
 - 🔵 IOutputRenderer  (ECAssistantCore)
 - 🔵 IParallelToolExecutor  (ECAssistantCore)
 - 🔵 IPdfPageRenderer  (ECAssistantCore)
+- 🔵 IPlaybookExtractor  (ECAssistantCore)
+- 🔵 IPlaybookStore  (ECAssistantCore)
 - 🔵 IPostEditVerifier  (ECAssistantCore)
 - 🔵 IProcessRunner  (ECAssistantCore)
 - 🔵 IRemoteModelProbe  (ECAssistantCore)
@@ -46,7 +48,7 @@ Packages: 2  |  Types: 437
 - 🟡 ActiveSubAgent  (ECAssistantCore)
 - 🟡 AgentConfig  (ECAssistantCore)
 - 🟡 AgentConfigBuilder  (ECAssistantCore)
-- 🟡 AgentOrchestrator : IAsyncDisposable  (ECAssistantCore)  deps: [EAgentEngine, ISessionOutput? sessionOutput =, int maxTurns =, int maxFailures =, ToolPolicy? toolPolicy =, ILogger? logger =, EAgentConfig? config =, IPostEditVerifier? postEditVerifier =]
+- 🟡 AgentOrchestrator : IAsyncDisposable  (ECAssistantCore)  deps: [EAgentEngine, ISessionOutput? sessionOutput =, int maxTurns =, int maxFailures =, ToolPolicy? toolPolicy =, ILogger? logger =, EAgentConfig? config =, IPostEditVerifier? postEditVerifier =, IPlaybookStore? playbookStore =, IPlaybookExtractor? playbookExtractor =]
 - 🟡 AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable  (ECAssistantCore)  deps: [string, string, string, string, InferenceRequestParams, string, SemaphoreSlim, SubAgentConfig? subAgentConfig =, string? label =, ILogger? logger =, EAgentConfig? config =, OpenAIClient? httpClient =, RemoteTokenizer? remoteTokenizer =, string? apiKey =, bool isLocalMode =]
 - 🟡 AiSetupResetter : IAiSetupResetter  (ECAssistantCore)
 - 🟡 AiSetupResetterTests  (ECAssistantCore)
@@ -59,6 +61,7 @@ Packages: 2  |  Types: 437
 - 🟡 BuildCallSignatureTests  (ECAssistantCore)
 - 🟣 BuildError  (ECAssistantCore)  deps: [string, int, string, string]
 - 🟡 BuildErrorParser  (ECAssistantCore)
+- 🟣 CapturedToolCall  (ECAssistantCore)  deps: [string, string]
 - 🟡 CatalogFetcher  (ECAssistantCore)  deps: [HttpClient, HttpClient, string]
 - 🟡 CatalogModelFile  (ECAssistantCore)
 - 🟡 CatalogSuggestedConfig  (ECAssistantCore)
@@ -85,7 +88,7 @@ Packages: 2  |  Types: 437
 - 🟣 DownloadProgress  (ECAssistantCore)  deps: [string, long, long, double, double]
 - 🟡 EAgentConfig  (ECAssistantCore)
 - 🟡 EAgentConfigTests : IDisposable  (ECAssistantCore)
-- 🟡 EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost  (ECAssistantCore)  deps: [string, IInferenceEngine, IKvCacheController, RemoteTokenizer? tokenizer =, InferenceRequestParams? inferenceParams =, uint contextSize =, string modelPath =, EAgentConfig? config =, string? workingDir =, ILogger? logger =, EMemoryManager? memoryManager =, SelfCorrectionManager? selfCorrection =, ProjectContextManager? projectContext =, ITaskPlanner? taskPlanner =]
+- 🟡 EAgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost  (ECAssistantCore)  deps: [string, IInferenceEngine, IKvCacheController, RemoteTokenizer? tokenizer =, InferenceRequestParams? inferenceParams =, uint contextSize =, string modelPath =, EAgentConfig? config =, string? workingDir =, ILogger? logger =, EMemoryManager? memoryManager =, SelfCorrectionManager? selfCorrection =, IPlaybookStore? playbookStore =, ProjectContextManager? projectContext =, ITaskPlanner? taskPlanner =]
 - 🟡 EBackgroundExecTool : EToolBase  (ECAssistantCore)  deps: [BackgroundProcessManager, IProcessRunner, IFileSystem, EAgentConfig]
 - 🟡 EBackgroundExecToolTests : IDisposable  (ECAssistantCore)
 - 🟡 ECodeEditorTool : EToolBase  (ECAssistantCore)  deps: [IFileSystem, EAgentConfig]
@@ -213,6 +216,11 @@ Packages: 2  |  Types: 437
 - 🟡 ParallelToolExecutorTests  (ECAssistantCore)
 - 🟡 PathExpander  (ECAssistantCore)
 - 🟡 PlannedToolCall  (ECAssistantCore)
+- 🟡 Playbook  (ECAssistantCore)
+- 🟡 PlaybookExtractor : IPlaybookExtractor  (ECAssistantCore)
+- 🟡 PlaybookMatcher  (ECAssistantCore)
+- 🟡 PlaybookStore : IPlaybookStore  (ECAssistantCore)  deps: [string, ILogger? logger =, int maxPlaybooks =]
+- 🟡 PlaybookTests : IDisposable  (ECAssistantCore)
 - 🟡 PostEditVerifier : IPostEditVerifier  (ECAssistantCore)  deps: [IVerificationRunner, VerificationConfig]
 - 🟡 PostEditVerifierTests : IDisposable  (ECAssistantCore)
 - 🟣 ProcessResult  (ECAssistantCore)  deps: [int, string, string, bool]
@@ -340,7 +348,7 @@ Packages: 2  |  Types: 437
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (105 types, ~12943 LOC)
+## Tests (106 types, ~13168 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 ApiUserController  (Tests)
@@ -402,6 +410,7 @@ Packages: 2  |  Types: 437
 - 🟡 OrchestratorIntegrationTests : IDisposable  (Tests)
 - 🟡 ParallelToolExecutorIntegrationTests : IDisposable  (Tests)
 - 🟡 ParallelToolExecutorTests  (Tests)
+- 🟡 PlaybookTests : IDisposable  (Tests)
 - 🟡 PostEditVerifierTests : IDisposable  (Tests)
 - 🟡 ProcessRunnerTests  (Tests)
 - 🟡 ProgramGuiCollection  (Tests)

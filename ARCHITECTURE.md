@@ -1,6 +1,6 @@
 # ECAssistant — Architecture
 
-**Updated:** 2026-09-23 PM — v14.13 tier-aware post-edit verification loop + v14.12 harness chain complete + audit + TestSupport shared test infra.
+**Updated:** 2026-09-23 PM — v14.14 tier-aware playbook memory + v14.13 tier-aware post-edit verification loop + v14.12 harness chain complete + audit + TestSupport shared test infra.
 Current state: model-tier-adaptive harness (`model_tier.mode` small/large/auto, tier-resolved preplanning,
 slim directives + envelope budget for large tier), grammar tool-name union (`tool_names` wire field,
 DecisionGrammar.BuildGbnf on all 3 structured paths), envelope commentary (remote native path, local grammar
@@ -13,7 +13,7 @@ post-edit build/test gate fed back into the loop, tier-gated (small: every edit,
 (MockEngine config param, public noops, ProbeTestTool, HarnessE2ESessionFactory). Test net: 65/65 unit +
 2/2 real-model e2e (live server + qwen35-4b). Dated history: git log + Addenda below.
 
-**Status:** ✅ builds 0 errors | 65/65 unit net | 2/2 harness e2e | LDC regenerated 2026-09-23
+**Status:** ✅ builds 0 errors | 116/116 harness-filtered unit net (98 Harness + 18 Playbook) | 2/2 harness e2e | LDC regenerated 2026-09-23
 
 ## Overview
 
@@ -590,3 +590,27 @@ delta, Aider/Cline/Claude-Code teardowns). All model-independent, all config-dri
   SelfCorrectionManager wiring). One type per file, no statics.
 - **Tests:** PostEditVerifierTests ×19 (classification, tier gating, stub-runner verification,
   feedback formatting, MockEngine orchestrator wiring — no real builds). Net with tier tests: 29/29.
+
+## Addendum — v14.14 tier-aware playbook memory (2026-09-23)
+
+- **New Playbooks/ package:** `Playbook` (id, title, trigger keywords, ordered steps, created/last-used,
+  use_count, source), `CapturedToolCall` (tool + pre-summarized args), `PlaybookMatcher` (static PURE
+  helpers only — keyword extraction, title normalization, dedup equivalence), `IPlaybookStore`/
+  `PlaybookStore` (JSON persistence under `{workingDir}/playbooks/`, one file per entry — mirrors the
+  SelfCorrectionManager .snapshots pattern; corrupt files skipped, disk failures logged never thrown),
+  `IPlaybookExtractor`/`PlaybookExtractor` (deterministic extraction from the run's successful tool-call
+  log — NO LLM in Core). One type per file, no statics except pure matcher functions.
+- **Capture (Orchestrator):** successful tool calls (single + batch paths) recorded as CapturedToolCall;
+  on every GoalAchieved return with ≥1 successful tool call, TryCapturePlaybookAsync extracts and stores
+  a playbook — never kills the agent loop. Dedup: equal normalized title OR equal trigger keyword set →
+  UseCount++/LastUsedAt update instead of a new entry. Cap 50 → least-used/oldest evicted.
+- **Injection (EAgentEngine):** `InitializePlaybooks(workingDir)` mirrors InitializeSelfCorrection
+  (called by AgentSession + TestRunner); turn-1 `BuildIncrementalInput` adds `GetPlaybookInjection` —
+  trigger-keyword match vs the user request, top N=2, 1500-char cap.
+- **Tier behavior:** small tier → STRICT recipe ("Follow these steps exactly; adapt only if a step
+  fails"); large tier → slim reference material ("PAST SUCCESSFUL PROCEDURE, use if helpful").
+- **No new config section (conservative choice):** caps/defaults are constants in PlaybookStore
+  (max 50, top 2, 1500 chars). Config-gating can follow if needed.
+- **Tests:** PlaybookTests ×18 (persist/load roundtrip, title+trigger-set dedup, eviction of
+  least-used/oldest, keyword matching, tier-flavored injection text, deterministic extractor,
+  MockEngine orchestrator capture — no LLM, temp dirs only). Playbook net 18/18; Harness filter 98/98.

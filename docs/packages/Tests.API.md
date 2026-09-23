@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 105  |  LOC: 12943  |  ~4209 tokens
+Types: 106  |  LOC: 13168  |  ~4279 tokens
 
 ---
 
@@ -235,6 +235,11 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core, ECAssistant.Core.
 
 ### Class: ParallelToolExecutorTests
 Cross-package deps: ECAssistant.TestSupport, ECAssistant.Core.Engine, ECAssistant.Core.Tools, Moq
+
+### Class: PlaybookTests
+> v14.14: tier-aware playbook memory. Pure-logic tests — JSON persistence in
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Orchestration, ECAssistant.Core.Playbooks, ECAssistant.Core.Tools, ECAssistant.TestSupport
 
 ### Class: PostEditVerifierTests
 > v14.13: tier-aware post-edit verification loop. Pure-logic tests — the build/test

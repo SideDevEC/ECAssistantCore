@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-23T07:45:35.156330+00:00
-Edges: 80  |  Packages: 2
+Generated: 2026-09-23T07:53:57.989774+00:00
+Edges: 82  |  Packages: 2
 
 ---
 
@@ -68,6 +68,8 @@ Edges: 80  |  Packages: 2
 - ModelParamValidator ──implements──► IModelParamValidator (ECAssistantCore)
 - NopKvCacheController ──implements──► IKvCacheController (ECAssistantCore)
 - ParallelToolExecutor ──implements──► IParallelToolExecutor (ECAssistantCore)
+- PlaybookExtractor ──implements──► IPlaybookExtractor (ECAssistantCore)
+- PlaybookStore ──implements──► IPlaybookStore (ECAssistantCore)
 - PostEditVerifier ──implements──► IPostEditVerifier (ECAssistantCore)
 - PostEditVerifier ──uses──► IVerificationRunner (ECAssistantCore)
 - ProcessRunner ──implements──► IProcessRunner (ECAssistantCore)
