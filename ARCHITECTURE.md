@@ -1,7 +1,7 @@
 # ECAssistant — Architecture (as-is)
 
-**Updated:** 2026-09-23 · Naming convention: tool-family classes carry the `E` prefix (class name = wire name); everything else doesn't. `Eca*` types keep the product prefix.
-**Status:** ✅ builds 0 errors | 57/57 MCP tests passing | LDC regenerated 2026-09-23, enforcement PASSED (591 types Core+LLM+TUI+TestSupport+Console / 159 edges)
+**Updated:** 2026-09-24 · Naming convention: tool-family classes carry the `E` prefix (class name = wire name); everything else doesn't. `Eca*` types keep the product prefix.
+**Status:** ✅ builds 0 errors | 57/57 MCP tests passing | LDC regenerated 2026-09-24, enforcement PASSED (552 types Core + 183 LLM + 30 TUI + 13 TestSupport + 4 Console / 148 edges)
 **History:** git log — this file describes the CURRENT state only.
 
 ## Overview
