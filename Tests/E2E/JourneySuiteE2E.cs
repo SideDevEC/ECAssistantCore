@@ -42,10 +42,12 @@ public sealed class JourneySuiteE2E
     private AppConfig LocalConfig(int maxTurns = 12, int? compactPct = null,
         string? verifyCommand = null, int? llmContextSize = null)
     {
+        // Emre (2026-09-24): tier-forcing env for silicon/turn-economy experiments.
+        var localTier = (Environment.GetEnvironmentVariable("ECA_E2E_LOCAL_TIER") ?? "small").ToLowerInvariant();
         var json = $$"""
         {
           "llm_provider": { "mode": "local", "model_id": "{{LocalModel}}" },
-          "model_tier": { "mode": "small" },
+          "model_tier": { "mode": "{{localTier}}" },
           "interface": { "max_turns": {{maxTurns}} },
           "llm": { "context_size": {{llmContextSize ?? 16384}} },
           "context_management": {
@@ -59,10 +61,14 @@ public sealed class JourneySuiteE2E
 
     private AppConfig RemoteConfig(int maxTurns = 12, int? compactPct = null, int? llmContextSize = null)
     {
+        // Emre (2026-09-24): tier-forcing env — run the REMOTE model as SMALL tier
+        // (same scaffolding, 16K window, small-tier output caps) for silicon-vs-
+        // turn-economy comparison. Default stays large.
+        var remoteTier = (Environment.GetEnvironmentVariable("ECA_E2E_REMOTE_TIER") ?? "large").ToLowerInvariant();
         var json = $$"""
         {
           "llm_provider": { "mode": "remote", "model_id": "{{RemoteModel}}", "endpoint": "{{RemoteEndpoint}}" },
-          "model_tier": { "mode": "large" },
+          "model_tier": { "mode": "{{remoteTier}}" },
           "interface": { "max_turns": {{maxTurns}} },
           "llm": { "context_size": {{llmContextSize ?? 16384}} },
           "context_management": {
@@ -120,7 +126,7 @@ public sealed class JourneySuiteE2E
             sessionId: "remote-journey-" + Guid.NewGuid().ToString("N")[..8],
             endpoint: RemoteEndpoint!,
             clientId: null,
-            inferenceParams: InferenceParamsFactory.Default.CreateTiered(config, isLargeTier: true),
+            inferenceParams: InferenceParamsFactory.Default.CreateTiered(config, isLargeTier: config.ModelTier?.Mode?.Equals("large", StringComparison.OrdinalIgnoreCase) != false),
             workingDir: workingDir,
             inferenceLock: new SemaphoreSlim(1, 1),
             config: config,
