@@ -1349,13 +1349,34 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
          // KV cache overflow handling — rebuild with summarized conversation
         var tokenBudget = _contextWindow.GetTotalTokens();
         var maxBudget = (int)_contextWindow.MaxTokens;
+        // v15: server-truth compaction signal. The server's actual KV usage counts
+        // chat-template wrapping, envelope/grammar overhead, and incremental-input
+        // framing that the window estimator cannot see — at 16k contexts that drift
+        // let the real wall arrive BEFORE compaction fired. Refresh from the server
+        // and use the LARGER usage figure against the SMALLER of the two budgets,
+        // so compaction can never fire late again.
+        if (_kvCacheController != null && _kvState.SessionActive)
+         {
+            await RefreshKvStatusAsync();
+            if (_kvState.ApproxTokens > tokenBudget)
+             {
+                _logger?.Info("KVCache", $"Server KV usage {_kvState.ApproxTokens} exceeds window estimate {tokenBudget} — compacting on server truth.");
+                tokenBudget = _kvState.ApproxTokens;
+             }
+            if (_kvState.ContextSize > 0)
+                maxBudget = Math.Min(maxBudget, (int)_kvState.ContextSize);
+         }
         if (maxBudget > 0 && tokenBudget > maxBudget * CompactThreshold())
          {
             _out?.WriteWarning($"[KVCache] Context at {tokenBudget}/{maxBudget} tokens ({tokenBudget * 100 / maxBudget}%). Rebuilding cache...");
 
             var allMessages = _contextWindow.GetWindowMessages();
             var convSb = new StringBuilder();
-            var convCharLimit = (int)(_backgroundTasks?.Summarize.ContextSize ?? 4096) * 3 / 4;
+            // Cap the summarize input to what FITS in the window minus output headroom.
+             // At small windows (16k) an uncapped conversation would overflow the very
+            // call that's supposed to shrink it — the deadlock. ~4 chars/token, leave a
+             // third for system prompt + summary output.
+            var convCharLimit = Math.Max(2048, (int)((maxBudget * 0.6) * 3));
             for (int i = allMessages.Count - 1; i >= 0 && convSb.Length < convCharLimit; i--)
                 convSb.Insert(0, $"[{allMessages[i].Role}] {allMessages[i].Content}\n");
             var convText = convSb.ToString();
@@ -1969,7 +1990,13 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
         _out?.WriteInfo("[Engine] LLM server unreachable — attempting recovery...");
         try
          {
-            return await ConnectionRecovery();
+            var ok = await ConnectionRecovery();
+             // After any connection-level failure the local server may have reset ALL its
+             // sessions (overflow safety net). Rebuild our KV cache from full history so we
+             // don't keep talking to a stale client-side session handle.
+            if (_kvCacheController != null && _kvState.SessionActive)
+                await ResetAndRebuildCacheAsync();
+            return ok;
          }
         catch (Exception ex)
          {

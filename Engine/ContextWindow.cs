@@ -284,7 +284,7 @@ public class ContextWindow
             {
                 try
                 {
-                    var summary = await _summaryService.SummarizeAsync(oldMessages, preferWarmSession: true);
+                    var summary = await _summaryService.SummarizeAsync(oldMessages, preferWarmSession: false);
                     var summaryMsg = TranscriptMessage.System(summary);
                     summaryMsg.EstimatedTokens = _tokenCounter.Count(summary);
                     lock (_messagesLock)

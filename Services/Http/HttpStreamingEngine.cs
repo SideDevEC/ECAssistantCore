@@ -16,18 +16,24 @@ public sealed class HttpStreamingEngine : IInferenceEngine
 {
     private readonly OpenAIClient _client;
     private readonly string _defaultModelId;
-    private readonly string? _defaultSessionId;
 
+    /// <summary>Legacy default session id. v15: REMOVED from request routing —
+    /// SessionId=null on the params object is now a REAL stateless signal (server
+    /// runs a fresh executor, no KV writes). Main turns pass their session id
+    /// explicitly via request params, so helper prompts (decompose, planner,
+    /// stateless summary) can never leak into a session's KV cache again.</summary>
     public string Endpoint => _client.BaseUrl;
 
     /// <summary>
     /// Create with an existing OpenAIClient (shared with other services).
+    /// <paramref name="defaultSessionId"/> is accepted for ctor compatibility but
+    /// no longer used (v15): request routing is driven solely by params.SessionId.
     /// </summary>
     public HttpStreamingEngine(OpenAIClient client, string defaultModelId = "main", string? defaultSessionId = null)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _defaultModelId = defaultModelId;
-        _defaultSessionId = defaultSessionId;
+        // v15: defaultSessionId intentionally unused — see class comment above.
     }
 
     /// <summary>
@@ -238,8 +244,23 @@ public sealed class HttpStreamingEngine : IInferenceEngine
         return JsonSerializer.Serialize(new { thinking, answer = content });
     }
 
+    /// <summary>
+    /// v15: SessionId=null on the params object means STATELESS — the caller
+    /// explicitly chose no KV session (BuildStatelessParams contract). Resolve to
+    /// null so `session_id` is omitted from the JSON (WhenWritingNull) and the
+    /// server routes the request to its stateless executor instead of appending
+    /// this prompt to a session's KV cache.
+    /// </summary>
+    private static string? ResolveSessionId(InferenceRequestParams parameters)
+        => parameters.SessionId; // null stays null — no fallback
+
     private string BuildStructuredRequestBody(string prompt, InferenceRequestParams parameters)
     {
+        // v15 fix: SessionId=null means STATELESS — never fall back to the engine's
+        // default session. The old `?? _defaultSessionId` silently routed decompose,
+        // planner, and stateless-summary calls into the MAIN session's KV cache,
+        // inflating it toward the context wall (16k overflow on shift-incapable
+        // models, J2 failure). Null (omitted in JSON) → server's stateless executor.
         var req = new
         {
             model = parameters.ModelId ?? _defaultModelId,
@@ -251,7 +272,7 @@ public sealed class HttpStreamingEngine : IInferenceEngine
             top_k = parameters.TopK,
             max_tokens = parameters.MaxTokens,
             repeat_penalty = parameters.RepeatPenalty,
-            session_id = parameters.SessionId ?? _defaultSessionId,
+            session_id = ResolveSessionId(parameters),
             tool_names = parameters.ToolNames,
             reasoning_effort = parameters.ReasoningEffort,
         };
@@ -279,7 +300,9 @@ public sealed class HttpStreamingEngine : IInferenceEngine
             top_k = parameters.TopK,
             max_tokens = parameters.MaxTokens,
             repeat_penalty = parameters.RepeatPenalty,
-            session_id = parameters.SessionId ?? _defaultSessionId,
+            // v15 fix: SessionId=null means STATELESS — never fall back to the
+            // engine's default session (see BuildStructuredRequestBody).
+            session_id = ResolveSessionId(parameters),
             stop = parameters.Stop,
             grammar = parameters.Grammar,
             reasoning_effort = parameters.ReasoningEffort,
