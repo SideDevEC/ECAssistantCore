@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-24T07:59:08.178670+00:00
-Packages: 2  |  Types: 556
+Generated: 2026-09-24T08:09:40.854914+00:00
+Packages: 2  |  Types: 552
 
 ---
 
-## ECAssistantCore (416 types, ~34848 LOC)
+## ECAssistantCore (413 types, ~34696 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -20,7 +20,6 @@ Packages: 2  |  Types: 556
 - 🔵 IInferenceEngine  (ECAssistantCore)
 - 🔵 IKvCacheController  (ECAssistantCore)
 - 🔵 ILlmProviderRegistry  (ECAssistantCore)
-- 🔵 ILlmRootMigrator  (ECAssistantCore)
 - 🔵 ILlmServerClient : IAsyncDisposable  (ECAssistantCore)
 - 🔵 ILogger  (ECAssistantCore)
 - 🔵 IMcpClient : IAsyncDisposable  (ECAssistantCore)
@@ -209,8 +208,6 @@ Packages: 2  |  Types: 556
 - 🟡 LlmProviderConfig  (ECAssistantCore)
 - 🟡 LlmProviderRegistry : ILlmProviderRegistry  (ECAssistantCore)  deps: [MultiLlmProvidersConfig, ILogger? logger =, ISecureKeyStore? keyStore =]
 - 🟡 LlmProviderRegistryTests : IDisposable  (ECAssistantCore)
-- 🟡 LlmRootMigrator : ILlmRootMigrator  (ECAssistantCore)  deps: [string, string]
-- 🟡 LlmRootMigratorTests : IDisposable  (ECAssistantCore)
 - 🟡 LlmServerClient : ILlmServerClient  (ECAssistantCore)  deps: [string, string? clientId =, int maxHeartbeatFailures =, ILogger? logger =]
 - 🟡 LlmServerClientReconnectTests  (ECAssistantCore)
 - 🟡 LlmServerEndpointConfig  (ECAssistantCore)
@@ -424,7 +421,7 @@ Packages: 2  |  Types: 556
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (140 types, ~16555 LOC)
+## Tests (139 types, ~16476 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 AllToolsTierPromptsTests  (Tests)
@@ -485,7 +482,6 @@ Packages: 2  |  Types: 556
 - 🟡 JsonEnvelopeFallbackTests  (Tests)
 - 🟡 LLMDecisionEnvelopeTests  (Tests)
 - 🟡 LlmProviderRegistryTests : IDisposable  (Tests)
-- 🟡 LlmRootMigratorTests : IDisposable  (Tests)
 - 🟡 LlmServerClientReconnectTests  (Tests)
 - 🟡 LoggerTests : IDisposable  (Tests)
 - 🟡 McpConfigTests  (Tests)

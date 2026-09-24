@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 140  |  LOC: 16555  |  ~6176 tokens
+Types: 139  |  LOC: 16476  |  ~6152 tokens
 
 ---
 
@@ -229,10 +229,6 @@ Cross-package deps: ECAssistant.Core.Orchestration
 ### Class: LlmProviderRegistryTests
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services
-
-### Class: LlmRootMigratorTests
-Implements: IDisposable
-Cross-package deps: ECAssistant.Core.Setup
 
 ### Class: LlmServerClientReconnectTests
 > Minimal fake of the ECAssistantLLM endpoints used by LlmServerClient:

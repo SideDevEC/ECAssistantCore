@@ -68,8 +68,6 @@ public sealed class FirstRunOrchestrator : IFirstRunOrchestrator
         {
             Directory.CreateDirectory(_userConfigDir);
 
-            MigrateLegacyLlmRoot();
-
             var catalogPath = Path.Combine(_userConfigDir, "model-catalog.json");
             var catalog = await LoadCatalogAsync(catalogPath).ConfigureAwait(false);
             var validationError = catalog.Validate();
@@ -86,25 +84,6 @@ public sealed class FirstRunOrchestrator : IFirstRunOrchestrator
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or HttpRequestException or InvalidOperationException or OperationCanceledException)
         {
             _ui.WriteLine($"[Setup] First-run setup skipped: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// One-time move of the hidden legacy LLM root to the visible ECALLM root.
-    /// Best-effort: a failed/conflicted migration only logs — setup continues so
-    /// the user can resolve manually. Fresh installs are a no-op.
-    /// </summary>
-    private void MigrateLegacyLlmRoot()
-    {
-        var result = new LlmRootMigrator(_llmRoot,
-                PathExpander.Default.Expand(LlmRootMigrator.LegacyRootPath)).Migrate();
-        if (result.Outcome == LlmRootMigrationOutcome.Migrated)
-        {
-            _ui.WriteLine($"[Setup] Moved LLM data from {LlmRootMigrator.LegacyRootPath} to {_llmRoot}.");
-        }
-        else if (result.Outcome != LlmRootMigrationOutcome.NotNeeded)
-        {
-            _ui.WriteLine($"[Setup] LLM root migration: {result.Error}");
         }
     }
 

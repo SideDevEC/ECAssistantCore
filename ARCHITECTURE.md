@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-24 · Naming convention: tool-family classes carry the `E` prefix (class name = wire name); everything else doesn't. `Eca*` types keep the product prefix.
 **Status:** ✅ builds 0 errors | 57/57 MCP tests passing | LDC regenerated 2026-09-24, enforcement PASSED (552 types Core + 183 LLM + 30 TUI + 13 TestSupport + 4 Console / 148 edges)
-**Addendum 2026-09-24:** LLM working root renamed `~/.ECAssistantLLM` → `~/ECALLM` (visible). `LlmRootMigrator` performs a one-time Directory.Move on first run; legacy path const `LlmRootMigrator.LegacyRootPath`. The SERVER PRODUCT is still named ECAssistantLLM — only the on-disk root changed.
+**Addendum 2026-09-24:** LLM working root renamed `~/.ECAssistantLLM` → `~/ECALLM` (visible folder). Fresh installs only — no migration logic in code; the developer machine was migrated manually. The SERVER PRODUCT is still named ECAssistantLLM — only the on-disk root changed.
 **History:** git log — this file describes the CURRENT state only.
 
 ## Overview
