@@ -13,6 +13,7 @@ public class ContextWindow
     private readonly object _messagesLock = new();
     private int _summarizeInProgress = 0;
     private int _windowSummarized = 0;
+    private volatile TaskCompletionSource<bool>? _summarizeCompletion;
 
     /// <summary>Flat token estimate per attached image for budgeting.</summary>
     public const int TokensPerImage = 800;
@@ -125,6 +126,23 @@ public class ContextWindow
     /// </summary>
     public bool ConsumeWindowSummarized() =>
         Interlocked.Exchange(ref _windowSummarized, 0) == 1;
+
+    /// <summary>
+    /// Await any pending background summarize started by SummarizeOldest.
+    /// Returns true if a summary was inserted, false if it failed or none was pending.
+    /// Callers that make compaction decisions must await this before checking
+    /// ConsumeWindowSummarized() — the background Task.Run may not have completed yet.
+    /// </summary>
+    public async Task<bool> WaitForPendingSummarizeAsync()
+    {
+        // Volatile read: the TCS is assigned inside SummarizeOldest which may run on a
+        // different thread than the compaction caller. Without it a stale register
+        // value could yield the PREVIOUS (already completed) TCS — the exact race
+        // this wait exists to close (audit 2026-09-24).
+        var tcs = _summarizeCompletion;
+        if (tcs == null) return false;
+        return await tcs.Task;
+    }
 
     public bool RemoveLastAssistantMessage()
     {
@@ -274,6 +292,11 @@ public class ContextWindow
 
             if (_summaryService == null || oldMessages.Count <= 3) return;
 
+            // TCS: let callers (AgentEngine compaction) await the background summarize
+            // before making compaction decisions — eliminates the race where
+            // ConsumeWindowSummarized() is checked before the summary has landed.
+            _summarizeCompletion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously); // volatile write — see WaitForPendingSummarizeAsync
+
             // Keep the guard held until the background insert completes so a
             // concurrent GetWindowMessages cannot start a second trim race.
             backgroundScheduled = true;
@@ -308,8 +331,10 @@ public class ContextWindow
                         // context window even though this window stays compact).
                         Interlocked.Exchange(ref _windowSummarized, 1);
                     }
+                    _summarizeCompletion.TrySetResult(true);
                 }
-                catch { /* summarization is best-effort — messages stay in place on failure */ }
+                catch { /* summarization is best-effort — messages stay in place on failure */ 
+                    _summarizeCompletion.TrySetResult(false); }
                 finally { Interlocked.Exchange(ref _summarizeInProgress, 0); }
             });
         }

@@ -97,6 +97,17 @@ public sealed class HandoffExecutor : IAsyncDisposable
                 ? (IKvCacheController)new RemoteKvCacheController(client)
                 : new NopKvCacheController();
 
+            // Leak fix (audit 2026-09-24): a previous specialist engine that was never
+            // disposed (crashed run, overwritten handoff) must be disposed before a new
+            // one takes the field — otherwise every handoff leaks an engine + its
+            // server-side KV session (VRAM reservation held until client disconnect).
+            if (_specialistEngine != null)
+            {
+                try { await _specialistEngine.DisposeAsync(); }
+                catch (Exception ex) { _logger.Debug("Handoff", $"Prior specialist dispose failed: {ex.Message}"); }
+                _specialistEngine = null;
+            }
+
             _specialistEngine = new AgentEngine(
                 sessionId: sessionId,
                 inferenceEngine: inference,
@@ -184,6 +195,18 @@ public sealed class HandoffExecutor : IAsyncDisposable
                 FinalOutput = $"[Handoff] Specialist '{request.Name}' failed: {ex.Message}",
                 Status = OrchestratorStatus.Failed
             };
+        }
+        finally
+        {
+            // Ephemeral by contract: the specialist is disposed as soon as the run ends
+            // (success, cancel, or failure). The field is only kept for DisposeAsync
+            // idempotence — RunAsync is the primary lifetime boundary.
+            if (_specialistEngine != null)
+            {
+                try { await _specialistEngine.DisposeAsync(); }
+                catch (Exception ex) { _logger.Debug("Handoff", $"Specialist dispose failed: {ex.Message}"); }
+                _specialistEngine = null;
+            }
         }
     }
 

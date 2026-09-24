@@ -3,6 +3,7 @@
 **Updated:** 2026-09-24 · Naming convention: tool-family classes carry the `E` prefix (class name = wire name); everything else doesn't. `Eca*` types keep the product prefix.
 **Status:** ✅ builds 0 errors | 57/57 MCP tests passing | LDC regenerated 2026-09-24, enforcement PASSED (552 types Core + 183 LLM + 30 TUI + 13 TestSupport + 4 Console / 148 edges)
 **Addendum 2026-09-24:** LLM working root renamed `~/.ECAssistantLLM` → `~/ECALLM` (visible folder). Fresh installs only — no migration logic in code; the developer machine was migrated manually. The SERVER PRODUCT is still named ECAssistantLLM — only the on-disk root changed.
+**Addendum 2026-09-24 (audit fixes, PM):** (1) **HandoffExecutor leak fixed** — the specialist engine is disposed before a new one is assigned AND in a `finally` at the end of `RunAsync` (success/cancel/failure); the "ephemeral specialist" contract is now real. (2) **`SummarizeStructuredAsync` hardened** — a toolcalls envelope (null AnswerText) no longer injects raw JSON as the summary (falls to the capped plain path); the plain fallback uses capped summarize params (`GeneratePlainSummaryAsync`), and `OperationCanceledException` propagates instead of being swallowed. (3) **`ContextWindow._summarizeCompletion` is volatile** — closes the stale-TCS read race in `WaitForPendingSummarizeAsync` (compaction decision after background summarize).
 **History:** git log — this file describes the CURRENT state only.
 
 ## Overview

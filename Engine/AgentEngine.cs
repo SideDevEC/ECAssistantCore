@@ -337,7 +337,7 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
 
         _memoryManager = memoryManager ?? new MemoryManager();
         var summarySvc = _inferenceEngine != null
-             ? new SummaryService(p => _inferenceEngine.GenerateAsync(p, BuildStatelessParams(), CancellationToken.None))
+             ? new SummaryService(p => SummarizeStructuredAsync(p))
              : null;
         _contextWindow = new ContextWindow(contextSize, summarySvc, tokenCounter: null,
             // compact_threshold_percent now drives the summarize trigger too (was hardwired 0.50)
@@ -473,13 +473,13 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
             return;
 
         var summaryService = new SummaryService(
-            p => _inferenceEngine.GenerateAsync(p, BuildStatelessParams(), CancellationToken.None),
+            p => SummarizeStructuredAsync(p),
             prompt =>
             {
                 var warmParams = BuildWarmSessionParams();
                 return warmParams != null
-                    ? _inferenceEngine.GenerateAsync(prompt, warmParams, CancellationToken.None)
-                    : _inferenceEngine.GenerateAsync(prompt, BuildStatelessParams(), CancellationToken.None);
+                    ? SummarizeStructuredAsync(prompt, warmParams)
+                    : SummarizeStructuredAsync(prompt);
             });
         _contextWindow.SetSummaryService(summaryService);
         _logger?.Info("Engine", "SummaryService wired with main model (HTTP transport).");
@@ -588,6 +588,61 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         var p = BuildStatelessParams();
         p.SessionId = _sessionId; // warm path — reuse prefilled conversation in cache
         return p;
+    }
+
+    /// <summary>
+    /// Grammar-constrained summarize: uses the structured decision envelope
+    /// ({"thinking","answer"}) so the server's GBNF grammar + early-stop keep the
+    /// 4B model from rambling 24K chars on a summarize prompt. Extracts the
+    /// <c>answer</c> field as the summary text. Falls back to plain GenerateAsync
+    /// when the structured path returns null (server doesn't support it).
+    /// </summary>
+    private async Task<string> SummarizeStructuredAsync(string prompt, InferenceRequestParams? warmParams = null)
+    {
+        if (_inferenceEngine == null)
+            return "";
+        var p = warmParams ?? BuildStatelessParams();
+        p.MaxTokens = Math.Max(100, _backgroundTasks?.Summarize.MaxTokens ?? 200);
+        p.Temperature = _backgroundTasks?.Summarize.Temperature ?? 0.1f;
+        p.Stop = _backgroundTasks?.Summarize.AntiPrompts ?? new[] { "User:", "Question:" };
+        try
+        {
+            var raw = await _inferenceEngine.GenerateStructuredAsync(prompt, p, CancellationToken.None);
+            if (raw == null)
+                return await GeneratePlainSummaryAsync(prompt);
+            var decision = StructuredDecisionAdapter.ParseDecision(raw);
+            // Audit fix (2026-09-24): a toolcalls envelope has no AnswerText — falling
+            // back to `raw` injected the raw JSON envelope as the summary text. A summary
+            // must be prose; anything else goes through the capped plain path.
+            return !string.IsNullOrWhiteSpace(decision.AnswerText)
+                ? decision.AnswerText
+                : await GeneratePlainSummaryAsync(prompt);
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancellation is not a summary failure — rethrow so ESC/stop propagates.
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger?.Warn("Engine", $"Structured summarize failed ({ex.Message}) — falling back to plain generation.");
+            // Fallback: plain text generation, with the SAME capped params (max_tokens,
+            // stop sequences) — the audit found the old fallback dropped them, reopening
+            // the exact 24K-char rambling the structured path was built to prevent.
+            return await GeneratePlainSummaryAsync(prompt);
+        }
+    }
+
+    /// <summary>Plain-text summarize with the capped summarize params (never the
+    /// uncapped stateless defaults — see audit 2026-09-24).</summary>
+    private async Task<string> GeneratePlainSummaryAsync(string prompt)
+    {
+        if (_inferenceEngine == null) return "";
+        var p = BuildStatelessParams(
+            Math.Max(100, _backgroundTasks?.Summarize.MaxTokens ?? 200),
+            _backgroundTasks?.Summarize.AntiPrompts ?? new[] { "User:", "Question:" },
+            _backgroundTasks?.Summarize.Temperature ?? 0.1f);
+        return await _inferenceEngine.GenerateAsync(prompt, p, CancellationToken.None);
     }
 
      private InferenceRequestParams BuildStatelessParams(int maxTokens, string[]? stop, float temperature = 0.1f, float topP = 0.8f, int topK = 40, float repeatPenalty = 1.0f)
@@ -1355,6 +1410,7 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
         // let the real wall arrive BEFORE compaction fired. Refresh from the server
         // and use the LARGER usage figure against the SMALLER of the two budgets,
         // so compaction can never fire late again.
+        bool serverTruthTriggered = false;
         if (_kvCacheController != null && _kvState.SessionActive)
          {
             await RefreshKvStatusAsync();
@@ -1362,6 +1418,7 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
              {
                 _logger?.Info("KVCache", $"Server KV usage {_kvState.ApproxTokens} exceeds window estimate {tokenBudget} — compacting on server truth.");
                 tokenBudget = _kvState.ApproxTokens;
+                serverTruthTriggered = true;
              }
             if (_kvState.ContextSize > 0)
                 maxBudget = Math.Min(maxBudget, (int)_kvState.ContextSize);
@@ -1371,6 +1428,13 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
             _out?.WriteWarning($"[KVCache] Context at {tokenBudget}/{maxBudget} tokens ({tokenBudget * 100 / maxBudget}%). Rebuilding cache...");
 
             var allMessages = _contextWindow.GetWindowMessages();
+
+            // v15 fix: SummarizeOldest (triggered by GetWindowMessages) runs the LLM
+            // summarize in a background Task.Run. Await its completion before checking
+            // ConsumeWindowSummarized() — otherwise the flag is false because the
+            // background task hasn't finished inserting the summary yet (race condition).
+            await _contextWindow.WaitForPendingSummarizeAsync();
+
             var convSb = new StringBuilder();
             // Cap the summarize input to what FITS in the window minus output headroom.
              // At small windows (16k) an uncapped conversation would overflow the very
@@ -1399,38 +1463,27 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                 rebuilt = true;
                 await ResetAndRebuildCacheAsync();
              }
-            else if (!_contextWindow.TrimStaleToolOutputs(keepRecent))
+            else
              {
+                // Staged compaction stage 1: trim stale tool outputs first (zero LLM cost).
+                // Only pay for the LLM summarize + rebuild when trimming isn't enough.
+                // BUT: when server-truth triggered the compaction, trim alone is never
+                // sufficient — it shrinks the Core window but not the server KV. Proceed
+                // to LLM summarize anyway so the server cache is reset + rebuilt.
+                bool trimSufficient = _contextWindow.TrimStaleToolOutputs(keepRecent);
+                _logger?.Info("Compaction", $"trimSufficient={trimSufficient} serverTruth={serverTruthTriggered} windowTokens={_contextWindow.GetTotalTokens()} budget={tokenBudget}/{maxBudget}");
+                if (!trimSufficient || serverTruthTriggered)
+                 {
                 rebuilt = true;
                 if (_inferenceEngine != null && (_backgroundTasks?.Summarize.UseLlm ?? true))
                 {
-                    var summarizeConfig = _backgroundTasks?.Summarize;
-                var warmParams = BuildWarmSessionParams();
-                try
+                    try
                  {
-                    // v10.31: Warm-session compaction — the conversation being summarized is
-                    // already in the main session's KV cache, so infer inside it (decode-only)
-                    // instead of a cold stateless call. Fall back to stateless if no warm session.
-                    InferenceRequestParams ResolveParams()
-                     {
-                        if (warmParams != null)
-                         {
-                            warmParams.MaxTokens = Math.Max(100, summarizeConfig?.MaxTokens ?? 200);
-                            warmParams.Stop = summarizeConfig?.AntiPrompts ?? new[] { "User:", "Question:" };
-                            warmParams.Temperature = summarizeConfig?.Temperature ?? 0.1f;
-                            return warmParams;
-                         }
-                        return BuildStatelessParams(
-                            Math.Max(100, summarizeConfig?.MaxTokens ?? 200),
-                            summarizeConfig?.AntiPrompts ?? new[] { "User:", "Question:" },
-                            summarizeConfig?.Temperature ?? 0.1f,
-                            summarizeConfig?.TopP ?? 0.8f,
-                            summarizeConfig?.TopK ?? 40,
-                            summarizeConfig?.RepeatPenalty ?? 1.1f);
-                    }
-                    var result = await _inferenceEngine.GenerateAsync(
-                        $"Summarize this conversation concisely. Keep facts, decisions, and tool results only. Max 3 sentences. Plain text.\n\n{convText}",
-                        ResolveParams(), CancellationToken.None);
+                    // v15: grammar-constrained summarize — the structured envelope +
+                    // early-stop keep the 4B model from rambling 24K chars. Uses the
+                    // warm session when available (decode-only), falls back to stateless.
+                    var result = await SummarizeStructuredAsync(
+                        $"Summarize this conversation concisely. Keep facts, decisions, and tool results only. Max 3 sentences. Plain text.\n\n{convText}");
                     summaryText = System.Text.RegularExpressions.Regex.Replace(result.Trim(), @"<[^>]+>", "");
                  }
                 catch (OperationCanceledException) { }
@@ -1438,6 +1491,7 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
 
                 _contextWindow.Clear();
                 await ResetAndRebuildCacheAsync();
+                 }
              }
 
             if (!string.IsNullOrWhiteSpace(summaryText))
