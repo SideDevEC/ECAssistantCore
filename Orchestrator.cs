@@ -791,7 +791,15 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                                  // v14.20: AddToolResult renders via the tool's own projection — for
                                  // build failures the embedded raw log compacts to parsed errors here.
                                  // Render exactly ONCE (double render re-parses compacted text).
-                                 _engine.AddToolResult(decision.ToolName!, $"[ERROR] Tool failed: {result.Error}");
+                                 // v15 (Emre, 2026-09-24): append the failed tool's usage contract —
+                                 // wrong parameters/syntax is the dominant small-model failure mode;
+                                 // re-surface the schema AT the failure point (most recent message).
+                                 var failMsg = $"[ERROR] Tool failed: {result.Error}";
+                                 var usageHint = _engine.GetToolUsageHint(decision.ToolName!);
+                                 if (!string.IsNullOrEmpty(usageHint))
+                                     failMsg += "\n\n" + usageHint +
+                                                "\nRetry with CORRECT parameters per the usage block above — or switch to a different tool/approach.";
+                                 _engine.AddToolResult(decision.ToolName!, failMsg);
 
                                 if (IsFailureStreak(_maxFailuresBeforeStop))
                                           {
@@ -816,7 +824,13 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                             // Feed the exception back to the LLM — without this the model
                             // never learns the tool call failed and repeats it blindly.
                             if (!string.IsNullOrEmpty(decision.ToolName))
-                                _engine.AddToolResult(decision.ToolName, $"[EXCEPTION] Tool threw: {ex.GetType().Name}: {ex.Message}");
+                             {
+                                var exMsg = $"[EXCEPTION] Tool threw: {ex.GetType().Name}: {ex.Message}";
+                                var exHint = _engine.GetToolUsageHint(decision.ToolName);
+                                if (!string.IsNullOrEmpty(exHint))
+                                    exMsg += "\n\n" + exHint + "\nRetry with CORRECT parameters per the usage block above — or switch to a different tool/approach.";
+                                _engine.AddToolResult(decision.ToolName, exMsg);
+                            }
                             // Count the turn — otherwise a persistently throwing tool loops forever.
                             _turnCount++;
                             continue;
@@ -864,7 +878,8 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                       // Inject as a user-level message (not tool result) for stronger signal
                       _engine.InjectFormatRetry(
                            "Your last response did not produce an answer or a tool call.\n" +
-                           "If you have enough information, provide your final answer. If you need more data, call a tool.");
+                           "If you have enough information, provide your final answer. If you need more data, call a tool.\n" +
+                           "Write something NEW — never reuse the wording of your earlier replies.");
                        _turnCount++;
                     continue;
                   }
@@ -1237,6 +1252,15 @@ public sealed class AgentOrchestrator : IAsyncDisposable
                     var safeCurrent = _subTasks[_currentSubTask].Description.Replace("<", "&lt;").Replace(">", "&gt;");
                     sb.AppendLine($"> CURRENT STEP: {safeCurrent}");
                     sb.AppendLine("Focus on completing THIS step. If the previous tool result gives you what you need, proceed to this step.");
+
+            // v15 (Emre, 2026-09-24): planned/queued work is REAL work — a small
+            // model must never "answer" a pending tool step from memory (J1 flake
+            // class: claims the file was created/appended without any tool call).
+            if (_subTasks.Any(s => s.Status == SubTaskStatus.Pending || s.Status == SubTaskStatus.InProgress))
+              {
+                sb.AppendLine();
+                sb.AppendLine("RULE: planned/queued tool steps are actions that still need REAL tool calls. They CANNOT be answered from memory or narration — if a step above is not [OK], you must call the tool to actually perform it.");
+              }
                   }
               }
 

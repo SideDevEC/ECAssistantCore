@@ -51,17 +51,6 @@ public sealed class EngineTierBehaviorTests : IDisposable
         return (bool)m.Invoke(engine, null)!;
     }
 
-    private static string InvokeBuildIncrementalInput(AgentEngine engine)
-    {
-        // Turn-2+ branch fires whenever TurnCount != 1; a fresh engine has 0, and a
-        // tool output in the window supplies the <tooloutput> block the branch feeds.
-        engine.AddToolResult("ProbeTool", "some tool output");
-        var m = typeof(AgentEngine).GetMethod("BuildIncrementalInput",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.NotNull(m);
-        return (string)m.Invoke(engine, new object[] { "continue" })!;
-    }
-
     // ── tier resolution ──
 
     [Fact]
@@ -111,6 +100,84 @@ public sealed class EngineTierBehaviorTests : IDisposable
         Assert.Contains("final answer now", input);
         Assert.DoesNotContain("Do NOT repeat", input);
         Assert.Contains("<tooloutput>", input);
+    }
+
+    // ── v15 anti-parrot directive (Emre, 2026-09-24) — small tier only ──
+
+    [Fact]
+    public void IncrementalInput_SmallTier_InjectsAntiParrotDirective()
+    {
+        var engine = CreateEngine(BuildConfig("small", isLocal: true));
+        var input = InvokeBuildIncrementalInput(engine);
+        Assert.Contains("Never reuse the wording of your earlier replies", input);
+        Assert.Contains("write something NEW", input);
+    }
+
+    [Fact]
+    public void IncrementalInput_LargeTier_NoAntiParrotDirective()
+    {
+        var engine = CreateEngine(BuildConfig("large", isLocal: true));
+        var input = InvokeBuildIncrementalInput(engine);
+        Assert.DoesNotContain("reuse the wording of your earlier replies", input);
+    }
+
+    [Fact]
+    public void Turn1Input_SmallTier_InjectsAntiParrotDirective_OnlyWhenHistoryExists()
+    {
+        var engine = CreateEngine(BuildConfig("small", isLocal: true));
+
+        // Turn-1 branch fires when TurnCount == 1; a fresh engine has 0.
+        SetTurnCount(engine, 1);
+
+        // No assistant history yet → no directive (fresh conversation).
+        var fresh = InvokeBuildIncrementalInput(engine, turn1: true);
+        Assert.DoesNotContain("reuse the wording of your earlier replies", fresh);
+
+        // Assistant history present (multi-request session) → directive injected.
+        engine.ContextWindow.AddAssistantMessage("The waves crashed against the shore, ancient and unyielding.");
+        var withHistory = InvokeBuildIncrementalInput(engine, turn1: true);
+        Assert.Contains("reuse the wording of your earlier replies", withHistory);
+    }
+
+    [Fact]
+    public void Turn1Input_LargeTier_NeverInjectsAntiParrotDirective()
+    {
+        var engine = CreateEngine(BuildConfig("large", isLocal: true));
+        SetTurnCount(engine, 1);
+        engine.ContextWindow.AddAssistantMessage("Earlier assistant content that could be repeated.");
+        var input = InvokeBuildIncrementalInput(engine, turn1: true);
+        Assert.DoesNotContain("reuse the wording of your earlier replies", input);
+    }
+
+    private static void SetTurnCount(AgentEngine engine, int target)
+    {
+        var lifecycle = typeof(AgentEngine).GetField("_lifecycle",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(lifecycle);
+        var state = lifecycle!.GetValue(engine)!;
+        var current = (int)state.GetType().GetProperty("TurnCount")!.GetValue(state)!;
+        var increment = state.GetType().GetMethod("IncrementTurn")!;
+        for (var i = current; i < target; i++) increment.Invoke(state, null);
+    }
+
+    private static string InvokeBuildIncrementalInput(AgentEngine engine, bool turn1 = false)
+    {
+        if (turn1)
+        {
+            // Turn-1 branch: no tool output seeded — pure conversational input.
+            var m1 = typeof(AgentEngine).GetMethod("BuildIncrementalInput",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(m1);
+            return (string)m1.Invoke(engine, new object[] { "Tell me a story about the sea." })!;
+        }
+
+        // Turn-2+ branch fires whenever TurnCount != 1; a fresh engine has 0, and a
+        // tool output in the window supplies the <tooloutput> block the branch feeds.
+        engine.AddToolResult("ProbeTool", "some tool output");
+        var m = typeof(AgentEngine).GetMethod("BuildIncrementalInput",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(m);
+        return (string)m.Invoke(engine, new object[] { "continue" })!;
     }
 
 

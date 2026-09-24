@@ -260,3 +260,20 @@ Core knows NOTHING about ECAssistantLLM internals — **OpenAI-compatible HTTP e
 - **Interface-first:** every public service has an interface (LDC-enforced, 0 warnings)
 - **Naming:** `E` prefix = tool family (wire identity); bare names elsewhere; `Eca*` product prefix
 - Release discipline: **unified versioning, train shipping** (Emre, 2026-09-23) — ALL packages (TestSupport, LLM, Core, TUI, Console) carry the SAME version number; per-repo publish workflows unchanged, train order preserved: TestSupport → LLM → Core → TUI → Console, one at a time, each CI-green AND nuget.org-indexed before tagging the next. All package versions + inter-package PackageReferences bump in lockstep before the wave starts. Version floor: ≥ 15.0.0 (nuget.org monotonicity — LLM reached 14.9.x).
+---
+
+## Addendum — 2026-09-24 (anti-parrot directive, small tier)
+
+- **Not-repeat directive injection (`AgentEngine.BuildIncrementalInput`):** small tier only. (1) Turn-1 branch: when the window already carries assistant history (multi-request session), inject "write something NEW — never reuse the wording of your earlier replies" before the user turn. (2) Turn-2+ branch: same directive appended alongside the existing tool-repeat lines. Rationale: small models parrot their own earlier answers verbatim under repetitive contexts (J2 journey story-copy degeneration), feeding decode loops that die mid-envelope. Append-only → KV-cache-safe. Large tiers untouched (v14.12 lean-nagging philosophy).
+- **Empty-response nudge (`Orchestrator`):** the format-retry prompt now carries the same anti-repeat line, so the retry attempt is steered toward new content, not a repeat of the failed pattern.
+- **Server-side counterpart (ECAssistantLLM, same day):** structured-envelope max_tokens made config-driven (256 clamp removed) + gated truncated-envelope salvage with rewind+refeed KV hygiene — see ECAssistantLLM ARCHITECTURE.md addendum.
+- **Tests:** Core build 0 errors; ContextWindow/Orchestrator filtered suite 66/66.
+
+## Addendum — 2026-09-24 (compaction estimator + tool-call grounding, small tier)
+
+- **KvCacheStatus snake_case mapping (`IKvCacheController.cs`):** DTO gained `[JsonPropertyName]` for server fields (`approx_tokens`, `context_size`, …). Before: server-truth KV usage always deserialized to 0 → compaction trigger never fired (J2 symptom; product compaction was fully dead).
+- **Estimator survival (`ContextWindow.RestoreFrom`):** integrity rebuilds copied transcript messages with `EstimatedTokens = 0`; now recompute `0`-estimates via `_tokenCounter.Count`. Plus `AgentEngine` passes its counter into the rebuilt window (was `tokenCounter: null`).
+- **Tool-usage hint on failure (`AgentEngine.GetToolUsageHint`):** on tool error/exception the orchestrator appends the failed tool's own prompt block (tier-aware, capped 1500 chars) to the failure feedback — wrong parameters/syntax is the dominant small-model failure mode; schema re-surfaced AT the failure point. Tail injection → KV prefix untouched.
+- **Planned-work grounding rule (`Orchestrator.BuildStepDirective`):** when sub-tasks are pending/in-progress, injects "planned/queued tool steps CANNOT be answered from memory or narration — call the tool for real". Targets the J1 flake class (model claims file created/appended without any tool call).
+- **Verify-skip for project-less dirs (`DotnetVerificationRunner`):** build verification skipped when the working dir has no `*.*proj`/`*.sln` (was guaranteed MSB1003 → unfixable verify-fail loop that ate created files).
+- **Tests:** journeys 7/7 green ×2 on prod-like server (16K ctx, gpu_layers 99, batch 512); builds 0 errors.

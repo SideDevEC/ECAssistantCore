@@ -245,6 +245,29 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
      {
         get { lock (_toolsLock) return _tools.ToArray(); }
      }
+
+    /// <summary>
+    /// v15 (Emre, 2026-09-24): tool-specific usage hint for failure feedback.
+    /// When a tool call fails, the retry should carry the tool's own contract
+    /// (name, description, rules, worked example) at the failure point — small
+    /// models fix wrong parameters/syntax far more reliably with the schema
+    /// re-surfaced as the most recent message than with a generic "try again".
+    /// Rendered for the ACTIVE tier, same as the registration prompt.
+    /// Returns null when the tool is unknown. Capped to keep retries lean.
+    /// </summary>
+    public string? GetToolUsageHint(string toolName)
+     {
+        if (string.IsNullOrWhiteSpace(toolName)) return null;
+        var snapshot = Tools;
+        var tool = snapshot.FirstOrDefault(t =>
+            string.Equals(t.Name, toolName, StringComparison.OrdinalIgnoreCase));
+        if (tool == null) return null;
+        var block = tool.ToSystemPromptBlock(IsLargeModelTier());
+        const int MaxHintChars = 1500;
+        if (block.Length > MaxHintChars)
+            block = block[..MaxHintChars] + "\n[usage hint truncated]";
+        return block;
+    }
     public SubAgentManager SubAgentManager => _subAgentManager ??= CreateSubAgentManager();
     public ECAssistant.Core.Engine.SelfCorrectionManager? SelfCorrection => _selfCorrection;
     public ECAssistant.Core.Engine.ProjectContextManager? ProjectContext => _projectContext;
@@ -339,7 +362,7 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         var summarySvc = _inferenceEngine != null
              ? new SummaryService(p => SummarizeStructuredAsync(p))
              : null;
-        _contextWindow = new ContextWindow(contextSize, summarySvc, tokenCounter: null,
+        _contextWindow = new ContextWindow(contextSize, summarySvc, tokenCounter: _tokenCounter,
             // compact_threshold_percent now drives the summarize trigger too (was hardwired 0.50)
             CompactThreshold());
         _transcript = new ConversationTranscript();
@@ -1117,6 +1140,19 @@ User: " + userRequest + "\n";
                 sb.AppendLine();
             }
 
+            // v15 (Emre, 2026-09-24): anti-parrot directive for small models. Under
+            // repetitive contexts small models copy their own earlier answers verbatim
+            // (J2 journey failure mode: identical 60-word stories re-emitted turn after
+            // turn), which feeds degenerate decodes that die mid-envelope. Injected
+            // only when the window already carries assistant history (multi-request
+            // session); fresh conversations need no instruction. Large tiers stay lean
+            // (v14.12 philosophy: large models get minimal nagging).
+            if (!IsLargeModelTier() && _contextWindow.GetWindowMessages().Any(m => m.Role == "assistant"))
+            {
+                sb.AppendLine("IMPORTANT: If the user asks for new content (a story, idea, explanation, or rewrite), write something NEW — never reuse the wording of your earlier replies. Vary content, imagery, and phrasing every time.");
+                sb.AppendLine();
+            }
+
             sb.AppendLine("<user>");
             sb.AppendLine(userRequest);
             sb.AppendLine("</user>");
@@ -1145,6 +1181,10 @@ User: " + userRequest + "\n";
              {
                 sb.AppendLine("Continue the task. First check: if the tool results above already fully answer the user's request, you MUST finish NOW with your final answer.");
                 sb.AppendLine("Do NOT repeat a tool call that already succeeded with the same arguments — repeating it adds nothing. Only call a tool again if you need DIFFERENT data.");
+                // v15 (Emre, 2026-09-24): chat-side anti-parrot directive — mirrors the
+                // tool-repeat rule; small models must write NEW content, not re-emit
+                // earlier answers verbatim (J2 story-copy degeneration).
+                sb.AppendLine("Never reuse the wording of your earlier replies — if the user asks for new content, write something NEW with different content and phrasing.");
                 sb.AppendLine("If you truly need more data, call the next tool. Otherwise finish now with your final answer.");
              }
          }

@@ -255,7 +255,12 @@ public class ContextWindow
                 Role = m.Role,
                 Source = m.Source,
                 Content = m.Content,
-                EstimatedTokens = m.EstimatedTokens,
+                // Transcript factories carry EstimatedTokens = 0 — recomputing here
+                // keeps the compaction trigger alive after integrity rebuilds
+                // (audit 2026-09-24: transcript-sourced zeros deadened the estimator).
+                EstimatedTokens = m.EstimatedTokens > 0
+                    ? m.EstimatedTokens
+                    : _tokenCounter.Count(m.Content),
                 ImageDataUris = m.ImageDataUris
              }));
          }

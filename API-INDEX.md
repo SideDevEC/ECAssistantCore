@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-24T08:09:40.854914+00:00
-Packages: 2  |  Types: 552
+Generated: 2026-09-24T20:58:15.024822+00:00
+Packages: 2  |  Types: 554
 
 ---
 
-## ECAssistantCore (413 types, ~34696 LOC)
+## ECAssistantCore (414 types, ~35086 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -331,6 +331,7 @@ Packages: 2  |  Types: 552
 - 🟡 SipsPdfPageRenderer : IPdfPageRenderer  (ECAssistantCore)  deps: [IProcessRunner]
 - 🟡 SseParser  (ECAssistantCore)
 - 🟡 StartupTimeoutDefaultsTests  (ECAssistantCore)
+- 🟡 StatelessSessionRoutingTests  (ECAssistantCore)
 - 🟡 SteeringQueue  (ECAssistantCore)
 - 🟡 SteeringQueueTests  (ECAssistantCore)
 - 🟡 StepMapper : IStepMapper  (ECAssistantCore)  deps: [IEngineToolContext, ILogger? logger =]
@@ -421,7 +422,7 @@ Packages: 2  |  Types: 552
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (139 types, ~16476 LOC)
+## Tests (140 types, ~16684 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 AllToolsTierPromptsTests  (Tests)
@@ -525,6 +526,7 @@ Packages: 2  |  Types: 552
 - 🟡 ShellTeardownSweepTests  (Tests)
 - 🟡 ShellTierPromptOSTests  (Tests)
 - 🟡 StartupTimeoutDefaultsTests  (Tests)
+- 🟡 StatelessSessionRoutingTests  (Tests)
 - 🟡 SteeringQueueTests  (Tests)
 - 🟡 StepMapperTests  (Tests)
 - 🟡 StructuredDecisionAdapterTests  (Tests)

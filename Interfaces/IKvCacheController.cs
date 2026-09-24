@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -38,10 +39,19 @@ public interface IKvCacheController
 /// </summary>
 public sealed class KvCacheStatus
 {
+    // Server returns snake_case — explicit mapping required, default STJ is
+    // case-sensitive and silently deserialized everything to 0/false (audit
+    // 2026-09-24): server-truth compaction never saw real KV usage.
+    [JsonPropertyName("session_id")]
     public string? SessionId { get; set; }
+    [JsonPropertyName("model_id")]
     public string? ModelId { get; set; }
+    [JsonPropertyName("is_prefilled")]
     public bool IsPrefilled { get; set; }
+    [JsonPropertyName("approx_tokens")]
     public int ApproxTokens { get; set; }
+    [JsonPropertyName("context_size")]
     public uint ContextSize { get; set; }
+    [JsonPropertyName("estimated_vram_mb")]
     public double EstimatedVramMb { get; set; }
 }

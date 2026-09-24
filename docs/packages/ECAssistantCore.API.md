@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 413  |  LOC: 34696  |  ~20259 tokens
+Types: 414  |  LOC: 35086  |  ~20316 tokens
 
 ---
 
@@ -1534,6 +1534,10 @@ Cross-package deps: ECAssistant.Core.Interfaces
 ### Class: StartupTimeoutDefaultsTests
 > v12.8 regression: the installer must detect models already on disk so
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Setup, Xunit
+
+### Class: StatelessSessionRoutingTests
+> v15: SessionId=null on InferenceRequestParams must be a REAL stateless signal —
+Cross-package deps: ECAssistant.Core.Interfaces, ECAssistant.Core.Services.Http, ECAssistant.Core.Transport
 
 ### Class: SteeringQueue
 > v14.12.2: mid-run steering seam. The host queues user input while the
