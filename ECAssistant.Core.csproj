@@ -9,7 +9,7 @@
     <AssemblyName>ECAssistant.Core</AssemblyName>
     <IsPackable>true</IsPackable>
     <PackageId>ECAssistant.Core</PackageId>
-    <PackageVersion>12.9.13</PackageVersion>
+    <PackageVersion>15.0.0</PackageVersion>
     <Authors>SideDevEC</Authors>
     <Company>SideDevEC</Company>
     <Product>ECAssistant</Product>
@@ -35,7 +35,7 @@
     <!-- LLM server package: provides the build target that copies the server runtime
          into the consumer's output (server/). Consumed as a NuGet dependency so
          downstream projects get the server automatically — no lib/ DLLs anywhere. -->
-    <PackageReference Include="ECAssistant.LLM.Server" Version="14.10.1" Condition="'$(EcaUseProjectRefs)' != 'true'" />
+    <PackageReference Include="ECAssistant.LLM.Server" Version="15.0.0" Condition="'$(EcaUseProjectRefs)' != 'true'" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(EcaUseProjectRefs)' == 'true'">
