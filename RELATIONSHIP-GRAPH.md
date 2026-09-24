@@ -1,7 +1,7 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantCore
 
-Generated: 2026-09-24T00:29:49.366320+00:00
-Edges: 107  |  Packages: 2
+Generated: 2026-09-24T07:59:08.179395+00:00
+Edges: 108  |  Packages: 2
 
 ---
 
@@ -66,6 +66,7 @@ Edges: 107  |  Packages: 2
 - LineAnchoredMatchStrategy ──implements──► LineMatchStrategyBase (ECAssistantCore)
 - LineMatchStrategyBase ──implements──► ITextMatchStrategy (ECAssistantCore)
 - LlmProviderRegistry ──implements──► ILlmProviderRegistry (ECAssistantCore)
+- LlmRootMigrator ──implements──► ILlmRootMigrator (ECAssistantCore)
 - LlmServerClient ──implements──► ILlmServerClient (ECAssistantCore)
 - Logger ──implements──► ILogger (ECAssistantCore)
 - McpHttpSseClient ──implements──► IMcpClient (ECAssistantCore)

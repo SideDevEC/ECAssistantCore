@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 413  |  LOC: 34696  |  ~20259 tokens
+Types: 416  |  LOC: 34848  |  ~20379 tokens
 
 ---
 
@@ -119,6 +119,11 @@ Properties:
 Methods:
   - RemoteProvider? GetByName(string? name)
   - IReadOnlyList<RemoteProvider> OrderedCandidates(string? preferredName = null)
+
+### Interface: ILlmRootMigrator
+> Migrates an existing legacy LLM root directory (<c>~/.ECAssistantLLM</c>, hidden)
+Methods:
+  - LlmRootMigrationResult Migrate()
 
 ### Interface: ILlmServerClient
 > Client lifecycle management for ECAssistantLLM server.
@@ -1027,6 +1032,16 @@ Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Interfaces
 ### Class: LlmProviderRegistryTests
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Services
+
+### Class: LlmRootMigrator
+> Moves the legacy hidden LLM root (~/.ECAssistantLLM) to the new visible root (~/ECALLM).
+Implements: ILlmRootMigrator
+Constructor:
+  - LlmRootMigrator(string targetRoot, string legacyRoot)
+
+### Class: LlmRootMigratorTests
+Implements: IDisposable
+Cross-package deps: ECAssistant.Core.Setup
 
 ### Class: LlmServerClient
 > Manages client lifecycle with ECAssistantLLM server.
