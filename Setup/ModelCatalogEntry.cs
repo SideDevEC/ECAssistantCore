@@ -45,7 +45,7 @@ public sealed class CatalogSuggestedConfig
     public int GpuLayers { get; set; } = 99;
 
     [JsonPropertyName("context_size")]
-    public uint ContextSize { get; set; } = 8192;
+    public uint ContextSize { get; set; } = 65536;
 
     /// <summary>Prompt-processing batch size. 0 = omit (library default).</summary>
     [JsonPropertyName("batch_size")]

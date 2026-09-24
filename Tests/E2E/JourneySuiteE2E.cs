@@ -95,11 +95,14 @@ public sealed class JourneySuiteE2E
     /// </summary>
     private static async Task WireSessionParityAsync(AgentSession session, bool withSubAgents = true)
     {
-        await session.InitializeHandoffAsync();
+        // Register BOTH late toolsets BEFORE any KV prefill — one prefill instead of
+        // register → prefill → reset → re-prefill (each reset costs a full re-prefill).
+        session.Orchestrator.InitializeHandoff(session.Engine.WorkingDir);
         if (withSubAgents)
-            await session.Orchestrator.InitializeSubAgentsAsync(session.Engine.WorkingDir);
+            session.Orchestrator.InitializeSubAgents(session.Engine.WorkingDir);
         foreach (var tool in session.Engine.Tools.ToList())
             session.Orchestrator.Policy.SetPermission(tool.Name, approvalRequired: false, "e2e journey");
+        await session.Engine.PrefillStaticPrefix();
     }
 
     private AgentSession? TryCreateRemoteSession(AppConfig config, Action<AgentEngine>? configure = null)

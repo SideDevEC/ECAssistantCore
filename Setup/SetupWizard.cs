@@ -336,9 +336,41 @@ public sealed class SetupWizard : ISetupWizard
     internal static bool IsEntryOnDisk(WizardContext ctx, ModelCatalogEntry entry) =>
         entry.Files.All(f => File.Exists(Path.Combine(ctx.ModelsDir, f.Filename)));
 
+    /// <summary>v15 context tiers — floor 32k (server-enforced hard minimum), Normal 64k default.</summary>
+    private static readonly (string Name, uint Ctx, int MaxTok)[] ContextTiers =
+    {
+        ("Floor  (32k context /  8k output)", 32768, 8192),
+        ("Normal (64k context / 16k output) — recommended", 65536, 16384),
+        ("Middle (128k context / 16k output)", 131072, 16384),
+        ("Max    (256k context / 32k output, model permitting)", 262144, 32768),
+    };
+
+    /// <summary>
+    /// One prompt per wizard run: pick the context tier for chat models. Applied as
+    /// the final word in ModelInstallerService.ApplyToServerConfig (over catalog
+    /// suggestions and hardware tuning); embedding models are exempt.
+    /// </summary>
+    private void ApplyContextTierChoice(WizardContext ctx, IReadOnlyList<ModelCatalogEntry> picks)
+    {
+        if (!picks.Any(p => p.Category != CatalogModelCategory.Embedding)) return;
+
+        _ui.WriteLine();
+        _ui.WriteLine("Context window tier (hard floor: 32k — nothing runs lower):");
+        for (var i = 0; i < ContextTiers.Length; i++)
+            _ui.WriteLine($"  {i + 1}) {ContextTiers[i].Name}");
+        _ui.Write("Choose tier [2]: ");
+        var input = _ui.ReadLine()?.Trim();
+        var tier = input switch { "1" => 0, "3" => 2, "4" => 3, _ => 1 };
+        var (name, contextSize, maxTokens) = ContextTiers[tier];
+        ctx.Installer.ContextTierOverride = contextSize;
+        ctx.Installer.ContextOutputOverride = maxTokens;
+        _ui.WriteLine($"✓ Context tier: {name}");
+    }
+
     private async Task<IReadOnlyList<ModelCatalogEntry>> DownloadPicksAsync(
         WizardContext ctx, IReadOnlyList<ModelCatalogEntry> picks)
     {
+        ApplyContextTierChoice(ctx, picks);
         var installed = new List<ModelCatalogEntry>();
         foreach (var entry in picks)
         {

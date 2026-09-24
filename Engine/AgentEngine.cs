@@ -68,6 +68,10 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
     protected readonly ExecutionLifecycleState _lifecycle = new();
     private string? _systemPromptText;
     private string? _cachedStaticPrefix;
+
+    /// <summary>Set when the server reports a context overflow (model cannot shift KV in
+    /// place) — lowers the compaction threshold for the rest of the session.</summary>
+    private bool _modelShiftIncapable;
     private const int MaxRewindFailures = 2;
 
     // ── Output mode (verbose/silent) ──
@@ -543,8 +547,11 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
 
      // ── Stateless helpers (summary / plan / decompose / intent) ──
 
-    /// <summary>Compaction trigger threshold — context_management.compact_threshold_percent (default 80%).</summary>
+    /// <summary>Compaction trigger threshold — context_management.compact_threshold_percent (default 80%).
+    /// Models detected as shift-incapable (server 413 context_overflow) compact earlier (60%)
+    /// so the hard context wall is never reached.</summary>
     private double CompactThreshold() =>
+        _modelShiftIncapable ? 0.6 :
         _config?.ContextManagement?.CompactThresholdPercent is > 0 and <= 100
             ? _config.ContextManagement.CompactThresholdPercent / 100.0
             : 0.8;
@@ -853,6 +860,14 @@ User: " + userRequest + "\n";
     public virtual async Task ResetAndRebuildCacheAsync()
      {
         if (_kvCacheController == null) return;
+
+        // Nothing prefilled yet (late tool registration before first use): skip the
+        // server round-trip — there is no cache to throw away, just prefill once.
+        if (!_kvState.IsPrefilled && !_kvState.SessionActive)
+        {
+            await PrefillStaticPrefix();
+            return;
+        }
 
         _out?.WriteWarning("[KVCache] Full reset — rebuilding from scratch...");
         try
@@ -1598,7 +1613,8 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                 }
                  }
                 catch (Exception connEx) when (tokenCount == 0 &&
-                                               (IsConnectionFailure(connEx) || IsStaleSessionFailure(connEx)) &&
+                                               (IsConnectionFailure(connEx) || IsStaleSessionFailure(connEx) ||
+                                                IsContextOverflowFailure(connEx)) &&
                                                !retriedAfterRecovery)
                  {
                     // Connection-level failure (e.g. local server went down after
@@ -1606,8 +1622,18 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
                     // restarted server no longer knows. Recover the connection
                     // (which also recreates sessions) and retry once — never
                     // surface these as model output.
+                    // Context overflow (413): the server already reset the KV cache
+                    // (shift-incapable model). Rebuild the cache WITH conversation
+                    // history re-fed, remember the model can't shift (compaction now
+                    // triggers earlier), and retry the turn once.
                     _out?.StopStream();
-                    if (!await TryRecoverConnectionAsync())
+                    if (IsContextOverflowFailure(connEx))
+                    {
+                        _modelShiftIncapable = true;
+                        _out?.WriteWarning("[KVCache] Context overflow — rebuilding cache (model cannot shift KV in place).");
+                        await ResetAndRebuildCacheAsync();
+                    }
+                    else if (!await TryRecoverConnectionAsync())
                         throw;
                     retriedAfterRecovery = true;
                     // The finally below skips clearing when retrying, so image
@@ -1910,6 +1936,22 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
         for (var e = (Exception?)ex; e != null; e = e.InnerException)
          {
             if (e is HttpRequestException hre && hre.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return true;
+         }
+        return false;
+     }
+
+    /// <summary>
+    /// Server answered 413 context_overflow: the KV cache hit the hard context wall
+    /// and the server reset it (models without native memory shifting cannot truncate
+    /// in place). Core must rebuild the cache and mark the model shift-incapable so
+    /// compaction triggers earlier and the wall is never reached again.
+    /// </summary>
+    private static bool IsContextOverflowFailure(Exception ex)
+     {
+        for (var e = (Exception?)ex; e != null; e = e.InnerException)
+         {
+            if (e is HttpRequestException hre && (int)hre.StatusCode == 413)
                 return true;
          }
         return false;

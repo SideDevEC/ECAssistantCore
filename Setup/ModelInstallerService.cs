@@ -23,6 +23,12 @@ public sealed class ModelInstallerService
 {
     private readonly HttpClient _http;
     private readonly string _modelsDir;
+
+    /// <summary>v15: user-selected context tier (wizard) — final word for chat models. Default: Normal 64k.</summary>
+    public uint ContextTierOverride { get; set; } = 65536;
+
+    /// <summary>v15: output cap matching the context tier. Default 16384.</summary>
+    public int ContextOutputOverride { get; set; } = 16384;
     private readonly string _serverConfigPath;
     private readonly string? _appsettingsPath;
 
@@ -356,6 +362,17 @@ public sealed class ModelInstallerService
 
     public string ApplyToServerConfig(ModelCatalogEntry entry)
     {
+        // v15 context tier: the user's wizard choice is the final word (chat models
+        // only) — overrides catalog suggestions AND hardware tuning. Embedding models
+        // are exempt (they don't need chat-scale windows). The server independently
+        // enforces the 32k hard floor at model load.
+        if (entry.Category != CatalogModelCategory.Embedding)
+        {
+            entry.SuggestedConfig.ContextSize = ContextTierOverride;
+            entry.SuggestedConfig.MaxTokens = ContextOutputOverride;
+            entry.SuggestedConfig.BatchSize = Math.Max(entry.SuggestedConfig.BatchSize, 1024);
+        }
+
         JsonNode root;
         if (File.Exists(_serverConfigPath))
         {

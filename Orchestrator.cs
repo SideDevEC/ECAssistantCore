@@ -181,17 +181,25 @@ public sealed class AgentOrchestrator : IAsyncDisposable
      public async Task InitializeHandoffAsync(string defaultWorkingDir)
       {
          InitializeHandoff(defaultWorkingDir);
-         _out?.WriteWarning("Rebuilding KV cache to include EHandoff...");
-         await _engine.ResetAndRebuildCacheAsync();
+         // Rebuild only if the cache is live — before first use the (lazy) prefill
+         // already picks up the new tool, so a reset+re-prefill would be pure waste.
+         if (_engine.IsKVCachePrefilled)
+         {
+             _out?.WriteWarning("Rebuilding KV cache to include EHandoff...");
+             await _engine.ResetAndRebuildCacheAsync();
+         }
      }
 
            /// <summary>v10.18: Initialize sub-agents AND rebuild KV cache to include ESubAgent in system prompt.</summary>
      public async Task InitializeSubAgentsAsync(string defaultWorkingDir)
       {
          InitializeSubAgents(defaultWorkingDir);
-          // Rebuild KV cache so ESubAgent appears in the tool list the LLM sees
-         _out?.WriteWarning("Rebuilding KV cache to include ESubAgent...");
-         await _engine.ResetAndRebuildCacheAsync();
+          // See InitializeHandoffAsync — rebuild only when a cache already exists.
+         if (_engine.IsKVCachePrefilled)
+         {
+             _out?.WriteWarning("Rebuilding KV cache to include ESubAgent...");
+             await _engine.ResetAndRebuildCacheAsync();
+         }
       }
 
       /// <summary>Get the tool policy instance (for runtime modification).</summary>
