@@ -51,7 +51,7 @@ public class AiSetupResetter : IAiSetupResetter
             }
             catch { /* fall through to default */ }
         }
-        return PathExpander.Default.Expand("~/.ECAssistantLLM");
+        return PathExpander.Default.Expand("~/ECALLM");
     }
 
     private static void ResetAppsettings(string appsettingsPath)
@@ -64,7 +64,7 @@ public class AiSetupResetter : IAiSetupResetter
             return;
 
         config.LlmProviders = null;
-        config.LlmProvider = new LlmProviderConfig(); // defaults = local, port 48217, ~/.ECAssistantLLM
+        config.LlmProvider = new LlmProviderConfig(); // defaults = local, port 48217, ~/ECALLM
         File.WriteAllText(appsettingsPath, JsonSerializer.Serialize(config, JsonOptions));
     }
 }

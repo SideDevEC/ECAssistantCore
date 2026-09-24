@@ -180,7 +180,7 @@ public class SessionManager : IAsyncDisposable
                     {
                         Mode = "local",
                         Endpoint = embedding.Endpoint ?? $"http://localhost:{config.LlmProvider.Port}",
-                        ServerRootPath = config.LlmProvider.ServerRootPath ?? "~/.ECAssistantLLM"
+                        ServerRootPath = config.LlmProvider.ServerRootPath ?? "~/ECALLM"
                     };
                     _embeddingServerLauncher = launcherFactory(embeddingProvider);
                     var embedOk = _embeddingServerLauncher.EnsureServerRunningAsync().GetAwaiter().GetResult();

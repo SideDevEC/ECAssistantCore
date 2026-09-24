@@ -8,7 +8,7 @@ namespace ECAssistant.Core.Services.Http;
 
 /// <summary>
 /// Detects if ECAssistantLLM server is running. If not, launches it from the
-/// shared standalone location (~/.ECAssistantLLM/server/).
+/// shared standalone location (~/ECALLM/server/).
 /// Waits for health check to pass before returning.
 /// Local mode only — not used in remote mode.
 ///
@@ -33,14 +33,14 @@ public sealed class ServerLauncher
     }
 
     /// <summary>
-    /// The LLM server root directory. Expanded from ServerRootPath (default ~/.ECAssistantLLM).
+    /// The LLM server root directory. Expanded from ServerRootPath (default ~/ECALLM).
     /// </summary>
     public string LlmRoot
     {
         get
         {
             var raw = string.IsNullOrEmpty(_config.ServerRootPath)
-                ? "~/.ECAssistantLLM"
+                ? "~/ECALLM"
                 : _config.ServerRootPath;
             return PathExpander.Default.Expand(raw);
         }

@@ -72,10 +72,10 @@ public class EcaCompositionRoot
             Directory.CreateDirectory(Path.Combine(_userConfigDir, config.Workspace.Path));
 
         // ── Ensure LLM server root directory exists ──
-        // The LLM server home is the shared standalone location (~/.ECAssistantLLM).
+        // The LLM server home is the shared standalone location (~/ECALLM).
         // It contains llm-server.json, logs, models/, and server/.
         var llmRoot = string.IsNullOrEmpty(config.LlmProvider.ServerRootPath)
-            ? PathExpander.Default.Expand("~/.ECAssistantLLM")
+            ? PathExpander.Default.Expand("~/ECALLM")
             : PathExpander.Default.Expand(config.LlmProvider.ServerRootPath);
         Directory.CreateDirectory(llmRoot);
         Directory.CreateDirectory(Path.Combine(llmRoot, "models"));
@@ -105,7 +105,7 @@ public class EcaCompositionRoot
             return modelPath;
 
         var llmRoot = string.IsNullOrEmpty(config.LlmProvider.ServerRootPath)
-            ? PathExpander.Default.Expand("~/.ECAssistantLLM")
+            ? PathExpander.Default.Expand("~/ECALLM")
             : PathExpander.Default.Expand(config.LlmProvider.ServerRootPath);
 
         var inLlmModels = Path.Combine(llmRoot, "models", Path.GetFileName(modelPath));

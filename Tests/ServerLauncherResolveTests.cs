@@ -6,7 +6,7 @@ namespace ECAssistant.Core.Tests;
 
 /// <summary>
 /// Tests for the standalone ServerLauncher: resolves the server binary from
-/// the shared location (~/.ECAssistantLLM/server/) only. No dev-tree scanning,
+/// the shared location (~/ECALLM/server/) only. No dev-tree scanning,
 /// no binary copying, no app-relative path resolution.
 /// </summary>
 public class ServerLauncherResolveTests : IDisposable
@@ -35,11 +35,11 @@ public class ServerLauncherResolveTests : IDisposable
     [Fact]
     public void LlmRoot_ExpandsTilde_ToUserHome()
     {
-        var config = new LlmProviderConfig { ServerRootPath = "~/.ECAssistantLLM" };
+        var config = new LlmProviderConfig { ServerRootPath = "~/ECALLM" };
         var launcher = new ServerLauncher(config);
 
         var llmRoot = launcher.LlmRoot;
-        Assert.Contains(".ECAssistantLLM", llmRoot);
+        Assert.Contains("ECALLM", llmRoot);
         Assert.False(llmRoot.StartsWith("~"));
         Assert.True(Path.IsPathRooted(llmRoot));
     }
@@ -60,7 +60,7 @@ public class ServerLauncherResolveTests : IDisposable
         var launcher = new ServerLauncher(config);
 
         var llmRoot = launcher.LlmRoot;
-        Assert.Contains(".ECAssistantLLM", llmRoot);
+        Assert.Contains("ECALLM", llmRoot);
         Assert.True(Path.IsPathRooted(llmRoot));
     }
 

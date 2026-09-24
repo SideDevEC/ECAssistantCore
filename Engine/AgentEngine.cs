@@ -746,7 +746,7 @@ User: " + userRequest + "\n";
         sb.AppendLine("You are integrated into an application whose runtime files live at the paths below.");
         sb.AppendLine("Shell commands and file tools can access all of them directly:");
         sb.AppendLine();
-        var llmRoot = PathExpander.Default.Expand("~/.ECAssistantLLM");
+        var llmRoot = PathExpander.Default.Expand("~/ECALLM");
         sb.AppendLine($"- App root (user config directory): {_workingDir}");
         sb.AppendLine($"- appsettings.json (provider, embedding, vector memory settings): {Path.Combine(_workingDir, "appsettings.json")}");
         sb.AppendLine($"- llm-server.json (registered models, gpu_layers, context sizes): {Path.Combine(llmRoot, "llm-server.json")}");

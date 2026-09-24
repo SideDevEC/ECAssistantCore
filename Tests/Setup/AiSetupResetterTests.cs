@@ -43,7 +43,7 @@ public class AiSetupResetterTests
         var llmRoot = Path.Combine(Path.GetTempPath(), "ecallm-" + Guid.NewGuid().ToString("N"));
         try
         {
-            // AiSetupResetter deletes the shared ~/.ECAssistantLLM/llm-server.json.
+            // AiSetupResetter deletes the shared ~/ECALLM/llm-server.json.
             // For the test we point ServerRootPath at a temp dir via the config.
             Directory.CreateDirectory(Path.Combine(dir, "keys"));
             File.WriteAllText(Path.Combine(dir, "keys", "k.key"), "secret");

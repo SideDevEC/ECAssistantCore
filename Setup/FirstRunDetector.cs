@@ -25,7 +25,7 @@ public sealed class FirstRunStatus
 /// provider, NeedsSetup is false even with an empty models dir — remote users
 /// install zero local models by design.
 /// Also checks if the server binary is installed at the shared location.
-/// All paths point to the shared LLM root (~/.ECAssistantLLM/).
+/// All paths point to the shared LLM root (~/ECALLM/).
 /// </summary>
 public sealed class FirstRunDetector
 {
@@ -42,9 +42,9 @@ public sealed class FirstRunDetector
     /// <summary>
     /// Create the detector with all paths.
     /// </summary>
-    /// <param name="modelsDir">The shared models directory (~/.ECAssistantLLM/models/)</param>
-    /// <param name="serverConfigPath">The shared server config (~/.ECAssistantLLM/llm-server.json)</param>
-    /// <param name="serverBinaryPath">The server DLL path (~/.ECAssistantLLM/server/ECAssistant.LLM.dll). If null, binary check is skipped.</param>
+    /// <param name="modelsDir">The shared models directory (~/ECALLM/models/)</param>
+    /// <param name="serverConfigPath">The shared server config (~/ECALLM/llm-server.json)</param>
+    /// <param name="serverBinaryPath">The server DLL path (~/ECALLM/server/ECAssistant.LLM.dll). If null, binary check is skipped.</param>
     /// <param name="appsettingsPath">Optional appsettings.json path; when present,
     /// a configured remote provider suppresses NeedsSetup.</param>
     public FirstRunDetector(string modelsDir, string serverConfigPath, string? serverBinaryPath, string? appsettingsPath = null)

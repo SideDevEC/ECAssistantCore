@@ -2,7 +2,7 @@ namespace ECAssistant.Core.Setup;
 
 /// <summary>
 /// Copies the LLM server runtime from the app's NuGet-populated content directory
-/// to the shared standalone location (~/.ECAssistantLLM/server/).
+/// to the shared standalone location (~/ECALLM/server/).
 ///
 /// This is the ONLY place that references the app's content directory (AppContext.BaseDirectory).
 /// ServerLauncher never uses it — this class runs at wizard time only.
@@ -24,7 +24,7 @@ public sealed class ServerBinaryInstaller
     /// server runtime (populated by the NuGet package at build time). Typically
     /// {AppContext.BaseDirectory}/server/.</param>
     /// <param name="targetServerDir">Destination: the shared server directory
-    /// (typically ~/.ECAssistantLLM/server/).</param>
+    /// (typically ~/ECALLM/server/).</param>
     public ServerBinaryInstaller(string sourceServerDir, string targetServerDir)
     {
         _sourceServerDir = sourceServerDir ?? throw new ArgumentNullException(nameof(sourceServerDir));

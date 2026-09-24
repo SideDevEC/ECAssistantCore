@@ -106,13 +106,13 @@ public sealed class LlmProviderConfig
 
     /// <summary>Heartbeat interval in seconds (local mode only).</summary>
     /// <summary>
-    /// Root directory for the LLM server. If not set, defaults to ~/.ECAssistantLLM.
+    /// Root directory for the LLM server. If not set, defaults to ~/ECALLM.
     /// The LLM server creates llm-server.json, logs, and models/ under this directory.
     /// Passed to the server via --root argument.
     /// Supports ~ expansion to the user's home directory.
     /// </summary>
     [JsonPropertyName("server_root_path")]
-    public string? ServerRootPath { get; set; } = "~/.ECAssistantLLM";
+    public string? ServerRootPath { get; set; } = "~/ECALLM";
 
     // ── Convenience properties ──
 

@@ -5,7 +5,7 @@ namespace ECAssistant.Core.Setup;
 /// <summary>
 /// Downloads the ECAssistant.LLM.Server NuGet package from nuget.org and extracts the
 /// server runtime to a staging directory for installation into the shared location
-/// (~/.ECAssistantLLM/server/).
+/// (~/ECALLM/server/).
 ///
 /// The tool/application packages stay thin: the server is NEVER embedded. This fetch
 /// runs ONCE at wizard time when a local GGUF model (chat or embeddings) is involved —
