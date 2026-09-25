@@ -86,7 +86,7 @@ public sealed class SeatbeltShellSandbox : IShellSandbox
     /// <summary>Session-protocol-independent no-op logger.</summary>
     private sealed class NoOpSandboxLogger : ILogger
     {
-        public void Initialize(string logFilePath, LogLevel minLevel) { }
+        public void Initialize(string logFilePath, LogLevel minLevel, Func<string, bool>? componentFilter = null) { }
         public void SetLevel(LogLevel level) { }
         public bool IsDebugEnabled => false;
         public void Debug(string tag, string message) { }

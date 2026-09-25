@@ -630,16 +630,24 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         p.Stop = _backgroundTasks?.Summarize.AntiPrompts ?? new[] { "User:", "Question:" };
         try
         {
+            _logger?.Debug("Summarize", $"Structured request: maxTokens={p.MaxTokens}, stop=[{string.Join(",", p.Stop ?? Array.Empty<string>())}]");
             var raw = await _inferenceEngine.GenerateStructuredAsync(prompt, p, CancellationToken.None);
             if (raw == null)
+            {
+                _logger?.Debug("Summarize", "Structured returned null — falling back to plain");
                 return await GeneratePlainSummaryAsync(prompt);
+            }
             var decision = StructuredDecisionAdapter.ParseDecision(raw);
             // Audit fix (2026-09-24): a toolcalls envelope has no AnswerText — falling
             // back to `raw` injected the raw JSON envelope as the summary text. A summary
             // must be prose; anything else goes through the capped plain path.
-            return !string.IsNullOrWhiteSpace(decision.AnswerText)
-                ? decision.AnswerText
-                : await GeneratePlainSummaryAsync(prompt);
+            if (!string.IsNullOrWhiteSpace(decision.AnswerText))
+            {
+                _logger?.Debug("Summarize", $"Structured success: {decision.AnswerText.Length} chars");
+                return decision.AnswerText;
+            }
+            _logger?.Debug("Summarize", "Structured returned no answer text — falling back to plain");
+            return await GeneratePlainSummaryAsync(prompt);
         }
         catch (OperationCanceledException)
         {
@@ -665,7 +673,10 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
             Math.Max(100, _backgroundTasks?.Summarize.MaxTokens ?? 200),
             _backgroundTasks?.Summarize.AntiPrompts ?? new[] { "User:", "Question:" },
             _backgroundTasks?.Summarize.Temperature ?? 0.1f);
-        return await _inferenceEngine.GenerateAsync(prompt, p, CancellationToken.None);
+        _logger?.Debug("Summarize", $"Plain fallback: maxTokens={p.MaxTokens}, stop=[{string.Join(",", p.Stop ?? Array.Empty<string>())}]");
+        var result = await _inferenceEngine.GenerateAsync(prompt, p, CancellationToken.None);
+        _logger?.Debug("Summarize", $"Plain result: {result?.Length ?? 0} chars");
+        return result;
     }
 
      private InferenceRequestParams BuildStatelessParams(int maxTokens, string[]? stop, float temperature = 0.1f, float topP = 0.8f, int topK = 40, float repeatPenalty = 1.0f)
@@ -1439,7 +1450,7 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
         _contextPinner?.SetGoal(effectivePrompt);
         _contextPinner?.ObserveUserMessage(effectivePrompt);
 
-        _logger?.Debug("Context", $"Turn {_lifecycle.TurnCount} | Budget: {_contextWindow.GetTotalTokens()}/{_contextWindow.MaxTokens} tokens");
+        _logger?.Debug("Context", $"Turn {_lifecycle.TurnCount} | Budget: {_contextWindow.GetTotalTokens()}/{_contextWindow.MaxTokens} tokens | threshold={CompactThreshold():P}");
 
          // KV cache overflow handling — rebuild with summarized conversation
         var tokenBudget = _contextWindow.GetTotalTokens();
@@ -1466,6 +1477,7 @@ var sessionDir = Path.Combine(_workingDir, ".sessions", _sessionId);
         if (maxBudget > 0 && tokenBudget > maxBudget * CompactThreshold())
          {
             _out?.WriteWarning($"[KVCache] Context at {tokenBudget}/{maxBudget} tokens ({tokenBudget * 100 / maxBudget}%). Rebuilding cache...");
+            _logger?.Info("Compaction", $"Triggered: {tokenBudget}/{maxBudget} ({tokenBudget * 100 / maxBudget}%) serverTruth={serverTruthTriggered}");
 
             var allMessages = _contextWindow.GetWindowMessages();
 

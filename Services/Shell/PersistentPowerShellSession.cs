@@ -143,7 +143,7 @@ public sealed class PersistentPowerShellSession : IShellSession
 
     private sealed class NoOpLogger : ILogger
     {
-        public void Initialize(string logFilePath, LogLevel minLevel) { }
+        public void Initialize(string logFilePath, LogLevel minLevel, Func<string, bool>? componentFilter = null) { }
         public void SetLevel(LogLevel level) { }
         public bool IsDebugEnabled => false;
         public void Debug(string tag, string message) { }

@@ -7,7 +7,7 @@ namespace ECAssistant.Core.Interfaces;
 /// </summary>
 public interface ILogger
 {
-    void Initialize(string logFilePath, LogLevel minLevel);
+    void Initialize(string logFilePath, LogLevel minLevel, Func<string, bool>? componentFilter = null);
     void SetLevel(LogLevel level);
     bool IsDebugEnabled { get; }
     void Debug(string tag, string message);

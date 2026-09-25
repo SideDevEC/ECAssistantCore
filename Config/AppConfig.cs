@@ -89,6 +89,13 @@ public class AppConfig
     public MultiLlmProvidersConfig? LlmProviders { get; set; }
 
     /// <summary>
+    /// Logging configuration (Emre 2026-09-25). Encapsulated in Core — no cross-repo
+    /// logging dependencies. When enabled=false, logger uses LogLevel.None (zero overhead).
+    /// </summary>
+    [JsonPropertyName("logging")]
+    public LoggingConfig Logging { get; set; } = new();
+
+    /// <summary>
     /// MCP (Model Context Protocol) server connections. Stdio subprocess or HTTP/SSE.
     /// Empty = no MCP tools registered. See McpConfig for schema.
     /// </summary>

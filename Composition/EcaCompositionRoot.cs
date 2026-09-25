@@ -38,14 +38,18 @@ public class EcaCompositionRoot
     /// </summary>
     public EcaServiceBundle Build()
     {
-        // ── Logger ──
-        var logPath = Path.Combine(_userConfigDir, "ECAssistant.log");
-        var logger = new Logger(logPath, LogLevel.Info);
-
-        // ── Config ──
+        // ── Config (load first so logging config is available) ──
         var builder = AgentConfigBuilder.Create().WorkingDirectory(_userConfigDir);
         ApplyCommandLineArgs(ref builder, _args);
         var config = builder.Build();
+
+        // ── Logger (config-driven, zero-overhead when disabled) ──
+        var logCfg = config.Logging;
+        var logPath = Path.IsPathRooted(logCfg.File)
+            ? logCfg.File
+            : Path.Combine(_userConfigDir, logCfg.File);
+        var logger = new Logger(logPath, logCfg.ResolvedLevel,
+            logCfg.Components.Length > 0 ? logCfg.IsComponentEnabled : null);
 
         // ── Resolve model path ──
         var modelPath = ResolveModelPath(config, _userConfigDir);

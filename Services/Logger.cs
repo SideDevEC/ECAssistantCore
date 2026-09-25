@@ -12,19 +12,23 @@ public class Logger : ILogger
     private LogLevel _minLevel = LogLevel.Info;
     private readonly object _lock = new();
     private bool _initialized = false;
+    private Func<string, bool>? _componentFilter;
 
     public Logger() { }
 
-    public Logger(string logFilePath, LogLevel minLevel = LogLevel.Info)
+    public Logger(string logFilePath, LogLevel minLevel = LogLevel.Info, Func<string, bool>? componentFilter = null)
     {
-        Initialize(logFilePath, minLevel);
+        Initialize(logFilePath, minLevel, componentFilter);
     }
 
-    public void Initialize(string logFilePath, LogLevel minLevel)
+    public void Initialize(string logFilePath, LogLevel minLevel, Func<string, bool>? componentFilter = null)
     {
         _logFilePath = Path.GetFullPath(logFilePath);
         _minLevel = minLevel;
+        _componentFilter = componentFilter;
         _initialized = true;
+
+        if (_minLevel >= LogLevel.None) return; // disabled — don't write init line
 
         var dir = Path.GetDirectoryName(_logFilePath);
         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
@@ -50,7 +54,9 @@ public class Logger : ILogger
     private void Log(LogLevel level, string tag, string message)
     {
         if (!_initialized) return;
-        if (level < _minLevel) return;
+        if (level < _minLevel) return; // zero-overhead when None or filtered out
+        // Component filter: Error/Warn always pass; Debug/Info respect the filter
+        if (_componentFilter != null && level <= LogLevel.Info && !_componentFilter(tag)) return;
 
         var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
         var levelStr = level switch
