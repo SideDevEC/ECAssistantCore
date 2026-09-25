@@ -125,7 +125,7 @@ public class InstallerVisionEmbeddingTests : IDisposable
     // ── Orphan local model registration defaults ──
 
     [Fact]
-    public void RegisterLocalModelFile_ChatOrphan_CpuDefaults_64kCtx_Batch512()
+    public void RegisterLocalModelFile_ChatOrphan_CpuDefaults_64kCtx_Batch1024()
     {
         File.WriteAllText(Path.Combine(_modelsDir, "my-orphan-model.gguf"), "x");
         var installer = CreateInstaller();
@@ -137,7 +137,8 @@ public class InstallerVisionEmbeddingTests : IDisposable
         Assert.Equal("local-my-orphan-model", entry["id"]!.GetValue<string>());
         Assert.Equal(0, entry["gpu_layers"]!.GetValue<int>());
         Assert.Equal(65536, entry["context_size"]!.GetValue<int>());
-        Assert.Equal(512, entry["batch_size"]!.GetValue<int>());
+        // v15 context tier: ApplyToServerConfig bumps chat-model batch to >= 1024
+        Assert.Equal(1024, entry["batch_size"]!.GetValue<int>());
         Assert.Null(entry["mmproj_path"]);
     }
 

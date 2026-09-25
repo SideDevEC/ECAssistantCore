@@ -100,7 +100,8 @@ public class ModelInstallerConfigTests : IDisposable
         installer.RegisterLocalModelFile("Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf");
 
         var json = File.ReadAllText(_configPath);
-        Assert.Contains("\"batch_size\": 512", json);
+        // v15 context tier: ApplyToServerConfig bumps chat-model batch to >= 1024
+        Assert.Contains("\"batch_size\": 1024", json);
         Assert.Contains("\"context_size\": 65536", json);
         Assert.Contains("\"gpu_layers\": 0", json);
         Assert.Contains("mmproj-Qwen2.5-VL-7B-Instruct-f16.gguf", json);
