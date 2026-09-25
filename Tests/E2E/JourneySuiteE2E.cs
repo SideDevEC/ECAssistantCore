@@ -37,6 +37,14 @@ public sealed class JourneySuiteE2E
     private static string DebugDir(string tier, string journey) =>
         Path.Combine("/tmp/eca-journeys", tier, journey);
 
+    // Dump-tier labels mirror the config tier (Emre 2026-09-25): dumps land in
+    // local-small / local-large / remote-small / remote-large so tier runs never
+    // overwrite each other. Same env vars + defaults as the config builders.
+    private static string LocalDumpTier =>
+        "local-" + (Environment.GetEnvironmentVariable("ECA_E2E_LOCAL_TIER") ?? "small").ToLowerInvariant();
+    private static string RemoteDumpTier =>
+        "remote-" + (Environment.GetEnvironmentVariable("ECA_E2E_REMOTE_TIER") ?? "large").ToLowerInvariant();
+
     // ── Config builders ─────────────────────────────────────────────
 
     private AppConfig LocalConfig(int maxTurns = 12, int? compactPct = null,
@@ -477,7 +485,7 @@ public sealed class JourneySuiteE2E
                 configure: engine => configure?.Invoke(engine, cfg),
                 prepareWorkingDir: dir => cfg.AgentSettings.WorkingDirectory = dir);
             await WireSessionParityAsync(session, withSubAgents);
-            return (session, "local");
+            return (session, LocalDumpTier);
         }
 
         if (!string.IsNullOrEmpty(RemoteEndpoint))
@@ -486,7 +494,7 @@ public sealed class JourneySuiteE2E
             var session = TryCreateRemoteSession(cfg, engine => configure?.Invoke(engine, cfg));
             if (session != null)
                 await WireSessionParityAsync(session, withSubAgents);
-            return (session, "remote");
+            return (session, RemoteDumpTier);
         }
 
         return (null, "");
