@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-24T20:58:15.024822+00:00
+Generated: 2026-09-25T19:58:45.856104+00:00
 Packages: 2  |  Types: 554
 
 ---
 
-## ECAssistantCore (414 types, ~35086 LOC)
+## ECAssistantCore (414 types, ~34728 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -197,7 +197,7 @@ Packages: 2  |  Types: 554
 - 🟡 InstallerVisionEmbeddingTests : IDisposable  (ECAssistantCore)
 - 🟡 InteractionConfig  (ECAssistantCore)
 - 🟡 InterfaceConfig  (ECAssistantCore)
-- 🟡 JourneySuiteE2E  (ECAssistantCore)
+- 🟡 JourneySuiteE2EHost : JourneySuiteE2E  (ECAssistantCore)
 - 🟡 JsonEnvelopeFallbackTests  (ECAssistantCore)
 - 🟡 KvCacheStatus  (ECAssistantCore)
 - 🟡 LLMDecision  (ECAssistantCore)  deps: [bool, string, Dictionary, string? answerText =, string? reasoning =, List, string? reasoning =, string? commentary =]
@@ -422,7 +422,7 @@ Packages: 2  |  Types: 554
 - 🟡 WizardOnDiskDetectionTests : IDisposable  (ECAssistantCore)
 - 🟡 WorkspaceConfig  (ECAssistantCore)
 
-## Tests (140 types, ~16684 LOC)
+## Tests (140 types, ~16326 LOC)
 
 - 🟡 AiSetupResetterTests  (Tests)
 - 🟡 AllToolsTierPromptsTests  (Tests)
@@ -479,7 +479,7 @@ Packages: 2  |  Types: 554
 - 🟡 ImageAttachmentParserTests : IDisposable  (Tests)
 - 🟡 InMemoryVectorStoreTests  (Tests)
 - 🟡 InstallerVisionEmbeddingTests : IDisposable  (Tests)
-- 🟡 JourneySuiteE2E  (Tests)
+- 🟡 JourneySuiteE2EHost : JourneySuiteE2E  (Tests)
 - 🟡 JsonEnvelopeFallbackTests  (Tests)
 - 🟡 LLMDecisionEnvelopeTests  (Tests)
 - 🟡 LlmProviderRegistryTests : IDisposable  (Tests)

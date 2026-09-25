@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 140  |  LOC: 16684  |  ~6209 tokens
+Types: 140  |  LOC: 16326  |  ~6160 tokens
 
 ---
 
@@ -214,9 +214,10 @@ Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Setup
 
-### Class: JourneySuiteE2E
-> v15 rigorous journey E2E — long mixed conversations (chat → tools → chat → tools),
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Tools.Build, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Shell, ECAssistant.TestSupport
+### Class: JourneySuiteE2EHost
+> Opt-in host for the TestSupport JourneySuiteE2E (Emre 2026-09-25): the journey
+Implements: JourneySuiteE2E
+Cross-package deps: ECAssistant.TestSupport
 
 ### Class: JsonEnvelopeFallbackTests
 > v14.10.1: when the structured path falls back to text streaming, the model

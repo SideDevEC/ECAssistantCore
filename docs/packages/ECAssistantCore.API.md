@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 414  |  LOC: 35086  |  ~20316 tokens
+Types: 414  |  LOC: 34728  |  ~20267 tokens
 
 ---
 
@@ -982,9 +982,10 @@ Cross-package deps: ECAssistant.Core.Setup
 ### Class: InterfaceConfig
 > UI and output configuration. Verbose/silent controls token stream visibility.
 
-### Class: JourneySuiteE2E
-> v15 rigorous journey E2E — long mixed conversations (chat → tools → chat → tools),
-Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Tools.Build, ECAssistant.Core.Tools.Code, ECAssistant.Core.Tools.Shell, ECAssistant.TestSupport
+### Class: JourneySuiteE2EHost
+> Opt-in host for the TestSupport JourneySuiteE2E (Emre 2026-09-25): the journey
+Implements: JourneySuiteE2E
+Cross-package deps: ECAssistant.TestSupport
 
 ### Class: JsonEnvelopeFallbackTests
 > v14.10.1: when the structured path falls back to text streaming, the model
