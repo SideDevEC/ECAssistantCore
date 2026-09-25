@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-25T19:58:45.856104+00:00
-Packages: 2  |  Types: 554
+Generated: 2026-09-25T20:40:29.430397+00:00
+Packages: 2  |  Types: 555
 
 ---
 
-## ECAssistantCore (414 types, ~34728 LOC)
+## ECAssistantCore (415 types, ~34782 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -211,8 +211,9 @@ Packages: 2  |  Types: 554
 - 🟡 LlmServerClient : ILlmServerClient  (ECAssistantCore)  deps: [string, string? clientId =, int maxHeartbeatFailures =, ILogger? logger =]
 - 🟡 LlmServerClientReconnectTests  (ECAssistantCore)
 - 🟡 LlmServerEndpointConfig  (ECAssistantCore)
-- 🟡 Logger : ILogger  (ECAssistantCore)  deps: [string, LogLevel minLevel =]
+- 🟡 Logger : ILogger  (ECAssistantCore)  deps: [string, LogLevel minLevel =, Func]
 - 🟡 LoggerTests : IDisposable  (ECAssistantCore)
+- 🟡 LoggingConfig  (ECAssistantCore)
 - 🟡 McpConfig  (ECAssistantCore)
 - 🟡 McpConfigTests  (ECAssistantCore)
 - 🟣 McpContentItem  (ECAssistantCore)  deps: [string, string, string, string]

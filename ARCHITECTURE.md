@@ -228,13 +228,21 @@ Enforcement: Blocked tools are NOT registered (LLM never sees them). ApprovalReq
 
 ## Config (as-is)
 
-- **AppConfig** (root doc) — `llm`, `memory`, `workspace`, `subagent`, `background_tasks`, `tools` (dynamic per-tool sections), `tool_output_limits`, `interaction`, `model_tier`, `context_management`, `verification`, `mcp` (MCP server connections), `handoffs` (n/a — handoff is configless)
+- **AppConfig** (root doc) — `llm`, `memory`, `workspace`, `subagent`, `background_tasks`, `tools` (dynamic per-tool sections), `tool_output_limits`, `interaction`, `model_tier`, `context_management`, `verification`, `mcp` (MCP server connections), `handoffs` (n/a — handoff is configless), **`logging`** (Emre 2026-09-25)
 - **LlmProviderConfig** — `mode` (local/remote), `host:localhost`, `port:8420`, `endpoint`, `api_key`, `model_id`, `embedding_model_id`, `auto_start`, …; `ResolvedEndpoint` computed (`http://{host}:{port}` local / endpoint remote)
 - **`llm_providers`** — multiple remote providers: `providers[]` (name/endpoint/api_key/model_id/is_default), `default_provider`, `fallback_enabled` (opt-in health-probe failover at session start only). Local mode ignores it.
 - **API key schemes** — literal | `file:<path>` | `keyfile:<name>` (SecureKeyStore: self-encrypting DPAPI keyring, atomic writes, name-only references)
 - **`model_tier`** — `small|large|auto`; drives preplanning, envelope budgets, sampling, sub-agent briefs, verification cadence
 - **Model catalog** — data-driven `model-catalog.json`; live-fetch from GitHub, local copy fallback, embedded default; License self-heal backfill
 - AgentConfig (`agent_settings`) — working_directory, execution_timeout_minutes, allow_delete, allowed_extensions
+
+### Logging config (Emre 2026-09-25)
+- **`LoggingConfig`** in `AppConfig.Logging` — `enabled:bool`, `level:string`, `file:string`, `components:string[]`
+- **Zero-overhead when disabled:** `enabled:false` → `LogLevel.None=99`, every call returns immediately (no string alloc, no file I/O)
+- **Component filter:** non-empty `components[]` filters Debug/Info by tag prefix; Error/Warn always pass
+- **Known tags:** compaction, summarize, engine, tools, session, transport, composition, KVCache, Context
+- **Encapsulated in Core** — no cross-repo logging dependencies. LLM has its own `LoggingSection`, Inference has C-level callback.
+- **`EcaCompositionRoot.Build()`** reads `config.Logging` instead of hardcoding path + level
 
 ## Core/LLM Boundary Law
 

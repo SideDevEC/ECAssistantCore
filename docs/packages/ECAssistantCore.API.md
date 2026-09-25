@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 414  |  LOC: 34728  |  ~20267 tokens
+Types: 415  |  LOC: 34782  |  ~20315 tokens
 
 ---
 
@@ -137,7 +137,7 @@ Properties:
   - string LogFilePath { get; set; }
   - long LogFileSize { get; set; }
 Methods:
-  - void Initialize(string logFilePath, LogLevel minLevel)
+  - void Initialize(string logFilePath, LogLevel minLevel, Func<string, bool>? componentFilter = null)
   - void SetLevel(LogLevel level)
   - void Debug(string tag, string message)
   - void Info(string tag, string message)
@@ -1047,12 +1047,15 @@ Cross-package deps: ECAssistant.Core.Services.Http
 > Lightweight structured logger — writes to file only.
 Implements: ILogger
 Constructor:
-  - Logger(string logFilePath, LogLevel minLevel = LogLevel.Info)
+  - Logger(string logFilePath, LogLevel minLevel = LogLevel.Info, Func<string, bool>? componentFilter = null)
 Cross-package deps: ECAssistant.Core.Interfaces
 
 ### Class: LoggerTests
 Implements: IDisposable
 Cross-package deps: ECAssistant.Core.Services, ECAssistant.Core.Interfaces, ECAssistant.Core.UI, Moq
+
+### Class: LoggingConfig
+> Logging configuration for ECAssistantCore. Encapsulated — Core uses its own
 
 ### Class: McpConfig
 > MCP server configuration section in appsettings.json.
