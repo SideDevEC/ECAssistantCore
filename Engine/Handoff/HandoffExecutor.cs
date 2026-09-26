@@ -190,7 +190,7 @@ public sealed class HandoffExecutor : IAsyncDisposable
             var openingMessage = string.IsNullOrWhiteSpace(request.ContextSummary)
                 || request.ContextSummary.Trim().Equals("none", StringComparison.OrdinalIgnoreCase)
                 || request.ContextSummary.Trim() == "-"
-                ? "Complete the task you were created for."
+                ? "No additional context. Give your final answer now."
                 : request.ContextSummary;
             // Thinking-off no longer touches the prompt text (2026-09-26): it rides the
             // request as a first-class parameter (server-side template prefill).

@@ -65,7 +65,8 @@ public sealed class HandoffE2E
             var result = await session.Orchestrator.ExecuteMultiStep(
                 "Call EHandoff now to delegate this task to a specialist. " +
                 "Use this exact specialist prompt: 'You are an echo specialist. Reply with exactly SPECIALIST_ECHO_OK and nothing else.' " +
-                "Pass context: 'none'. Do not answer yourself — delegate.");
+                "Pass context: 'none'. Pass sampling: 'greedy' and thinking: 'off' (deterministic echo task). " +
+                "Do not answer yourself — delegate.");
 
             // The parent loop stops after the interception; the specialist's
             // answer IS the final output.
