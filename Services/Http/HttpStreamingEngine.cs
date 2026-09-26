@@ -166,6 +166,7 @@ public sealed class HttpStreamingEngine : IInferenceEngine
             tools,
             tool_choice = "auto",
             temperature = parameters.Temperature,
+            thinking = parameters.Thinking,
             top_p = parameters.TopP,
             max_tokens = parameters.MaxTokens,
         }, JsonOptions);
@@ -268,6 +269,7 @@ public sealed class HttpStreamingEngine : IInferenceEngine
             stream = false,
             structured = true,
             temperature = parameters.Temperature,
+            thinking = parameters.Thinking,
             top_p = parameters.TopP,
             top_k = parameters.TopK,
             max_tokens = parameters.MaxTokens,
@@ -296,6 +298,7 @@ public sealed class HttpStreamingEngine : IInferenceEngine
             },
             stream,
             temperature = parameters.Temperature,
+            thinking = parameters.Thinking,
             top_p = parameters.TopP,
             top_k = parameters.TopK,
             max_tokens = parameters.MaxTokens,

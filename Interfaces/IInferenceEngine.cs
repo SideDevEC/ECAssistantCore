@@ -49,6 +49,15 @@ public sealed class InferenceRequestParams
     public float? TopP { get; set; }
     public int? TopK { get; set; }
     public float? RepeatPenalty { get; set; }
+
+    /// <summary>
+    /// Thinking/reasoning control (2026-09-26): null = auto, false = off, true = on.
+    /// Rides the request like temperature — server prefills an empty think block at
+    /// the template layer when the vocabulary supports it; stream-side ThinkFilter
+    /// is the model-independent enforcement. Replaces the /no_think prompt soft switch.
+    /// </summary>
+    public bool? Thinking { get; set; }
+
     public string[]? Stop { get; set; }
     public bool Stream { get; set; } = true;
 

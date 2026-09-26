@@ -59,17 +59,21 @@ public sealed class HandoffExecutor : IAsyncDisposable
     }
 
     /// <summary>
-    /// Option 4 (2026-09-26): "greedy" specialist sampling — temperature 0 maps to
-    /// the native engine's greedy chain. Returns a copy; the parent's params object
-    /// is never mutated (injection, no shared mutable state).
+    /// Options 2+4 (2026-09-26): agent-decided specialist execution modes. Greedy =
+    /// temperature 0 (native greedy chain); thinking-off now rides the REQUEST
+    /// as a first-class parameter (server prefills the empty think block at the
+    /// template layer — structured state, replacing the former /no_think prompt
+    /// soft switch). Returns a copy; the parent's params object is never mutated
+    /// (injection, no shared mutable state).
     /// </summary>
     private InferenceRequestParams? ResolveSpecialistParams(HandoffRequest request)
     {
-        if (request.SamplingStyle != "greedy" || _inferenceParams == null)
-            return _inferenceParams;
+        if (_inferenceParams == null) return null;
+        if (request.SamplingStyle != "greedy" && request.Thinking != "off") return _inferenceParams;
         var copy = new InferenceRequestParams
         {
-            Temperature = 0f,
+            Temperature = request.SamplingStyle == "greedy" ? 0f : _inferenceParams.Temperature,
+            Thinking = request.Thinking == "off" ? false : _inferenceParams.Thinking,
             MaxTokens = _inferenceParams.MaxTokens,
             SessionId = _inferenceParams.SessionId,
         };
@@ -188,12 +192,8 @@ public sealed class HandoffExecutor : IAsyncDisposable
                 || request.ContextSummary.Trim() == "-"
                 ? "Complete the task you were created for."
                 : request.ContextSummary;
-
-            // Option 2 (2026-09-26): agent-decided no-think mode — the Qwen3 soft
-            // switch in the opening user message skips the think block server-side
-            // (the chat template detects it and prefills an empty think block).
-            if (request.Thinking == "off")
-                openingMessage += " /no_think";
+            // Thinking-off no longer touches the prompt text (2026-09-26): it rides the
+            // request as a first-class parameter (server-side template prefill).
 
             var result = await specialistOrchestrator.ExecuteMultiStep(openingMessage);
             _specialistEngine.EndExecution();
