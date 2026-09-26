@@ -59,6 +59,24 @@ public sealed class HandoffExecutor : IAsyncDisposable
     }
 
     /// <summary>
+    /// Option 4 (2026-09-26): "greedy" specialist sampling — temperature 0 maps to
+    /// the native engine's greedy chain. Returns a copy; the parent's params object
+    /// is never mutated (injection, no shared mutable state).
+    /// </summary>
+    private InferenceRequestParams? ResolveSpecialistParams(HandoffRequest request)
+    {
+        if (request.SamplingStyle != "greedy" || _inferenceParams == null)
+            return _inferenceParams;
+        var copy = new InferenceRequestParams
+        {
+            Temperature = 0f,
+            MaxTokens = _inferenceParams.MaxTokens,
+            SessionId = _inferenceParams.SessionId,
+        };
+        return copy;
+    }
+
+    /// <summary>
     /// Run the specialist to completion. The specialist's
     /// <see cref="OrchestratorResult"/> is returned directly — the parent
     /// orchestrator should adopt it as its own final result.
@@ -112,7 +130,7 @@ public sealed class HandoffExecutor : IAsyncDisposable
                 sessionId: sessionId,
                 inferenceEngine: inference,
                 kvCacheController: kvCache,
-                inferenceParams: _inferenceParams,
+                inferenceParams: ResolveSpecialistParams(request),
                 config: _config,
                 workingDir: _workingDir,
                 logger: _logger,
@@ -170,6 +188,12 @@ public sealed class HandoffExecutor : IAsyncDisposable
                 || request.ContextSummary.Trim() == "-"
                 ? "Complete the task you were created for."
                 : request.ContextSummary;
+
+            // Option 2 (2026-09-26): agent-decided no-think mode — the Qwen3 soft
+            // switch in the opening user message skips the think block server-side
+            // (the chat template detects it and prefills an empty think block).
+            if (request.Thinking == "off")
+                openingMessage += " /no_think";
 
             var result = await specialistOrchestrator.ExecuteMultiStep(openingMessage);
             _specialistEngine.EndExecution();

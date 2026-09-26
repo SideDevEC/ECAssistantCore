@@ -53,6 +53,8 @@ public sealed class EHandoffTool : EToolBase
         "model_override = different model ID on the same endpoint (optional). " +
         "max_turns = max turns for the specialist (optional, default 8). " +
         "timeout = timeout in seconds (optional, default 180). " +
+        "sampling = 'greedy' for deterministic deliverables (fixed output, no creativity needed) (optional). " +
+        "thinking = 'off' to run the specialist without a think block on simple tasks (optional). " +
         "Do NOT use for simple questions or single tool calls — handle those yourself. " +
         "Do NOT use EHandoff for sub-tasks where you need the result to continue — use ESubAgent for that.";
 
@@ -71,7 +73,9 @@ public sealed class EHandoffTool : EToolBase
             "name": { "type": "string", "description": "Short name for the specialist (logging only)" },
             "model_override": { "type": "string", "description": "Different model ID on the same endpoint (optional)" },
             "max_turns": { "type": "string", "description": "Max turns for the specialist (default: 8)" },
-            "timeout": { "type": "string", "description": "Timeout in seconds (default: 180)" }
+            "timeout": { "type": "string", "description": "Timeout in seconds (default: 180)" },
+            "sampling": { "type": "string", "description": "Specialist sampling style: 'greedy' for deterministic deliverables (echo, fixed-format output); default otherwise" },
+            "thinking": { "type": "string", "description": "Specialist thinking mode: 'off' to skip the think block on simple tasks (less drift, fewer tokens); default keeps thinking on" }
           }
         }
         """;
@@ -96,6 +100,15 @@ public sealed class EHandoffTool : EToolBase
             request = request with { MaxTurns = mt };
         if (int.TryParse(arguments.GetValueOrDefault("timeout"), out var ts))
             request = request with { TimeoutSeconds = ts };
+
+        // Agent-decided specialist modes (options 2 + 4, 2026-09-26): the delegating
+        // model opts in per handoff call via the envelope.
+        var sampling = arguments.GetValueOrDefault("sampling")?.Trim().ToLowerInvariant() ?? "";
+        if (sampling is "greedy" or "deterministic")
+            request = request with { SamplingStyle = "greedy" };
+        var thinking = arguments.GetValueOrDefault("thinking")?.Trim().ToLowerInvariant() ?? "";
+        if (thinking is "off" or "no" or "no_think")
+            request = request with { Thinking = "off" };
 
         try
         {

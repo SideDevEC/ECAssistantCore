@@ -41,4 +41,20 @@ public sealed record HandoffRequest
 
     /// <summary>Timeout in seconds (default: 180).</summary>
     public int TimeoutSeconds { get; init; } = 180;
+
+    /// <summary>
+    /// Agent-decided sampling style for the specialist (option 4, 2026-09-26):
+    /// "greedy" runs the specialist at temperature 0 — for deterministic
+    /// deliverables (echo, fixed-format output). Default/other = inherited params.
+    /// The DELEGATING model chooses this at handoff time; no semantic analysis.
+    /// </summary>
+    public string SamplingStyle { get; init; } = "";
+
+    /// <summary>
+    /// Agent-decided thinking mode for the specialist (option 2, 2026-09-26):
+    /// "off" appends the Qwen3 /no_think soft switch to the specialist's opening
+    /// message — skips the think block (less drift, fewer tokens on simple tasks).
+    /// Default/"on" = model default behavior.
+    /// </summary>
+    public string Thinking { get; init; } = "";
 }
