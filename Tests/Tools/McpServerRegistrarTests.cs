@@ -191,7 +191,7 @@ public class McpServerRegistrarTests : IDisposable
 
     private class TestLogger : ECAssistant.Core.Interfaces.ILogger
     {
-        public void Initialize(string logFilePath, LogLevel minLevel) { }
+        public void Initialize(string logFilePath, LogLevel minLevel, Func<string, bool>? componentFilter = null) { }
         public void SetLevel(LogLevel level) { }
         public bool IsDebugEnabled => false;
         public string LogFilePath => "";

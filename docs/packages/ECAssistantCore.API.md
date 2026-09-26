@@ -1,6 +1,6 @@
 # ECAssistantCore.API.md
 
-Types: 415  |  LOC: 34782  |  ~20315 tokens
+Types: 415  |  LOC: 34799  |  ~20324 tokens
 
 ---
 
@@ -426,7 +426,7 @@ Cross-package deps: ECAssistant.Core.Config
 > v10.30: Core engine. All inference + KV cache control is HTTP-based via the
 Implements: IEngine, IEngineToolContext, ISubAgentEngineHost
 Constructor:
-  - AgentEngine(string sessionId, IInferenceEngine inferenceEngine, IKvCacheController kvCacheController, RemoteTokenizer? tokenizer = null, InferenceRequestParams? inferenceParams = null, uint contextSize = 8192, string modelPath = "", AppConfig? config = null, string? workingDir = null, ILogger? logger = null, MemoryManager? memoryManager = null, ECAssistant.Core.Engine.SelfCorrectionManager? selfCorrection = null, ECAssistant.Core.Playbooks.IPlaybookStore? playbookStore = null, ECAssistant.Core.Engine.ProjectContextManager? projectContext = null, ITaskPlanner? taskPlanner = null, Transport.OpenAIClient? sharedHttpClient = null, bool isLocalMode = true)
+  - AgentEngine(string sessionId, IInferenceEngine inferenceEngine, IKvCacheController kvCacheController, RemoteTokenizer? tokenizer = null, InferenceRequestParams? inferenceParams = null, uint contextSize = 8192, string modelPath = "", AppConfig? config = null, string? workingDir = null, ILogger? logger = null, MemoryManager? memoryManager = null, ECAssistant.Core.Engine.SelfCorrectionManager? selfCorrection = null, ECAssistant.Core.Playbooks.IPlaybookStore? playbookStore = null, ECAssistant.Core.Engine.ProjectContextManager? projectContext = null, ITaskPlanner? taskPlanner = null, Transport.OpenAIClient? sharedHttpClient = null, bool isLocalMode = true, bool isSpecialistSession = false)
 Cross-package deps: ECAssistant.Core.Config, ECAssistant.Core.ContextPinning, ECAssistant.Core.Interfaces, ECAssistant.Core.Memory, ECAssistant.Core.Engine, ECAssistant.Core.Orchestration, ECAssistant.Core.Session, ECAssistant.Core.Services, ECAssistant.Core.Services.Http, ECAssistant.Core.Tools, ECAssistant.Core.Transport
 
 ### Class: AgentOrchestrator

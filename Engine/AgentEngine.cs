@@ -55,6 +55,15 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
     /// <summary>v15: true when running against the local ECAssistantLLM server (KV sessions available).</summary>
     protected readonly bool _isLocalMode;
 
+    /// <summary>
+    /// Option 5 (owner-approved, 2026-09-26): handoff/specialist sessions get a
+    /// narrower decision prompt — the opening message is framed as a task to
+    /// execute, never as chat. Injected via constructor; the main agent keeps
+    /// today's decision template untouched.
+    /// </summary>
+    protected readonly bool _isSpecialistSession;
+    public bool IsSpecialistSession => _isSpecialistSession;
+
      // ── Core components ──
     protected TokenCounter _tokenCounter;
     protected MemoryManager _memoryManager;
@@ -318,7 +327,8 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         ECAssistant.Core.Engine.ProjectContextManager? projectContext = null,
         ITaskPlanner? taskPlanner = null,
         Transport.OpenAIClient? sharedHttpClient = null,
-        bool isLocalMode = true)
+        bool isLocalMode = true,
+        bool isSpecialistSession = false)
      {
         if (logger != null) _logger = logger;
         _injectedSelfCorrection = selfCorrection;
@@ -336,6 +346,7 @@ public class AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost
         _requestParams.SessionId = sessionId;
 
         _modelPath = modelPath;
+        _isSpecialistSession = isSpecialistSession;
         _contextSize = contextSize;
         _kvState.ContextSize = contextSize;
         _config = config ?? new AppConfig();
@@ -1168,9 +1179,26 @@ User: " + userRequest + "\n";
             sb.AppendLine(userRequest);
             sb.AppendLine("</user>");
             sb.AppendLine();
-            sb.AppendLine("The user message above is the user's request. Decide yourself:");
-            sb.AppendLine("- If it needs tools (files, shell, web, system), start working and call the first tool now.");
-            sb.AppendLine("- If it can be answered directly (greetings, questions, conversation), finish now with your answer.");
+            if (_isSpecialistSession)
+            {
+                // Option 5 (2026-09-26): specialist sessions must not "decide themselves"
+                // whether the opening message is a task or small talk — that interpretive
+                // freedom is what let a literal 'none' opening message turn into a
+                // greeting on small models (HandoffE2E flake). Specialists exist to
+                // execute; their answer is the deliverable. Tool decisions are unaffected
+                // — only the "conversational answer is an acceptable completion" branch
+                // of the main-agent template is removed here.
+                sb.AppendLine("The user message above is the task to execute. Work on it exactly as your instructions specify.");
+                sb.AppendLine("Do not reinterpret it as small talk or conversation — it is a directive, execute it.");
+                sb.AppendLine("If the task's deliverable is text, finish now with that text as your answer.");
+                sb.AppendLine("If the task needs tools (files, shell, web, system), start working and call the first tool now.");
+            }
+            else
+            {
+                sb.AppendLine("The user message above is the user's request. Decide yourself:");
+                sb.AppendLine("- If it needs tools (files, shell, web, system), start working and call the first tool now.");
+                sb.AppendLine("- If it can be answered directly (greetings, questions, conversation), finish now with your answer.");
+            }
          }
         else
          {

@@ -117,7 +117,8 @@ public sealed class HandoffExecutor : IAsyncDisposable
                 workingDir: _workingDir,
                 logger: _logger,
                 sharedHttpClient: client,
-                isLocalMode: isLocal);
+                isLocalMode: isLocal,
+                isSpecialistSession: true);
 
             // ── Inject the specialist's system prompt ──
             _specialistEngine.SystemPromptText = request.SystemPrompt;
@@ -160,7 +161,13 @@ public sealed class HandoffExecutor : IAsyncDisposable
 
             // The context summary is the opening user message — it tells the
             // specialist what the user wants and what the parent already knows.
-            var openingMessage = string.IsNullOrEmpty(request.ContextSummary)
+            // Placeholder hygiene (2026-09-26): models occasionally send 'none' as
+            // a literal context value; feeding that string as the opening message
+            // invites small models to answer it as small talk. Normalize to the
+            // neutral filler (string normalization, not semantic analysis).
+            var openingMessage = string.IsNullOrWhiteSpace(request.ContextSummary)
+                || request.ContextSummary.Trim().Equals("none", StringComparison.OrdinalIgnoreCase)
+                || request.ContextSummary.Trim() == "-"
                 ? "Complete the task you were created for."
                 : request.ContextSummary;
 

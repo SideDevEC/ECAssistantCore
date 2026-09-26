@@ -1,11 +1,11 @@
 # API-INDEX.md — ECAssistantCore
 
-Generated: 2026-09-25T20:40:29.430397+00:00
+Generated: 2026-09-26T19:20:51.628245+00:00
 Packages: 2  |  Types: 555
 
 ---
 
-## ECAssistantCore (415 types, ~34782 LOC)
+## ECAssistantCore (415 types, ~34799 LOC)
 
 - 🔵 IAiSetupResetter  (ECAssistantCore)
 - 🔵 IConfigLoader  (ECAssistantCore)
@@ -58,7 +58,7 @@ Packages: 2  |  Types: 555
 - 🟡 ActiveSubAgent  (ECAssistantCore)
 - 🟡 AgentConfig  (ECAssistantCore)
 - 🟡 AgentConfigBuilder  (ECAssistantCore)
-- 🟡 AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost  (ECAssistantCore)  deps: [string, IInferenceEngine, IKvCacheController, RemoteTokenizer? tokenizer =, InferenceRequestParams? inferenceParams =, uint contextSize =, string modelPath =, AppConfig? config =, string? workingDir =, ILogger? logger =, MemoryManager? memoryManager =, SelfCorrectionManager? selfCorrection =, IPlaybookStore? playbookStore =, ProjectContextManager? projectContext =, ITaskPlanner? taskPlanner =, OpenAIClient? sharedHttpClient =, bool isLocalMode =]
+- 🟡 AgentEngine : IEngine, IEngineToolContext, ISubAgentEngineHost  (ECAssistantCore)  deps: [string, IInferenceEngine, IKvCacheController, RemoteTokenizer? tokenizer =, InferenceRequestParams? inferenceParams =, uint contextSize =, string modelPath =, AppConfig? config =, string? workingDir =, ILogger? logger =, MemoryManager? memoryManager =, SelfCorrectionManager? selfCorrection =, IPlaybookStore? playbookStore =, ProjectContextManager? projectContext =, ITaskPlanner? taskPlanner =, OpenAIClient? sharedHttpClient =, bool isLocalMode =, bool isSpecialistSession =]
 - 🟡 AgentOrchestrator : IAsyncDisposable  (ECAssistantCore)  deps: [AgentEngine, ISessionOutput? sessionOutput =, int maxTurns =, int maxFailures =, ToolPolicy? toolPolicy =, ILogger? logger =, AppConfig? config =, IPostEditVerifier? postEditVerifier =, IPlaybookStore? playbookStore =, IPlaybookExtractor? playbookExtractor =]
 - 🟡 AgentSession : ISessionOutput, ISessionContext, IAsyncDisposable  (ECAssistantCore)  deps: [string, string, string, string, InferenceRequestParams, string, SemaphoreSlim, SubAgentConfig? subAgentConfig =, string? label =, ILogger? logger =, AppConfig? config =, OpenAIClient? httpClient =, RemoteTokenizer? remoteTokenizer =, string? apiKey =, bool isLocalMode =]
 - 🟡 AiSetupResetter : IAiSetupResetter  (ECAssistantCore)
