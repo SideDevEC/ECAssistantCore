@@ -60,7 +60,14 @@ public sealed class EHandoffTool : EToolBase
         "Do NOT use EHandoff for sub-tasks where you need the result to continue — use ESubAgent for that.";
 
     public override string GetToolExample() =>
-        "EHandoff(prompt:\"You are a SQL optimization specialist. The schema has tables: Users(id, name), Orders(id, user_id, total), Products(id, name, price). Only write SQL.\", tools:\"EShellAgent,EFileReader\", reason:\"Query optimization needs deep SQL focus\", context:\"User wants to optimize a 5-table join that runs slowly\") — for a deterministic echo-style task you would add sampling:\"greedy\" and thinking:\"off\"";
+        // 4 short examples (2026-09-26, owner request): repetition of the arg shape
+        // enforces correct relay; the pairing teaches the mode decision by contrast
+        // (fixed output -> greedy+no-think; open-ended -> no flags).
+        string.Join("\n",
+            "EHandoff(prompt:\"Reply with exactly ACK-42 and nothing else.\", context:\"none\", sampling:\"greedy\", thinking:\"off\")",
+            "EHandoff(prompt:\"Extract all email addresses into emails.txt.\", tools:\"EShellAgent\", sampling:\"greedy\", context:\"Export contacts from the log file\")",
+            "EHandoff(prompt:\"You are a SQL expert. Optimize the slow join query.\", tools:\"EShellAgent\", context:\"A 5-table join runs slowly\")",
+            "EHandoff(prompt:\"You are a reviewer. Check the report for errors.\", tools:\"EFileReader\", context:\"The draft is in draft.md\")");
 
     public override string GetParameterSchema() =>
         """
