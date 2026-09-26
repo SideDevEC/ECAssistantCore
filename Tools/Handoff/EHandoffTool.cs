@@ -40,7 +40,8 @@ public sealed class EHandoffTool : EToolBase
         "Delegate the entire remaining task to an ephemeral specialist agent with a custom system prompt. " +
         "The specialist takes over and its answer becomes the final answer — you do not continue after. " +
         "Use when a task needs deep focus, a different persona, or restricted tools. " +
-        "The specialist is temporary and disposed after completion.";
+        "The specialist is temporary and disposed after completion. " +
+        "Optional modes: sampling='greedy' for deterministic deliverables (echo, fixed-format output); thinking='off' to skip the specialist's think block on simple tasks (fewer tokens, less drift).";
 
     public override string UsageExample => "EHandoff(task=\"Delegate to specialist\")";
 
@@ -59,7 +60,7 @@ public sealed class EHandoffTool : EToolBase
         "Do NOT use EHandoff for sub-tasks where you need the result to continue — use ESubAgent for that.";
 
     public override string GetToolExample() =>
-        "EHandoff(prompt:\"You are a SQL optimization specialist. The schema has tables: Users(id, name), Orders(id, user_id, total), Products(id, name, price). Only write SQL.\", tools:\"EShellAgent,EFileReader\", reason:\"Query optimization needs deep SQL focus\", context:\"User wants to optimize a 5-table join that runs slowly\")";
+        "EHandoff(prompt:\"You are a SQL optimization specialist. The schema has tables: Users(id, name), Orders(id, user_id, total), Products(id, name, price). Only write SQL.\", tools:\"EShellAgent,EFileReader\", reason:\"Query optimization needs deep SQL focus\", context:\"User wants to optimize a 5-table join that runs slowly\") — for a deterministic echo-style task you would add sampling:\"greedy\" and thinking:\"off\"";
 
     public override string GetParameterSchema() =>
         """
